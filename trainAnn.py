@@ -1,7 +1,9 @@
+# trainAnn.py
 import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
 from annModule import ann
+import torch.optim as optim
 #%% 
 class myAnn(ann):
     def __init__(self):
@@ -16,3 +18,8 @@ class myAnn(ann):
         return x
 #%%
 z1=myAnn()
+#%%
+'#ccc how to set optimizer manually'
+# z1.changeLearningRate(0.001)
+# z1.optimizer=optim.Adam(z1.parameters(), lr=0.4)
+#%%

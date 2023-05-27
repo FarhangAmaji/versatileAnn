@@ -1,3 +1,4 @@
+# annModule.py
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,22 +11,30 @@ class ann(nn.Module):
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
         self.patience = patience
-        
+        self.optimizer = None
         
         # define model here
         # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
         # self.layer2 = self.linLSigmoidDropout(200, 300, dropoutRate=0.2)
         #self.layer3 = nn.Linear(inputSize, 4*inputSize)
         # Add more layers as needed
-        
     
     def forward(self, x):
         # define forward step here
-        pass
         # x = self.layer1(x)
         # x = self.layer2(x)
         # x = self.layer3(x)
-        # return x
+        return x
+    
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, value):
+        assert isinstance(value, (optim.Optimizer, type(None))),f'optimizerType={type(value)} is not correct'
+        self._optimizer = value
+    
     def getInitInpArgs(self):
         args, _, _, values = inspect.getargvalues(inspect.currentframe().f_back)
         "#ccc patience and optimizer's change should not affect that doesnt let the model rerun"
@@ -56,14 +65,30 @@ class ann(nn.Module):
             return nn.Sequential(layer, drLayer)
         return layer
     
+    def initOptimizer(self):
+        if list(self.parameters()):
+            self.optimizer = optim.Adam(self.parameters(), lr=0.00001)
+        else:
+            self.optimizer = None
+    
+    def tryToSetDefaultOptimizerIfItsNotSet(self):
+        if not isinstance(self.optimizer, optim.Optimizer):
+            self.initOptimizer()
+    
+    def havingOptimizerCheck(self):
+        self.tryToSetDefaultOptimizerIfItsNotSet()
+        assert isinstance(self.optimizer, optim.Optimizer), "model's optimizer is not defined"
+    
     def changeLearningRate(self, newLearningRate):
+        self.tryToSetDefaultOptimizerIfItsNotSet()
         for param_group in self.optimizer.param_groups:#kkk check does it change
             param_group['lr'] = newLearningRate
     
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, optimizer, criterion, numEpochs, batchSize, savePath):#kkk add numSamples for ensemble
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, batchSize, savePath):#kkk add numSamples for ensemble
+        self.havingOptimizerCheck()
         self.train()
         bestValScore = float('inf') #kkk with if should be float('inf') if its loss and 0 if its accuracy
         patienceCounter = 0
@@ -74,23 +99,20 @@ class ann(nn.Module):
             # Create random indexes for sampling
             indexes = torch.randperm(trainInputs.shape[0])
             for i in range(0, len(trainInputs), batchSize):
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 # Create batch indexes
                 batchIndexes = indexes[i:i+batchSize]
                 
-                batchTrainInputs = trainInputs[batchIndexes].to(device)
-                batchTrainOutputs = trainOutputs[batchIndexes].to(device)
+                batchTrainInputs = trainInputs[batchIndexes].to(self.device)
+                batchTrainOutputs = trainOutputs[batchIndexes].to(self.device)
                 
-                batchTrainOutputsPred = model.forward(batchTrainInputs)
+                batchTrainOutputsPred = self.forward(batchTrainInputs)
                 loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
                 
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 
-                runningLoss += loss.item()
+                trainLoss += loss.item()
             
-            epochLoss = runningLoss / len(trainInputs)
+            epochLoss = trainLoss / len(trainInputs)
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
-#%%
-z1=ann()
-z2=z1.linLReluDropout(4, 4,dropoutRate=.9)
