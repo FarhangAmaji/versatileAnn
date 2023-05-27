@@ -7,6 +7,8 @@ class ann(nn.Module):
     def __init__(self):
         super(ann, self).__init__()
         self.getInitInpArgs()
+        self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
         # define model here
         
         
@@ -45,3 +47,6 @@ class ann(nn.Module):
         else:
             assert type(dropoutRate) in (bool),f'dropoutRate={dropoutRate} is not a int, float or bool'
         return layer
+#%%
+z1=ann()
+z2=z1.linLReluDropout(4, 4,dropoutRate=.9)
