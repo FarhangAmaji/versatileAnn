@@ -5,13 +5,14 @@ import torch.optim as optim
 import inspect
 
 class ann(nn.Module):
-    def __init__(self, patience=10):
+    def __init__(self, patience=10, batchSize=64):
         super(ann, self).__init__()
         self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
         self.patience = patience
         self.optimizer = None
+        self.batchSize = batchSize
         
         # define model here
         # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
@@ -87,6 +88,13 @@ class ann(nn.Module):
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
+    def batchDatapreparation(self,indexesIndex, indexes):
+        batchIndexes = indexes[indexesIndex:indexesIndex+self.batchSize]
+        
+        batchTrainInputs = trainInputs[batchIndexes].to(self.device)
+        batchTrainOutputs = trainOutputs[batchIndexes].to(self.device)
+        return batchTrainInputs, batchTrainOutputs
+    
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, batchSize, savePath):#kkk add numSamples for ensemble
         self.havingOptimizerCheck()
         self.train()
@@ -100,11 +108,8 @@ class ann(nn.Module):
             indexes = torch.randperm(trainInputs.shape[0])
             for i in range(0, len(trainInputs), batchSize):
                 self.optimizer.zero_grad()
-                # Create batch indexes
-                batchIndexes = indexes[i:i+batchSize]
                 
-                batchTrainInputs = trainInputs[batchIndexes].to(self.device)
-                batchTrainOutputs = trainOutputs[batchIndexes].to(self.device)
+                batchTrainInputs, batchTrainOutputs = self.batchDatapreparation(i, indexes)
                 
                 batchTrainOutputsPred = self.forward(batchTrainInputs)
                 loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
