@@ -40,6 +40,16 @@ class ann(nn.Module, metaclass=PostInitCaller):
         return x
     
     @property
+    def device(self):
+        return self._device
+    
+    @device.setter
+    def device(self, value):
+        assert value in ['cuda','cpu'],"device={value} must be 'cuda' or 'cpu'"
+        self._device = value
+        self.to(value)
+    
+    @property
     def optimizer(self):
         return self._optimizer
 
