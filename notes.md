@@ -37,3 +37,46 @@ hyperParam tuning with mopso(is it possible)
 make a learning rate change func
 
 kkk should optimizer be in init
+#%% implement the post init later
+class class00:
+    def __init__(self):
+        print('class00 __init__')
+
+    def common2(self):
+        print('common 2')
+
+
+class PostInitCaller(type):
+    def __call__(cls, *args, **kwargs):
+        obj = type.__call__(cls, *args, **kwargs)
+        obj.__post_init__()
+        return obj
+
+
+class BaseClass(class00, metaclass=PostInitCaller):
+
+    def __init__(self):
+        super().__init__()
+        print('base __init__')
+        self.common1()
+
+    def common1(self):
+        print('common 1')
+
+    def finalizeInitialization(self):
+        print('finalizeInitialization [common2]')
+
+    def __post_init__(self):  # this is called at the end of __init__
+        self.finalizeInitialization()
+
+
+class Subclass1(BaseClass):
+    def __init__(self):
+        super().__init__()
+        self.specific()
+
+    def specific(self):
+        print('specific')
+
+
+s = Subclass1()

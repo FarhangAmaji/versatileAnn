@@ -3,6 +3,7 @@ import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
 from annModule import ann
+import torch
 import torch.optim as optim
 #%% 
 class myAnn(ann):
@@ -22,4 +23,30 @@ z1=myAnn()
 '#ccc how to set optimizer manually'
 # z1.changeLearningRate(0.001)
 # z1.optimizer=optim.Adam(z1.parameters(), lr=0.4)
+# z1.batchSize=32
+# z1.device='cpu'
+#%% regression test
+import time
+t0=time.time()
+trainInputs = torch.randn(100, 40)  # Assuming 100 training samples with 40 features each
+trainOutputs = torch.randn(100, 1)  # Assuming 100 training output values
+
+testInputs = torch.randn(50, 40)  # Assuming 50 testing samples with 40 features each
+testOutputs = torch.randn(50, 1)  # Assuming 50 testing output values
+
+# Define the criterion (loss function)
+criterion = torch.nn.MSELoss()  # Example: Mean Squared Error (MSE) loss
+
+# Train the model
+z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=10, batchSize=64, savePath=None)
+
+# Evaluate the model
+evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion)
+print("Evaluation Loss:", evalLoss)
+print('time:',time.time()-t0)
+#%%
+#%%
+#%%
+#%%
+#%%
 #%%
