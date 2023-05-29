@@ -11,14 +11,11 @@ class PostInitCaller(type):
         obj.__post_init__()
         return obj
 
-class MissingFrameError(Exception):
-    pass
-
 class ann(nn.Module, metaclass=PostInitCaller):
     def __init__(self,frame_=None):
         frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())"'
         if frame_ is None:
-            raise MissingFrameError(frameErrorMsg)
+            raise Exception(frameErrorMsg)
         assert type(frame_)==types.FrameType, frameErrorMsg
         super(ann, self).__init__()
         self.getInitInpArgs(frame_)
@@ -26,6 +23,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         #kkk model save with class definition or subclass definition
         #kkk model save with imports
         #kkk model save with class name
+        #kkk it was better to have optimizer definition in training phase in order not to take memory if the model is a part of a bigger network
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.patience = 10
         self.optimizer = None
@@ -39,9 +37,10 @@ class ann(nn.Module, metaclass=PostInitCaller):
         #self.layer3 = nn.Linear(inputSize, 4*inputSize)
         # Add more layers as needed
     def __post_init__(self):
+        '# ccc this is ran after child class constructor'
         if isinstance(self, ann) and not type(self) == ann:
             self.to(self.device)
-            self.initOptimizer()
+            # self.initOptimizer()
 
     def forward(self, x):
         # define forward step here
@@ -104,7 +103,13 @@ class ann(nn.Module, metaclass=PostInitCaller):
             self.optimizer = optim.Adam(self.parameters(), lr=0.00001)
         else:
             self.optimizer = None
+    def tryToSetDefaultOptimizerIfItsNotSet(self):
+        if not isinstance(self.optimizer, optim.Optimizer):
+            self.initOptimizer()
     
+    def havingOptimizerCheck(self):
+        self.tryToSetDefaultOptimizerIfItsNotSet()
+        assert isinstance(self.optimizer, optim.Optimizer), "model's optimizer is not defined"
     @property
     def lr(self):
         return self.optimizer.param_groups[0]['lr']
@@ -122,6 +127,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         self.changeLearningRate(value)
         
     def changeLearningRate(self, newLearningRate):
+        self.tryToSetDefaultOptimizerIfItsNotSet()
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = newLearningRate
     
@@ -140,6 +146,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         return batchInputs, batchOutputs, appliedBatchSize
     
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath):
+        self.havingOptimizerCheck()
         #kkk check saving on savePath has no problem
         self.train()
         bestValScore = float('inf')
