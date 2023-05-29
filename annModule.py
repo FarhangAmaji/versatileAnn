@@ -93,9 +93,24 @@ class ann(nn.Module, metaclass=PostInitCaller):
         else:
             self.optimizer = None
     
+    @property
+    def lr(self):
+        return self.optimizer.param_groups[0]['lr']
     
+    @lr.setter
+    def lr(self, value):
+        self.changeLearningRate(value)
+        
+    @property
+    def learningRate(self):
+        return self.optimizer.param_groups[0]['lr']
+    
+    @learningRate.setter
+    def learningRate(self, value):
+        self.changeLearningRate(value)
+        
     def changeLearningRate(self, newLearningRate):
-        for param_group in self.optimizer.param_groups:#kkk check does it change
+        for param_group in self.optimizer.param_groups:
             param_group['lr'] = newLearningRate
     
     def divideLearningRate(self,factor):

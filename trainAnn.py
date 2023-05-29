@@ -22,6 +22,8 @@ class myAnn(ann):
 z1=myAnn()
 #%%
 '#ccc how to set optimizer manually'
+# z1.lr=0.001
+# z1.learningRate=0.001
 # z1.changeLearningRate(0.001)
 # z1.optimizer=optim.Adam(z1.parameters(), lr=0.4)
 # z1.batchSize=32
