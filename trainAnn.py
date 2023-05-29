@@ -26,8 +26,13 @@ z1=myAnn()
 # z1.optimizer=optim.Adam(z1.parameters(), lr=0.4)
 # z1.batchSize=32
 # z1.evalBatchSize=1024
-# z1.device='cpu'
+# z1.device=torch.device(type='cpu')
+
+# z1.patience=10
+z1.saveOnDiskPeriod=1
 #%% regression test
+# Set random seed for reproducibility
+torch.manual_seed(42)
 import time
 t0=time.time()
 trainInputs = torch.randn(100, 40)  # Assuming 100 training samples with 40 features each

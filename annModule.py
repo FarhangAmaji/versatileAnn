@@ -11,14 +11,15 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):
-    def __init__(self, patience=10, batchSize=64):
+    def __init__(self):
         super(ann, self).__init__()
         self.getInitInpArgs()#kkk I should only get the getInitInpArgs from child classes
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.patience = patience
+        self.patience = 10
         self.optimizer = None
-        self.batchSize = batchSize
-        self.evalBatchSize = 16*batchSize
+        self.batchSize = 64
+        self.evalBatchSize = 1024
+        self.saveOnDiskPeriod = 5
         
         # define model here
         # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
@@ -115,19 +116,27 @@ class ann(nn.Module, metaclass=PostInitCaller):
         self.train()
         bestValScore = float('inf')
         patienceCounter = 0
+        bestModel = None
+        bestModelCounter = 1
         
-        def check_patience(valScore, bestValScore, patienceCounter, epoch):
+        def checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):
             if valScore < bestValScore:
                 bestValScore = valScore
                 patienceCounter = 0
-                torch.save(self.state_dict(), savePath)
+                bestModel = self.state_dict()
+                bestModelCounter += 1
             else:
                 patienceCounter += 1
                 if patienceCounter >= self.patience:
                     print(f"Early stopping! in {epoch+1} epoch")
                     raise StopIteration
-        
-            return bestValScore, patienceCounter
+            
+            if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
+                # Save the best model to the hard disk
+                saveModelPath = f"{savePath}.pth"
+                torch.save(bestModel, saveModelPath)
+            
+            return bestValScore, patienceCounter, bestModel, bestModelCounter
         
         for epoch in range(numEpochs):
             trainLoss = 0.0
@@ -151,16 +160,19 @@ class ann(nn.Module, metaclass=PostInitCaller):
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
             
             valScore = self.evaluateModel(valInputs, valOutputs, criterion)
-            bestValScore, patienceCounter = check_patience(valScore, bestValScore, patienceCounter, epoch)
+            bestValScore, patienceCounter, bestModel, bestModelCounter = checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         
         print("Training finished.")
         
-        # Load the best model
-        self.load_state_dict(torch.load(savePath))
+        # Save the best model to the hard disk
+        saveModelPath = f"{savePath}.pth"
+        torch.save(bestModel, saveModelPath)
+        
+        # Load the best model into the current instance
+        self.load_state_dict(bestModel)
         
         # Return the best model
         return self
-
     
     def evaluateModel(self, inputs, outputs, criterion):
         self.eval()
