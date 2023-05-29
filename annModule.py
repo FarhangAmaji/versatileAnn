@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import inspect
+import types
 
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
@@ -10,10 +11,21 @@ class PostInitCaller(type):
         obj.__post_init__()
         return obj
 
+class MissingFrameError(Exception):
+    pass
+
 class ann(nn.Module, metaclass=PostInitCaller):
-    def __init__(self):
+    def __init__(self,frame_=None):
+        frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())"'
+        if frame_ is None:
+            raise MissingFrameError(frameErrorMsg)
+        assert type(frame_)==types.FrameType, frameErrorMsg
         super(ann, self).__init__()
-        self.getInitInpArgs()#kkk I should only get the getInitInpArgs from child classes
+        self.getInitInpArgs(frame_)
+        #kkk model save with inputArgs from child classes
+        #kkk model save with class definition or subclass definition
+        #kkk model save with imports
+        #kkk model save with class name
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.patience = 10
         self.optimizer = None
@@ -57,8 +69,8 @@ class ann(nn.Module, metaclass=PostInitCaller):
         assert isinstance(value, (optim.Optimizer, type(None))),f'optimizerType={type(value)} is not correct'
         self._optimizer = value
     
-    def getInitInpArgs(self):
-        args, _, _, values = inspect.getargvalues(inspect.currentframe().f_back)
+    def getInitInpArgs(self, frame_):
+        args, _, _, values = inspect.getargvalues(frame_)
         "#ccc patience and optimizer's change should not affect that doesnt let the model rerun"
         excludeInputArgs = ['patience', 'optimizer', 'device']
         for eia in excludeInputArgs:
@@ -128,6 +140,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         return batchInputs, batchOutputs, appliedBatchSize
     
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath):
+        #kkk check saving on savePath has no problem
         self.train()
         bestValScore = float('inf')
         patienceCounter = 0
