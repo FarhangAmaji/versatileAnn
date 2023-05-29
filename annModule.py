@@ -13,13 +13,12 @@ class PostInitCaller(type):
 class ann(nn.Module, metaclass=PostInitCaller):
     def __init__(self, patience=10, batchSize=64):
         super(ann, self).__init__()
-        self.getInitInpArgs()
+        self.getInitInpArgs()#kkk I should only get the getInitInpArgs from child classes
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.patience = patience
         self.optimizer = None
         self.batchSize = batchSize
         self.evalBatchSize = 16*batchSize
-        
         
         # define model here
         # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
@@ -28,7 +27,6 @@ class ann(nn.Module, metaclass=PostInitCaller):
         # Add more layers as needed
     def __post_init__(self):
         if isinstance(self, ann) and not type(self) == ann:
-            print("ann __post_init__",self.__class__.__name__)
             self.to(self.device)
             self.initOptimizer()
 
@@ -45,7 +43,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
     
     @device.setter
     def device(self, value):
-        assert value in ['cuda','cpu'],"device={value} must be 'cuda' or 'cpu'"
+        assert value in [torch.device(type='cuda'),torch.device(type='cpu')],"device={value} must be 'cuda' or 'cpu'"
         self._device = value
         self.to(value)
     
@@ -79,8 +77,8 @@ class ann(nn.Module, metaclass=PostInitCaller):
         '#ccc instead of defining many times of leakyRelu and dropOuts I do them at once'
         layer = nn.Sequential(
             nn.Linear(innerSize, outterSize),
-            activation
-        )
+            activation)
+        
         if dropoutRate:
             assert type(dropoutRate) in (int, float),f'dropoutRateType={type(dropoutRate)} is not int or float'
             assert 0 <= dropoutRate <= 1, f'dropoutRate={dropoutRate} is not between 0 and 1'
@@ -113,11 +111,23 @@ class ann(nn.Module, metaclass=PostInitCaller):
         batchOutputs = outputs[batchIndexes].to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize
     
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, batchSize, savePath):#kkk add numSamples for ensemble
-        # self.havingOptimizerCheck()
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath):
         self.train()
-        bestValScore = float('inf') #kkk with if should be float('inf') if its loss and 0 if its accuracy
+        bestValScore = float('inf')
         patienceCounter = 0
+        
+        def check_patience(valScore, bestValScore, patienceCounter, epoch):
+            if valScore < bestValScore:
+                bestValScore = valScore
+                patienceCounter = 0
+                torch.save(self.state_dict(), savePath)
+            else:
+                patienceCounter += 1
+                if patienceCounter >= self.patience:
+                    print(f"Early stopping! in {epoch+1} epoch")
+                    raise StopIteration
+        
+            return bestValScore, patienceCounter
         
         for epoch in range(numEpochs):
             trainLoss = 0.0
@@ -139,6 +149,18 @@ class ann(nn.Module, metaclass=PostInitCaller):
             
             epochLoss = trainLoss / len(trainInputs)
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
+            
+            valScore = self.evaluateModel(valInputs, valOutputs, criterion)
+            bestValScore, patienceCounter = check_patience(valScore, bestValScore, patienceCounter, epoch)
+        
+        print("Training finished.")
+        
+        # Load the best model
+        self.load_state_dict(torch.load(savePath))
+        
+        # Return the best model
+        return self
+
     
     def evaluateModel(self, inputs, outputs, criterion):
         self.eval()
