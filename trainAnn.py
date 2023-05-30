@@ -27,6 +27,7 @@ z1=myAnn(40,1)
 # z1.learningRate=0.001
 # z1.changeLearningRate(0.001)
 # z1.optimizer=optim.Adam(z1.parameters(), lr=0.4)
+# z1.tensorboardWriter=newTensorboardPath
 # z1.batchSize=32
 # z1.evalBatchSize=1024
 # z1.device=torch.device(type='cpu')
@@ -61,113 +62,15 @@ runcell('define model', 'F:/projects/public github projects/private repos/versat
 runcell('make model instance', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('regression test', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 #%%
+#%% reload model
+runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
+bestModel=ann.loadModel(r'data\bestModels\a1_EeBe')
+bestModel.evaluateModel(testInputs, testOutputs, criterion)
 #%%
 #%%
 #%%
 #%%
 #%%
-import inspect
-
-class ann():
-    def __init__(self, arg1):
-        super(ann, self).__init__()
-        self.getInitInpArgs()
-    def getInitInpArgs(self):
-        args, _, _, values = inspect.getargvalues(inspect.currentframe().f_back)
-        self.inputArgs = {arg: values[arg] for arg in args if arg != 'self'}
-class myAnn(ann):
-    def __init__(self, inputSize, outputSize):
-        super(myAnn, self).__init__(4)
-        self.layer1 = 8
-        self.layer2 = 16
-z1=myAnn(40,1)
-#%% gpt 
-import inspect
-
-class ann():
-    def __init__(self, arg1):
-        super(ann, self).__init__()
-        self.getInitInpArgs()
-    
-    def getInitInpArgs(self):
-        args, _, _, values = inspect.getargvalues(inspect.currentframe().f_back)
-        self.inputArgs = {arg: values[arg] for arg in args if arg != 'self'}
-        
-class myAnn(ann):
-    def __init__(self, inputSize, outputSize):
-        super(myAnn, self).__init__(4)
-        self.layer1 = 8
-        self.layer2 = 16
-
-z1 = myAnn(40, 1)
-z1.inputArgs
-#%% bit good
-import inspect
-
-class ann():
-    def __init__(self, arg1):
-        super(ann, self).__init__()
-        self.getInitInpArgs()
-    
-    def getInitInpArgs(self):
-        argspec = inspect.getfullargspec(self.__init__)
-        args = argspec.args[1:]
-        defaults = argspec.defaults or ()
-        default_args = dict(zip(args[-len(defaults):], defaults))
-        self.inputArgs = {arg: default_args.get(arg) for arg in args}
-
-class myAnn(ann):
-    def __init__(self, inputSize, outputSize):
-        super(myAnn, self).__init__(4)
-
-z1 = myAnn(40, 1)
-z1.inputArgs
-#%% bad
-from functools import wraps
-class Base:
-
-    @staticmethod
-    def get_initial_args_wrapper(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            # This code will run automatically before each __init__ method
-            # in each subclass: 
-            
-            # if you want to annotate arguments passed in order,
-            # as just "args", then you will indeed have to resort
-            # to the "inspect" module - 
-            # but, `inspect.signature`, followed by `signature.bind` calls 
-            # instead of dealing with frames.
-    
-            # for named args, this will just work to annotate all of them:
-            input_args = getattr(self, "input_args", {})
-            
-            input_args.update(kwargs)
-            self.input_args = input_args
-    
-            # after the arguments are recorded as instance attributes, 
-            # proceed to the original __init__ call:
-            return func(self, *args, **kwargs)
-        return wrapper
-        
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        if "__init__" in cls.__dict__:
-            setattr(cls, "__init__", cls.get_initial_args_wrapper(cls.__init__))
-class Ann(Base):
-    def __init__(self, arg1):
-        super().__init__()
-    
-class MyAnn(Ann):
-    def __init__(self, input_size, output_size):
-        super().__init__(4)
-z1=MyAnn(40, 1)
-print(z1.input_args)
-# outputs:
-
-# {'input_size': 40, 'output_size': 1, 'arg1': 4}
-#%%
-
 #%%
 
 #%%

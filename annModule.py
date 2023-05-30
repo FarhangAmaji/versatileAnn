@@ -20,7 +20,7 @@ class PostInitCaller(type):
         obj.__post_init__()
         return obj
 
-class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso
+class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
     def __init__(self,frame_=None):
         frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())" when inherenting from "ann"'
         if frame_ is None:
@@ -157,10 +157,25 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         batchOutputs = outputs[batchIndexes].to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize
     
+    def saveModel(self, bestModel, savePath):
+        torch.save({'className':self.__class__.__name__,'classDefinition':inspect.getsource(self.__class__),'inputArgs':self.inputArgs,
+                    'model':bestModel}, savePath)
+        #kkk model save subclass definition for i.e. if there is some property of this object has a encoder class I should save their definitions also
+    
+    @classmethod
+    def loadModel(cls, savePath):
+        bestModelDic = torch.load(savePath)
+        exec(bestModelDic['classDefinition'], globals())
+        classDefinition = globals()[bestModelDic['className']]
+        emptyModel = classDefinition(**bestModelDic['inputArgs'])
+        emptyModel.load_state_dict(bestModelDic['model'])
+        return emptyModel
+
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath=''):
         self.havingOptimizerCheck()
         randomId=randomIdFunc()
-        savePath+=randomId
+        savePath+='_'+randomId
+        print(f'model will be saved in {savePath}')
         os.makedirs(os.path.dirname(savePath), exist_ok=True)
         if tensorboardPath:
             tensorboardPath+randomId
@@ -188,11 +203,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             
             if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
                 # Save the best model to the hard disk
-                torch.save(bestModel, f"{savePath}.pth")
-                #kkk model save with inputArgs from child classes
-                #kkk model save with class definition or subclass definition
-                #kkk model save with imports
-                #kkk model save with class name
+                self.saveModel(bestModel, savePath)
             
             return bestValScore, patienceCounter, bestModel, bestModelCounter
         
@@ -216,7 +227,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             
             epochLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
-            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")#kkk add tensor board
+            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
             
             valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
             bestValScore, patienceCounter, bestModel, bestModelCounter = checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
@@ -224,7 +235,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         print("Training finished.")
         
         # Save the best model to the hard disk
-        torch.save(bestModel, f"{savePath}.pth")
+        self.saveModel(bestModel, savePath)
         
         # Load the best model into the current instance
         self.load_state_dict(bestModel)
@@ -232,7 +243,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Return the best model
         return self
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0 ,evalOrTest='Test'):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test'):
         self.eval()
         evalLoss = 0.0
         
@@ -247,5 +258,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 evalLoss += loss.item()
             
             evalLoss /= inputs.shape[0]
-            self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
+            if hasattr(self, 'tensorboardWriter'):
+                self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
             return evalLoss
