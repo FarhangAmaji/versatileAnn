@@ -4,6 +4,15 @@ import torch.nn as nn
 import torch.optim as optim
 import inspect
 import types
+import os
+from torch.utils.tensorboard import SummaryWriter
+
+def randomIdFunc(stringLength=4):
+    import random
+    import string
+    characters = string.ascii_letters + string.digits
+    
+    return ''.join(random.choices(characters, k=stringLength))
 
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
@@ -11,22 +20,18 @@ class PostInitCaller(type):
         obj.__post_init__()
         return obj
 
-class ann(nn.Module, metaclass=PostInitCaller):
+class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso
     def __init__(self,frame_=None):
-        frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())"'
+        frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())" when inherenting from "ann"'
         if frame_ is None:
             raise Exception(frameErrorMsg)
         assert type(frame_)==types.FrameType, frameErrorMsg
         super(ann, self).__init__()
         self.getInitInpArgs(frame_)
-        #kkk model save with inputArgs from child classes
-        #kkk model save with class definition or subclass definition
-        #kkk model save with imports
-        #kkk model save with class name
-        #kkk it was better to have optimizer definition in training phase in order not to take memory if the model is a part of a bigger network
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.patience = 10
         self.optimizer = None
+        self.tensorboardWriter = None
         self.batchSize = 64
         self.evalBatchSize = 1024
         self.saveOnDiskPeriod = 5
@@ -97,6 +102,15 @@ class ann(nn.Module, metaclass=PostInitCaller):
             drLayer = nn.Dropout(p=dropoutRate)
             return nn.Sequential(layer, drLayer)
         return layer
+    @property
+    def tensorboardWriter(self):
+        return self._tensorboardWriter
+    
+    @tensorboardWriter.setter
+    def tensorboardWriter(self, tensorboardPath):
+        if tensorboardPath:
+            os.makedirs(os.path.dirname(tensorboardPath+'_Tensorboard'), exist_ok=True)
+            self._tensorboardWriter = SummaryWriter(tensorboardPath+'_Tensorboard')
     
     def initOptimizer(self):
         if list(self.parameters()):
@@ -134,10 +148,8 @@ class ann(nn.Module, metaclass=PostInitCaller):
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize=None):
-        if batchSize is None:
-            batchSize = self.batchSize
-        
+    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize):
+        #kkk do parallel datapreparation
         batchIndexes = indexes[indexesIndex:indexesIndex + batchSize]
         appliedBatchSize = len(batchIndexes)
         
@@ -145,9 +157,17 @@ class ann(nn.Module, metaclass=PostInitCaller):
         batchOutputs = outputs[batchIndexes].to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize
     
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath):
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath=''):
         self.havingOptimizerCheck()
-        #kkk check saving on savePath has no problem
+        randomId=randomIdFunc()
+        savePath+=randomId
+        os.makedirs(os.path.dirname(savePath), exist_ok=True)
+        if tensorboardPath:
+            tensorboardPath+randomId
+        else:
+            tensorboardPath = savePath
+        self.tensorboardWriter = tensorboardPath
+        
         self.train()
         bestValScore = float('inf')
         patienceCounter = 0
@@ -168,8 +188,11 @@ class ann(nn.Module, metaclass=PostInitCaller):
             
             if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
                 # Save the best model to the hard disk
-                saveModelPath = f"{savePath}.pth"
-                torch.save(bestModel, saveModelPath)
+                torch.save(bestModel, f"{savePath}.pth")
+                #kkk model save with inputArgs from child classes
+                #kkk model save with class definition or subclass definition
+                #kkk model save with imports
+                #kkk model save with class name
             
             return bestValScore, patienceCounter, bestModel, bestModelCounter
         
@@ -181,7 +204,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
             for i in range(0, len(trainInputs), self.batchSize):
                 self.optimizer.zero_grad()
                 
-                batchTrainInputs, batchTrainOutputs, appliedBatchSize = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs)
+                batchTrainInputs, batchTrainOutputs, appliedBatchSize = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
                 
                 batchTrainOutputsPred = self.forward(batchTrainInputs)
                 loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
@@ -192,16 +215,16 @@ class ann(nn.Module, metaclass=PostInitCaller):
                 trainLoss += loss.item()
             
             epochLoss = trainLoss / len(trainInputs)
-            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
+            self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
+            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")#kkk add tensor board
             
-            valScore = self.evaluateModel(valInputs, valOutputs, criterion)
+            valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
             bestValScore, patienceCounter, bestModel, bestModelCounter = checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         
         print("Training finished.")
         
         # Save the best model to the hard disk
-        saveModelPath = f"{savePath}.pth"
-        torch.save(bestModel, saveModelPath)
+        torch.save(bestModel, f"{savePath}.pth")
         
         # Load the best model into the current instance
         self.load_state_dict(bestModel)
@@ -209,7 +232,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         # Return the best model
         return self
     
-    def evaluateModel(self, inputs, outputs, criterion):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0 ,evalOrTest='Test'):
         self.eval()
         evalLoss = 0.0
         
@@ -224,4 +247,5 @@ class ann(nn.Module, metaclass=PostInitCaller):
                 evalLoss += loss.item()
             
             evalLoss /= inputs.shape[0]
+            self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
             return evalLoss
