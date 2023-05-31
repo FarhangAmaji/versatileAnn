@@ -10,13 +10,11 @@ import torch.optim as optim
 #%% define model
 class myAnn(ann):
     def __init__(self, inputSize, outputSize):
-        super(myAnn, self).__init__(inspect.currentframe())
+        super(myAnn, self).__init__()
         self.layer1 = self.linLReluDropout(inputSize, inputSize*4, dropoutRate=0.5)
-        self.layer2 = self.linLReluDropout(inputSize*4, inputSize*4, dropoutRate=0.8)
         self.layer3 = self.linLReluDropout(inputSize*4, outputSize)
     def forward(self, x):
         x = self.layer1(x)
-        x = self.layer2(x)
         x = self.layer3(x)
         return x
 #%% make model instance

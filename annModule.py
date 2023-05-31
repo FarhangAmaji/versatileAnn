@@ -21,13 +21,9 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    def __init__(self,frame_=None):
-        frameErrorMsg='you should do "super(myAnn, self).__init__(inspect.currentframe())" when inherenting from "ann"'
-        if frame_ is None:
-            raise Exception(frameErrorMsg)
-        assert type(frame_)==types.FrameType, frameErrorMsg
+    def __init__(self):
         super(ann, self).__init__()
-        self.getInitInpArgs(frame_)
+        self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.patience = 10
         self.optimizer = None
@@ -73,7 +69,19 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         assert isinstance(value, (optim.Optimizer, type(None))),f'optimizerType={type(value)} is not correct'
         self._optimizer = value
     
-    def getInitInpArgs(self, frame_):
+    def getInitInpArgs(self):
+        numOfFbacksNeeded=0
+        foundAnn=False
+        classHierarchy = self.__class__.mro()
+        for i in range(len(classHierarchy)):
+            if classHierarchy[i]==ann:
+                numOfFbacksNeeded = i +1
+                foundAnn=True
+                break
+        assert foundAnn,'it seems the object is not from ann class'
+        frame_ = inspect.currentframe()
+        for i in range(numOfFbacksNeeded):
+            frame_=frame_.f_back
         args, _, _, values = inspect.getargvalues(frame_)
         "#ccc patience and optimizer's change should not affect that doesnt let the model rerun"
         excludeInputArgs = ['patience', 'optimizer', 'device']
@@ -150,7 +158,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize):
         #kkk do parallel datapreparation
-        batchIndexes = indexes[indexesIndex:indexesIndex + batchSize]
+        batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
         batchInputs = inputs[batchIndexes].to(self.device)
@@ -207,12 +215,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             
             return bestValScore, patienceCounter, bestModel, bestModelCounter
         
+        # Create random indexes for sampling
+        indexes = torch.randperm(trainInputs.shape[0])
+        batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         for epoch in range(numEpochs):
             trainLoss = 0.0
             
-            # Create random indexes for sampling
-            indexes = torch.randperm(trainInputs.shape[0])
-            for i in range(0, len(trainInputs), self.batchSize):
+            for i in range(0, batchIterLen):
                 self.optimizer.zero_grad()
                 
                 batchTrainInputs, batchTrainOutputs, appliedBatchSize = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
@@ -223,7 +232,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 loss.backward()
                 self.optimizer.step()
                 
-                trainLoss += loss.item()
+                trainLoss += loss.item()#kkk add l1 and l2 regularization
+                #kkk add layer based l1 and l2 regularization
             
             epochLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
