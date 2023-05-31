@@ -6,6 +6,7 @@ import inspect
 import types
 import os
 from torch.utils.tensorboard import SummaryWriter
+import concurrent.futures
 
 def randomIdFunc(stringLength=4):
     import random
@@ -156,18 +157,18 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize):
+    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         #kkk do parallel datapreparation
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
         batchInputs = inputs[batchIndexes].to(self.device)
         batchOutputs = outputs[batchIndexes].to(self.device)
-        return batchInputs, batchOutputs, appliedBatchSize
+        return batchInputs, batchOutputs, appliedBatchSize, identifier
     
-    def saveModel(self, bestModel, savePath):
+    def saveModel(self, bestModel):
         torch.save({'className':self.__class__.__name__,'classDefinition':inspect.getsource(self.__class__),'inputArgs':self.inputArgs,
-                    'model':bestModel}, savePath)
+                    'model':bestModel}, self.savePath)
         #kkk model save subclass definition for i.e. if there is some property of this object has a encoder class I should save their definitions also
     
     @classmethod
@@ -178,53 +179,26 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
         return emptyModel
-
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath=''):
-        self.havingOptimizerCheck()
-        randomId=randomIdFunc()
-        savePath+='_'+randomId
-        print(f'model will be saved in {savePath}')
-        os.makedirs(os.path.dirname(savePath), exist_ok=True)
-        if tensorboardPath:
-            tensorboardPath+randomId
-        else:
-            tensorboardPath = savePath
-        self.tensorboardWriter = tensorboardPath
-        
-        self.train()
+    def getPreTrainStats(self, trainInputs):
         bestValScore = float('inf')
         patienceCounter = 0
         bestModel = None
         bestModelCounter = 1
         
-        def checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):
-            if valScore < bestValScore:
-                bestValScore = valScore
-                patienceCounter = 0
-                bestModel = self.state_dict()
-                bestModelCounter += 1
-            else:
-                patienceCounter += 1
-                if patienceCounter >= self.patience:
-                    print(f"Early stopping! in {epoch+1} epoch")
-                    raise StopIteration
-            
-            if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
-                # Save the best model to the hard disk
-                self.saveModel(bestModel, savePath)
-            
-            return bestValScore, patienceCounter, bestModel, bestModelCounter
-        
         # Create random indexes for sampling
         indexes = torch.randperm(trainInputs.shape[0])
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
+        return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
+    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion):
+        indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         for epoch in range(numEpochs):
             trainLoss = 0.0
             
             for i in range(0, batchIterLen):
                 self.optimizer.zero_grad()
                 
-                batchTrainInputs, batchTrainOutputs, appliedBatchSize = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
+                with torch.no_grad():
+                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
                 
                 batchTrainOutputsPred = self.forward(batchTrainInputs)
                 loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
@@ -240,12 +214,46 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
             
             valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
-            bestValScore, patienceCounter, bestModel, bestModelCounter = checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
+            bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
+        return bestModel
+    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):#jjj does it need to be on the class
+        if valScore < bestValScore:
+            bestValScore = valScore
+            patienceCounter = 0
+            bestModel = self.state_dict()
+            bestModelCounter += 1
+        else:
+            patienceCounter += 1
+            if patienceCounter >= self.patience:
+                print(f"Early stopping! in {epoch+1} epoch")
+                raise StopIteration
+        
+        if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
+            # Save the best model to the hard disk
+            self.saveModel(bestModel)
+        
+        return bestValScore, patienceCounter, bestModel, bestModelCounter
+    
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=False):
+        self.havingOptimizerCheck()
+        randomId=randomIdFunc()#kkk keepId or not
+        self.savePath=savePath+'_'+randomId
+        print(f'model will be saved in {self.savePath}')
+        os.makedirs(os.path.dirname(self.savePath), exist_ok=True)
+        if tensorboardPath:
+            tensorboardPath+=randomId
+        else:
+            tensorboardPath = self.savePath
+        self.tensorboardWriter = tensorboardPath#kkk may add print 'access to tensorboard with "tensorboard --logdir=data" from terminal' (I need to take first part of path from tensorboardPath)
+        
+        self.train()
+        if not workerNum:
+            bestModel = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion)
         
         print("Training finished.")
         
         # Save the best model to the hard disk
-        self.saveModel(bestModel, savePath)
+        self.saveModel(bestModel)
         
         # Load the best model into the current instance
         self.load_state_dict(bestModel)
@@ -260,7 +268,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         with torch.no_grad():
             indexes = torch.arange(len(inputs))
             for i in range(0, len(inputs), self.evalBatchSize):
-                batchEvalInputs, batchEvalOutputs, appliedBatchSize = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
+                batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
                 
                 batchEvalOutputsPred = self.forward(batchEvalInputs)
                 loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
