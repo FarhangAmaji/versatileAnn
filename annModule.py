@@ -92,26 +92,34 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 args.remove(eia)
         self.inputArgs = {arg: values[arg] for arg in args if arg != 'self'}
         
-    def linLReluDropout(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=False):
+    def linLReluDropout(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=False, normalization='layer'):
         activation = nn.LeakyReLU(negative_slope=leakyReluNegSlope)
-        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate)
+        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate, normalization=normalization)
     
-    def linLSigmoidDropout(self, innerSize, outterSize, dropoutRate=False):
+    def linLSigmoidDropout(self, innerSize, outterSize, dropoutRate=False, normalization='layer'):
         activation = nn.Sigmoid()
-        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate)
+        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate, normalization=normalization)
     
-    def linActivationDropout(self, innerSize, outterSize, activation, dropoutRate=None):#kkk add batch or layer Norm
-        '#ccc instead of defining many times of leakyRelu and dropOuts I do them at once'
-        layer = nn.Sequential(
-            nn.Linear(innerSize, outterSize),
-            activation)
-        
+    def linActivationDropout(self, innerSize, outterSize, activation, dropoutRate=None, normalization=None):
+        layer = [nn.Linear(innerSize, outterSize)]
+    
+        if normalization is not None:
+            assert normalization in ['batch', 'layer'], f"Invalid normalization option: {normalization}"
+            if normalization == 'batch':
+                normLayer = nn.BatchNorm1d(outterSize)
+            else:
+                normLayer = nn.LayerNorm(outterSize)
+            layer.append(normLayer)
+        layer.append(activation)
+    
         if dropoutRate:
-            assert type(dropoutRate) in (int, float),f'dropoutRateType={type(dropoutRate)} is not int or float'
-            assert 0 <= dropoutRate <= 1, f'dropoutRate={dropoutRate} is not between 0 and 1'
+            assert isinstance(dropoutRate, (int, float)), f"dropoutRateType={type(dropoutRate)} is not int or float"
+            assert 0 <= dropoutRate <= 1, f"dropoutRate={dropoutRate} is not between 0 and 1"
             drLayer = nn.Dropout(p=dropoutRate)
-            return nn.Sequential(layer, drLayer)
-        return layer
+            layer.append(drLayer)
+    
+        return nn.Sequential(*layer)
+
     @property
     def tensorboardWriter(self):
         return self._tensorboardWriter
