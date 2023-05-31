@@ -99,7 +99,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         activation = nn.Sigmoid()
         return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate)
     
-    def linActivationDropout(self, innerSize, outterSize, activation, dropoutRate=None):
+    def linActivationDropout(self, innerSize, outterSize, activation, dropoutRate=None):#kkk add batch or layer Norm
         '#ccc instead of defining many times of leakyRelu and dropOuts I do them at once'
         layer = nn.Sequential(
             nn.Linear(innerSize, outterSize),
@@ -157,15 +157,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
-        #kkk do parallel datapreparation
-        batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
-        appliedBatchSize = len(batchIndexes)
-        
-        batchInputs = inputs[batchIndexes].to(self.device)
-        batchOutputs = outputs[batchIndexes].to(self.device)
-        return batchInputs, batchOutputs, appliedBatchSize, identifier
-    
     def saveModel(self, bestModel):
         torch.save({'className':self.__class__.__name__,'classDefinition':inspect.getsource(self.__class__),'inputArgs':self.inputArgs,
                     'model':bestModel}, self.savePath)
@@ -179,6 +170,15 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
         return emptyModel
+    
+    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
+        batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
+        appliedBatchSize = len(batchIndexes)
+        
+        batchInputs = inputs[batchIndexes].to(self.device)
+        batchOutputs = outputs[batchIndexes].to(self.device)
+        return batchInputs, batchOutputs, appliedBatchSize, identifier
+    
     def getPreTrainStats(self, trainInputs):
         bestValScore = float('inf')
         patienceCounter = 0
@@ -189,6 +189,25 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         indexes = torch.randperm(trainInputs.shape[0])
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
+    
+    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):#jjj does it need to be on the class
+        if valScore < bestValScore:
+            bestValScore = valScore
+            patienceCounter = 0
+            bestModel = self.state_dict()
+            bestModelCounter += 1
+        else:
+            patienceCounter += 1
+            if patienceCounter >= self.patience:
+                print(f"Early stopping! in {epoch+1} epoch")
+                raise StopIteration
+        
+        if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
+            # Save the best model to the hard disk
+            self.saveModel(bestModel)
+        
+        return bestValScore, patienceCounter, bestModel, bestModelCounter
+    
     def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         for epoch in range(numEpochs):
@@ -209,38 +228,48 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 trainLoss += loss.item()#kkk add l1 and l2 regularization
                 #kkk add layer based l1 and l2 regularization
             
-            epochLoss = trainLoss / len(trainInputs)
-            self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
-            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
+            trainLoss = trainLoss / len(trainInputs)
+            self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
             
             valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
+            
             bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel
-    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion, workerNum):
-        indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
-        readyArgs = []
-        identifiers=[]
+    
+    def workerNumRegularization(self,workerNum):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             maxCpus = executor._max_workers
         workerNum=max(min(maxCpus-4,workerNum),1)
+        return workerNum
+    
+    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion, workerNum):
+        indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
+        workerNum=self.workerNumRegularization(workerNum)
+        totEpochBatchItersNum=numEpochs*batchIterLen
         with concurrent.futures.ThreadPoolExecutor(max_workers=workerNum) as executor:
+            readyArgs = []
+            identifiers=[]
             futures = []
             for epoch in range(numEpochs):
                 trainLoss = 0.0
                 
                 for i in range(0, batchIterLen):
                     with torch.no_grad():
-                        idIdx = epoch * batchIterLen +i
                         parallelInputArgs = []
+                        idIdx = epoch * batchIterLen +i
                         if len(readyArgs) < 10:
                             for jj in range(20 - len(readyArgs)):
                                 idIdx2=idIdx+jj
-                                if idIdx2 not in identifiers:
-                                    if len(parallelInputArgs)<workerNum:
-                                        parallelInputArgs.append([i, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])
-                                        identifiers.append(idIdx2)
-                                    else:
-                                        break
+                                if idIdx2>=totEpochBatchItersNum:
+                                    continue
+                                if idIdx2 in identifiers:
+                                    continue
+                                if len(parallelInputArgs)<workerNum:
+                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])#kkk is i correct
+                                    identifiers.append(idIdx2)
+                                else:
+                                    break
                             for args in parallelInputArgs:
                                 future = executor.submit(self.batchDatapreparation, *args)
                                 futures.append(future)
@@ -267,32 +296,16 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     trainLoss += loss.item()#kkk add l1 and l2 regularization
                     #kkk add layer based l1 and l2 regularization
                 
-                epochLoss = trainLoss / len(trainInputs)
-                self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
-                print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
+                trainLoss = trainLoss / len(trainInputs)
+                self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
                 
-                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum)
+                print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
+                
                 bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel
-    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):#jjj does it need to be on the class
-        if valScore < bestValScore:
-            bestValScore = valScore
-            patienceCounter = 0
-            bestModel = self.state_dict()
-            bestModelCounter += 1
-        else:
-            patienceCounter += 1
-            if patienceCounter >= self.patience:
-                print(f"Early stopping! in {epoch+1} epoch")
-                raise StopIteration
-        
-        if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
-            # Save the best model to the hard disk
-            self.saveModel(bestModel)
-        
-        return bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=False):
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0):
         self.havingOptimizerCheck()
         randomId=randomIdFunc()#kkk keepId or not
         self.savePath=savePath+'_'+randomId
@@ -321,14 +334,71 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Return the best model
         return self
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test'):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):
         self.eval()
-        evalLoss = 0.0
-        
         with torch.no_grad():
-            indexes = torch.arange(len(inputs))
-            for i in range(0, len(inputs), self.evalBatchSize):
-                batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
+            if workerNum:
+                evalLoss = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum)
+            else:
+                evalLoss = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest)
+            if hasattr(self, 'tensorboardWriter'):
+                self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
+            return evalLoss
+    
+    def getPreEvalStats(self, inputs):
+        indexes = torch.arange(len(inputs))
+        batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
+        return indexes, batchIterLen
+    
+    def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest):
+        evalLoss = 0.0
+        indexes, batchIterLen = self.getPreEvalStats(inputs)
+        for i in range(0, batchIterLen):
+            batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
+            
+            batchEvalOutputsPred = self.forward(batchEvalInputs)
+            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
+            
+            evalLoss += loss.item()
+        
+        evalLoss /= inputs.shape[0]
+        return evalLoss
+
+    def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, workerNum):
+        evalLoss = 0.0
+        workerNum=self.workerNumRegularization(workerNum)
+        indexes, batchIterLen = self.getPreEvalStats(inputs)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workerNum) as executor:
+            readyArgs = []
+            identifiers=[]
+            futures = []
+            for i in range(0, batchIterLen):
+                parallelInputArgs = []
+                if len(readyArgs) < 10:
+                    for jj in range(20 - len(readyArgs)):
+                        idIdx2=i+jj
+                        if idIdx2>=batchIterLen:
+                            continue
+                        if idIdx2 in identifiers:
+                            continue
+                        if len(parallelInputArgs)<workerNum:
+                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2])#kkk is i correct
+                            identifiers.append(idIdx2)
+                        else:
+                            break
+                    for args in parallelInputArgs:
+                        future = executor.submit(self.batchDatapreparation, *args)
+                        futures.append(future)
+                # Wait until at least one future is completed
+                while not readyArgs:
+                    while futures:
+                        result = futures[0].result()
+                        readyArgs.append(result)
+                        futures.pop(0)#
+                    continue
+                batchEvalInputs, batchEvalOutputs, appliedBatchSize, identifier = readyArgs[0]
+                identifiers.remove(identifier)
+                readyArgs.pop(0)
                 
                 batchEvalOutputsPred = self.forward(batchEvalInputs)
                 loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
@@ -336,6 +406,5 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 evalLoss += loss.item()
             
             evalLoss /= inputs.shape[0]
-            if hasattr(self, 'tensorboardWriter'):
-                self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
             return evalLoss
+    

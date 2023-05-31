@@ -33,6 +33,7 @@ z1=myAnn(40,1)
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
 #%% regression test
+workerNum=0
 # Set random seed for reproducibility
 torch.manual_seed(42)
 import time
@@ -47,10 +48,10 @@ testOutputs = torch.randn(50, 1)  # Assuming 50 testing output values
 criterion = torch.nn.MSELoss()  # Example: Mean Squared Error (MSE) loss
 
 # Train the model
-z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=10, savePath=r'data\bestModels\a1', workerNum=8)
+z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=2, savePath=r'data\bestModels\a1', workerNum=workerNum)
 
 # Evaluate the model
-evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion)
+evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion, workerNum=workerNum)
 print("Evaluation Loss:", evalLoss)
 print('time:',time.time()-t0)
 '#ccc access to tensorboard with "tensorboard --logdir=data" from terminal'
@@ -58,6 +59,8 @@ print('time:',time.time()-t0)
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('define model', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('make model instance', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
+#%%
+
 runcell('regression test', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 #%%
 #%% reload model
