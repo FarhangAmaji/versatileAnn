@@ -216,6 +216,64 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
             bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel
+    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion, workerNum):
+        indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
+        readyArgs = []
+        identifiers=[]
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            maxCpus = executor._max_workers
+        workerNum=max(min(maxCpus-4,workerNum),1)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workerNum) as executor:
+            futures = []
+            for epoch in range(numEpochs):
+                trainLoss = 0.0
+                
+                for i in range(0, batchIterLen):
+                    with torch.no_grad():
+                        idIdx = epoch * batchIterLen +i
+                        parallelInputArgs = []
+                        if len(readyArgs) < 10:
+                            for jj in range(20 - len(readyArgs)):
+                                idIdx2=idIdx+jj
+                                if idIdx2 not in identifiers:
+                                    if len(parallelInputArgs)<workerNum:
+                                        parallelInputArgs.append([i, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])
+                                        identifiers.append(idIdx2)
+                                    else:
+                                        break
+                            for args in parallelInputArgs:
+                                future = executor.submit(self.batchDatapreparation, *args)
+                                futures.append(future)
+    
+                    # Wait until at least one future is completed
+                    while not readyArgs:
+                        while futures:
+                            result = futures[0].result()
+                            readyArgs.append(result)
+                            futures.pop(0)#
+                        continue
+                    self.optimizer.zero_grad()
+                    
+                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, identifier = readyArgs[0]
+                    identifiers.remove(identifier)
+                    readyArgs.pop(0)
+                    
+                    batchTrainOutputsPred = self.forward(batchTrainInputs)
+                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                    
+                    loss.backward()
+                    self.optimizer.step()
+                    
+                    trainLoss += loss.item()#kkk add l1 and l2 regularization
+                    #kkk add layer based l1 and l2 regularization
+                
+                epochLoss = trainLoss / len(trainInputs)
+                self.tensorboardWriter.add_scalar('train loss', epochLoss, epoch + 1)
+                print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {epochLoss:.6f}")
+                
+                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+                bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
+        return bestModel
     def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):#jjj does it need to be on the class
         if valScore < bestValScore:
             bestValScore = valScore
@@ -247,7 +305,9 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.tensorboardWriter = tensorboardPath#kkk may add print 'access to tensorboard with "tensorboard --logdir=data" from terminal' (I need to take first part of path from tensorboardPath)
         
         self.train()
-        if not workerNum:
+        if workerNum:
+            bestModel = self.multiProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, workerNum)
+        else:
             bestModel = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion)
         
         print("Training finished.")

@@ -47,7 +47,7 @@ testOutputs = torch.randn(50, 1)  # Assuming 50 testing output values
 criterion = torch.nn.MSELoss()  # Example: Mean Squared Error (MSE) loss
 
 # Train the model
-z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=10, savePath=r'data\bestModels\a1', workerNum=0)
+z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=10, savePath=r'data\bestModels\a1', workerNum=8)
 
 # Evaluate the model
 evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion)
