@@ -28,12 +28,13 @@ z1=myAnn(40,1)
 # z1.tensorboardWriter=newTensorboardPath
 # z1.batchSize=32
 # z1.evalBatchSize=1024
-# z1.device=torch.device(type='cpu')
+# z1.device=torch.device(type='cpu') or torch.device(type='cuda')
+# z1.l1Reg=1e-3 or z1.l2Reg=1e-3 or z1.regularization=[None, None]
 
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
 #%% regression test
-workerNum=0
+workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)
 import time
@@ -60,7 +61,6 @@ runcell('imports', 'F:/projects/public github projects/private repos/versatileAn
 runcell('define model', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('make model instance', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 #%%
-
 runcell('regression test', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 #%%
 #%% reload model

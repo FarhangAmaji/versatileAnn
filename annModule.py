@@ -32,6 +32,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.batchSize = 64
         self.evalBatchSize = 1024
         self.saveOnDiskPeriod = 5
+        self.regularization = ['l2', 1e-3]
         
         # define model here
         # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
@@ -171,6 +172,75 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         emptyModel.load_state_dict(bestModelDic['model'])
         return emptyModel
     
+    @property
+    def regularization(self):
+        return [self._regularizationType, self._regularizationValue]
+    
+    @regularization.setter
+    def regularization(self, value):
+        assert value[0] in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
+        self._regularizationType = value[0]
+        self._regularizationValue = value[1]
+    
+    @property
+    def l1Reg(self):
+        return self._l1Reg
+    
+    @l1Reg.setter
+    def l1Reg(self, value):
+        self._l1Reg = value
+        self.regularization=['l1',value]
+    
+    @property
+    def l2Reg(self):
+        return self._l2Reg
+    
+    @l2Reg.setter
+    def l2Reg(self, value):
+        self._l2Reg = value
+        self.regularization=['l2',value]
+    
+    @property
+    def noReg(self):
+        return self._noReg
+    
+    @noReg.setter
+    def noReg(self, value):
+        self._noReg = value
+        self.regularization=[None,None]
+    
+    def addL1Regularization(self,loss):
+        regType,regVal = z1.regularization[0]
+        assert regType=='l1','to add l1 regularization the type should be "l1"'
+        l1Reg = torch.tensor(0., requires_grad=True)
+        for name, param in self.named_parameters():
+            if 'weight' in name:
+                l1Reg = l1Reg + torch.linalg.norm(param, 1)
+        
+        loss += regVal * l1Reg
+        return loss
+    
+    def addL2Regularization(self,loss):
+        regType,regVal = z1.regularization[0]
+        assert regType=='l2','to add l2 regularization the type should be "l2"'
+        l2Reg = torch.tensor(0., requires_grad=True)
+        for param in self.parameters():
+            l2Reg += torch.norm(param)
+        
+        loss += regVal * l2Reg
+        return loss
+    
+    def addRegularizationToLoss(self, loss):
+        regType,regVal=self.regularization
+        assert regType in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
+        if regType==None:
+            return loss
+        elif regType=='l1':
+            return self.addL1Regularization(loss)
+        elif regType=='l2':
+            return self.addL2Regularization(loss)
+            
+        
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
@@ -225,8 +295,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 loss.backward()
                 self.optimizer.step()
                 
-                trainLoss += loss.item()#kkk add l1 and l2 regularization
-                #kkk add layer based l1 and l2 regularization
+                trainLoss += addRegularizationToLoss(loss.item())
             
             trainLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
@@ -266,7 +335,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                                 if idIdx2 in identifiers:
                                     continue
                                 if len(parallelInputArgs)<workerNum:
-                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])#kkk is i correct
+                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])
                                     identifiers.append(idIdx2)
                                 else:
                                     break
@@ -293,8 +362,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     loss.backward()
                     self.optimizer.step()
                     
-                    trainLoss += loss.item()#kkk add l1 and l2 regularization
-                    #kkk add layer based l1 and l2 regularization
+                    trainLoss += addRegularizationToLoss(loss.item())
                 
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
@@ -382,7 +450,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         if idIdx2 in identifiers:
                             continue
                         if len(parallelInputArgs)<workerNum:
-                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2])#kkk is i correct
+                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2])
                             identifiers.append(idIdx2)
                         else:
                             break
