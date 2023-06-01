@@ -7,13 +7,7 @@ import types
 import os
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
-
-def randomIdFunc(stringLength=4):
-    import random
-    import string
-    characters = string.ascii_letters + string.digits
-    
-    return ''.join(random.choices(characters, k=stringLength))
+from .utils import randomIdFunc
 
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
