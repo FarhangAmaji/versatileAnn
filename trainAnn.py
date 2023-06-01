@@ -3,7 +3,7 @@
 import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
-from annModule import ann
+from annModule import ann, linLReluNormDropout, linLSigmoidNormDropout
 import inspect
 import torch
 import torch.optim as optim
@@ -11,8 +11,8 @@ import torch.optim as optim
 class myAnn(ann):
     def __init__(self, inputSize, outputSize):
         super(myAnn, self).__init__()
-        self.layer1 = self.linLReluDropout(inputSize, inputSize*4, dropoutRate=0.5)
-        self.layer3 = self.linLReluDropout(inputSize*4, outputSize)
+        self.layer1 = linLReluNormDropout(inputSize, inputSize*4, dropoutRate=0.5)
+        self.layer3 = linLReluNormDropout(inputSize*4, outputSize)
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer3(x)
@@ -67,7 +67,8 @@ runcell('regression test', 'F:/projects/public github projects/private repos/ver
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 bestModel=ann.loadModel(r'data\bestModels\a1_EeBe')
 bestModel.evaluateModel(testInputs, testOutputs, criterion)
-#%%
+#%% 
+
 #%%
 #%%
 #%%

@@ -8,6 +8,51 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
 
+class CustomLayer(nn.Module):
+    def __init__(self, innerSize, outterSize, activation=None, dropoutRate=None, normalization=None):
+        super(CustomLayer, self).__init__()
+        self.innerSize = innerSize
+        self.outterSize = outterSize
+        self.activation = activation
+        self.dropoutRate = dropoutRate
+        self.normalization = normalization
+
+        layers = [nn.Linear(innerSize, outterSize)]
+
+        if normalization is not None:
+            assert normalization in ['batch', 'layer'], f"Invalid normalization option: {normalization}"
+            if normalization == 'batch':
+                normLayer = nn.BatchNorm1d(outterSize)
+            else:
+                normLayer = nn.LayerNorm(outterSize)
+            layers.append(normLayer)
+
+        if activation is not None:
+            layers.append(activation)
+
+        if dropoutRate:
+            assert isinstance(dropoutRate, (int, float)), f"dropoutRateType={type(dropoutRate)} is not int or float"
+            assert 0 <= dropoutRate <= 1, f"dropoutRate={dropoutRate} is not between 0 and 1"
+            drLayer = nn.Dropout(p=dropoutRate)
+            layers.append(drLayer)
+
+        self.layer = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.layer(x)
+
+
+class linLReluNormDropout(CustomLayer):
+    def __init__(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=None, normalization='layer'):
+        activation = nn.LeakyReLU(negative_slope=leakyReluNegSlope)
+        super(linLReluNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization)
+
+
+class linLSigmoidNormDropout(CustomLayer):
+    def __init__(self, innerSize, outterSize, dropoutRate=None, normalization='layer'):
+        activation = nn.Sigmoid()
+        super(linLSigmoidNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization)
+
 def randomIdFunc(stringLength=4):
     import random
     import string
@@ -92,34 +137,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 args.remove(eia)
         self.inputArgs = {arg: values[arg] for arg in args if arg != 'self'}
         
-    def linLReluDropout(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=False, normalization='layer'):
-        activation = nn.LeakyReLU(negative_slope=leakyReluNegSlope)
-        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate, normalization=normalization)
-    
-    def linLSigmoidDropout(self, innerSize, outterSize, dropoutRate=False, normalization='layer'):
-        activation = nn.Sigmoid()
-        return self.linActivationDropout(innerSize, outterSize, activation, dropoutRate, normalization=normalization)
-    
-    def linActivationDropout(self, innerSize, outterSize, activation, dropoutRate=None, normalization=None):
-        layer = [nn.Linear(innerSize, outterSize)]
-    
-        if normalization is not None:
-            assert normalization in ['batch', 'layer'], f"Invalid normalization option: {normalization}"
-            if normalization == 'batch':
-                normLayer = nn.BatchNorm1d(outterSize)
-            else:
-                normLayer = nn.LayerNorm(outterSize)
-            layer.append(normLayer)
-        layer.append(activation)
-    
-        if dropoutRate:
-            assert isinstance(dropoutRate, (int, float)), f"dropoutRateType={type(dropoutRate)} is not int or float"
-            assert 0 <= dropoutRate <= 1, f"dropoutRate={dropoutRate} is not between 0 and 1"
-            drLayer = nn.Dropout(p=dropoutRate)
-            layer.append(drLayer)
-    
-        return nn.Sequential(*layer)
-
     @property
     def tensorboardWriter(self):
         return self._tensorboardWriter
@@ -218,27 +235,27 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.regularization=[None,None]
     
     def addL1Regularization(self,loss):
-        regType,regVal = z1.regularization[0]
+        regType,regVal = self.regularization
         assert regType=='l1','to add l1 regularization the type should be "l1"'
         l1Reg = torch.tensor(0., requires_grad=True)
         for name, param in self.named_parameters():
             if 'weight' in name:
                 l1Reg = l1Reg + torch.linalg.norm(param, 1)
         
-        loss += regVal * l1Reg
+        loss = loss + regVal * l1Reg
         return loss
     
     def addL2Regularization(self,loss):
-        regType,regVal = z1.regularization[0]
+        regType,regVal = self.regularization
         assert regType=='l2','to add l2 regularization the type should be "l2"'
         l2Reg = torch.tensor(0., requires_grad=True)
         for param in self.parameters():
-            l2Reg += torch.norm(param)
+            l2Reg = l2Reg + torch.norm(param)
         
-        loss += regVal * l2Reg
+        loss = loss + regVal * l2Reg
         return loss
     
-    def addRegularizationToLoss(self, loss):
+    def addRegularizationToLoss(self, loss):#kkk add layer specific regularization
         regType,regVal=self.regularization
         assert regType in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
         if regType==None:
@@ -247,7 +264,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             return self.addL1Regularization(loss)
         elif regType=='l2':
             return self.addL2Regularization(loss)
-            
         
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
@@ -303,7 +319,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 loss.backward()
                 self.optimizer.step()
                 
-                trainLoss += addRegularizationToLoss(loss.item())
+                trainLoss += self.addRegularizationToLoss(loss.item())
             
             trainLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
@@ -370,7 +386,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     loss.backward()
                     self.optimizer.step()
                     
-                    trainLoss += addRegularizationToLoss(loss.item())
+                    trainLoss += self.addRegularizationToLoss(loss.item())
                 
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
