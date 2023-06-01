@@ -3,7 +3,8 @@
 import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
-from annModule import ann, linLReluNormDropout, linLSigmoidNormDropout
+from versatileAnn import ann
+from versatileAnn.layers import linLReluNormDropout, linLSigmoidNormDropout
 import inspect
 import torch
 import torch.optim as optim
