@@ -9,11 +9,58 @@ import inspect
 import torch
 import torch.optim as optim
 #%% define model
+import torch.nn as nn
+class A:
+    def __init__(self):
+        self.x='aaaa'
+class B(A):
+    def __init__(self):
+        super(B, self).__init__()
+        self.x='bbbb'
+class MyBaseClass:
+    pass
+class variationalEncoder(nn.Module):
+    def __init__(self, inputSize, latentDim):
+        super(variationalEncoder, self).__init__()
+        self.linSig=linLSigmoidNormDropout(4,1)
+        self.b11=B()
+        self.a11=A()
+        self.inputArgs = [inputSize, latentDim]
+        self.latentDim = latentDim
+        self.fc1 = nn.Linear(inputSize, 4*inputSize)
+        self.fc2 = nn.Linear(4*inputSize, inputSize)
+        self.sigmoid = nn.Sigmoid()
+        self.dropout = nn.Dropout()
+        self.fcMean = nn.Linear(inputSize, latentDim)
+        self.fcLogvar = nn.Linear(inputSize, latentDim)
+    
+    def reparameterize(self, mean, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mean + eps * std
+        return z
+    
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.sigmoid(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        x = self.dropout(x)
+        mean = self.fcMean(x)
+        logvar = self.fcLogvar(x)
+        z = self.reparameterize(mean, logvar)
+        return mean, logvar, z
 class myAnn(ann):
     def __init__(self, inputSize, outputSize):
         super(myAnn, self).__init__()
         self.layer1 = linLReluNormDropout(inputSize, inputSize*4, dropoutRate=0.5)
+        self.layer2 = torch.nn.Linear(inputSize, outputSize)
         self.layer3 = linLReluNormDropout(inputSize*4, outputSize)
+        self.l4= torch.nn.LayerNorm(outputSize)
+        self.l5= variationalEncoder(inputSize,2)
+        self.l6= B()
+        self.l7= MyBaseClass
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer3(x)
@@ -66,8 +113,8 @@ runcell('regression test', 'F:/projects/public github projects/private repos/ver
 #%%
 #%% reload model
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
-bestModel=ann.loadModel(r'data\bestModels\a1_EeBe')
-bestModel.evaluateModel(testInputs, testOutputs, criterion)
+bestModel=ann.loadModel(r'data\bestModels\a1_UjNC')
+# bestModel.evaluateModel(testInputs, testOutputs, criterion)
 #%% 
 
 #%%
