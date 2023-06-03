@@ -30,13 +30,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.regularization = ['l2', 1e-3]
         self.neededDefinitions=None
         self.layersRegularization = {}
-        self.layersRegularizationNames = []
+        self.layersRegularizationOperational = {}
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
         if isinstance(self, ann) and not type(self) == ann:
             self.to(self.device)
-            self.addLayersRegularization()
+            self.addCustomLayersRegularizations()
+            self.makeLayersRegularizationOperational()
             # self.initOptimizer()
 
     def forward(self, x):
@@ -186,15 +187,30 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 if layer==rg[0]:
                     self.layersRegularization[layerName]={'layer':layer, 'regularization':rg[1:3]}
                     foundLayer=True
-            assert foundLayer,f'{rg1} is not in proper layer'
+            assert foundLayer,f'{rg[1]} is not in proper layer'
     
-    def addLayersRegularization(self):#kkk rename
+    def makeLayersRegularizationOperational(self):
+        defaultRegType,defaultRegVal=self.regularization
+        assert defaultRegType in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
+        defaultRegAddFunc=self.getRegAddFunc(defaultRegType)
+        
+        layersRegularizationNames=self.layersRegularization.keys()
+        
+        for name, param in self.named_parameters():
+            if 'weight' in name and name.split('.')[0] in layersRegularizationNames:
+                layerName = name.split('.')[0]
+                layerRegType, layerRegVal = self.layersRegularization[layerName]['regularization']
+                layerRegAddFunc=self.getRegAddFunc(layerRegType)
+                self.layersRegularizationOperational[name]=[layerRegAddFunc, layerRegVal]
+            else:
+                self.layersRegularizationOperational[name]=[defaultRegAddFunc, defaultRegVal]
+    
+    def addCustomLayersRegularizations(self):
         for layerName, layer in vars(self)['_modules'].items():
             if isinstance(layer, CustomLayer):
                 if layer.regularization:
-                    self.layersRegularization[layerName]={'layer':layer, 'regularization':layer.regularization}
-        for layerName,_ in self.layersRegularization.items():
-            self.layersRegularizationNames.append(layerName)
+                    if layerName not in self.layersRegularization.keys():
+                        self.layersRegularization[layerName]={'layer':layer, 'regularization':layer.regularization}
     
     def addNoRegularization(self,param, regVal):
         return torch.tensor(0)
@@ -214,19 +230,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             return self.addL2Regularization
     
     def addRegularizationToLoss(self, loss):
-        regType,regVal=self.regularization
-        assert regType in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
-        defaultRegAddFunc=self.getRegAddFunc(regType)
-        
         lReg = torch.tensor(0., requires_grad=True)
-        for name, param in self.named_parameters():#kkk init to save layers and their RegAddFunc
-            if 'weight' in name and name.split('.')[0] in self.layersRegularizationNames:
-                layerName = name.split('.')[0]
-                layerRegType, layerRegVal = self.layersRegularization[layerName]['regularization']
-                layerRegAddFunc=self.getRegAddFunc(layerRegType)
-                lReg = lReg + layerRegAddFunc(param, layerRegVal)
-            else:
-                lReg = lReg + defaultRegAddFunc(param, regVal)
+        for name, param in self.named_parameters():
+            layerRegAddFunc, layerRegVal=self.layersRegularizationOperational[name]
+            lReg = lReg + layerRegAddFunc(param, layerRegVal)
         return loss + lReg
         
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):

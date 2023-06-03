@@ -70,7 +70,6 @@ class myAnn(ann):
         return x
 #%% make model instance
 z1=myAnn(40,1)
-z1.layersRegularization
 #%%
 '#ccc how to set optimizer manually'
 # z1.lr=0.001
@@ -101,7 +100,7 @@ testOutputs = torch.randn(50, 1)  # Assuming 50 testing output values
 criterion = torch.nn.MSELoss()  # Example: Mean Squared Error (MSE) loss
 
 # Train the model
-z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=2, savePath=r'data\bestModels\a1', workerNum=workerNum)
+z1.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=200, savePath=r'data\bestModels\a1', workerNum=workerNum)
 
 # Evaluate the model
 evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion, workerNum=workerNum)
@@ -120,7 +119,8 @@ runcell('imports', 'F:/projects/public github projects/private repos/versatileAn
 bestModel=ann.loadModel(r'data\bestModels\a1_UjNC')
 # bestModel.evaluateModel(testInputs, testOutputs, criterion)
 #%% 
-
+for item in self.named_parameters():
+    item
 #%%
 #%%
 #%%
