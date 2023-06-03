@@ -178,7 +178,17 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self._noReg = value
         self.regularization=[None,None]
     
-    def addLayersRegularization(self):
+    def addLayerRegularization(self,regList):
+        for rg in regList:
+            assert rg[1] in [None,'l1','l2'],f'regularization type for {rg[0]} should be either None , "l1", "l2"'
+            foundLayer=False
+            for layerName, layer in vars(self)['_modules'].items():
+                if layer==rg[0]:
+                    self.layersRegularization[layerName]={'layer':layer, 'regularization':rg[1:3]}
+                    foundLayer=True
+            assert foundLayer,f'{rg1} is not in proper layer'
+    
+    def addLayersRegularization(self):#kkk rename
         for layerName, layer in vars(self)['_modules'].items():
             if isinstance(layer, CustomLayer):
                 if layer.regularization:

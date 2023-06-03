@@ -61,8 +61,9 @@ class myAnn(ann):
         self.l5= variationalEncoder(inputSize,2)
         self.l6= B()
         self.l7= MyBaseClass
+        self.addLayerRegularization([[self.layer2,'l2',.004], [self.layer3,None,None]])
         self.layersRegularization = {'layer2':{'layer':self.layer2, 'regularization':['l2',.004]},
-                                     'layer3':{'layer':self.layer3, 'regularization':[None,None]}}#kkk add a func to add layers automatically
+                                      'layer3':{'layer':self.layer3, 'regularization':[None,None]}}#kkk add a func to add layers automatically
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer3(x)
