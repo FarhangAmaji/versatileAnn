@@ -2,13 +2,20 @@
 import torch.nn as nn
 
 class CustomLayer(nn.Module):
-    def __init__(self, innerSize, outterSize, activation=None, dropoutRate=None, normalization=None):
+    def __init__(self, innerSize, outterSize, activation=None, dropoutRate=None, normalization=None, regularization=None):
         super(CustomLayer, self).__init__()
         self.innerSize = innerSize
         self.outterSize = outterSize
         self.activation = activation
         self.dropoutRate = dropoutRate
         self.normalization = normalization
+        if regularization:
+            assert isinstance(regularization, (list, set)), "Regularization should be a list or set"
+            assert len(regularization) == 2, "Regularization should have a length of 2"
+            assert regularization[0] in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
+            self.regularization=regularization
+        else:
+            self.regularization=None
 
         layers = [nn.Linear(innerSize, outterSize)]
 
@@ -36,12 +43,12 @@ class CustomLayer(nn.Module):
 
 
 class linLReluNormDropout(CustomLayer):
-    def __init__(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=None, normalization='layer'):
+    def __init__(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=None, normalization='layer', regularization=None):
         activation = nn.LeakyReLU(negative_slope=leakyReluNegSlope)
-        super(linLReluNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization)
+        super(linLReluNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization, regularization=regularization)
 
 
 class linLSigmoidNormDropout(CustomLayer):
-    def __init__(self, innerSize, outterSize, dropoutRate=None, normalization='layer'):
+    def __init__(self, innerSize, outterSize, dropoutRate=None, normalization='layer', regularization=None):
         activation = nn.Sigmoid()
-        super(linLSigmoidNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization)
+        super(linLSigmoidNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization, regularization=regularization)

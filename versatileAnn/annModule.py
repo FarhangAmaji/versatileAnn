@@ -8,6 +8,7 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
 from .utils import randomIdFunc
+from .layers.customLayers import CustomLayer
 
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
@@ -28,23 +29,17 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.saveOnDiskPeriod = 5
         self.regularization = ['l2', 1e-3]
         self.neededDefinitions=None
+        self.layersRegularization = {}
+        self.layersRegularizationNames = []
         
-        # define model here
-        # self.layer1 = self.linLReluDropout(40, 160, dropoutRate=0.5)
-        # self.layer2 = self.linLSigmoidDropout(200, 300, dropoutRate=0.2)
-        #self.layer3 = nn.Linear(inputSize, 4*inputSize)
-        # Add more layers as needed
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
         if isinstance(self, ann) and not type(self) == ann:
             self.to(self.device)
+            self.addLayersRegularization()
             # self.initOptimizer()
 
     def forward(self, x):
-        # define forward step here
-        # x = self.layer1(x)
-        # x = self.layer2(x)
-        # x = self.layer3(x)
         return x
     
     @property
@@ -183,36 +178,46 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self._noReg = value
         self.regularization=[None,None]
     
-    def addL1Regularization(self,loss):
-        regType,regVal = self.regularization
-        assert regType=='l1','to add l1 regularization the type should be "l1"'
-        l1Reg = torch.tensor(0., requires_grad=True)
-        for name, param in self.named_parameters():
-            if 'weight' in name:
-                l1Reg = l1Reg + torch.linalg.norm(param, 1)
-        
-        loss = loss + regVal * l1Reg
-        return loss
+    def addLayersRegularization(self):
+        for layerName, layer in vars(self)['_modules'].items():
+            if isinstance(layer, CustomLayer):
+                if layer.regularization:
+                    self.layersRegularization[layerName]={'layer':layer, 'regularization':layer.regularization}
+        for layerName,_ in self.layersRegularization.items():
+            self.layersRegularizationNames.append(layerName)
     
-    def addL2Regularization(self,loss):
-        regType,regVal = self.regularization
-        assert regType=='l2','to add l2 regularization the type should be "l2"'
-        l2Reg = torch.tensor(0., requires_grad=True)
-        for param in self.parameters():
-            l2Reg = l2Reg + torch.norm(param)
-        
-        loss = loss + regVal * l2Reg
-        return loss
+    def addNoRegularization(self,param, regVal):
+        return torch.tensor(0)
     
-    def addRegularizationToLoss(self, loss):#kkk add layer specific regularization
+    def addL1Regularization(self,param, regVal):
+        return torch.linalg.norm(param, 1) * regVal
+    
+    def addL2Regularization(self,param, regVal):
+        return torch.norm(param)*regVal
+
+    def getRegAddFunc(self, regType):
+        if regType==None:
+            return self.addNoRegularization
+        elif regType=='l1':
+            return self.addL1Regularization
+        elif regType=='l2':
+            return self.addL2Regularization
+    
+    def addRegularizationToLoss(self, loss):
         regType,regVal=self.regularization
         assert regType in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
-        if regType==None:
-            return loss
-        elif regType=='l1':
-            return self.addL1Regularization(loss)
-        elif regType=='l2':
-            return self.addL2Regularization(loss)
+        defaultRegAddFunc=self.getRegAddFunc(regType)
+        
+        lReg = torch.tensor(0., requires_grad=True)
+        for name, param in self.named_parameters():#kkk init to save layers and their RegAddFunc
+            if 'weight' in name and name.split('.')[0] in self.layersRegularizationNames:
+                layerName = name.split('.')[0]
+                layerRegType, layerRegVal = self.layersRegularization[layerName]['regularization']
+                layerRegAddFunc=self.getRegAddFunc(layerRegType)
+                lReg = lReg + layerRegAddFunc(param, layerRegVal)
+            else:
+                lReg = lReg + defaultRegAddFunc(param, regVal)
+        return loss + lReg
         
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
@@ -222,7 +227,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         batchOutputs = outputs[batchIndexes].to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize, identifier
     
-    # Get the definitions of all instance variables of an object
+    # Get all definitions needed to create an instance
     def getAllNeededDefinitions(self,obj):#kkk add metaclass, function and classmethod and methods of class 
         
         def findClassNamesAndDependencies(classDefinitions):
@@ -244,6 +249,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     class_name=classNameWithdependencies
                     classDefinitionsWithInfo.append({'class_name':class_name,'dep': [], 'def': classDef})
             return classDefinitionsWithInfo
+        
         def getOrderedClassDefinitions(classDefinitionsWithInfo):
             changes=1
             while changes!=0:
@@ -264,6 +270,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         unorderedClasses=findClassNamesAndDependencies(unorderedClasses)
         orderedClasses=getOrderedClassDefinitions(unorderedClasses)
         return '\n'.join(orderedClasses)
+    
     def getAllNeededClassDefinitions(self,obj, visitedClasses=set()):
         import builtins
         import pkg_resources

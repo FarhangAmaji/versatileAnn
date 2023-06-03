@@ -54,19 +54,22 @@ class variationalEncoder(nn.Module):
 class myAnn(ann):
     def __init__(self, inputSize, outputSize):
         super(myAnn, self).__init__()
-        self.layer1 = linLReluNormDropout(inputSize, inputSize*4, dropoutRate=0.5)
+        self.layer1 = linLReluNormDropout(inputSize, inputSize*4, dropoutRate=0.5, regularization=['l1',0.003])#
         self.layer2 = torch.nn.Linear(inputSize, outputSize)
         self.layer3 = linLReluNormDropout(inputSize*4, outputSize)
         self.l4= torch.nn.LayerNorm(outputSize)
         self.l5= variationalEncoder(inputSize,2)
         self.l6= B()
         self.l7= MyBaseClass
+        self.layersRegularization = {'layer2':{'layer':self.layer2, 'regularization':['l2',.004]},
+                                     'layer3':{'layer':self.layer3, 'regularization':[None,None]}}#kkk add a func to add layers automatically
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer3(x)
         return x
 #%% make model instance
 z1=myAnn(40,1)
+z1.layersRegularization
 #%%
 '#ccc how to set optimizer manually'
 # z1.lr=0.001
