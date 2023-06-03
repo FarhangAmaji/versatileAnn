@@ -31,6 +31,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.neededDefinitions=None
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
+        self.evalMode='loss'
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -42,6 +43,19 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
 
     def forward(self, x):
         return x
+    
+    @property
+    def evalMode(self):
+        return self._evalMode
+    
+    @evalMode.setter
+    def evalMode(self, value):
+        assert value in ['loss','accuracy'],f"{self.evalMode} must be either 'loss' or 'accuracy'"
+        self._evalMode=value
+        if value=='loss':
+            self.evalCompareFunc=lambda valScore, bestValScore: valScore< bestValScore
+        elif value=='accuracy':
+            self.evalCompareFunc=lambda valScore, bestValScore: valScore> bestValScore
     
     @property
     def device(self):
@@ -129,7 +143,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def saveModel(self, bestModel):
+    def saveModel(self, bestModel):#kkk bestValScore and valMode
         torch.save({'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
                     'model':bestModel}, self.savePath)
     
@@ -140,6 +154,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         classDefinition = globals()[bestModelDic['className']]
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
+        #kkk add valMode
         return emptyModel
     
     @property
@@ -289,24 +304,29 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return '\n'.join(orderedClasses)
     
     def getAllNeededClassDefinitions(self,obj, visitedClasses=set()):
-        import builtins
-        import pkg_resources
-
         def isCustomClass(cls_):
+            import builtins
+            import pkg_resources
+            import types
             if cls_ is None or cls_ is types.NoneType:
                 return False
             moduleName = getattr(cls_, '__module__', '')
-            return not (
-                cls_ in builtins.__dict__.values()
-                or any(moduleName.startswith(package.key) for package in pkg_resources.working_set)
-                or moduleName.startswith('collections')
-            )
+            return (
+                isinstance(cls_, type) and
+                not (
+                    cls_ in builtins.__dict__.values()
+                    or any(moduleName.startswith(package.key) for package in pkg_resources.working_set)
+                    or moduleName.startswith('collections')
+                )
+            ) and not issubclass(cls_, types.FunctionType)
 
         # Get the definition of a class if it's a custom class
         def getCustomClassDefinition(cls_):
-            if cls_==ann:
+            if cls_ is ann:
                 return None
-            return inspect.getsource(cls_) if isCustomClass(cls_) else None
+            if isCustomClass(cls_):
+                return inspect.getsource(cls_)
+            return None
 
         def getClassDefinitionsIfNotDoneBefore(cls_, visitedClasses, classDefinitions):
             if cls_ not in visitedClasses:
@@ -346,7 +366,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return classDefinitions
     
     def getPreTrainStats(self, trainInputs):
-        bestValScore = float('inf')
+        if self.evalMode == 'accuracy':
+            bestValScore = 0
+        elif self.evalMode == 'loss':
+            bestValScore = float('inf')
         patienceCounter = 0
         bestModel = None
         bestModelCounter = 1
@@ -356,8 +379,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):#jjj does it need to be on the class
-        if valScore < bestValScore:
+    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):
+        if self.evalCompareFunc(valScore, bestValScore):
             bestValScore = valScore
             patienceCounter = 0
             bestModel = self.state_dict()
@@ -423,8 +446,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     with torch.no_grad():
                         parallelInputArgs = []
                         idIdx = epoch * batchIterLen +i
-                        if len(readyArgs) < 10:
-                            for jj in range(20 - len(readyArgs)):
+                        if len(readyArgs) < 16:
+                            for jj in range(24 - len(readyArgs)):
                                 idIdx2=idIdx+jj
                                 if idIdx2>=totEpochBatchItersNum:
                                     continue
@@ -505,34 +528,42 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.eval()
         with torch.no_grad():
             if workerNum:
-                evalLoss = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum)
+                evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum)
             else:
-                evalLoss = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest)
+                evalScore = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest)
             if hasattr(self, 'tensorboardWriter'):
-                self.tensorboardWriter.add_scalar(f'{evalOrTest} loss', evalLoss, stepNum)
-            return evalLoss
+                self.tensorboardWriter.add_scalar(f'{evalOrTest} {self.evalMode}', evalScore, stepNum)
+            return evalScore
     
     def getPreEvalStats(self, inputs):
         indexes = torch.arange(len(inputs))
         batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
         return indexes, batchIterLen
     
+    def updateEvalScoreBasedOnMode(self, evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion):
+        if self.evalMode == 'accuracy':
+            predicted = torch.argmax(batchEvalOutputsPred, dim=1)
+            evalScore += (predicted == batchEvalOutputs).sum().item()
+        elif self.evalMode == 'loss':
+            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
+            evalScore += loss.item()
+        return evalScore
+    
     def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest):
-        evalLoss = 0.0
+        evalScore = 0.0
         indexes, batchIterLen = self.getPreEvalStats(inputs)
         for i in range(0, batchIterLen):
             batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
             
             batchEvalOutputsPred = self.forward(batchEvalInputs)
-            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
             
-            evalLoss += loss.item()
+            evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
         
-        evalLoss /= inputs.shape[0]
-        return evalLoss
+        evalScore /= inputs.shape[0]
+        return evalScore
 
     def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, workerNum):
-        evalLoss = 0.0
+        evalScore = 0.0
         workerNum=self.workerNumRegularization(workerNum)
         indexes, batchIterLen = self.getPreEvalStats(inputs)
         with concurrent.futures.ThreadPoolExecutor(max_workers=workerNum) as executor:
@@ -541,8 +572,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             futures = []
             for i in range(0, batchIterLen):
                 parallelInputArgs = []
-                if len(readyArgs) < 10:
-                    for jj in range(20 - len(readyArgs)):
+                if len(readyArgs) < 16:
+                    for jj in range(24 - len(readyArgs)):
                         idIdx2=i+jj
                         if idIdx2>=batchIterLen:
                             continue
@@ -568,9 +599,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 readyArgs.pop(0)
                 
                 batchEvalOutputsPred = self.forward(batchEvalInputs)
-                loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
                 
-                evalLoss += loss.item()
+                evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)
             
-            evalLoss /= inputs.shape[0]
-            return evalLoss
+            evalScore /= inputs.shape[0]
+            return evalScore

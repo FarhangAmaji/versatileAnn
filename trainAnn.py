@@ -84,7 +84,9 @@ z1=myAnn(40,1)
 
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
+# z1.lossMode='accuracy'
 #%% regression test
+z1.lossMode='accuracy'
 workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)
@@ -119,8 +121,7 @@ runcell('imports', 'F:/projects/public github projects/private repos/versatileAn
 bestModel=ann.loadModel(r'data\bestModels\a1_UjNC')
 # bestModel.evaluateModel(testInputs, testOutputs, criterion)
 #%% 
-for item in self.named_parameters():
-    item
+
 #%%
 #%%
 #%%
