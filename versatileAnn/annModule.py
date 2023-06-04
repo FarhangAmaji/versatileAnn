@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import inspect
-import types
 import os
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
@@ -17,7 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    def __init__(self):
+    def __init__(self):#kkk add comments
         super(ann, self).__init__()
         self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -143,9 +142,9 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
-    def saveModel(self, bestModel):#kkk bestValScore and valMode
+    def saveModel(self, bestModel, bestValScore):
         torch.save({'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
-                    'model':bestModel}, self.savePath)
+                    ,'bestValScore': bestValScore,'valMode':self.valMode,'model':bestModel}, self.savePath)
     
     @classmethod
     def loadModel(cls, savePath):
@@ -154,6 +153,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         classDefinition = globals()[bestModelDic['className']]
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
+        emptyModel.valMode=bestModelDic['valMode']
+        print('bestValScore:',bestModelDic['bestValScore'])
         #kkk add valMode
         return emptyModel
     
@@ -393,7 +394,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         if patienceCounter == 0 and (bestModelCounter -1 ) % self.saveOnDiskPeriod == 0:
             # Save the best model to the hard disk
-            self.saveModel(bestModel)
+            self.saveModel(bestModel, bestValScore)
         
         return bestValScore, patienceCounter, bestModel, bestModelCounter
     
@@ -423,7 +424,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
             
             bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
-        return bestModel
+        return bestModel, bestValScore
     
     def workerNumRegularization(self,workerNum):
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -490,7 +491,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
                 
                 bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
-        return bestModel
+        return bestModel, bestValScore
     
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0):
         self.havingOptimizerCheck()
@@ -509,14 +510,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         self.train()
         if workerNum:
-            bestModel = self.multiProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, workerNum)
+            bestModel, bestValScore = self.multiProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, workerNum)
         else:
-            bestModel = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion)
+            bestModel, bestValScore = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion)
         
         print("Training finished.")
         
         # Save the best model to the hard disk
-        self.saveModel(bestModel)
+        self.saveModel(bestModel, bestValScore)
         
         # Load the best model into the current instance
         self.load_state_dict(bestModel)
@@ -524,7 +525,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Return the best model
         return self
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):#kkk add dropoutEnsembleMode
         self.eval()
         with torch.no_grad():
             if workerNum:
