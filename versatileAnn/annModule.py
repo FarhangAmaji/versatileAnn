@@ -31,7 +31,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
         self.evalMode='loss'
-        self.variationalAutoEncoder=False
+        self.variationalAutoEncoderMode=False
+        self.dropoutEnsembleMode=False
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -45,28 +46,28 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return x
     
     def autoEncoderOutputAssign(self,batchTrainOutputsPred):
-        if self.variationalAutoEncoder:
-            assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoder u should pass batchTrainOutputsPred, mean, logvar'
+        if self.variationalAutoEncoderMode:
+            assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
             batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
             return batchTrainOutputsPred, mean, logvar
         else:
             return batchTrainOutputsPred, None, None
     
     def autoEncoderAddKlDivergence(self,loss, mean, logvar):
-        if self.variationalAutoEncoder:
+        if self.variationalAutoEncoderMode:
             return loss + self.autoEncoderKlDivergence(mean, logvar)
         else:
             return loss
     
     @property
-    def variationalAutoEncoder(self):
-        return self._variationalAutoEncoder
+    def variationalAutoEncoderMode(self):
+        return self._variationalAutoEncoderMode
     
-    @variationalAutoEncoder.setter
-    def variationalAutoEncoder(self, value):
-        assert isinstance(value, bool), 'variationalAutoEncoder should be bool'
-        self._variationalAutoEncoder = value
-        if self._variationalAutoEncoder:
+    @variationalAutoEncoderMode.setter
+    def variationalAutoEncoderMode(self, value):
+        assert isinstance(value, bool), 'variationalAutoEncoderMode should be bool'
+        self._variationalAutoEncoderMode = value
+        if self._variationalAutoEncoderMode:
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
     
     @property
@@ -568,9 +569,16 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Return the best model
         return self
     
+    def activateDropouts(self):
+        if self.dropoutEnsembleMode:
+            for module in self.modules():
+                if isinstance(module, nn.Dropout):
+                    module.train()
+    
     def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):#kkk add dropoutEnsembleMode
         self.eval()
         with torch.no_grad():
+            self.activateDropouts()
             if workerNum:
                 evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum)
             else:

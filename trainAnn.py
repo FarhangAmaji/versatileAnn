@@ -57,7 +57,7 @@ class myAnn(ann):
         self.layer2 = torch.nn.Linear(inputSize, outputSize)
         self.layer3 = linLReluNormDropout(inputSize*4, outputSize)
         self.l4= torch.nn.LayerNorm(outputSize)
-        self.l5= variationalEncoder(inputSize,2)
+        # self.l5= variationalEncoder(inputSize,2)
         self.l6= B()
         self.l7= MyBaseClass
         self.fcMean = torch.nn.Linear(inputSize, outputSize)
@@ -89,7 +89,7 @@ z1=myAnn(40,1)
 # z1.lossMode='accuracy'
 # z1.autoEncoderMode=True #kkk will it have problems of not saving these to saveModel
 #%% regression test
-z1.autoEncoderMode=True
+z1.variationalAutoEncoderMode=True
 workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)
