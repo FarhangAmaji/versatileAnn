@@ -60,13 +60,16 @@ class myAnn(ann):
         self.l5= variationalEncoder(inputSize,2)
         self.l6= B()
         self.l7= MyBaseClass
+        self.fcMean = torch.nn.Linear(inputSize, outputSize)
+        self.fcLogvar = torch.nn.Linear(inputSize, outputSize)
         self.addLayerRegularization([[self.layer2,'l2',.004], [self.layer3,None,None]])
-        self.layersRegularization = {'layer2':{'layer':self.layer2, 'regularization':['l2',.004]},
-                                      'layer3':{'layer':self.layer3, 'regularization':[None,None]}}#kkk add a func to add layers automatically
+    
     def forward(self, x):
+        mean = self.fcMean(x)
+        logvar = self.fcLogvar(x)
         x = self.layer1(x)
         x = self.layer3(x)
-        return x
+        return x, mean, logvar
 #%% make model instance
 z1=myAnn(40,1)
 #%%
@@ -84,7 +87,9 @@ z1=myAnn(40,1)
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
 # z1.lossMode='accuracy'
+# z1.autoEncoderMode=True #kkk will it have problems of not saving these to saveModel
 #%% regression test
+z1.autoEncoderMode=True
 workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)

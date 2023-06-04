@@ -31,6 +31,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
         self.evalMode='loss'
+        self.autoEncoderMode=False
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -42,6 +43,31 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
 
     def forward(self, x):
         return x
+    
+    def autoEncoderOutputAssign(self,batchTrainOutputsPred):
+        if self.autoEncoderMode:
+            assert len(batchTrainOutputsPred)==3,'in autoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
+            batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
+            return batchTrainOutputsPred, mean, logvar
+        else:
+            return batchTrainOutputsPred, None, None
+    
+    def autoEncoderAddKlDivergence(self,loss, mean, logvar):
+        if self.autoEncoderMode:
+            return loss + self.autoEncoderKlDivergence(mean, logvar)
+        else:
+            return loss
+    
+    @property
+    def autoEncoderMode(self):
+        return self._autoEncoderMode
+    
+    @autoEncoderMode.setter
+    def autoEncoderMode(self, value):
+        assert isinstance(value, bool), 'autoEncoderMode should be bool'
+        self._autoEncoderMode = value
+        if self._autoEncoderMode:
+            self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
     
     @property
     def evalMode(self):
@@ -90,7 +116,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             frame_=frame_.f_back
         args, _, _, values = inspect.getargvalues(frame_)
         "#ccc patience and optimizer's change should not affect that doesnt let the model rerun"
-        excludeInputArgs = ['patience', 'optimizer', 'device']
+        excludeInputArgs = ['patience', 'optimizer', 'device']#kkk this part is redundant
         for eia in excludeInputArgs:
             if eia in args:
                 args.remove(eia)
@@ -144,7 +170,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def saveModel(self, bestModel, bestValScore):
         torch.save({'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
-                    'bestValScore': bestValScore,'valMode':self.valMode,'model':bestModel}, self.savePath)
+                    'bestValScore': bestValScore,'evalMode':self.evalMode,'model':bestModel}, self.savePath)
     
     @classmethod
     def loadModel(cls, savePath):
@@ -153,7 +179,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         classDefinition = globals()[bestModelDic['className']]
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
-        emptyModel.valMode=bestModelDic['valMode']
+        emptyModel.evalMode=bestModelDic['evalMode']
         print('bestValScore:',bestModelDic['bestValScore'])
         return emptyModel
     
@@ -258,8 +284,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         z = mean + eps * std
         return z
     
-    @classmethod
-    def klDivergenceNormalDistributionLoss(cls, mean, logvar):
+    def klDivergenceNormalDistributionLoss(mean, logvar):
         klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
         return klLoss
     
@@ -421,8 +446,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     batchTrainInputs, batchTrainOutputs, appliedBatchSize, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
                 
                 batchTrainOutputsPred = self.forward(batchTrainInputs)
-                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                 
+                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
                 loss.backward()
                 self.optimizer.step()
                 
@@ -488,8 +515,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     readyArgs.pop(0)
                     
                     batchTrainOutputsPred = self.forward(batchTrainInputs)
-                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                    batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                     
+                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                    loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
                     loss.backward()
                     self.optimizer.step()
                     
@@ -568,7 +597,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
             
             batchEvalOutputsPred = self.forward(batchEvalInputs)
-            
+            batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
             evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
         
         evalScore /= inputs.shape[0]
@@ -611,7 +640,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 readyArgs.pop(0)
                 
                 batchEvalOutputsPred = self.forward(batchEvalInputs)
-                
+                batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
                 evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)
             
             evalScore /= inputs.shape[0]
