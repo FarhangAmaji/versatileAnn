@@ -16,7 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    def __init__(self):#kkk add comments #kkk variational autoencoder
+    def __init__(self):#kkk add comments 
         super(ann, self).__init__()
         self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -31,7 +31,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
         self.evalMode='loss'
-        self.autoEncoderMode=False
+        self.variationalAutoEncoder=False
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -45,28 +45,28 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return x
     
     def autoEncoderOutputAssign(self,batchTrainOutputsPred):
-        if self.autoEncoderMode:
-            assert len(batchTrainOutputsPred)==3,'in autoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
+        if self.variationalAutoEncoder:
+            assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoder u should pass batchTrainOutputsPred, mean, logvar'
             batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
             return batchTrainOutputsPred, mean, logvar
         else:
             return batchTrainOutputsPred, None, None
     
     def autoEncoderAddKlDivergence(self,loss, mean, logvar):
-        if self.autoEncoderMode:
+        if self.variationalAutoEncoder:
             return loss + self.autoEncoderKlDivergence(mean, logvar)
         else:
             return loss
     
     @property
-    def autoEncoderMode(self):
-        return self._autoEncoderMode
+    def variationalAutoEncoder(self):
+        return self._variationalAutoEncoder
     
-    @autoEncoderMode.setter
-    def autoEncoderMode(self, value):
-        assert isinstance(value, bool), 'autoEncoderMode should be bool'
-        self._autoEncoderMode = value
-        if self._autoEncoderMode:
+    @variationalAutoEncoder.setter
+    def variationalAutoEncoder(self, value):
+        assert isinstance(value, bool), 'variationalAutoEncoder should be bool'
+        self._variationalAutoEncoder = value
+        if self._variationalAutoEncoder:
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
     
     @property
@@ -238,13 +238,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         layersRegularizationNames=self.layersRegularization.keys()
         
         for name, param in self.named_parameters():
-            if 'weight' in name and name.split('.')[0] in layersRegularizationNames:#kkk do we add l1 and l2 only to weight or we add it to others also
-                layerName = name.split('.')[0]
+            layerName = name.split('.')[0]
+            if layerName in layersRegularizationNames:
                 layerRegType, layerRegVal = self.layersRegularization[layerName]['regularization']
                 layerRegAddFunc=self.getRegAddFunc(layerRegType)
                 self.layersRegularizationOperational[name]=[layerRegAddFunc, layerRegVal]
             else:
-                print('layername',name)
                 self.layersRegularizationOperational[name]=[defaultRegAddFunc, defaultRegVal]
     
     def addCustomLayersRegularizations(self):
@@ -526,7 +525,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     loss.backward()
                     self.optimizer.step()
                     
-                    trainLoss += loss.item()#kkk do we need to add it to trainLoss or loss itself before .backward()
+                    trainLoss += loss.item()
                 
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
