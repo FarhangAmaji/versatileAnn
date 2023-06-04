@@ -449,11 +449,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                 
                 loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
-                loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
+                loss = self.autoEncoderAddKlDivergence(loss, mean, logvar)
+                loss = self.addRegularizationToLoss(loss)
+                
                 loss.backward()
                 self.optimizer.step()
                 
-                trainLoss += self.addRegularizationToLoss(loss.item())
+                trainLoss += loss.item()
             
             trainLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
@@ -519,10 +521,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     
                     loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
                     loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
+                    loss = self.addRegularizationToLoss(loss)
+                    
                     loss.backward()
                     self.optimizer.step()
                     
-                    trainLoss += self.addRegularizationToLoss(loss.item())#kkk do we need to add it to trainLoss or loss itself before .backward()
+                    trainLoss += loss.item()#kkk do we need to add it to trainLoss or loss itself before .backward()
                 
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
