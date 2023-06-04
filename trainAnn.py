@@ -5,7 +5,6 @@ baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
 from versatileAnn import ann
 from versatileAnn.layers import linLReluNormDropout, linLSigmoidNormDropout
-import inspect
 import torch
 import torch.optim as optim
 #%% define model
@@ -86,7 +85,6 @@ z1=myAnn(40,1)
 # z1.saveOnDiskPeriod=1
 # z1.lossMode='accuracy'
 #%% regression test
-z1.lossMode='accuracy'
 workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)
@@ -110,6 +108,7 @@ print("Evaluation Loss:", evalLoss)
 print('time:',time.time()-t0)
 '#ccc access to tensorboard with "tensorboard --logdir=data" from terminal'
 #%% 
+runcell=runcell
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('define model', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('make model instance', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')

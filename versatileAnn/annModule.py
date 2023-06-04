@@ -16,7 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    def __init__(self):#kkk add comments
+    def __init__(self):#kkk add comments #kkk variational autoencoder
         super(ann, self).__init__()
         self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -144,7 +144,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def saveModel(self, bestModel, bestValScore):
         torch.save({'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
-                    ,'bestValScore': bestValScore,'valMode':self.valMode,'model':bestModel}, self.savePath)
+                    'bestValScore': bestValScore,'valMode':self.valMode,'model':bestModel}, self.savePath)
     
     @classmethod
     def loadModel(cls, savePath):
@@ -155,7 +155,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         emptyModel.load_state_dict(bestModelDic['model'])
         emptyModel.valMode=bestModelDic['valMode']
         print('bestValScore:',bestModelDic['bestValScore'])
-        #kkk add valMode
         return emptyModel
     
     @property
@@ -213,12 +212,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         layersRegularizationNames=self.layersRegularization.keys()
         
         for name, param in self.named_parameters():
-            if 'weight' in name and name.split('.')[0] in layersRegularizationNames:
+            if 'weight' in name and name.split('.')[0] in layersRegularizationNames:#kkk do we add l1 and l2 only to weight or we add it to others also
                 layerName = name.split('.')[0]
                 layerRegType, layerRegVal = self.layersRegularization[layerName]['regularization']
                 layerRegAddFunc=self.getRegAddFunc(layerRegType)
                 self.layersRegularizationOperational[name]=[layerRegAddFunc, layerRegVal]
             else:
+                print('layername',name)
                 self.layersRegularizationOperational[name]=[defaultRegAddFunc, defaultRegVal]
     
     def addCustomLayersRegularizations(self):
@@ -251,7 +251,18 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             layerRegAddFunc, layerRegVal=self.layersRegularizationOperational[name]
             lReg = lReg + layerRegAddFunc(param, layerRegVal)
         return loss + lReg
-        
+    
+    def reparameterize(self, mean, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mean + eps * std
+        return z
+    
+    @classmethod
+    def klDivergenceNormalDistributionLoss(cls, mean, logvar):
+        klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
+        return klLoss
+    
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
@@ -482,7 +493,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     loss.backward()
                     self.optimizer.step()
                     
-                    trainLoss += self.addRegularizationToLoss(loss.item())
+                    trainLoss += self.addRegularizationToLoss(loss.item())#kkk do we need to add it to trainLoss or loss itself before .backward()
                 
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
