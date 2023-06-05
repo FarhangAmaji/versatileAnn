@@ -33,6 +33,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.evalMode='loss'
         self.variationalAutoEncoderMode=False
         self.dropoutEnsembleMode=False
+        self.dropoutEnsembleNumSamples = 100
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -44,6 +45,18 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
 
     def forward(self, x):
         return x
+    
+    def forwardModelForEvalDueToMode(self,batchEvalInputs, appliedBatchSize):
+        if self.dropoutEnsembleMode:
+            batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
+            batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
+            batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
+        if not self.variationalAutoEncoderMode:
+            batchEvalOutputsPred = self.forward(batchEvalInputs)
+        batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
+        if mean:
+            return batchEvalOutputsPred, mean, logvar
+        return batchEvalOutputsPred, None, None
     
     def autoEncoderOutputAssign(self,batchTrainOutputsPred):
         if self.variationalAutoEncoderMode:
@@ -60,6 +73,16 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             return loss
     
     @property
+    def dropoutEnsembleMode(self):
+        return self._dropoutEnsembleMode
+    
+    @dropoutEnsembleMode.setter
+    def dropoutEnsembleMode(self, value):
+        assert isinstance(value, bool), 'dropoutEnsembleMode should be bool'
+        assert self.variationalAutoEncoderMode==False,'one of variationalAutoEncoder or dropoutEnsemble Modes can be turned on'
+        self._dropoutEnsembleMode = value
+    
+    @property
     def variationalAutoEncoderMode(self):
         return self._variationalAutoEncoderMode
     
@@ -68,6 +91,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         assert isinstance(value, bool), 'variationalAutoEncoderMode should be bool'
         self._variationalAutoEncoderMode = value
         if self._variationalAutoEncoderMode:
+            assert self.dropoutEnsembleMode==False,'one of variationalAutoEncoder or dropoutEnsemble Modes can be turned on'
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
     
     @property
@@ -488,8 +512,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         parallelInputArgs = []
                         idIdx = epoch * batchIterLen +i
                         if len(readyArgs) < 16:
-                            for jj in range(24 - len(readyArgs)):
-                                idIdx2=idIdx+jj
+                            for raI in range(24 - len(readyArgs)):
+                                idIdx2=idIdx+raI
                                 if idIdx2>=totEpochBatchItersNum:
                                     continue
                                 if idIdx2 in identifiers:
@@ -575,7 +599,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 if isinstance(module, nn.Dropout):
                     module.train()
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):#kkk add dropoutEnsembleMode
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):
         self.eval()
         with torch.no_grad():
             self.activateDropouts()
@@ -593,7 +617,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return indexes, batchIterLen
     
     def updateEvalScoreBasedOnMode(self, evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion):
-        if self.evalMode == 'accuracy':
+        if self.evalMode == 'accuracy':#kkk add dropoutEnsemble certainty based accuracy
             predicted = torch.argmax(batchEvalOutputsPred, dim=1)
             evalScore += (predicted == batchEvalOutputs).sum().item()
         elif self.evalMode == 'loss':
@@ -607,8 +631,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         for i in range(0, batchIterLen):
             batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
             
-            batchEvalOutputsPred = self.forward(batchEvalInputs)
-            batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
+            batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, appliedBatchSize)
             evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
         
         evalScore /= inputs.shape[0]
@@ -625,8 +648,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             for i in range(0, batchIterLen):
                 parallelInputArgs = []
                 if len(readyArgs) < 16:
-                    for jj in range(24 - len(readyArgs)):
-                        idIdx2=i+jj
+                    for raI in range(24 - len(readyArgs)):
+                        idIdx2=i+raI
                         if idIdx2>=batchIterLen:
                             continue
                         if idIdx2 in identifiers:
@@ -650,8 +673,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 identifiers.remove(identifier)
                 readyArgs.pop(0)
                 
-                batchEvalOutputsPred = self.forward(batchEvalInputs)
-                batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
+                batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, appliedBatchSize)
                 evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)
             
             evalScore /= inputs.shape[0]

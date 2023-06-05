@@ -69,7 +69,7 @@ class myAnn(ann):
         logvar = self.fcLogvar(x)
         x = self.layer1(x)
         x = self.layer3(x)
-        return x, mean, logvar
+        return x#, mean, logvar
 #%% make model instance
 z1=myAnn(40,1)
 #%%
@@ -87,9 +87,9 @@ z1=myAnn(40,1)
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
 # z1.lossMode='accuracy'
-# z1.autoEncoderMode=True #kkk will it have problems of not saving these to saveModel
+# z1.variationalAutoEncoderMode=True #kkk will it have problems of not saving these to saveModel
 #%% regression test
-z1.variationalAutoEncoderMode=True
+z1.dropoutEnsembleMode=True
 workerNum=8
 # Set random seed for reproducibility
 torch.manual_seed(42)
