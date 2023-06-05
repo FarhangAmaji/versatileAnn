@@ -34,6 +34,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.variationalAutoEncoderMode=False
         self.dropoutEnsembleMode=False
         self.dropoutEnsembleNumSamples = 100
+        self.modelNameDifferentiator = True
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -563,12 +564,15 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0):
         self.havingOptimizerCheck()
-        randomId=randomIdFunc()#kkk keepId or not
-        self.savePath=savePath+'_'+randomId
+        randomId=randomIdFunc()
+        nameDifferentiator=''
+        if self.modelNameDifferentiator:
+            nameDifferentiator='_'+randomId
+        self.savePath=savePath+nameDifferentiator
         print(f'model will be saved in {self.savePath}')
         os.makedirs(os.path.dirname(self.savePath), exist_ok=True)
         if tensorboardPath:
-            tensorboardPath+=randomId
+            tensorboardPath+=nameDifferentiator
         else:
             tensorboardPath = self.savePath
         self.tensorboardWriter = tensorboardPath#kkk may add print 'access to tensorboard with "tensorboard --logdir=data" from terminal' (I need to take first part of path from tensorboardPath)
