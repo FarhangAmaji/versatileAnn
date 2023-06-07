@@ -1,5 +1,5 @@
 #%% imports
-# models\multivariateTransformers.py
+# models\univariateTransformers.py
 import sys
 import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
@@ -92,4 +92,30 @@ class multiHeadAttention(nn.Module):#kkk make it suitable for multivariate
         out = self.outLayer(out)
         # N * queryLen * embedSize
 
+        return out
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, embedSize, heads, dropout, forward_expansion):
+        '#ccc this is used in both encoder and decoder'
+        super(TransformerBlock, self).__init__()
+        self.attention = multiHeadAttention(embedSize, heads)
+        self.norm1 = nn.LayerNorm(embedSize)
+        self.norm2 = nn.LayerNorm(embedSize)
+
+        self.feedForward = nn.Sequential(nn.Linear(embedSize, forward_expansion * embedSize),
+            nn.ReLU(),
+            nn.Linear(forward_expansion * embedSize, embedSize))
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, query, key, value, mask):
+        'TransformerBlock'
+        attention = self.attention(query, key, value, mask)
+
+        # Add skip connection, run through normalization and finally dropout
+        x = self.norm1(attention + query)
+        '#ccc the query is used in skip connection'
+        forward = self.feedForward(x)
+        out = self.dropout(self.norm2(forward + x))
         return out
