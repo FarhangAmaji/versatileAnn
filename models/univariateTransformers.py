@@ -14,8 +14,8 @@ from torch import nn
 originial github: https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/more_advanced/transformer_from_scratch/transformer_from_scratch.py
 some parts of code been corrected also has been modified and to suit multivariateTransformers
 """
-class multiHeadAttention(nn.Module):#kkk make it suitable for multivariate
-    def __init__(self, embedSize, heads):#kkk correct explanations for this
+class multiHeadAttention(nn.Module):
+    def __init__(self, embedSize, heads):
         super(multiHeadAttention, self).__init__()
         '''#ccc its important to know the network is independent of sequence length because we didnt make any layer(linear)
         which takes input equal to sequence length
@@ -120,11 +120,11 @@ class TransformerBlock(nn.Module):
         out = self.dropout(self.norm2(forward + x))
         return out
     
-def PositionalEncoding(max_rows,d_model):
-    even_i = torch.arange(0, d_model, 2).float()# shape: d_model//2
-    denominator = torch.pow(10000, even_i/d_model)
-    position = (torch.arange(max_rows)
-                      .reshape(max_rows, 1))
+def positionalEmbedding1d(maxRows,dModel):
+    even_i = torch.arange(0, dModel, 2).float()# shape: dModel//2
+    denominator = torch.pow(10000, even_i/dModel)
+    position = (torch.arange(maxRows)
+                      .reshape(maxRows, 1))
     even_PE = torch.sin(position / denominator)# shape: maxLen * dModel//2; each row is for a position
     odd_PE = torch.cos(position / denominator)
     stacked = torch.stack([even_PE, odd_PE], dim=2)# shape: maxLen * dModel//2 * 2
@@ -132,8 +132,31 @@ def PositionalEncoding(max_rows,d_model):
     """#ccc
     PE for position i: [sin(i\denominator[0]),cos(i\denominator[0]), sin(i\denominator[1]),cos(i\denominator[1]), sin(i\denominator[2]),cos(i\denominator[2]),...]        
     thus PE for even position i starts at sin(i\denominator[0]) and goes to 0 because the denominator[dModel-1] is a really large number sin(0)=0        thus PE for odd position i starts at cos(i\denominator[0]) and goes to 1 because the denominator[dModel-1] is a really large number cos(0)=1
-            note for different'i's the sin(i\denominator[0]) just circulates and its not confined like (i/max_rows*2*pi)
-            therefore the max_rows plays really doesnt affect the positional encoding and for each position we can get PE for position i without having max_rows
+            note for different'i's the sin(i\denominator[0]) just circulates and its not confined like (i/maxRows*2*pi)
+            therefore the maxRows plays really doesnt affect the positional encoding and for each position we can get PE for position i without having maxRows
             #kkk why the positional embeddings for a specific position i, each embedding element different?
     """
     return PE #ccc in order PE to be summable with other embeddings, we fill for the rest of values upto maxLen with some padding
+
+class Encoder(nn.Module):
+    def __init__(self,embedSize,numLayers,heads,forward_expansion,dropout,maxLength,device):
+        super(Encoder, self).__init__()
+        self.embedSize = embedSize
+        self.device = device #kkk may inherent from
+        self.embeddings = nn.Linear(1, embedSize)
+        self.positionalEmbedding = positionalEmbedding1d(maxRows=maxLength, dModel=embedSize)
+
+        self.layers = nn.ModuleList(
+            [TransformerBlock(embedSize,heads,dropout=dropout+i*(1-dropout)/numLayers,forward_expansion=forward_expansion,) for i in range(numLayers)])
+
+    def forward(self, x, mask):
+        'Encoder'
+        N, inputSeqLength = x.shape
+        positions = torch.arange(0, inputSeqLength).expand(N, inputSeqLength).to(self.device)#kkk device may used from myAnn
+        x = self.embeddings(x) + self.positionalEmbedding(positions)
+            
+        # In the Encoder the query, key, value are all the same, it's in the
+        # decoder this will change. This might look a bit odd in this case.
+        for layer in self.layers:
+            x = layer(x, x, x, mask)
+        return out
