@@ -174,3 +174,24 @@ class DecoderBlock(TransformerInfo):
         out = self.transformerBlock(query, key, value, srcMask)
         return out
 
+class Decoder(TransformerInfo):
+    def __init__(self):
+        super(Decoder, self).__init__()
+        self.embeddings = nn.Linear(1, self.embedSize)
+
+        self.layers = nn.ModuleList(
+            [DecoderBlock(self.dropoutRate+i*(.9-self.dropoutRate)/self.decoderLayersNum) for i in range(self.decoderLayersNum)])#kkk numLayers
+        self.outLayer = nn.Linear(self.embedSize, 1)
+
+    def forward(self, outputSeq, outputOfEncoder, srcMask, trgMask, maxLength):
+        'Decoder'
+        N, outputSeqLength = outputSeq.shape
+        outputSeq = self.embeddings(outputSeq) + self.positionalEmbedding1d(outputSeqLength)
+
+        for layer in self.layers:
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, srcMask, trgMask)
+        '#ccc note outputSeq is query, outputOfEncoder is value and key'
+
+        outputSeq = self.outLayer(outputSeq)
+        return outputSeq
+
