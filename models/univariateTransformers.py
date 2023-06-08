@@ -195,3 +195,30 @@ class Decoder(TransformerInfo):
         outputSeq = self.outLayer(outputSeq)
         return outputSeq
 
+class Transformer(TransformerInfo, ann):
+    def __init__(self):
+        super(Transformer, self).__init__()
+
+        self.encoder = Encoder()
+        self.decoder = Decoder()
+
+    def makeSrcMask(self, src):
+        # srcMask = (src != self.src_pad_idx).unsqueeze(1).unsqueeze(2)#kkk
+        srcMask = torch.ones(src.shape[2]).expand(src.shape[0], 1,1, 1, src.shape[2])
+        # (N, 1, 1, srcLen)
+        return srcMask.to(self.device)
+
+    def makeTrgMask(self, trg):
+        N, trgLen = trg.shape
+        trgMask = torch.tril(torch.ones((trgLen, trgLen))).expand(N, 1, trgLen, trgLen)
+        # trgMask = torch.tril(torch.ones((trgLen, trgLen))).expand(N, 1,c, trg_len, trg_len)
+
+        return trgMask.to(self.device)
+
+    def forward(self, src, trg):
+        'Transformer'
+        srcMask = self.makeSrcMask(src)
+        trgMask = self.makeTrgMask(trg)
+        encSrc = self.encoder(src, srcMask)
+        out = self.decoder(trg, encSrc, srcMask, trgMask)
+        return out
