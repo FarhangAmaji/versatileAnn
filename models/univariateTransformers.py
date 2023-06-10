@@ -12,17 +12,26 @@ from torch import nn
 originial github: https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/more_advanced/transformer_from_scratch/transformer_from_scratch.py
 some parts of code been corrected also has been modified and to suit multivariateTransformers
 """
-class TransformerInfo(nn.Module):
-    def __init__(self, embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6):
+class TransformerInfo:
+    def __init__(self, embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=10, outputLen=10):
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.embedSize = embedSize
         self.heads = heads
         self.forwardExpansion = forwardExpansion
         self.dropoutRate = dropoutRate
         self.headDim = embedSize // heads
-
         assert (self.headDim * heads == embedSize), "Embedding size needs to be divisible by heads number"
-        
+
+        self.encoderLayersNum= encoderLayersNum
+        self.decoderLayersNum= decoderLayersNum
+        self.encoderPositionalEmbedding=self.positionalEmbedding1d(inpLen)
+        self.decoderPositionalEmbedding=self.positionalEmbedding1d(outputLen)
+        self.trgMask=self.makeTrgMask(outputLen)
+    
+    def makeTrgMask(self, outputLen):
+        trgMask = torch.tril(torch.ones((outputLen, outputLen)))
+        return trgMask.to(self.device)
+    
     def positionalEmbedding1d(self, maxRows):
         even_i = torch.arange(0, self.embedSize, 2).float()# shape: embedSize//2
         denominator = torch.pow(10000, even_i/self.embedSize)
@@ -31,7 +40,7 @@ class TransformerInfo(nn.Module):
         even_PE = torch.sin(position / denominator)# shape: maxLen * embedSize//2; each row is for a position
         odd_PE = torch.cos(position / denominator)
         stacked = torch.stack([even_PE, odd_PE], dim=2)# shape: maxLen * embedSize//2 * 2
-        PE = torch.flatten(stacked, start_dim=1, end_dim=2)# shape: maxLen * embedSize
+        PE = torch.flatten(stacked, start_dim=1, end_dim=2).to(self.device)# shape: maxLen * embedSize
         """#ccc
         PE for position i: [sin(i\denominator[0]),cos(i\denominator[0]), sin(i\denominator[1]),cos(i\denominator[1]), sin(i\denominator[2]),cos(i\denominator[2]),...]        
         thus PE for even position i starts at sin(i\denominator[0]) and goes to 0 because the denominator[self.embedSize-1] is a really large number sin(0)=0        thus PE for odd position i starts at cos(i\denominator[0]) and goes to 1 because the denominator[self.embedSize-1] is a really large number cos(0)=1
@@ -41,16 +50,17 @@ class TransformerInfo(nn.Module):
         """
         return PE #ccc in order PE to be summable with other embeddings, we fill for the rest of values upto maxLen with some padding
 
-class multiHeadAttention(TransformerInfo):
-    def __init__(self):
+class multiHeadAttention(nn.Module):
+    def __init__(self, transformerInfo):
         super(multiHeadAttention, self).__init__()
         '''#ccc its important to know the network is independent of sequence length because we didnt make any layer(linear)
         which takes input equal to sequence length
         '''
-        self.valueLayer = nn.Linear(self.embedSize, self.embedSize)
-        self.keyLayer = nn.Linear(self.embedSize, self.embedSize)
-        self.queryLayer = nn.Linear(self.embedSize, self.embedSize)
-        self.outLayer = nn.Linear(self.embedSize, self.embedSize)
+        self.transformerInfo= transformerInfo
+        self.valueLayer = nn.Linear(transformerInfo.embedSize, transformerInfo.embedSize)
+        self.keyLayer = nn.Linear(transformerInfo.embedSize, transformerInfo.embedSize)
+        self.queryLayer = nn.Linear(transformerInfo.embedSize, transformerInfo.embedSize)
+        self.outLayer = nn.Linear(transformerInfo.embedSize, transformerInfo.embedSize)
 
     def forward(self, query, key, value, mask):
         'multiHeadAttention'
@@ -66,10 +76,10 @@ class multiHeadAttention(TransformerInfo):
         key = self.keyLayer(key)  # N * valueLen * embedSize
         query = self.queryLayer(query)  # N * queryLen * embedSize
 
-        # Split the embedding into self.heads different pieces
-        value = value.reshape(N, valueLen, self.heads, self.headDim)
-        key = key.reshape(N, valueLen, self.heads, self.headDim)
-        query = query.reshape(N, queryLen, self.heads, self.headDim)
+        # Split the embedding into heads different pieces
+        value = value.reshape(N, valueLen, self.transformerInfo.heads, self.transformerInfo.headDim)
+        key = key.reshape(N, valueLen, self.transformerInfo.heads, self.transformerInfo.headDim)
+        query = query.reshape(N, queryLen, self.transformerInfo.heads, self.transformerInfo.headDim)
 
         energy = torch.einsum("nqhd,nkhd->nhqk", [query, key])
         """#ccc Einsum does matrix multiplication
@@ -87,10 +97,10 @@ class multiHeadAttention(TransformerInfo):
         # energy: N * heads * queryLen * valueLen
 
         # Mask padded indices so their weights become 0
-        if mask is not None:#kkk dont send make if its not needed
+        if mask is not None:
             energy = energy.masked_fill(mask == 0, float("-1e20"))
 
-        attention = torch.softmax(energy / (self.embedSize ** (1 / 2)), dim=3)
+        attention = torch.softmax(energy / (self.transformerInfo.embedSize ** (1 / 2)), dim=3)
         # attention shape: N * heads * queryLen * valueLen
         '''#ccc we Normalize energy value for better stability
         note after this we would have attention[0,0,0,:].sum()==1
@@ -100,7 +110,7 @@ class multiHeadAttention(TransformerInfo):
         value get so less softmax output
         '''
 
-        out = torch.einsum("nhqv,nvhd->nqhd", [attention, value]).reshape(N, queryLen, self.heads * self.headDim)#N * queryLen * heads * headDim
+        out = torch.einsum("nhqv,nvhd->nqhd", [attention, value]).reshape(N, queryLen, self.transformerInfo.heads * self.transformerInfo.headDim)#N * queryLen * heads * headDim
         """#ccc this line is equal to == out = torch.einsum("nhqv,nvhd->nhqd", [attention, value]); out= out.permute(0, 2, 1, 3)
         
         we have 3 sets of words(value, key, query). now 2 of them (key and query) are consummed to create the attentionTable
@@ -115,21 +125,22 @@ class multiHeadAttention(TransformerInfo):
 
         return out
 
-class TransformerBlock(TransformerInfo):
-    def __init__(self, dropout):
+class TransformerBlock(nn.Module):
+    def __init__(self, transformerInfo, dropout):
         '#ccc this is used in both encoder and decoder'
         super(TransformerBlock, self).__init__()
-        self.attention = multiHeadAttention()
-        self.norm1 = nn.LayerNorm(self.embedSize)
-        self.norm2 = nn.LayerNorm(self.embedSize)
+        self.transformerInfo= transformerInfo
+        self.attention = multiHeadAttention(transformerInfo)
+        self.norm1 = nn.LayerNorm(transformerInfo.embedSize)
+        self.norm2 = nn.LayerNorm(transformerInfo.embedSize)
 
-        self.feedForward = nn.Sequential(nn.Linear(self.embedSize, self.forwardExpansion * self.embedSize),
-            nn.ReLU(),
-            nn.Linear(self.forwardExpansion * self.embedSize, self.embedSize))
+        self.feedForward = nn.Sequential(nn.Linear(transformerInfo.embedSize, transformerInfo.forwardExpansion * transformerInfo.embedSize),
+            nn.LeakyReLU(negative_slope=.05),
+            nn.Linear(transformerInfo.forwardExpansion * transformerInfo.embedSize, transformerInfo.embedSize))
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, query, key, value, mask):
+    def forward(self, query, key, value, mask=None):
         'TransformerBlock'
         attention = self.attention(query, key, value, mask)
 
@@ -141,84 +152,91 @@ class TransformerBlock(TransformerInfo):
         return out
     
 
-class Encoder(TransformerInfo):
-    def __init__(self):
+class Encoder(nn.Module):
+    def __init__(self, transformerInfo):
         super(Encoder, self).__init__()
-        self.embeddings = nn.Linear(1, self.embedSize)
+        self.transformerInfo= transformerInfo
+        self.embeddings = nn.Linear(1, transformerInfo.embedSize)
         self.layers = nn.ModuleList(
-            [TransformerBlock(dropout=self.dropoutRate+i*(1-self.dropoutRate)/self.encoderLayersNum) for i in range(self.encoderLayersNum)])#kkk numLayers
+            [TransformerBlock(transformerInfo, dropout=transformerInfo.dropoutRate+i*(1-transformerInfo.dropoutRate)/transformerInfo.encoderLayersNum) for i in range(transformerInfo.encoderLayersNum)])
 
-    def forward(self, x, mask, maxLength):
+    def forward(self, x):
         'Encoder'
         N, inputSeqLength = x.shape
-        x = self.embeddings(x) + self.positionalEmbedding1d(inputSeqLength)
+        x = self.embeddings(x.unsqueeze(2)) + self.transformerInfo.encoderPositionalEmbedding
             
         # In the Encoder the query, key, value are all the same, it's in the
         # decoder this will change. This might look a bit odd in this case.
         for layer in self.layers:
-            x = layer(x, x, x, mask)
+            x = layer(x, x, x, None)
         return x
 
-class DecoderBlock(TransformerInfo):
-    def __init__(self, dropout):
+class DecoderBlock(nn.Module):
+    def __init__(self, transformerInfo, dropout):
         super(DecoderBlock, self).__init__()
-        self.norm = nn.LayerNorm(self.embedSize)
-        self.attention = multiHeadAttention()
-        self.transformerBlock = TransformerBlock(dropout)
+        self.transformerInfo= transformerInfo
+        self.norm = nn.LayerNorm(transformerInfo.embedSize)
+        self.attention = multiHeadAttention(transformerInfo)
+        self.transformerBlock = TransformerBlock(transformerInfo,dropout)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, query, key, value, srcMask, trgMask):
+    def forward(self, query, key, value, trgMask):
         'DecoderBlock'
         attention = self.attention(query, query, query, trgMask)
         query = self.dropout(self.norm(attention + query))
-        out = self.transformerBlock(query, key, value, srcMask)
+        out = self.transformerBlock(query, key, value, None)
+        """#ccc note here we pass the mask equal to None the same mask as encoder because the attention table is 
+        outSeqLen*inpSeqLen so no need to prevent future words
+        
+        if it wasnt regression which we dont have empty spaces in our sequence like nlp then we would have assigned
+        negative infinity to the paddings"""
         return out
 
-class Decoder(TransformerInfo):
-    def __init__(self):
+class Decoder(nn.Module):
+    def __init__(self, transformerInfo):
         super(Decoder, self).__init__()
-        self.embeddings = nn.Linear(1, self.embedSize)
+        self.transformerInfo= transformerInfo
+        self.embeddings = nn.Linear(1, transformerInfo.embedSize)
 
         self.layers = nn.ModuleList(
-            [DecoderBlock(self.dropoutRate+i*(.9-self.dropoutRate)/self.decoderLayersNum) for i in range(self.decoderLayersNum)])#kkk numLayers
-        self.outLayer = nn.Linear(self.embedSize, 1)
+            [DecoderBlock(transformerInfo, dropout=transformerInfo.dropoutRate+i*(.9-transformerInfo.dropoutRate)/transformerInfo.decoderLayersNum) for i in range(transformerInfo.decoderLayersNum)])
+        self.outLayer = nn.Linear(transformerInfo.embedSize, 1)
 
-    def forward(self, outputSeq, outputOfEncoder, srcMask, trgMask, maxLength):
+    def forward(self, outputSeq, outputOfEncoder):
         'Decoder'
-        N, outputSeqLength = outputSeq.shape
-        outputSeq = self.embeddings(outputSeq) + self.positionalEmbedding1d(outputSeqLength)
+        outputSeq = self.embeddings(outputSeq.unsqueeze(2)) + self.transformerInfo.decoderPositionalEmbedding
 
         for layer in self.layers:
-            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, srcMask, trgMask)
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.trgMask)
         '#ccc note outputSeq is query, outputOfEncoder is value and key'
 
         outputSeq = self.outLayer(outputSeq)
         return outputSeq
 
-class Transformer(TransformerInfo, ann):
-    def __init__(self):
+class Transformer(ann):
+    def __init__(self, transformerInfo):
         super(Transformer, self).__init__()
 
-        self.encoder = Encoder()
-        self.decoder = Decoder()
-
-    def makeSrcMask(self, src):
-        # srcMask = (src != self.src_pad_idx).unsqueeze(1).unsqueeze(2)#kkk
-        srcMask = torch.ones(src.shape[2]).expand(src.shape[0], 1,1, 1, src.shape[2])
-        # (N, 1, 1, srcLen)
-        return srcMask.to(self.device)
-
-    def makeTrgMask(self, trg):
-        N, trgLen = trg.shape
-        trgMask = torch.tril(torch.ones((trgLen, trgLen))).expand(N, 1, trgLen, trgLen)
-        # trgMask = torch.tril(torch.ones((trgLen, trgLen))).expand(N, 1,c, trg_len, trg_len)
-
-        return trgMask.to(self.device)
+        self.transformerInfo= transformerInfo
+        self.encoder = Encoder(transformerInfo)
+        self.decoder = Decoder(transformerInfo)
 
     def forward(self, src, trg):
         'Transformer'
-        srcMask = self.makeSrcMask(src)
-        trgMask = self.makeTrgMask(trg)
-        encSrc = self.encoder(src, srcMask)
-        out = self.decoder(trg, encSrc, srcMask, trgMask)
+        encSrc = self.encoder(src)
+        out = self.decoder(trg, encSrc)
         return out
+#%%
+if __name__ == "__main__":
+    inpLen, outputLen= 12, 10
+    transformerInfo=TransformerInfo(embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=inpLen, outputLen=outputLen)
+    """#ccc we dont have first prediction; so we add last temporal data from the input to output
+    pay attention to outputLen"""
+    model = Transformer(transformerInfo)
+    
+    x= torch.rand(2,inpLen).to(transformerInfo.device)
+    trg = torch.rand(2,outputLen-1).to(transformerInfo.device)
+    appendedTrg = torch.cat((x[:, -1].unsqueeze(1), trg), dim=1)
+
+    out = model(x, appendedTrg)
+#%%
