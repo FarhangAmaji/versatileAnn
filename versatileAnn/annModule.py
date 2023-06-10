@@ -16,6 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
+    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode']
     def __init__(self):#kkk add comments 
         super(ann, self).__init__()
         self.getInitInpArgs()
@@ -202,8 +203,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
     
     def saveModel(self, bestModel, bestValScore):
-        torch.save({'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
-                    'bestValScore': bestValScore,'evalMode':self.evalMode,'model':bestModel}, self.savePath)
+        dicToSave={'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
+                    'bestValScore': bestValScore,'model':bestModel}
+        dicToSave['modes'] = {mode:getattr(self, mode) for mode in self.modeNames}
+        torch.save(dicToSave, self.savePath)
     
     @classmethod
     def loadModel(cls, savePath):
@@ -212,7 +215,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         classDefinition = globals()[bestModelDic['className']]
         emptyModel = classDefinition(**bestModelDic['inputArgs'])
         emptyModel.load_state_dict(bestModelDic['model'])
-        emptyModel.evalMode=bestModelDic['evalMode']
+        [setattr(emptyModel, mode, bestModelDic['modes'][mode]) for mode in cls.modeNames]
         print('bestValScore:',bestModelDic['bestValScore'])
         return emptyModel
     
@@ -689,49 +692,3 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             
             evalScore /= inputs.shape[0]
             return evalScore
-#%% 
-# # batchEvalInputs, appliedBatchSize
-# if self.dropoutEnsembleMode:
-#     batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
-#     batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
-#     if self.variationalAutoEncoderMode:
-#         batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
-#     batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
-# if not self.variationalAutoEncoderMode:
-#     batchEvalOutputsPred = self.forward(batchEvalInputs)
-# batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
-# if mean:
-#     return batchEvalOutputsPred, mean, logvar
-# return batchEvalOutputsPred, None, None
-# # batchEvalOutputsPred (used in train and eval)
-# if self.variationalAutoEncoderMode:
-#     assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
-#     batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
-#     return batchTrainOutputsPred, mean, logvar
-# else:
-#     return batchTrainOutputsPred, None, None
-# #
-# if self.dropoutEnsembleMode and self.variationalAutoEncoderMode:
-#     assert len(batchTrainOutputsPred) == 3, 'In variationalAutoEncoderMode, you should pass batchTrainOutputsPred, mean, logvar'
-#     batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
-
-#     batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
-#     batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
-#     batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
-
-#     return batchTrainOutputsPred, mean, logvar, batchEvalOutputsPred
-# #%%
-# if self.dropoutEnsembleMode:
-#     predicts = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
-#     predicts = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [inputs] * self.dropoutEnsembleNumSamples)))
-#     if self.variationalAutoEncoderMode:
-#         predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
-#     predicts = predicts.mean(dim=0).unsqueeze(1)
-# else:
-#     if not self.variationalAutoEncoderMode:
-#         predicts = self.forward(inputs)
-#     predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
-
-# if mean:
-#     return predicts, mean, logvar
-# return predicts, None, None
