@@ -47,25 +47,37 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def forward(self, x):
         return x
     
-    def forwardModelForEvalDueToMode(self,batchEvalInputs, appliedBatchSize):
-        if self.dropoutEnsembleMode:
-            batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
-            batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
-            batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
-        if not self.variationalAutoEncoderMode:
-            batchEvalOutputsPred = self.forward(batchEvalInputs)
-        batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
-        if mean:
-            return batchEvalOutputsPred, mean, logvar
-        return batchEvalOutputsPred, None, None
-    
-    def autoEncoderOutputAssign(self,batchTrainOutputsPred):
+    def autoEncoderOutputAssign(self, predicts):
         if self.variationalAutoEncoderMode:
-            assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
-            batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
-            return batchTrainOutputsPred, mean, logvar
+            assert len(predicts) == 3, 'In variationalAutoEncoderMode, you should pass predicts, mean, logvar'
+            predicts, mean, logvar = predicts
+            return predicts, mean, logvar
         else:
-            return batchTrainOutputsPred, None, None
+            return predicts, None, None
+    
+    def forwardModelForEvalDueToMode(self, inputs, appliedBatchSize):
+        mean, logvar = None, None
+        if self.dropoutEnsembleMode:
+            predicts = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
+            if self.variationalAutoEncoderMode:
+                predictsList = [[] for _ in range(3)]
+                for x in [inputs] * self.dropoutEnsembleNumSamples:
+                    output = self.forward(x)
+                    [predictsList[i].append(output[i]) for i in range(3)]
+                predicts, mean, logvar = tuple(torch.stack(predictsList[i]).squeeze().mean(dim=0).unsqueeze(1) for i in range(3))
+            else:
+                predicts = torch.stack(tuple(map(lambda x: self.forward(x), [inputs] * self.dropoutEnsembleNumSamples)))
+                predicts = predicts.squeeze().mean(dim=0).unsqueeze(1)
+        else:
+            predicts = self.forward(inputs)
+            predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
+    
+        return self.getOutputTuple(predicts, mean, logvar)
+    
+    def getOutputTuple(self, predicts, mean, logvar):
+        if mean is not None:
+            return predicts, mean, logvar
+        return predicts, None, None
     
     def autoEncoderAddKlDivergence(self,loss, mean, logvar):
         if self.variationalAutoEncoderMode:
@@ -80,8 +92,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     @dropoutEnsembleMode.setter
     def dropoutEnsembleMode(self, value):
         assert isinstance(value, bool), 'dropoutEnsembleMode should be bool'
-        assert self.variationalAutoEncoderMode==False,'one of variationalAutoEncoder or dropoutEnsemble Modes can be turned on'
         self._dropoutEnsembleMode = value
+        
     
     @property
     def variationalAutoEncoderMode(self):
@@ -92,8 +104,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         assert isinstance(value, bool), 'variationalAutoEncoderMode should be bool'
         self._variationalAutoEncoderMode = value
         if self._variationalAutoEncoderMode:
-            assert self.dropoutEnsembleMode==False,'one of variationalAutoEncoder or dropoutEnsemble Modes can be turned on'
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
+            print('note in variationalAutoEncoderMode u should pass predicts, mean, logvar')
     
     @property
     def evalMode(self):
@@ -141,11 +153,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         for i in range(numOfFbacksNeeded):
             frame_=frame_.f_back
         args, _, _, values = inspect.getargvalues(frame_)
-        "#ccc patience and optimizer's change should not affect that doesnt let the model rerun"
-        excludeInputArgs = ['patience', 'optimizer', 'device']#kkk this part is redundant
-        for eia in excludeInputArgs:
-            if eia in args:
-                args.remove(eia)
         self.inputArgs = {arg: values[arg] for arg in args if arg != 'self'}
         
     @property
@@ -682,3 +689,49 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             
             evalScore /= inputs.shape[0]
             return evalScore
+#%% 
+# # batchEvalInputs, appliedBatchSize
+# if self.dropoutEnsembleMode:
+#     batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
+#     batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
+#     if self.variationalAutoEncoderMode:
+#         batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
+#     batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
+# if not self.variationalAutoEncoderMode:
+#     batchEvalOutputsPred = self.forward(batchEvalInputs)
+# batchEvalOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchEvalOutputsPred)
+# if mean:
+#     return batchEvalOutputsPred, mean, logvar
+# return batchEvalOutputsPred, None, None
+# # batchEvalOutputsPred (used in train and eval)
+# if self.variationalAutoEncoderMode:
+#     assert len(batchTrainOutputsPred)==3,'in variationalAutoEncoderMode u should pass batchTrainOutputsPred, mean, logvar'
+#     batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
+#     return batchTrainOutputsPred, mean, logvar
+# else:
+#     return batchTrainOutputsPred, None, None
+# #
+# if self.dropoutEnsembleMode and self.variationalAutoEncoderMode:
+#     assert len(batchTrainOutputsPred) == 3, 'In variationalAutoEncoderMode, you should pass batchTrainOutputsPred, mean, logvar'
+#     batchTrainOutputsPred, mean, logvar = batchTrainOutputsPred
+
+#     batchEvalOutputsPred = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
+#     batchEvalOutputsPred = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [batchEvalInputs] * self.dropoutEnsembleNumSamples)))
+#     batchEvalOutputsPred = batchEvalOutputsPred.mean(dim=0).unsqueeze(1)
+
+#     return batchTrainOutputsPred, mean, logvar, batchEvalOutputsPred
+# #%%
+# if self.dropoutEnsembleMode:
+#     predicts = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
+#     predicts = torch.stack(tuple(map(lambda x: self.forward(x).squeeze(), [inputs] * self.dropoutEnsembleNumSamples)))
+#     if self.variationalAutoEncoderMode:
+#         predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
+#     predicts = predicts.mean(dim=0).unsqueeze(1)
+# else:
+#     if not self.variationalAutoEncoderMode:
+#         predicts = self.forward(inputs)
+#     predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
+
+# if mean:
+#     return predicts, mean, logvar
+# return predicts, None, None
