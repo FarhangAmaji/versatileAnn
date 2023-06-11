@@ -123,6 +123,88 @@ class multiHeadAttention(nn.Module):
         # N * queryLen * embedSize
 
         return out
+
+class layerNorm2D(nn.Module):
+    def __init__(self, dim1, dim2):
+        super(layerNorm2D, self).__init__()
+        self.layerNorms = nn.ModuleList([nn.LayerNorm(dim2) for _ in range(dim1)])
+        self.dim1= dim1
+    
+    def forward(self, x):
+        for i in range(self.dim1):
+            x[:, :, i] = self.layerNorms[i](x[:, :, i])
+        return x
+
+class encoderBlock(nn.Module):#jjj should be encoder block
+    def __init__(self, transformerInfo, dropout):
+        '#ccc this is used in both encoder and decoder'
+        super(encoderBlock, self).__init__()
+        self.transformerInfo= transformerInfo
+        self.attention = multiHeadAttention(transformerInfo, transformerInfo.inputDim, transformerInfo.inputDim)
+        self.norm1 = layerNorm2D(transformerInfo.inputDim, transformerInfo.embedSize)
+        self.norm2 = layerNorm2D(transformerInfo.inputDim, transformerInfo.embedSize)
+
+        self.feedForward = nn.Sequential(nn.Linear(transformerInfo.inputDim * transformerInfo.embedSize , transformerInfo.forwardExpansion * transformerInfo.inputDim *  transformerInfo.embedSize),
+            nn.LeakyReLU(negative_slope=.05),
+            nn.Linear(transformerInfo.forwardExpansion * transformerInfo.inputDim *  transformerInfo.embedSize, transformerInfo.inputDim * transformerInfo.embedSize))
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, query, key, value, mask=None):#jjj 1 query set is needed only
+        'encoderBlock'
+        attention = self.attention(query, key, value, mask)
+        N, seqLen, dim, _ = query.shape
+
+        # Add skip connection, run through normalization and finally dropout
+        x = self.norm1(attention + query)
+        '#ccc the query is used in skip connection'
+        forward = self.feedForward(x.reshape(N, seqLen, -1)).reshape(N, seqLen, dim, -1)
+        out = self.dropout(self.norm2(forward + x))
+        return out
+    
+
+class Encoder(nn.Module):
+    def __init__(self, transformerInfo):
+        super(Encoder, self).__init__()
+        self.transformerInfo= transformerInfo
+        self.embeddings = nn.Linear(transformerInfo.inputDim, transformerInfo.inputDim * transformerInfo.embedSize)#jjj d to d*embedSize
+        self.layers = nn.ModuleList(
+            [encoderBlock(transformerInfo, dropout=transformerInfo.dropoutRate+i*(1-transformerInfo.dropoutRate)/transformerInfo.encoderLayersNum) for i in range(transformerInfo.encoderLayersNum)])
+
+    def forward(self, x):
+        'Encoder'
+        N, inputSeqLength, inputDim = x.shape
+        x = self.embeddings(x).reshape(N, inputSeqLength, inputDim, self.transformerInfo.embedSize) + self.transformerInfo.encoderPositionalEmbedding#jjj
+            
+        # In the Encoder the query, key, value are all the same, it's in the
+        # decoder this will change. This might look a bit odd in this case.
+        for layer in self.layers:
+            x = layer(x, x, x, None)
+        return x
+
+class multivariateTransformer(ann):
+    def __init__(self, transformerInfo):
+        super(multivariateTransformer, self).__init__()
+
+        self.transformerInfo= transformerInfo
+        self.tsInputWindow=transformerInfo.inpLen
+        self.tsOutputWindow=transformerInfo.outputLen
+        self.timeSeriesMode=True
+        self.transformerMode=True
+        self.encoder = Encoder(transformerInfo)
+        # self.decoder = Decoder(transformerInfo)
+
+    def forward(self, src, trg):
+        'Transformer'
+        assert src.shape[2]==self.transformerInfo.inputDim,f'src dim={src.shape[2]} and transformerInfo inputDim ={self.transformerInfo.inputDim}; u should either change ur inputs or create suitable transformerInfo'#jjj assert dims with transformerInfo.inputDim outputDim
+        assert trg.shape[2]==self.transformerInfo.outputDim,f'trg dim={trg.shape[2]} and transformerInfo outputDim ={self.transformerInfo.outputDim}; u should either change ur targets or create suitable transformerInfo'#jjj assert dims with transformerInfo.inputDim outputDim
+        src=src.to(self.device)
+        trg=trg.to(self.device)
+        encSrc = self.encoder(src)
+        out = self.decoder(trg, encSrc)
+        return out#jjj
+    
+
 #%%
 
 #%%
