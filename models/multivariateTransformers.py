@@ -30,7 +30,7 @@ class TransformerInfo:
         self.trgMask=self.makeTrgMask(outputLen+1)#jjj
     
     def makeTrgMask(self, outputLen):
-        trgMask = torch.tril(torch.ones((outputLen, outputLen)))
+        trgMask = torch.tril(torch.ones((outputLen, outputLen))).unsqueeze(1).unsqueeze(-1)
         return trgMask.to(self.device)
     
     def positionalEmbedding2d(self, maxRows, maxCols):#jjj add shapes and comment
@@ -124,6 +124,7 @@ class multiHeadAttention(nn.Module):
 
         return out
 
+
 class layerNorm2D(nn.Module):
     def __init__(self, dim1, dim2):
         super(layerNorm2D, self).__init__()
@@ -131,27 +132,28 @@ class layerNorm2D(nn.Module):
         self.dim1= dim1
     
     def forward(self, x):
+        normalized=torch.zeros_like(x)
         for i in range(self.dim1):
-            x[:, :, i] = self.layerNorms[i](x[:, :, i])
-        return x
+            normalized[:, :, i] = self.layerNorms[i](x[:, :, i])
+        return normalized
 
-class encoderBlock(nn.Module):#jjj should be encoder block
-    def __init__(self, transformerInfo, dropout):
+class transformerBlock(nn.Module):#jjj should be encoder block
+    def __init__(self, transformerInfo, queryDim, valueDim, dropout):
         '#ccc this is used in both encoder and decoder'
-        super(encoderBlock, self).__init__()
+        super(transformerBlock, self).__init__()
         self.transformerInfo= transformerInfo
-        self.attention = multiHeadAttention(transformerInfo, transformerInfo.inputDim, transformerInfo.inputDim)
-        self.norm1 = layerNorm2D(transformerInfo.inputDim, transformerInfo.embedSize)
-        self.norm2 = layerNorm2D(transformerInfo.inputDim, transformerInfo.embedSize)
+        self.attention = multiHeadAttention(transformerInfo, queryDim, valueDim)
+        self.norm1 = layerNorm2D(queryDim, transformerInfo.embedSize)
+        self.norm2 = layerNorm2D(queryDim, transformerInfo.embedSize)
 
-        self.feedForward = nn.Sequential(nn.Linear(transformerInfo.inputDim * transformerInfo.embedSize , transformerInfo.forwardExpansion * transformerInfo.inputDim *  transformerInfo.embedSize),
+        self.feedForward = nn.Sequential(nn.Linear(queryDim * transformerInfo.embedSize , transformerInfo.forwardExpansion * queryDim *  transformerInfo.embedSize),
             nn.LeakyReLU(negative_slope=.05),
-            nn.Linear(transformerInfo.forwardExpansion * transformerInfo.inputDim *  transformerInfo.embedSize, transformerInfo.inputDim * transformerInfo.embedSize))
+            nn.Linear(transformerInfo.forwardExpansion * queryDim *  transformerInfo.embedSize, queryDim * transformerInfo.embedSize))
 
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, query, key, value, mask=None):#jjj 1 query set is needed only
-        'encoderBlock'
+        'transformerBlock'
         attention = self.attention(query, key, value, mask)
         N, seqLen, dim, _ = query.shape
 
@@ -169,7 +171,7 @@ class Encoder(nn.Module):
         self.transformerInfo= transformerInfo
         self.embeddings = nn.Linear(transformerInfo.inputDim, transformerInfo.inputDim * transformerInfo.embedSize)#jjj d to d*embedSize
         self.layers = nn.ModuleList(
-            [encoderBlock(transformerInfo, dropout=transformerInfo.dropoutRate+i*(1-transformerInfo.dropoutRate)/transformerInfo.encoderLayersNum) for i in range(transformerInfo.encoderLayersNum)])
+            [transformerBlock(transformerInfo, queryDim=transformerInfo.inputDim, valueDim=transformerInfo.inputDim, dropout=transformerInfo.dropoutRate+i*(1-transformerInfo.dropoutRate)/transformerInfo.encoderLayersNum) for i in range(transformerInfo.encoderLayersNum)])
 
     def forward(self, x):
         'Encoder'
@@ -182,6 +184,49 @@ class Encoder(nn.Module):
             x = layer(x, x, x, None)
         return x
 
+class DecoderBlock(nn.Module):
+    def __init__(self, transformerInfo, dropout):
+        super(DecoderBlock, self).__init__()
+        self.transformerInfo= transformerInfo
+        self.norm = layerNorm2D(transformerInfo.outputDim, transformerInfo.embedSize)
+        self.attention = multiHeadAttention(transformerInfo, transformerInfo.outputDim, transformerInfo.outputDim)#jjj
+        self.transformerBlock = transformerBlock(transformerInfo, queryDim=transformerInfo.outputDim, valueDim=transformerInfo.inputDim,dropout=dropout)#jjj
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, query, key, value, trgMask):
+        'DecoderBlock'
+        attention = self.attention(query, query, query, trgMask)
+        query = self.dropout(self.norm(attention + query))
+        out = self.transformerBlock(query, key, value, None)
+        """#ccc note here we pass the mask equal to None the same mask as encoder because the attention table is 
+        outSeqLen*inpSeqLen so no need to prevent future words
+        
+        if it wasnt regression which we dont have empty spaces in our sequence like nlp then we would have assigned
+        negative infinity to the paddings"""
+        return out
+
+class Decoder(nn.Module):
+    def __init__(self, transformerInfo):
+        super(Decoder, self).__init__()
+        self.transformerInfo= transformerInfo
+        self.embeddings = nn.Linear(transformerInfo.outputDim, transformerInfo.outputDim * transformerInfo.embedSize)
+
+        self.layers = nn.ModuleList(
+            [DecoderBlock(transformerInfo, dropout=transformerInfo.dropoutRate+i*(.9-transformerInfo.dropoutRate)/transformerInfo.decoderLayersNum) for i in range(transformerInfo.decoderLayersNum)])
+        self.outLayer = nn.Linear(transformerInfo.outputDim * transformerInfo.embedSize, transformerInfo.outputDim)
+
+    def forward(self, outputSeq, outputOfEncoder):
+        'Decoder'
+        N, outputSeqLength, outputDim = outputSeq.shape
+        outputSeq = self.embeddings(outputSeq).reshape(N, outputSeqLength, outputDim, self.transformerInfo.embedSize) + self.transformerInfo.decoderPositionalEmbedding#jjj
+
+        for layer in self.layers:
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.trgMask)#jjj check mask
+        '#ccc note outputSeq is query, outputOfEncoder is value and key'
+
+        outputSeq = self.outLayer(outputSeq.reshape(N,outputSeqLength,-1))
+        return outputSeq
+
 class multivariateTransformer(ann):
     def __init__(self, transformerInfo):
         super(multivariateTransformer, self).__init__()
@@ -192,7 +237,7 @@ class multivariateTransformer(ann):
         self.timeSeriesMode=True
         self.transformerMode=True
         self.encoder = Encoder(transformerInfo)
-        # self.decoder = Decoder(transformerInfo)
+        self.decoder = Decoder(transformerInfo)
 
     def forward(self, src, trg):
         'Transformer'
@@ -204,6 +249,14 @@ class multivariateTransformer(ann):
         out = self.decoder(trg, encSrc)
         return out#jjj
     
+    def forwardForUnknown(self, src, outputLen):#jjj
+        self.eval()
+        if len(src.shape)==1:
+            src=src.unsqueeze(0)
+        output=src[:,-1].unsqueeze(0)
+        for i in range(outputLen):
+            output=self.forward(src, output)
+        return output
 
 #%%
 
