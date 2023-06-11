@@ -22,11 +22,13 @@ class TransformerInfo:
         self.headDim = embedSize // heads
         assert (self.headDim * heads == embedSize), "Embedding size needs to be divisible by heads number"
 
+        self.inpLen= inpLen
+        self.outputLen= outputLen
         self.encoderLayersNum= encoderLayersNum
         self.decoderLayersNum= decoderLayersNum
         self.encoderPositionalEmbedding=self.positionalEmbedding1d(inpLen)
-        self.decoderPositionalEmbedding=self.positionalEmbedding1d(outputLen)
-        self.trgMask=self.makeTrgMask(outputLen)
+        self.decoderPositionalEmbedding=self.positionalEmbedding1d(outputLen+1)#+1 is for last data from input added to the first of output
+        self.trgMask=self.makeTrgMask(outputLen+1)
     
     def makeTrgMask(self, outputLen):
         trgMask = torch.tril(torch.ones((outputLen, outputLen)))
@@ -213,11 +215,15 @@ class Decoder(nn.Module):
         outputSeq = self.outLayer(outputSeq)
         return outputSeq
 
-class Transformer(ann):
+class univariateTransformer(ann):
     def __init__(self, transformerInfo):
-        super(Transformer, self).__init__()
+        super(univariateTransformer, self).__init__()
 
         self.transformerInfo= transformerInfo
+        self.tsInputWindow=transformerInfo.inpLen
+        self.tsOutputWindow=transformerInfo.outputLen#jjj check for 1 difference
+        self.timeSeriesMode=True
+        self.transformerMode=True
         self.encoder = Encoder(transformerInfo)
         self.decoder = Decoder(transformerInfo)
 
@@ -225,18 +231,7 @@ class Transformer(ann):
         'Transformer'
         encSrc = self.encoder(src)
         out = self.decoder(trg, encSrc)
-        return out
+        return out.squeeze(2)
 #%%
-if __name__ == "__main__":
-    inpLen, outputLen= 12, 10
-    transformerInfo=TransformerInfo(embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=inpLen, outputLen=outputLen)
-    """#ccc we dont have first prediction; so we add last temporal data from the input to output
-    pay attention to outputLen"""
-    model = Transformer(transformerInfo)
-    
-    x= torch.rand(2,inpLen).to(transformerInfo.device)
-    trg = torch.rand(2,outputLen-1).to(transformerInfo.device)
-    appendedTrg = torch.cat((x[:, -1].unsqueeze(1), trg), dim=1)
 
-    out = model(x, appendedTrg)
 #%%

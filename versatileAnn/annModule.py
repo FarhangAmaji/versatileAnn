@@ -16,7 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode']
+    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']#jjj
     def __init__(self):#kkk add comments 
         super(ann, self).__init__()
         self.getInitInpArgs()
@@ -31,11 +31,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.neededDefinitions=None
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
+        self.modelNameDifferentiator = True
         self.evalMode='loss'
         self.variationalAutoEncoderMode=False
         self.dropoutEnsembleMode=False
         self.dropoutEnsembleNumSamples = 100
-        self.modelNameDifferentiator = True
+        self.timeSeriesMode=False#jjj 
+        self.transformerMode=False#jjj
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -56,7 +58,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         else:
             return predicts, None, None
     
-    def forwardModelForEvalDueToMode(self, inputs, appliedBatchSize):
+    def forwardModelForEvalDueToMode(self, inputs, outputs, appliedBatchSize):#jjj give outputs as args
+        'this is used in eval phases'
         mean, logvar = None, None
         if self.dropoutEnsembleMode:
             predicts = torch.zeros((self.dropoutEnsembleNumSamples, appliedBatchSize)).to(self.device)
@@ -70,21 +73,39 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 predicts = torch.stack(tuple(map(lambda x: self.forward(x), [inputs] * self.dropoutEnsembleNumSamples)))
                 predicts = predicts.squeeze().mean(dim=0).unsqueeze(1)
         else:
-            predicts = self.forward(inputs)
+            predicts = self.transformerModeForward(inputs, outputs)#jjj
             predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
     
-        return self.getOutputTuple(predicts, mean, logvar)
-    
-    def getOutputTuple(self, predicts, mean, logvar):
-        if mean is not None:
-            return predicts, mean, logvar
-        return predicts, None, None
+        return predicts, mean, logvar
     
     def autoEncoderAddKlDivergence(self,loss, mean, logvar):
         if self.variationalAutoEncoderMode:
             return loss + self.autoEncoderKlDivergence(mean, logvar)
         else:
             return loss
+    
+    @property
+    def timeSeriesMode(self):
+        return self._timeSeriesMode
+    
+    @timeSeriesMode.setter
+    def timeSeriesMode(self, value):
+        assert isinstance(value, bool), 'timeSeriesMode should be bool'
+        if value:
+            assert getattr(self, 'tsInputWindow') and getattr(self, 'tsOutputWindow'),'with timeSeriesMode u should first introduce tsInputWindow and tsOutputWindow to model'#jjj
+            assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with timeSeriesMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
+            self._timeSeriesMode = value
+    
+    @property
+    def transformerMode(self):
+        return self._transformerMode
+    
+    @transformerMode.setter
+    def transformerMode(self, value):
+        assert isinstance(value, bool), 'transformerMode should be bool'
+        if value:
+            assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with transformerMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
+            self._transformerMode = value
     
     @property
     def dropoutEnsembleMode(self):
@@ -106,7 +127,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self._variationalAutoEncoderMode = value
         if self._variationalAutoEncoderMode:
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
-            print('note in variationalAutoEncoderMode u should pass predicts, mean, logvar')
+            print('tip: in variationalAutoEncoderMode u should pass predicts, mean, logvar')
     
     @property
     def evalMode(self):
@@ -324,10 +345,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return klLoss
     
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
+        if self.timeSeriesMode:#jjj assert reimplementation with time series
+            raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
-        batchInputs = inputs[batchIndexes].to(self.device)
+        batchInputs = inputs[batchIndexes].to(self.device)#kkk add memory or speed priority to have the whole data in gpu or add it here to gpu
         batchOutputs = outputs[batchIndexes].to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize, identifier
     
@@ -447,7 +470,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         bestModelCounter = 1
         
         # Create random indexes for sampling
-        indexes = torch.randperm(trainInputs.shape[0])
+        lenOfIndexes=trainInputs.shape[0]
+        if self.timeSeriesMode:
+            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1#jjj
+        indexes = torch.randperm(lenOfIndexes)
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
     
@@ -469,7 +495,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         return bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion):
+    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs, criterion):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         for epoch in range(numEpochs):
             trainLoss = 0.0
@@ -480,10 +506,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 with torch.no_grad():
                     batchTrainInputs, batchTrainOutputs, appliedBatchSize, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
                 
-                batchTrainOutputsPred = self.forward(batchTrainInputs)
+                batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)#jjj
                 batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                 
-                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)#jjj check how transformer compares
                 loss = self.autoEncoderAddKlDivergence(loss, mean, logvar)
                 loss = self.addRegularizationToLoss(loss)
                 
@@ -507,7 +533,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         workerNum=max(min(maxCpus-4,workerNum),1)
         return workerNum
     
-    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs,criterion, workerNum):
+    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs, criterion, workerNum):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         workerNum=self.workerNumRegularization(workerNum)
         totEpochBatchItersNum=numEpochs*batchIterLen
@@ -551,10 +577,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     identifiers.remove(identifier)
                     readyArgs.pop(0)
                     
-                    batchTrainOutputsPred = self.forward(batchTrainInputs)
+                    batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)#jjj
+                        
                     batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                     
-                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)#jjj check how transformer compares
                     loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
                     loss = self.addRegularizationToLoss(loss)
                     
@@ -607,6 +634,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Return the best model
         return self
     
+    def transformerModeForward(self, inputs, outputs):
+        if self.transformerMode:
+            return self.forward(inputs, outputs)#jjj
+        return self.forward(inputs)
+    
     def activateDropouts(self):
         if self.dropoutEnsembleMode:
             for module in self.modules():
@@ -626,7 +658,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             return evalScore
     
     def getPreEvalStats(self, inputs):
-        indexes = torch.arange(len(inputs))
+        lenOfIndexes=len(inputs)
+        if self.timeSeriesMode:
+            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1#jjj
+        indexes = torch.arange(lenOfIndexes)
         batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
         return indexes, batchIterLen
     
@@ -635,7 +670,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             predicted = torch.argmax(batchEvalOutputsPred, dim=1)
             evalScore += (predicted == batchEvalOutputs).sum().item()
         elif self.evalMode == 'loss':
-            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
+            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)#jjj check how transformer compares
             evalScore += loss.item()
         return evalScore
     
@@ -645,7 +680,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         for i in range(0, batchIterLen):
             batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
             
-            batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, appliedBatchSize)
+            batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
             evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
         
         evalScore /= inputs.shape[0]
@@ -687,7 +722,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 identifiers.remove(identifier)
                 readyArgs.pop(0)
                 
-                batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, appliedBatchSize)
+                batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
                 evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)
             
             evalScore /= inputs.shape[0]
