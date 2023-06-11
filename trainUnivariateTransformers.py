@@ -23,7 +23,7 @@ class ModifiedUnivariateTransformer(univariateTransformer):
 # Set random seed for reproducibility
 torch.manual_seed(42)
 
-inpLen, outputLen= 12, 10
+inpLen, outputLen= 12, 13
 transformerInfo=TransformerInfo(embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=inpLen, outputLen=outputLen)
 """#ccc we dont have first prediction; so we add last temporal data from the input to output
 pay attention to outputLen"""
@@ -46,7 +46,8 @@ criterion = torch.nn.MSELoss()
 model.trainModel(trainInputs, None, testInputs, None, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
 #%% model feedforward for unknown results
 inputOfUnknown=torch.rand(inpLen)
-output=model.forwardForUnknown(inputOfUnknown, outputLen)
+# output=model.forwardForUnknown(inputOfUnknown, outputLen)
+output=model.forwardForUnknownStraight(inputOfUnknown, outputLen)
 
 #%%
 #%%

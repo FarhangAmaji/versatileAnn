@@ -24,7 +24,7 @@ class ModifiedMultivariateTransformer(multivariateTransformer):
 # Set random seed for reproducibility
 torch.manual_seed(42)
 
-inpLen, outputLen= 12, 10
+inpLen, outputLen= 12, 13
 transformerInfo=TransformerInfo(embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=inpLen, outputLen=outputLen, inputDim=5, outputDim=2)
 """#ccc we dont have first prediction; so we add last temporal data from the input to output
 pay attention to outputLen"""
@@ -35,7 +35,7 @@ model = ModifiedMultivariateTransformer(transformerInfo)
 # appendedTrg = torch.cat((x[:, -1].unsqueeze(1), trg), dim=1)
 # out = model(x, appendedTrg)
 #%%
-workerNum=0
+workerNum=8
 
 allSeqLen=1000
 inputs=torch.rand(allSeqLen, transformerInfo.inputDim)
@@ -51,9 +51,11 @@ criterion = torch.nn.MSELoss()
 
 model.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=200, savePath=r'data\bestModels\a1', workerNum=workerNum)
 #%% model feedforward for unknown results
-#kkk model feedforward for unknown results
-
+inputOfUnknown=torch.rand(1,inpLen, transformerInfo.inputDim)
+output=model.forwardForUnknown(inputOfUnknown, outputLen)
+outputStraight=model.forwardForUnknownStraight(inputOfUnknown, outputLen)
 #%%
+
 #%%
 #%%
 #%%

@@ -29,7 +29,6 @@ class TransformerInfo:
         self.encoderPositionalEmbedding=self.positionalEmbedding1d(inpLen)
         self.decoderPositionalEmbedding=self.positionalEmbedding1d(outputLen+1)#+1 is for last data from input added to the first of output
         '#ccc for regression data we dont have startToken like in nlp so we assume that the last input is the first output; therefore we add +1 to outputLen'
-        self.trgMask=self.makeTrgMask(outputLen+1)
     
     def makeTrgMask(self, outputLen):
         trgMask = torch.tril(torch.ones((outputLen, outputLen)))
@@ -207,10 +206,11 @@ class Decoder(nn.Module):
 
     def forward(self, outputSeq, outputOfEncoder):
         'Decoder'
-        outputSeq = self.embeddings(outputSeq.unsqueeze(2)) + self.transformerInfo.decoderPositionalEmbedding
+        outputSeqLength=outputSeq.shape[1]
+        outputSeq = self.embeddings(outputSeq.unsqueeze(2)) + self.transformerInfo.decoderPositionalEmbedding[:outputSeqLength]
 
         for layer in self.layers:
-            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.trgMask)
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.makeTrgMask(outputSeqLength))
         '#ccc note outputSeq is query, outputOfEncoder is value and key'
 
         outputSeq = self.outLayer(outputSeq)
@@ -240,10 +240,21 @@ class univariateTransformer(ann):
         self.eval()
         if len(src.shape)==1:
             src=src.unsqueeze(0)
-        output=src[:,-1].unsqueeze(0)
+        output=src[:,-1].unsqueeze(0).to(self.device)
         for i in range(outputLen):
-            output=self.forward(src, output)
+            newOutput=self.forward(src, output)
+            output=torch.cat([output,newOutput[:,-1].unsqueeze(0)],dim=1)
         return output
+    
+    def forwardForUnknownStraight(self, src, outputLen):#jjj
+        self.eval()
+        if len(src.shape)==1:
+            src=src.unsqueeze(0)
+        src=src.to(self.device)
+        outputs=src[:,-1].unsqueeze(0).to(self.device)
+        outputs=torch.cat([outputs,torch.zeros(1,outputLen).to(self.device)],dim=1)
+        encInps=self.encoder(src)
+        return self.decoder(outputs,encInps)
 #%%
 
 #%%

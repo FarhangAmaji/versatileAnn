@@ -27,7 +27,6 @@ class TransformerInfo:
         self.encoderPositionalEmbedding=self.positionalEmbedding2d(inpLen, inputDim)
         self.decoderPositionalEmbedding=self.positionalEmbedding2d(outputLen+1, outputDim)#+1 is for last data from input added to the first of output
         '#ccc for regression data we dont have startToken like in nlp so we assume 0 of same shape of input is the first output; therefore we add +1 to outputLen'
-        self.trgMask=self.makeTrgMask(outputLen+1)#jjj
     
     def makeTrgMask(self, outputLen):
         trgMask = torch.tril(torch.ones((outputLen, outputLen))).unsqueeze(1).unsqueeze(-1)
@@ -218,10 +217,10 @@ class Decoder(nn.Module):
     def forward(self, outputSeq, outputOfEncoder):
         'Decoder'
         N, outputSeqLength, outputDim = outputSeq.shape
-        outputSeq = self.embeddings(outputSeq).reshape(N, outputSeqLength, outputDim, self.transformerInfo.embedSize) + self.transformerInfo.decoderPositionalEmbedding#jjj
+        outputSeq = self.embeddings(outputSeq).reshape(N, outputSeqLength, outputDim, self.transformerInfo.embedSize) + self.transformerInfo.decoderPositionalEmbedding[:outputSeqLength]#jjj
 
         for layer in self.layers:
-            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.trgMask)#jjj check mask
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.makeTrgMask(outputSeqLength))#jjj check mask
         '#ccc note outputSeq is query, outputOfEncoder is value and key'
 
         outputSeq = self.outLayer(outputSeq.reshape(N,outputSeqLength,-1))
@@ -251,12 +250,19 @@ class multivariateTransformer(ann):
     
     def forwardForUnknown(self, src, outputLen):#jjj
         self.eval()
-        if len(src.shape)==1:
-            src=src.unsqueeze(0)
-        output=src[:,-1].unsqueeze(0)
+        output=torch.zeros(1, 1, self.transformerInfo.outputDim).to(self.device)
         for i in range(outputLen):
-            output=self.forward(src, output)
-        return output
+            newOutput=self.forward(src, output)#kkk is this correct
+            output=torch.cat([output,newOutput[:,-1].unsqueeze(0)],dim=1)#kkk find a pair of input and output with known and pass it to the trained model: doesnt reproduce the same results
+        return output#kkk if I could get same results; also correct forwardForUnknown for univariate
+    
+    def forwardForUnknownStraight(self, src, outputLen):#jjj
+        self.eval()
+        src=src.to(self.device)
+        N, _, _ = src.shape
+        encInps=self.encoder(src)
+        outputs=torch.zeros(N,outputLen,self.transformerInfo.outputDim).to(self.device)
+        return self.decoder(outputs,encInps)
 
 #%%
 
