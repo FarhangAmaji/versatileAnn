@@ -242,8 +242,8 @@ class univariateTransformer(ann):
             src=src.unsqueeze(0)
         output=src[:,-1].unsqueeze(0)
         for i in range(outputLen):
-            output=model.forward(inputOfUnknown, output)
-        return out
+            output=self.forward(src, output)
+        return output
 #%%
 
 #%%
