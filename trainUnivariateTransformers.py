@@ -1,5 +1,5 @@
 #%% imports
-# trainAnn.py
+# trainUnivariateTransformers.py
 import os
 baseFolder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(baseFolder)
@@ -14,8 +14,8 @@ class ModifiedUnivariateTransformer(univariateTransformer):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
 
-        inputsSlices = [inputs[idx:idx + self.tsInputWindow] for idx in batchIndexes]#jjj
-        outputsSlices = [inputs[idx + self.tsInputWindow-1:idx + self.tsInputWindow+self.tsOutputWindow] for idx in batchIndexes]#jjj
+        inputsSlices = [inputs[idx:idx + self.tsInputWindow] for idx in batchIndexes]
+        outputsSlices = [inputs[idx + self.tsInputWindow-1:idx + self.tsInputWindow+self.tsOutputWindow] for idx in batchIndexes]
         batchInputs = torch.stack(inputsSlices).to(self.device)
         batchOutputs = torch.stack(outputsSlices).to(self.device)
         return batchInputs, batchOutputs, appliedBatchSize, identifier
@@ -43,8 +43,11 @@ testInputs =totalData[int(trainTowholeRatio*len(totalData)):]
 
 criterion = torch.nn.MSELoss()
 
-model.trainModel(trainInputs, None, testInputs, None, criterion, numEpochs=200, savePath=r'data\bestModels\a1', workerNum=workerNum)
-#%%
+model.trainModel(trainInputs, None, testInputs, None, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
+#%% model feedforward for unknown results
+inputOfUnknown=torch.rand(inpLen)
+output=model.forwardForUnknown(inputOfUnknown, outputLen)
+
 #%%
 #%%
 #%%

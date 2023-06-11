@@ -28,6 +28,7 @@ class TransformerInfo:
         self.decoderLayersNum= decoderLayersNum
         self.encoderPositionalEmbedding=self.positionalEmbedding1d(inpLen)
         self.decoderPositionalEmbedding=self.positionalEmbedding1d(outputLen+1)#+1 is for last data from input added to the first of output
+        '#ccc for regression data we dont have startToken like in nlp so we assume that the last input is the first output; therefore we add +1 to outputLen'
         self.trgMask=self.makeTrgMask(outputLen+1)
     
     def makeTrgMask(self, outputLen):
@@ -37,8 +38,8 @@ class TransformerInfo:
     def positionalEmbedding1d(self, maxRows):
         even_i = torch.arange(0, self.embedSize, 2).float()# shape: embedSize//2
         denominator = torch.pow(10000, even_i/self.embedSize)
-        position = (torch.arange(maxRows)
-                          .reshape(maxRows, 1))
+        position = (torch.arange(maxRows).reshape(maxRows, 1))
+                          
         even_PE = torch.sin(position / denominator)# shape: maxLen * embedSize//2; each row is for a position
         odd_PE = torch.cos(position / denominator)
         stacked = torch.stack([even_PE, odd_PE], dim=2)# shape: maxLen * embedSize//2 * 2
@@ -221,7 +222,7 @@ class univariateTransformer(ann):
 
         self.transformerInfo= transformerInfo
         self.tsInputWindow=transformerInfo.inpLen
-        self.tsOutputWindow=transformerInfo.outputLen#jjj check for 1 difference
+        self.tsOutputWindow=transformerInfo.outputLen
         self.timeSeriesMode=True
         self.transformerMode=True
         self.encoder = Encoder(transformerInfo)
@@ -229,9 +230,20 @@ class univariateTransformer(ann):
 
     def forward(self, src, trg):
         'Transformer'
+        src=src.to(self.device)
+        trg=trg.to(self.device)
         encSrc = self.encoder(src)
         out = self.decoder(trg, encSrc)
         return out.squeeze(2)
+    
+    def forwardForUnknown(self, src, outputLen):
+        self.eval()
+        if len(src.shape)==1:
+            src=src.unsqueeze(0)
+        output=src[:,-1].unsqueeze(0)
+        for i in range(outputLen):
+            output=model.forward(inputOfUnknown, output)
+        return out
 #%%
 
 #%%

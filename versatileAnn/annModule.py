@@ -16,7 +16,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']#jjj
+    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']
     def __init__(self):#kkk add comments 
         super(ann, self).__init__()
         self.getInitInpArgs()
@@ -36,8 +36,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.variationalAutoEncoderMode=False
         self.dropoutEnsembleMode=False
         self.dropoutEnsembleNumSamples = 100
-        self.timeSeriesMode=False#jjj 
-        self.transformerMode=False#jjj
+        self.timeSeriesMode=False
+        self.transformerMode=False
         
     def __post_init__(self):
         '# ccc this is ran after child class constructor'
@@ -58,7 +58,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         else:
             return predicts, None, None
     
-    def forwardModelForEvalDueToMode(self, inputs, outputs, appliedBatchSize):#jjj give outputs as args
+    def forwardModelForEvalDueToMode(self, inputs, outputs, appliedBatchSize):
         'this is used in eval phases'
         mean, logvar = None, None
         if self.dropoutEnsembleMode:
@@ -73,7 +73,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 predicts = torch.stack(tuple(map(lambda x: self.forward(x), [inputs] * self.dropoutEnsembleNumSamples)))
                 predicts = predicts.squeeze().mean(dim=0).unsqueeze(1)
         else:
-            predicts = self.transformerModeForward(inputs, outputs)#jjj
+            predicts = self.transformerModeForward(inputs, outputs)
             predicts, mean, logvar = self.autoEncoderOutputAssign(predicts)
     
         return predicts, mean, logvar
@@ -92,7 +92,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def timeSeriesMode(self, value):
         assert isinstance(value, bool), 'timeSeriesMode should be bool'
         if value:
-            assert getattr(self, 'tsInputWindow') and getattr(self, 'tsOutputWindow'),'with timeSeriesMode u should first introduce tsInputWindow and tsOutputWindow to model'#jjj
+            assert getattr(self, 'tsInputWindow') and getattr(self, 'tsOutputWindow'),'with timeSeriesMode u should first introduce tsInputWindow and tsOutputWindow to model'
             assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with timeSeriesMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
             self._timeSeriesMode = value
     
@@ -345,7 +345,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return klLoss
     
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
-        if self.timeSeriesMode:#jjj assert reimplementation with time series
+        if self.timeSeriesMode:
             raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
@@ -472,7 +472,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Create random indexes for sampling
         lenOfIndexes=trainInputs.shape[0]
         if self.timeSeriesMode:
-            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1#jjj
+            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1
         indexes = torch.randperm(lenOfIndexes)
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
@@ -506,10 +506,10 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 with torch.no_grad():
                     batchTrainInputs, batchTrainOutputs, appliedBatchSize, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
                 
-                batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)#jjj
+                batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)
                 batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                 
-                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)#jjj check how transformer compares
+                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
                 loss = self.autoEncoderAddKlDivergence(loss, mean, logvar)
                 loss = self.addRegularizationToLoss(loss)
                 
@@ -577,11 +577,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                     identifiers.remove(identifier)
                     readyArgs.pop(0)
                     
-                    batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)#jjj
+                    batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)
                         
                     batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                     
-                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)#jjj check how transformer compares
+                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
                     loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
                     loss = self.addRegularizationToLoss(loss)
                     
@@ -636,7 +636,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def transformerModeForward(self, inputs, outputs):
         if self.transformerMode:
-            return self.forward(inputs, outputs)#jjj
+            return self.forward(inputs, outputs)
         return self.forward(inputs)
     
     def activateDropouts(self):
@@ -660,7 +660,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def getPreEvalStats(self, inputs):
         lenOfIndexes=len(inputs)
         if self.timeSeriesMode:
-            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1#jjj
+            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1
         indexes = torch.arange(lenOfIndexes)
         batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
         return indexes, batchIterLen
@@ -670,7 +670,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             predicted = torch.argmax(batchEvalOutputsPred, dim=1)
             evalScore += (predicted == batchEvalOutputs).sum().item()
         elif self.evalMode == 'loss':
-            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)#jjj check how transformer compares
+            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
             evalScore += loss.item()
         return evalScore
     
