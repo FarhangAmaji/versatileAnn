@@ -9,6 +9,8 @@ import concurrent.futures
 from .utils import randomIdFunc
 from .layers.customLayers import CustomLayer
 
+#kkk make a module to copy trained models weights to raw model with same architecture
+
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
@@ -346,7 +348,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         if self.timeSeriesMode:
-            raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
+            raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")#kkk add check to device if the output is not in the device(ofc it would give the error itself why should I make an error)
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
@@ -521,7 +523,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             trainLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
             
-            valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+            valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')#kkk if we dont have valinputs we dont do eval here
             print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
             
             bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
