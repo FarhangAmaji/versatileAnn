@@ -31,3 +31,9 @@ class nBeats(ann):
                 forecast = forecast + f
         return backcast, forecast
     
+    def __str__(self):
+        stack_str = ', '.join(str(stack_) for stack_ in self.stacks)
+        return f'nBeats(stacks=[{stack_str}], backcastLength={self.backcastLength}, forecastLength={self.forecastLength})'
+    
+    def __repr__(self):
+        return self.__str__()

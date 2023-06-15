@@ -52,7 +52,10 @@ class Block(nn.Module):#kkk check args
         block_type = type(self).__name__
         return f'{block_type}(units={self.units}, thetasDim={self.thetasDim}, ' \
                f'backcastLength={self.backcastLength}, forecastLength={self.forecastLength}, ' \
-               f'shareThetas={self.shareThetas}) at @{id(self)}'
+               f'shareThetas={self.shareThetas}\nlayers={self._modules}) at @{id(self)}\n\n'
+               
+    def __repr__(self):
+        return self.__str__()
 
 class SeasonalityBlock(Block):
     def __init__(self, units, thetasDim, shareThetas=True, harmonicsNum=None):#yyy thetasDim==forecastLength or harmonicsNum
@@ -129,6 +132,13 @@ class stack(nn.Module):
             assert isinstance(block, Block),'blocks should be instance of Block class'
             assert not type(block) == Block,'blocks should be instance of children of Block class and not itself'
         self.blocks=blocks
+        
+    def __str__(self):
+        blocks_str = ', '.join(str(block) for block in self.blocks)
+        return f'stack(blocks=[{blocks_str}])'
+    
+    def __repr__(self):
+        return self.__str__()
     
 class stackWithSharedWeights(stack):
     def __init__(self, block, stackNumOfBlocks):
