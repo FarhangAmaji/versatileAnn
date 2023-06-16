@@ -73,17 +73,17 @@ class SeasonalityBlock(Block):
     def seasonalityModel(self, thetas, linspace):
         p = thetas.size()[-1]
         p1, p2 = (p // 2, p // 2) if p % 2 == 0 else (p // 2, p // 2 + 1)
-        s1 = torch.tensor(np.array([np.cos(2 * np.pi * i * linspace) for i in range(p1)])).float()#shape: forecastLen//2(+1) * forecastLen # H/2-1
-        s2 = torch.tensor(np.array([np.sin(2 * np.pi * i * linspace) for i in range(p2)])).float()
+        s1 = torch.tensor(np.array([np.cos(2 * np.pi * i * linspace) for i in range(p1)])).float().to(self.device)#shape: forecastLen//2(+1) * forecastLen # H/2-1
+        s2 = torch.tensor(np.array([np.sin(2 * np.pi * i * linspace) for i in range(p2)])).float().to(self.device)
         S = torch.cat([s1, s2])
         return thetas.mm(S)
     
     def forward(self, x):
-        x = super(SeasonalityBlock, self).forward(x)
+        x = super(SeasonalityBlock, self).forward(x) # N * units
         thetaBackcastFcX=self.thetaBackcastFc(x)
         assert thetaBackcastFcX.size()[-1] <= thetaBackcastFcX.shape[1], 'thetasDim is too big.'
-        backcast = self.seasonalityModel(thetaBackcastFcX, self.backcastLinspace)
-        forecast = self.seasonalityModel(self.thetaForecastFc(x), self.forecastLinspace)
+        backcast = self.seasonalityModel(thetaBackcastFcX, self.backcastLinspace)# N * backcastLen # self.thetaBackcastFc(x) shape: N * thetasDim
+        forecast = self.seasonalityModel(self.thetaForecastFc(x), self.forecastLinspace)# N * forecastLen # self.thetaForecastFc(x) shape: N * thetasDim
         return backcast, forecast
 
 class TrendBlock(Block):
@@ -94,13 +94,13 @@ class TrendBlock(Block):
 
     def trendModel(self, thetas, linspace):
         p = thetas.size()[-1]
-        T = torch.tensor(np.array([linspace ** i for i in range(p)])).float()
+        T = torch.tensor(np.array([linspace ** i for i in range(p)])).float().to(self.device)
         return thetas.mm(T)
     
     def forward(self, x):
-        x = super(TrendBlock, self).forward(x)
-        backcast = self.trendModel(self.thetaBackcastFc(x), self.backcastLinspace)
-        forecast = self.trendModel(self.thetaForecastFc(x), self.forecastLinspace)
+        x = super(TrendBlock, self).forward(x) # N * units
+        backcast = self.trendModel(self.thetaBackcastFc(x), self.backcastLinspace)# N * backcastLen # self.thetaBackcastFc(x) shape: N * thetasDim
+        forecast = self.trendModel(self.thetaForecastFc(x), self.forecastLinspace)# N * forecastLen # self.thetaForecastFc(x) shape: N * thetasDim
         return backcast, forecast
 
 class GenericBlock(Block):
@@ -116,13 +116,13 @@ class GenericBlock(Block):
 
     def forward(self, x):
         # no constraint for generic arch.
-        x = super(GenericBlock, self).forward(x)
+        x = super(GenericBlock, self).forward(x) # N * units
 
-        theta_b = self.thetaBackcastFc(x)
-        theta_f = self.thetaForecastFc(x)
+        theta_b = self.thetaBackcastFc(x)# N * backcastLen
+        theta_f = self.thetaForecastFc(x)# N * forecastLen
 
-        backcast = self.backcastFc(theta_b)  # generic. 3.3.
-        forecast = self.forecastFc(theta_f)  # generic. 3.3.
+        backcast = self.backcastFc(theta_b)# N * backcastLen
+        forecast = self.forecastFc(theta_f)# N * forecastLen
 
         return backcast, forecast
 
