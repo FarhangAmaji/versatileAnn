@@ -19,8 +19,27 @@ class nBeats(ann):
         self.forecastLength = forecastLength
         self.backcastLength = backcastLength
         self.stacks = stacks
-        [block.postInit(backcastLength=backcastLength, forecastLength=forecastLength) for stack_ in self.stacks for block in stack_.blocks]
-
+        
+        self.postInitForBlocks(backcastLength, forecastLength)
+        self.addBlockParametersToModel()
+        
+        self.tsInputWindow=backcastLength
+        self.tsOutputWindow=forecastLength
+        self.timeSeriesMode=True
+        self.transformerMode=True
+    
+    def postInitForBlocks(self, backcastLength, forecastLength):
+        for stack_ in self.stacks:
+            for block in stack_.blocks:
+                block.postInit(backcastLength=backcastLength, forecastLength=forecastLength)
+        
+    def addBlockParametersToModel(self):
+        self.parameters = []
+        for stack_ in self.stacks:
+            for block in stack_.blocks:
+                self.parameters.extend(block.parameters())
+        self.parameters = torch.nn.ParameterList(self.parameters)
+    
     def forward(self, backcast):
         backcast = squeeze_last_dim(backcast)#kkk add to check only univariate
         forecast = torch.zeros(size=(backcast.size()[0], self.forecastLength,))  # maybe batch size here.

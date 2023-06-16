@@ -9,7 +9,7 @@ from torch import nn
 import numpy as np
 #%% define model
 #kkk correct comments
-class Block(nn.Module):#kkk check args
+class Block(nn.Module):
     def __init__(self, units, thetasDim, shareThetas=False, harmonicsNum=None):
         super(Block, self).__init__()
         if isinstance(self, TrendBlock):
@@ -62,7 +62,7 @@ class SeasonalityBlock(Block):
         self.harmonicsNum=harmonicsNum
         
         if not shareThetas:
-            print('for SeasonalityBlock its recommended to make shareThetas=True')#kkk for SeasonalityBlock should pass forecastLength or harmonicsNum for thetasDim
+            print('for SeasonalityBlock its recommended to make shareThetas=True')
         super(SeasonalityBlock, self).__init__(units, thetasDim, shareThetas, harmonicsNum)
     
     def postInit(self, backcastLength=10, forecastLength=5):
@@ -72,7 +72,6 @@ class SeasonalityBlock(Block):
     
     def seasonalityModel(self, thetas, linspace):
         p = thetas.size()[-1]
-        assert p <= thetas.shape[1], 'thetasDim is too big.'#kkk do assertion sooner in forward
         p1, p2 = (p // 2, p // 2) if p % 2 == 0 else (p // 2, p // 2 + 1)
         s1 = torch.tensor(np.array([np.cos(2 * np.pi * i * linspace) for i in range(p1)])).float()#shape: forecastLen//2(+1) * forecastLen # H/2-1
         s2 = torch.tensor(np.array([np.sin(2 * np.pi * i * linspace) for i in range(p2)])).float()
@@ -81,7 +80,9 @@ class SeasonalityBlock(Block):
     
     def forward(self, x):
         x = super(SeasonalityBlock, self).forward(x)
-        backcast = self.seasonalityModel(self.thetaBackcastFc(x), self.backcastLinspace)
+        thetaBackcastFcX=self.thetaBackcastFc(x)
+        assert thetaBackcastFcX.size()[-1] <= thetaBackcastFcX.shape[1], 'thetasDim is too big.'
+        backcast = self.seasonalityModel(thetaBackcastFcX, self.backcastLinspace)
         forecast = self.seasonalityModel(self.thetaForecastFc(x), self.forecastLinspace)
         return backcast, forecast
 
