@@ -10,7 +10,7 @@ from .utils import randomIdFunc
 from .layers.customLayers import CustomLayer
 
 #kkk make a module to copy trained models weights to raw model with same architecture
-
+#kkk add weight inits orthogonal he_uniform he_normal glorot_uniform glorot_normal lecun_normal
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
@@ -96,7 +96,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         if value:
             assert getattr(self, 'tsInputWindow') and getattr(self, 'tsOutputWindow'),'with timeSeriesMode u should first introduce tsInputWindow and tsOutputWindow to model'
             assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with timeSeriesMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
-            self._timeSeriesMode = value
+        self._timeSeriesMode = value
     
     @property
     def transformerMode(self):
@@ -107,7 +107,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         assert isinstance(value, bool), 'transformerMode should be bool'
         if value:
             assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with transformerMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
-            self._transformerMode = value
+        self._transformerMode = value
     
     @property
     def dropoutEnsembleMode(self):
@@ -127,7 +127,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def variationalAutoEncoderMode(self, value):
         assert isinstance(value, bool), 'variationalAutoEncoderMode should be bool'
         self._variationalAutoEncoderMode = value
-        if self._variationalAutoEncoderMode:
+        if value:
             self.autoEncoderKlDivergence = ann.klDivergenceNormalDistributionLoss
             print('tip: in variationalAutoEncoderMode u should pass predicts, mean, logvar')
     
@@ -137,12 +137,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     @evalMode.setter
     def evalMode(self, value):
-        assert value in ['loss','accuracy'],f"{self.evalMode} must be either 'loss' or 'accuracy'"
+        assert value in ['loss','accuracy','noEval'],f"{self.evalMode} must be either 'loss' or 'accuracy' or 'noEval'"
         self._evalMode=value
         if value=='loss':
             self.evalCompareFunc=lambda valScore, bestValScore: valScore< bestValScore
         elif value=='accuracy':
             self.evalCompareFunc=lambda valScore, bestValScore: valScore> bestValScore
+        elif value=='noEval':
+            self.evalCompareFunc=lambda valScore, bestValScore: True
     
     @property
     def device(self):
@@ -201,6 +203,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def havingOptimizerCheck(self):
         self.tryToSetDefaultOptimizerIfItsNotSet()
         assert isinstance(self.optimizer, optim.Optimizer), "model's optimizer is not defined"
+    
     @property
     def lr(self):
         return self.optimizer.param_groups[0]['lr']
@@ -348,7 +351,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
         if self.timeSeriesMode:
-            raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")#kkk add check to device if the output is not in the device(ofc it would give the error itself why should I make an error)
+            raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
@@ -474,7 +477,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Create random indexes for sampling
         lenOfIndexes=trainInputs.shape[0]
         if self.timeSeriesMode:
-            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1
+            lenOfIndexes += -(self.tsInputWindow+self.tsOutputWindow) + 1
         indexes = torch.randperm(lenOfIndexes)
         batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
@@ -497,7 +500,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         return bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs, criterion):
+    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs, valInputs, valOutputs, criterion):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         for epoch in range(numEpochs):
             trainLoss = 0.0
@@ -523,8 +526,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             trainLoss = trainLoss / len(trainInputs)
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
             
-            valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')#kkk if we dont have valinputs we dont do eval here
-            print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
+            iterPrint=f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}"
+            if self.evalMode!= 'noEval':
+                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+                iterPrint += f', evalScore:{valScore}'
+            print(iterPrint)
             
             bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel, bestValScore
@@ -595,8 +601,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 trainLoss = trainLoss / len(trainInputs)
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
                 
-                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum)
-                print(f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}, evalScore:{valScore}")
+                iterPrint=f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}"
+                if self.evalMode!= 'noEval':
+                    valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum)
+                    iterPrint += f', evalScore:{valScore}'
+                print(iterPrint)
                 
                 bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel, bestValScore
@@ -618,6 +627,9 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         if not self.neededDefinitions:
             self.neededDefinitions=self.getAllNeededDefinitions(self)
+        
+        if valInputs is None or valOutputs is None:
+            self.evalMode='noEval'
         
         self.train()
         if workerNum:
