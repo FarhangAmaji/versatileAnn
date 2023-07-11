@@ -2,7 +2,7 @@
 # models\nbeats_blocks.py
 import sys
 import os
-parentFolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+parentFolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))#kkk is this needed
 sys.path.append(parentFolder)
 import torch
 from torch import nn
@@ -16,6 +16,7 @@ class Block(nn.Module):
             assert thetasDim <= 4, 'thetasDim for TrendBlock must be <=4'
         if harmonicsNum:
             assert isinstance(self, SeasonalityBlock),'only SeasonalityBlock can have harmonicsNum'
+            assert isinstance(harmonicsNum, int),'harmonicsNum should be either None or int'
         self.units = units
         self.thetasDim = thetasDim
         self.shareThetas = shareThetas#yyy what does this do: like rnn there is only 1 layer for backcast and forecast final layer
@@ -50,9 +51,12 @@ class Block(nn.Module):
 
     def __str__(self):
         block_type = type(self).__name__
-        return f'{block_type}(units={self.units}, thetasDim={self.thetasDim}, ' \
-               f'backcastLength={self.backcastLength}, forecastLength={self.forecastLength}, ' \
-               f'shareThetas={self.shareThetas}\nlayers={self._modules}) at @{id(self)}\n\n'
+        rep=f'{block_type}(units={self.units}, thetasDim={self.thetasDim},'
+        if hasattr(self, 'backcastLength'):
+            rep+= f' backcastLength={self.backcastLength},'
+        if hasattr(self, 'forecastLength'):
+            rep+= f' forecastLength={self.forecastLength},'
+        return rep + f' shareThetas={self.shareThetas}\nlayers={self._modules}) at @{id(self)}\n\n'
                
     def __repr__(self):
         return self.__str__()
@@ -129,11 +133,14 @@ class GenericBlock(Block):
 class stack(nn.Module):
     def __init__(self, blocks):
         super(stack, self).__init__()
+        assert isinstance(blocks, list) or isinstance(blocks, nn.ModuleList),'blocks should have either list or nn.ModuleList'
         for block in blocks:
             assert isinstance(block, Block),'blocks should be instance of Block class'
             assert not type(block) == Block,'blocks should be instance of children of Block class and not itself'
-        self.blocks=blocks
-        
+        if isinstance(blocks, list):
+            self.blocks = nn.ModuleList(blocks)
+        else:
+            self.blocks = blocks
     def __str__(self):
         blocks_str = ', '.join(str(block) for block in self.blocks)
         return f'stack(blocks=[{blocks_str}])'

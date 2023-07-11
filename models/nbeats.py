@@ -18,10 +18,9 @@ class nBeats(ann):
         assert isinstance(stacks, list) and all(isinstance(element, stack) for element in stacks),'all elements in stacks argument should be from class stack'
         self.forecastLength = forecastLength
         self.backcastLength = backcastLength
-        self.stacks = stacks
+        self.stacks= torch.nn.ModuleList(stacks)
         
         self.postInitForBlocks(backcastLength, forecastLength)
-        self.addBlockParametersToModel()
         
         self.tsInputWindow=backcastLength
         self.tsOutputWindow=forecastLength
@@ -34,14 +33,6 @@ class nBeats(ann):
                 block.postInit(backcastLength=backcastLength, forecastLength=forecastLength)
                 block.device=self.device
         
-    def addBlockParametersToModel(self):
-        self.parameters = []
-        for stack_ in self.stacks:
-            for block in stack_.blocks:
-                self.parameters.extend(block.parameters())
-        self.parameters = torch.nn.ParameterList(self.parameters)
-    
-    
     def isBackcastUnivariate(self, backcast):
         if self.isItUnivariate:
             return
