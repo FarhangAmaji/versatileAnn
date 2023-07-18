@@ -9,6 +9,7 @@ import concurrent.futures
 from .utils import randomIdFunc
 from .layers.customLayers import CustomLayer
 
+#kkk check all dropoutRates in repo; I thought p==1 means it would pass all but it means it would zero out
 #kkk make a module to copy trained models weights to raw model with same architecture
 #kkk add weight inits orthogonal he_uniform he_normal glorot_uniform glorot_normal lecun_normal
 class PostInitCaller(type):
@@ -94,7 +95,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def timeSeriesMode(self, value):
         assert isinstance(value, bool), 'timeSeriesMode should be bool'
         if value:
-            assert getattr(self, 'tsInputWindow') and getattr(self, 'tsOutputWindow'),'with timeSeriesMode u should first introduce tsInputWindow and tsOutputWindow to model'
+            assert getattr(self, 'backcastLen') and getattr(self, 'forecastLen'),'with timeSeriesMode u should first introduce backcastLen and forecastLen to model'
             assert not (self.dropoutEnsembleMode or self.variationalAutoEncoderMode),'with timeSeriesMode the dropoutEnsembleMode and variationalAutoEncoderMode should be off'
         self._timeSeriesMode = value
     
@@ -349,7 +350,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
         return klLoss
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
+    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
         if self.timeSeriesMode:
             raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
@@ -357,7 +358,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         batchInputs = inputs[batchIndexes].to(self.device)#kkk add memory or speed priority to have the whole data in gpu or add it here to gpu
         batchOutputs = outputs[batchIndexes].to(self.device)
-        return batchInputs, batchOutputs, appliedBatchSize, identifier
+        outPutMask=None
+        return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
+    
+    def batchTrainDatapreparation(self, *args, **kwargs):
+        return self.batchDatapreparation(*args, **kwargs)
+    
+    def batchEvalDatapreparation(self, *args, **kwargs):
+        return self.batchDatapreparation(*args, **kwargs)
     
     # Get all definitions needed to create an instance
     def getAllNeededDefinitions(self,obj):#kkk add metaclass, function and classmethod and methods of class 
@@ -465,11 +473,18 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
 
         return classDefinitions
     
+    def squeezeLastDimIf1(self, tensor):
+        if tensor.shape[-1]==1:
+            tensor = tensor.squeeze(-1)
+        return tensor
+    
     def getPreTrainStats(self, trainInputs):
         if self.evalMode == 'accuracy':
             bestValScore = 0
         elif self.evalMode == 'loss':
             bestValScore = float('inf')
+        elif self.evalMode == 'noEval':
+            bestValScore = 0
         patienceCounter = 0
         bestModel = None
         bestModelCounter = 1
@@ -477,12 +492,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         # Create random indexes for sampling
         lenOfIndexes=trainInputs.shape[0]
         if self.timeSeriesMode:
-            lenOfIndexes += -(self.tsInputWindow+self.tsOutputWindow) + 1
-        indexes = torch.randperm(lenOfIndexes)
-        batchIterLen = len(trainInputs)//self.batchSize if len(trainInputs) % self.batchSize == 0 else len(trainInputs)//self.batchSize + 1
+            lenOfIndexes += -(self.backcastLen+self.forecastLen) + 1
+        indexes = torch.randperm(lenOfIndexes).tolist()
+        batchIterLen = len(indexes)//self.batchSize
+        batchIterLen += 0 if len(indexes) % self.batchSize == 0 else  1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def checkPatience(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):
+    def checkPatienceAndSaveModel(self, valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter):
         if self.evalCompareFunc(valScore, bestValScore):
             bestValScore = valScore
             patienceCounter = 0
@@ -500,7 +516,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         return bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs, valInputs, valOutputs, criterion):
+    def maskedLoss(self, criterion, batchTrainOutputsPred, batchTrainOutputs, outPutMask):
+        if outPutMask is not None:
+            batchTrainOutputsPred = batchTrainOutputsPred * outPutMask
+            batchTrainOutputs = batchTrainOutputs * outPutMask
+        loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+        return loss
+    
+    def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs, valInputs, valOutputs, criterion, externalKwargs=None):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         for epoch in range(numEpochs):
             trainLoss = 0.0
@@ -509,12 +532,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 self.optimizer.zero_grad()
                 
                 with torch.no_grad():
-                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize)
+                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, outPutMask, _ = self.batchTrainDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize, identifier=None, externalKwargs=externalKwargs)
                 
                 batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)
                 batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                 
-                loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                loss = self.maskedLoss(criterion, batchTrainOutputsPred, batchTrainOutputs, outPutMask)
                 loss = self.autoEncoderAddKlDivergence(loss, mean, logvar)
                 loss = self.addRegularizationToLoss(loss)
                 
@@ -530,9 +553,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             if self.evalMode!= 'noEval':
                 valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
                 iterPrint += f', evalScore:{valScore}'
+            else:
+                valScore = 0
             print(iterPrint)
             
-            bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
+            bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatienceAndSaveModel(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel, bestValScore
     
     def workerNumRegularization(self,workerNum):
@@ -541,7 +566,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         workerNum=max(min(maxCpus-4,workerNum),1)
         return workerNum
     
-    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs, criterion, workerNum):
+    def multiProcessTrainModel(self,numEpochs,trainInputs, trainOutputs,valInputs, valOutputs, criterion, workerNum, externalKwargs=None):
         indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter = self.getPreTrainStats(trainInputs)
         workerNum=self.workerNumRegularization(workerNum)
         totEpochBatchItersNum=numEpochs*batchIterLen
@@ -564,12 +589,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                                 if idIdx2 in identifiers:
                                     continue
                                 if len(parallelInputArgs)<workerNum:
-                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2])
+                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2, externalKwargs])
                                     identifiers.append(idIdx2)
                                 else:
                                     break
                             for args in parallelInputArgs:
-                                future = executor.submit(self.batchDatapreparation, *args)
+                                future = executor.submit(self.batchTrainDatapreparation, *args)
                                 futures.append(future)
     
                     # Wait until at least one future is completed
@@ -577,11 +602,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         while futures:
                             result = futures[0].result()
                             readyArgs.append(result)
-                            futures.pop(0)#
+                            futures.pop(0)
                         continue
                     self.optimizer.zero_grad()
                     
-                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, identifier = readyArgs[0]
+                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, outPutMask, identifier = readyArgs[0]
                     identifiers.remove(identifier)
                     readyArgs.pop(0)
                     
@@ -589,7 +614,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         
                     batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
                     
-                    loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+                    loss = self.maskedLoss(criterion, batchTrainOutputsPred, batchTrainOutputs, outPutMask)
                     loss =self.autoEncoderAddKlDivergence(loss, mean, logvar)
                     loss = self.addRegularizationToLoss(loss)
                     
@@ -605,12 +630,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 if self.evalMode!= 'noEval':
                     valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum)
                     iterPrint += f', evalScore:{valScore}'
+                else:
+                    valScore = 0
                 print(iterPrint)
                 
-                bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatience(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
+                bestValScore, patienceCounter, bestModel, bestModelCounter = self.checkPatienceAndSaveModel(valScore, bestValScore, patienceCounter, epoch, bestModel, bestModelCounter)
         return bestModel, bestValScore
     
-    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0):
+    def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0, externalKwargs=None):
         self.havingOptimizerCheck()
         randomId=randomIdFunc()
         nameDifferentiator=''
@@ -633,9 +660,9 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         self.train()
         if workerNum:
-            bestModel, bestValScore = self.multiProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, workerNum)
+            bestModel, bestValScore = self.multiProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, workerNum, externalKwargs=externalKwargs)
         else:
-            bestModel, bestValScore = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion)
+            bestModel, bestValScore = self.singleProcessTrainModel(numEpochs, trainInputs, trainOutputs, valInputs, valOutputs, criterion, externalKwargs=externalKwargs)
         
         print("Training finished.")
         
@@ -649,7 +676,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return self
     
     def transformerModeForward(self, inputs, outputs):
-        if self.transformerMode:
+        if self.transformerMode:#kkk may change it to take inputs as a dictionary and in model separates it
             return self.forward(inputs, outputs)
         return self.forward(inputs)
     
@@ -659,14 +686,14 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 if isinstance(module, nn.Dropout):
                     module.train()
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0, externalKwargs=None):
         self.eval()
         with torch.no_grad():
             self.activateDropouts()
             if workerNum:
-                evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum)
+                evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum, externalKwargs=externalKwargs)
             else:
-                evalScore = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest)
+                evalScore = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, externalKwargs=externalKwargs)
             if hasattr(self, 'tensorboardWriter'):
                 self.tensorboardWriter.add_scalar(f'{evalOrTest} {self.evalMode}', evalScore, stepNum)
             return evalScore
@@ -674,7 +701,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     def getPreEvalStats(self, inputs):
         lenOfIndexes=len(inputs)
         if self.timeSeriesMode:
-            lenOfIndexes+=-(self.tsInputWindow+self.tsOutputWindow)+1
+            lenOfIndexes+=-(self.backcastLen+self.forecastLen)+1
         indexes = torch.arange(lenOfIndexes)
         batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
         return indexes, batchIterLen
@@ -688,11 +715,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             evalScore += loss.item()
         return evalScore
     
-    def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest):
+    def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, externalKwargs=None):
         evalScore = 0.0
         indexes, batchIterLen = self.getPreEvalStats(inputs)
         for i in range(0, batchIterLen):
-            batchEvalInputs, batchEvalOutputs, appliedBatchSize,_ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize)
+            batchEvalInputs, batchEvalOutputs, appliedBatchSize, outPutMask, _ = self.batchEvalDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize, identifier=None, externalKwargs=externalKwargs)
             
             batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
             evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
@@ -700,7 +727,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         evalScore /= inputs.shape[0]
         return evalScore
 
-    def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, workerNum):
+    def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, workerNum, externalKwargs=None):
         evalScore = 0.0
         workerNum=self.workerNumRegularization(workerNum)
         indexes, batchIterLen = self.getPreEvalStats(inputs)
@@ -718,12 +745,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         if idIdx2 in identifiers:
                             continue
                         if len(parallelInputArgs)<workerNum:
-                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2])
+                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2, externalKwargs])
                             identifiers.append(idIdx2)
                         else:
                             break
                     for args in parallelInputArgs:
-                        future = executor.submit(self.batchDatapreparation, *args)
+                        future = executor.submit(self.batchEvalDatapreparation, *args)
                         futures.append(future)
                 # Wait until at least one future is completed
                 while not readyArgs:
@@ -732,7 +759,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         readyArgs.append(result)
                         futures.pop(0)
                     continue
-                batchEvalInputs, batchEvalOutputs, appliedBatchSize, identifier = readyArgs[0]
+                batchEvalInputs, batchEvalOutputs, appliedBatchSize, outPutMask, identifier = readyArgs[0]
                 identifiers.remove(identifier)
                 readyArgs.pop(0)
                 

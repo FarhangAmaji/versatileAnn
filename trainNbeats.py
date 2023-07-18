@@ -12,16 +12,20 @@ class ModifiedNBeats(nBeats):
     def __init__(self, stacks, backcastLength, forecastLength):
         super(ModifiedNBeats, self).__init__(stacks, backcastLength, forecastLength)
     
-    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
+    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
 
-        inputsSlices = [inputs[idx:idx + self.tsInputWindow] for idx in batchIndexes]
-        outputsSlices = [inputs[idx + self.tsInputWindow:idx + self.tsInputWindow+self.tsOutputWindow] for idx in batchIndexes]
+        inputsSlices = [inputs[idx:idx + self.backcastLen] for idx in batchIndexes]
         batchInputs = torch.stack(inputsSlices).to(self.device)
+        
+        outputsSlices = [outputs[idx + self.backcastLen:idx + self.backcastLen+self.forecastLen] for idx in batchIndexes]
         batchOutputs = torch.stack(outputsSlices).to(self.device)
-        return batchInputs, batchOutputs, appliedBatchSize, identifier
+        outPutMask=None
+        return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
 #%% define model
+# Set random seed for reproducibility
+torch.manual_seed(42)
 stacks=[
     stack([
     SeasonalityBlock(256, 1, True, 4),
@@ -55,19 +59,21 @@ len(list(nBeatsModel.parameters()))
 # nBeatsModel.lossMode='accuracy'
 # nBeatsModel.variationalAutoEncoderMode=True
 #%% 
-# Set random seed for reproducibility
-torch.manual_seed(42)
-
 workerNum=0
 
-totalData=torch.rand(10000)
+inputData=torch.rand(10000)
+outputData=torch.rand(10000)
 trainTowholeRatio=.7
-trainInputs=totalData[:int(trainTowholeRatio*len(totalData))]
-testInputs =totalData[int(trainTowholeRatio*len(totalData)):]
+trainInputs=inputData[:int(trainTowholeRatio*len(inputData))]
+valInputs =inputData[int(trainTowholeRatio*len(inputData)):]
+
+trainOutputs=outputData[:int(trainTowholeRatio*len(outputData))]
+valOutputs =outputData[int(trainTowholeRatio*len(outputData)):]
 
 criterion = torch.nn.MSELoss()
 
-nBeatsModel.trainModel(trainInputs, None, testInputs, None, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
+# nBeatsModel.trainModel(trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
+nBeatsModel.trainModel(trainInputs, trainOutputs, None, None, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
 #%%
 #%%
 #%%

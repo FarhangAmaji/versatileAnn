@@ -10,15 +10,16 @@ import torch.optim as optim
 class ModifiedUnivariateTransformer(univariateTransformer):
     def __init__(self, transformerInfo):
         super(ModifiedUnivariateTransformer, self).__init__(transformerInfo)
-    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None):
+    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
 
-        inputsSlices = [inputs[idx:idx + self.tsInputWindow] for idx in batchIndexes]
-        outputsSlices = [inputs[idx + self.tsInputWindow-1:idx + self.tsInputWindow+self.tsOutputWindow] for idx in batchIndexes]
+        inputsSlices = [inputs[idx:idx + self.backcastLen] for idx in batchIndexes]
+        outputsSlices = [inputs[idx + self.backcastLen-1:idx + self.backcastLen+self.forecastLen] for idx in batchIndexes]
         batchInputs = torch.stack(inputsSlices).to(self.device)
         batchOutputs = torch.stack(outputsSlices).to(self.device)
-        return batchInputs, batchOutputs, appliedBatchSize, identifier
+        outPutMask=None
+        return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
 #%%
 # Set random seed for reproducibility
 torch.manual_seed(42)
