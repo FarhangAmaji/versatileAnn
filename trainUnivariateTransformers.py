@@ -10,7 +10,7 @@ import torch.optim as optim
 class ModifiedUnivariateTransformer(univariateTransformer):
     def __init__(self, transformerInfo):
         super(ModifiedUnivariateTransformer, self).__init__(transformerInfo)
-    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
+    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, mode=None, identifier=None, externalKwargs=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
 

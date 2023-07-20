@@ -23,7 +23,7 @@ class IdentityBasis(nn.Module):
         knots = knots.reshape(len(knots), 1, -1)
         if self.interpolationMode in ["nearest", "linear"]:
             forecast = nn.functional.interpolate(knots, size=self.forecastLen, mode=self.interpolationMode)
-        elif "cubic" in self.interpolationMode:#kkk check this part
+        elif "cubic" in self.interpolationMode:
             batchSize = len(backcast)
             knots = knots[:, None, :, :]
             forecast = torch.zeros((len(knots), self.forecastLen)).to(knots.device)

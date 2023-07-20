@@ -12,7 +12,7 @@ class ModifiedNBeats(nBeats):
     def __init__(self, stacks, backcastLength, forecastLength):
         super(ModifiedNBeats, self).__init__(stacks, backcastLength, forecastLength)
     
-    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
+    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, mode=None, identifier=None, externalKwargs=None):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
 

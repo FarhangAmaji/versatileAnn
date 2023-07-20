@@ -10,6 +10,7 @@ from .utils import randomIdFunc
 from .layers.customLayers import CustomLayer
 
 #kkk check all dropoutRates in repo; I thought p==1 means it would pass all but it means it would zero out
+#kkk timer and time estimation of finishing the trainning
 #kkk make a module to copy trained models weights to raw model with same architecture
 #kkk add weight inits orthogonal he_uniform he_normal glorot_uniform glorot_normal lecun_normal
 class PostInitCaller(type):
@@ -19,7 +20,7 @@ class PostInitCaller(type):
         return obj
 
 class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
-    modeNames = ['evalMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']
+    modeNames = ['evalScoreMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']
     def __init__(self):#kkk add comments 
         super(ann, self).__init__()
         self.getInitInpArgs()
@@ -35,7 +36,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         self.layersRegularization = {}
         self.layersRegularizationOperational = {}
         self.modelNameDifferentiator = True
-        self.evalMode='loss'
+        self.evalScoreMode='loss'
         self.variationalAutoEncoderMode=False
         self.dropoutEnsembleMode=False
         self.dropoutEnsembleNumSamples = 100
@@ -133,13 +134,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             print('tip: in variationalAutoEncoderMode u should pass predicts, mean, logvar')
     
     @property
-    def evalMode(self):
-        return self._evalMode
+    def evalScoreMode(self):
+        return self._evalScoreMode
     
-    @evalMode.setter
-    def evalMode(self, value):
-        assert value in ['loss','accuracy','noEval'],f"{self.evalMode} must be either 'loss' or 'accuracy' or 'noEval'"
-        self._evalMode=value
+    @evalScoreMode.setter
+    def evalScoreMode(self, value):
+        assert value in ['loss','accuracy','noEval'],f"{self.evalScoreMode} must be either 'loss' or 'accuracy' or 'noEval'"
+        self._evalScoreMode=value
         if value=='loss':
             self.evalCompareFunc=lambda valScore, bestValScore: valScore< bestValScore
         elif value=='accuracy':
@@ -350,7 +351,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
         return klLoss
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, identifier=None, externalKwargs=None):
+    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, mode=None, identifier=None, externalKwargs=None):
         if self.timeSeriesMode:
             raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
@@ -360,12 +361,6 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         batchOutputs = outputs[batchIndexes].to(self.device)
         outPutMask=None
         return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
-    
-    def batchTrainDatapreparation(self, *args, **kwargs):
-        return self.batchDatapreparation(*args, **kwargs)
-    
-    def batchEvalDatapreparation(self, *args, **kwargs):
-        return self.batchDatapreparation(*args, **kwargs)
     
     # Get all definitions needed to create an instance
     def getAllNeededDefinitions(self,obj):#kkk add metaclass, function and classmethod and methods of class 
@@ -479,18 +474,18 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return tensor
     
     def getPreTrainStats(self, trainInputs):
-        if self.evalMode == 'accuracy':
+        if self.evalScoreMode == 'accuracy':
             bestValScore = 0
-        elif self.evalMode == 'loss':
+        elif self.evalScoreMode == 'loss':
             bestValScore = float('inf')
-        elif self.evalMode == 'noEval':
+        elif self.evalScoreMode == 'noEval':
             bestValScore = 0
         patienceCounter = 0
         bestModel = None
         bestModelCounter = 1
         
         # Create random indexes for sampling
-        lenOfIndexes=trainInputs.shape[0]
+        lenOfIndexes=len(trainInputs)
         if self.timeSeriesMode:
             lenOfIndexes += -(self.backcastLen+self.forecastLen) + 1
         indexes = torch.randperm(lenOfIndexes).tolist()
@@ -516,11 +511,11 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         
         return bestValScore, patienceCounter, bestModel, bestModelCounter
     
-    def maskedLoss(self, criterion, batchTrainOutputsPred, batchTrainOutputs, outPutMask):
+    def maskedLoss(self, criterion, batchOutputsPred, batchOutputs, outPutMask):
         if outPutMask is not None:
-            batchTrainOutputsPred = batchTrainOutputsPred * outPutMask
-            batchTrainOutputs = batchTrainOutputs * outPutMask
-        loss = criterion(batchTrainOutputsPred, batchTrainOutputs)
+            batchOutputsPred = batchOutputsPred * outPutMask
+            batchOutputs = batchOutputs * outPutMask
+        loss = criterion(batchOutputsPred, batchOutputs)
         return loss
     
     def singleProcessTrainModel(self,numEpochs,trainInputs, trainOutputs, valInputs, valOutputs, criterion, externalKwargs=None):
@@ -532,7 +527,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 self.optimizer.zero_grad()
                 
                 with torch.no_grad():
-                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, outPutMask, _ = self.batchTrainDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize, identifier=None, externalKwargs=externalKwargs)
+                    batchTrainInputs, batchTrainOutputs, appliedBatchSize, outPutMask, _ = self.batchDatapreparation(i, indexes, trainInputs, trainOutputs, self.batchSize, mode='train', identifier=None, externalKwargs=externalKwargs)
                 
                 batchTrainOutputsPred = self.transformerModeForward(batchTrainInputs, batchTrainOutputs)
                 batchTrainOutputsPred, mean, logvar = self.autoEncoderOutputAssign(batchTrainOutputsPred)
@@ -550,8 +545,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
             
             iterPrint=f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}"
-            if self.evalMode!= 'noEval':
-                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval')
+            if self.evalScoreMode!= 'noEval':
+                valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum=0, externalKwargs=externalKwargs)
                 iterPrint += f', evalScore:{valScore}'
             else:
                 valScore = 0
@@ -589,12 +584,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                                 if idIdx2 in identifiers:
                                     continue
                                 if len(parallelInputArgs)<workerNum:
-                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, idIdx2, externalKwargs])
+                                    parallelInputArgs.append([idIdx2%batchIterLen, indexes, trainInputs, trainOutputs, self.batchSize, 'train', idIdx2, externalKwargs])
                                     identifiers.append(idIdx2)
                                 else:
                                     break
                             for args in parallelInputArgs:
-                                future = executor.submit(self.batchTrainDatapreparation, *args)
+                                future = executor.submit(self.batchDatapreparation, *args)
                                 futures.append(future)
     
                     # Wait until at least one future is completed
@@ -627,8 +622,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 self.tensorboardWriter.add_scalar('train loss', trainLoss, epoch + 1)
                 
                 iterPrint=f"Epoch [{epoch+1}/{numEpochs}], aveItemLoss: {trainLoss:.6f}"
-                if self.evalMode!= 'noEval':
-                    valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum)
+                if self.evalScoreMode!= 'noEval':
+                    valScore = self.evaluateModel(valInputs, valOutputs, criterion, epoch + 1, 'eval', workerNum, externalKwargs)
                     iterPrint += f', evalScore:{valScore}'
                 else:
                     valScore = 0
@@ -655,8 +650,8 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         if not self.neededDefinitions:
             self.neededDefinitions=self.getAllNeededDefinitions(self)
         
-        if valInputs is None or valOutputs is None:
-            self.evalMode='noEval'
+        if valInputs is None and valOutputs is None:
+            self.evalScoreMode='noEval'
         
         self.train()
         if workerNum:
@@ -680,54 +675,55 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             return self.forward(inputs, outputs)
         return self.forward(inputs)
     
-    def activateDropouts(self):
+    def activateDropoutsForEnsembleMode(self):
         if self.dropoutEnsembleMode:
             for module in self.modules():
                 if isinstance(module, nn.Dropout):
                     module.train()
     
-    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalOrTest='Test', workerNum=0, externalKwargs=None):
+    def evaluateModel(self, inputs, outputs, criterion, stepNum=0, evalMode='test', workerNum=0, externalKwargs=None):
         self.eval()
         with torch.no_grad():
-            self.activateDropouts()
+            self.activateDropoutsForEnsembleMode()
             if workerNum:
-                evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, workerNum, externalKwargs=externalKwargs)
+                evalScore = self.multiProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalMode, workerNum, externalKwargs=externalKwargs)
             else:
-                evalScore = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalOrTest, externalKwargs=externalKwargs)
+                evalScore = self.singleProcessEvaluateModel(inputs, outputs, criterion, stepNum, evalMode, externalKwargs=externalKwargs)
             if hasattr(self, 'tensorboardWriter'):
-                self.tensorboardWriter.add_scalar(f'{evalOrTest} {self.evalMode}', evalScore, stepNum)
+                self.tensorboardWriter.add_scalar(f'{evalMode} {self.evalScoreMode}', evalScore, stepNum)
             return evalScore
     
     def getPreEvalStats(self, inputs):
         lenOfIndexes=len(inputs)
         if self.timeSeriesMode:
             lenOfIndexes+=-(self.backcastLen+self.forecastLen)+1
-        indexes = torch.arange(lenOfIndexes)
-        batchIterLen = len(inputs)//self.evalBatchSize if len(inputs) % self.evalBatchSize == 0 else len(inputs)//self.evalBatchSize + 1
+        indexes = torch.arange(lenOfIndexes).tolist()
+        batchIterLen = len(indexes)//self.evalBatchSize
+        batchIterLen += 0 if len(indexes) % self.evalBatchSize == 0 else  1
         return indexes, batchIterLen
     
-    def updateEvalScoreBasedOnMode(self, evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion):
-        if self.evalMode == 'accuracy':#kkk add dropoutEnsemble certainty based accuracy
+    def updateEvalScoreBasedOnMode(self, evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask):
+        if self.evalScoreMode == 'accuracy':#kkk add dropoutEnsemble certainty based accuracy
             predicted = torch.argmax(batchEvalOutputsPred, dim=1)
             evalScore += (predicted == batchEvalOutputs).sum().item()
-        elif self.evalMode == 'loss':
-            loss = criterion(batchEvalOutputsPred, batchEvalOutputs)
+        elif self.evalScoreMode == 'loss':
+            loss = self.maskedLoss(criterion, batchEvalOutputsPred, batchEvalOutputs, outPutMask)
             evalScore += loss.item()
         return evalScore
     
-    def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, externalKwargs=None):
+    def singleProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalMode, externalKwargs=None):
         evalScore = 0.0
         indexes, batchIterLen = self.getPreEvalStats(inputs)
         for i in range(0, batchIterLen):
-            batchEvalInputs, batchEvalOutputs, appliedBatchSize, outPutMask, _ = self.batchEvalDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize, identifier=None, externalKwargs=externalKwargs)
+            batchEvalInputs, batchEvalOutputs, appliedBatchSize, outPutMask, _ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize, mode=evalMode, identifier=None, externalKwargs=externalKwargs)
             
             batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
-            evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)#kkk check for onehot vectors
+            evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask)#kkk check for onehot vectors
         
-        evalScore /= inputs.shape[0]
+        evalScore /= len(inputs)
         return evalScore
 
-    def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalOrTest, workerNum, externalKwargs=None):
+    def multiProcessEvaluateModel(self, inputs, outputs, criterion, stepNum, evalMode, workerNum, externalKwargs=None):
         evalScore = 0.0
         workerNum=self.workerNumRegularization(workerNum)
         indexes, batchIterLen = self.getPreEvalStats(inputs)
@@ -745,12 +741,12 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                         if idIdx2 in identifiers:
                             continue
                         if len(parallelInputArgs)<workerNum:
-                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, idIdx2, externalKwargs])
+                            parallelInputArgs.append([idIdx2%batchIterLen, indexes, inputs, outputs, self.evalBatchSize, evalMode, idIdx2, externalKwargs])
                             identifiers.append(idIdx2)
                         else:
                             break
                     for args in parallelInputArgs:
-                        future = executor.submit(self.batchEvalDatapreparation, *args)
+                        future = executor.submit(self.batchDatapreparation, *args)
                         futures.append(future)
                 # Wait until at least one future is completed
                 while not readyArgs:
@@ -764,7 +760,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 readyArgs.pop(0)
                 
                 batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
-                evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion)
+                evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask)
             
-            evalScore /= inputs.shape[0]
+            evalScore /= len(inputs)
             return evalScore
