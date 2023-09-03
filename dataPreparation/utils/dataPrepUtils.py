@@ -113,3 +113,31 @@ class SingleColsStdNormalizer:
 
     def repr(self):
         return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
+
+class MultiColStdNormalizer:
+    def init(self, colNames):
+        self.scaler = StdScaler('_'.join(colNames))
+        self.colNames = colNames
+
+    def assertColNames(self, df):
+        for col in self.colNames:
+            assert col in df.columns, f'{col} is not in df columns'
+
+    def fit(self, df):
+        self.assertColNames(df)
+        self.scaler.fit(df[self.colNames])
+
+    def transform(self, df):
+        self.assertColNames(df)
+        df[self.colNames] = self.scaler.transform(df[self.colNames]).reshape(-1, len(self.colNames))
+
+    def fitNTransform(self, df):
+        self.fit(df)
+        self.transform(df)
+
+    def inverseTransform(self, dataToInverseTransformed):
+        return self.scaler.inverseTransform(dataToInverseTransformed)
+    
+    def repr(self):
+        return f"MultiColStdNormalizer+{'_'.join(self.colNames)}"
+#%% data split
