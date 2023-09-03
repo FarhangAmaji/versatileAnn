@@ -12,7 +12,7 @@ def getDatasetFiles(fileName: str):
     return pd.read_csv(filePath)
 #%% normalizers
 class StdScaler:
-    def init(self, name=None):
+    def __init__(self, name=None):
         self.name = name#kkk add names
         self.scaler = StandardScaler()
         
@@ -53,7 +53,7 @@ class StdScaler:
             return dataToInverseTransformed
 
 class NormalizerStack:
-    def init(self, *stdNormalizers):
+    def __init__(self, *stdNormalizers):
         self._normalizers = {}
         for stdNormalizer in stdNormalizers:
             self.addNormalizer(stdNormalizer)
@@ -96,7 +96,7 @@ class NormalizerStack:
             return self._normalizers[col].scaler.inverseTransform(df[col])
 
 class SingleColsStdNormalizer:
-    def init(self, colNames:list):
+    def __init__(self, colNames:list):
         self.scalers={col:StdScaler(col) for col in colNames}
 
     @property
@@ -115,7 +115,7 @@ class SingleColsStdNormalizer:
         return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
 
 class MultiColStdNormalizer:
-    def init(self, colNames):
+    def __init__(self, colNames):
         self.scaler = StdScaler('_'.join(colNames))
         self.colNames = colNames
 
