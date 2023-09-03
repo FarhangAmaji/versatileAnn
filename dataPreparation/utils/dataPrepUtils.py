@@ -51,3 +51,22 @@ class StdScaler:
         else:
             print(f'StdScaler {self.name} is not fitted; cannot inverse transform.')
             return dataToInverseTransformed
+
+class SingleColsStdNormalizer:
+    def init(self, colNames:list):
+        self.scalers={col:StdScaler(col) for col in colNames}
+
+    @property
+    def colNames(self):
+        return self.scalers.keys()
+
+    def fitNTransform(self, df, col):
+        assert col in df.columns, f'{col} is not in df columns'
+        self.scalers[col].fit(df[col])
+        df[col] = self.scalers[col].transform(df[[col]])
+
+    def inverseTransform(self, dataToInverseTransformed):
+        return self.scaler.inverseTransform(dataToInverseTransformed)
+
+    def repr(self):
+        return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
