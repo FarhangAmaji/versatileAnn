@@ -5,14 +5,14 @@ from sklearn.preprocessing import StandardScaler
 datasetsRelativePath=r'..\..\data\datasets'
 
 def getDatasetFiles(fileName: str):
-    currentDir = os.path.dirname(os.path.abspath(__file__))
+    currentDir = os.path.dirname(os.path.abspath(file))
     datasetsDir = os.path.normpath(os.path.join(currentDir, datasetsRelativePath))
     os.makedirs(datasetsDir, exist_ok=True)
     filePath=os.path.join(datasetsDir, fileName)
     return pd.read_csv(filePath)
 #%% normalizers
 class StdScaler:
-    def __init__(self, name=None):
+    def init(self, name=None):
         self.name = name#kkk add names
         self.scaler = StandardScaler()
         
@@ -51,6 +51,49 @@ class StdScaler:
         else:
             print(f'StdScaler {self.name} is not fitted; cannot inverse transform.')
             return dataToInverseTransformed
+
+class NormalizerStack:
+    def init(self, *stdNormalizers):
+        self._normalizers = {}
+        for stdNormalizer in stdNormalizers:
+            self.addNormalizer(stdNormalizer)
+
+    def addNormalizer(self, newNormalizer):
+        assert isinstance(newNormalizer, (SingleColsStdNormalizer, MultiColStdNormalizer))
+        for col in newNormalizer.colNames:
+            if col not in self._normalizers.keys():
+                self._normalizers.update({col: newNormalizer})
+            else:
+                print(f'{col} is already in normalizers')
+    
+    @property
+    def normalizers(self):
+        return self._normalizers
+    
+    @property
+    def uniqueNormalizers(self):
+        uniqueNormalizers=[]
+        [uniqueNormalizers.append(nrm) for nrm in self._normalizers.values() if nrm not in uniqueNormalizers]
+        return uniqueNormalizers
+
+    def fitNTransform(self, df):
+        for nrm in self.uniqueNormalizers:
+            if isinstance(nrm, SingleColsStdNormalizer):
+                for col in nrm.colNames:
+                    nrm.fitNTransform(df, col)
+            elif isinstance(nrm, MultiColStdNormalizer):
+                nrm.fitNTransform(df)
+
+    def inverseTransform(self, df):
+        for col in self.normalizers.keys():
+            df[col] = self.inverseTransformCol(df, col)
+
+    def inverseTransformCol(self, df, col):
+        assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
+        if isinstance(self._normalizers[col], SingleColsStdNormalizer):
+            return self._normalizers[col].scalers[col].inverseTransform(df[col])
+        elif isinstance(self._normalizers[col], MultiColStdNormalizer):
+            return self._normalizers[col].scaler.inverseTransform(df[col])
 
 class SingleColsStdNormalizer:
     def init(self, colNames:list):
