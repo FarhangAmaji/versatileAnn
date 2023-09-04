@@ -151,3 +151,18 @@ def splitToNSeries(df, pastCols, renameCol):
         thisSeriesDf[renameCol+'Type']=pc
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
+#%% data split
+
+#%% data conversion
+def dfToNpDict(df):
+    return {col:df[col].values for col in df.columns}
+
+def npDictToDfForCol(df, dic, col):
+    assert col in dic.keys(),f'{col} is not in dictionary cols'
+    assert col in df.columns,f'{col} is not in dataframe cols'
+    assert len(dic[col])==len(df[col]),f'{col} lens in dataframe and dictionary are equal'
+    df[col]=dic[col]
+    
+def npDictToDf(df, dic):
+    for col in dic.keys():
+        npDictToDfForCol(df, dic, col)
