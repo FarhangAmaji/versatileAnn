@@ -1,11 +1,11 @@
 import pandas as pd
 import os
 from sklearn.preprocessing import StandardScaler
-
+#%% datasets
 datasetsRelativePath=r'..\..\data\datasets'
 
 def getDatasetFiles(fileName: str):
-    currentDir = os.path.dirname(os.path.abspath(file))
+    currentDir = os.path.dirname(os.path.abspath(__file__))
     datasetsDir = os.path.normpath(os.path.join(currentDir, datasetsRelativePath))
     os.makedirs(datasetsDir, exist_ok=True)
     filePath=os.path.join(datasetsDir, fileName)
@@ -78,11 +78,7 @@ class NormalizerStack:
 
     def fitNTransform(self, df):
         for nrm in self.uniqueNormalizers:
-            if isinstance(nrm, SingleColsStdNormalizer):
-                for col in nrm.colNames:
-                    nrm.fitNTransform(df, col)
-            elif isinstance(nrm, MultiColStdNormalizer):
-                nrm.fitNTransform(df)
+            nrm.fitNTransform(df)
 
     def inverseTransform(self, df):
         for col in self.normalizers.keys():
@@ -90,10 +86,7 @@ class NormalizerStack:
 
     def inverseTransformCol(self, df, col):
         assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
-        if isinstance(self._normalizers[col], SingleColsStdNormalizer):
-            return self._normalizers[col].scalers[col].inverseTransform(df[col])
-        elif isinstance(self._normalizers[col], MultiColStdNormalizer):
-            return self._normalizers[col].scaler.inverseTransform(df[col])
+        return self._normalizers[col].inverseTransformCol(df[col], col)
 
 class SingleColsStdNormalizer:
     def __init__(self, colNames:list):
@@ -102,14 +95,18 @@ class SingleColsStdNormalizer:
     @property
     def colNames(self):
         return self.scalers.keys()
+    
+    def fitNTransform(self, df):
+        for col in self.colNames:
+            self.fitNTransformCol(self, df, col)
 
-    def fitNTransform(self, df, col):
+    def fitNTransformCol(self, df, col):
         assert col in df.columns, f'{col} is not in df columns'
         self.scalers[col].fit(df[col])
         df[col] = self.scalers[col].transform(df[[col]])
 
-    def inverseTransform(self, dataToInverseTransformed):
-        return self.scaler.inverseTransform(dataToInverseTransformed)
+    def inverseTransformCol(self, dataToInverseTransformed, col):
+        return self.scalers[col].inverseTransform(dataToInverseTransformed)
 
     def repr(self):
         return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
@@ -134,10 +131,13 @@ class MultiColStdNormalizer:
     def fitNTransform(self, df):
         self.fit(df)
         self.transform(df)
-
-    def inverseTransform(self, dataToInverseTransformed):
+    
+    #kkk could have add many fit, transform, assert and their other combinations for single col
+    #kkk could have added inverseTransform which does inverse on self.colNames in df 
+    
+    def inverseTransformCol(self, dataToInverseTransformed, col=None):
+        '#ccc col is not used and its just for compatibleness'#kkk is this acceptable in terms of software engineering
         return self.scaler.inverseTransform(dataToInverseTransformed)
     
     def repr(self):
         return f"MultiColStdNormalizer+{'_'.join(self.colNames)}"
-#%% data split
