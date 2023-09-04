@@ -141,3 +141,13 @@ class MultiColStdNormalizer:
     
     def repr(self):
         return f"MultiColStdNormalizer+{'_'.join(self.colNames)}"
+#%% series
+def splitToNSeries(df, pastCols, renameCol):
+    processedData=pd.DataFrame({})
+    otherCols= [col for col in df.columns if col not in pastCols]
+    for i,pc in enumerate(pastCols):
+        thisSeriesDf=df[otherCols+[pc]]
+        thisSeriesDf=thisSeriesDf.rename(columns={pc:renameCol})
+        thisSeriesDf[renameCol+'Type']=pc
+        processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
+    return processedData
