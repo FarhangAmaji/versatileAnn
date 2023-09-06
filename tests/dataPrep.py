@@ -85,6 +85,36 @@ StdScaler stdcol3_col4 skipping transform: Mean of dataToFit is between -1 and 1
 
     #kkk add test for addNormalizer in NormalizerStack
     #kkk what meaningful tests can be added??
+#%% lblEncoderTest
+class lblEncoderTest(stdNormalizerTest):
+    def __init__(self, *args, **kwargs):
+        super(lblEncoderTest, self).__init__(*args, **kwargs)
+        self.expectedPrint={}
+        self.expectedPrint['testFitAgain']="""LblEncoder lblcol1 is already fitted
+LblEncoder lblcol1 skipping transform: data already seems transformed.
+LblEncoder lblcol2 is already fitted\nLblEncoder lblcol2 skipping transform: data already seems transformed.
+LblEncoder lblcol3_col4 is already fitted\nLblEncoder lblcol3_col4 skipping transform: data already seems transformed.
+"""
+        self.expectedPrint['testInverseTransformColAgain']="LabelEncoder lblcol1 skipping inverse transform: data already seems inverse transformed.\n"
+
+    def transformSetUp(self):
+        self.dfUntouched = pd.DataFrame({
+            'col1': ['a','d','ds','s','a'],
+            'col2': ['col2sd','col2dsa','col2dsa','21dxs','21dxs'],
+            'col3': ['nkcdf','mdeo','nkcdf','cd','a'],
+            'col4': ['z11','sc22','oem2','medk3','df']})
+        self.dfToDoTest = self.dfUntouched.copy()
+        self.dfAssertDummy = self.dfUntouched.copy()
+            
+        self.normalizerStack = NormalizerStack(
+            SingleColsLblEncoder(['col1','col2']),
+            MultiColLblEncoder(['col3', 'col4']))
+        self.transformedDf = pd.DataFrame({'col1': [0,1,2,3,0],
+                                           'col2': [2, 1, 1, 0, 0],
+                                           'col3': [5, 3, 5, 1, 0],
+                                           'col4': [8, 7, 6, 4, 2]})
+        # self.transformedDfUntouched = self.transformedDf.copy()
+        # self.floatPrecision= 0.001
 #%%
 if __name__ == '__main__':
     unittest.main()
