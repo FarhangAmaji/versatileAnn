@@ -3,11 +3,22 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPreparation.utils.dataPrepUtils import NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer, equalDfs, dfToNpDict
+from dataPreparation.utils.dataPrepUtils import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
+                                                 SingleColsLblEncoder, MultiColLblEncoder, equalDfs, dfToNpDict, makeIntLabelsString)
 import pandas as pd
-import numpy as np
-#%%
+#%% stdNormalizerTest
 class stdNormalizerTest(BaseTestClass):
+    def __init__(self, *args, **kwargs):
+        super(stdNormalizerTest, self).__init__(*args, **kwargs)
+        self.expectedPrint={}
+        self.expectedPrint['testFitAgain']="""StdScaler stdcol1 is already fitted
+StdScaler stdcol1 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
+StdScaler stdcol2 is already fitted
+StdScaler stdcol2 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
+StdScaler stdcol3_col4 is already fitted
+StdScaler stdcol3_col4 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
+"""
+        self.expectedPrint['testInverseTransformColAgain']="StdScaler stdcol1 skipping inverse transform: Mean of dataToInverseTransformed is not between -1 and 1, since seems the dataToInverseTransformed not to be normalized\n"
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
             'col1': range(0, 11),
@@ -25,6 +36,7 @@ class stdNormalizerTest(BaseTestClass):
                                            'col4': [0.7407972 , 0.79018368, 0.83957016, 0.88895664, 0.93834312,0.9877296 , 1.03711608, 1.08650256, 1.13588904, 1.18527552,1.234662  ]})
         # self.transformedDfUntouched = self.transformedDf.copy()
         # self.floatPrecision= 0.001
+        
 
     def inverseTransformSetUp(self):
         self.transformSetUp()
@@ -37,20 +49,13 @@ class stdNormalizerTest(BaseTestClass):
         assert equalDfs(self.dfToDoTest, self.transformedDf)
 
     def testFitAgain(self):
+        #nip#htd this example of checking expectedPrints
         def testFunc():
             self.transformSetUp()
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             assert equalDfs(self.dfToDoTest, self.transformedDf)
-
-        expectedPrint = """StdScaler stdcol1 is already fitted
-StdScaler stdcol1 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
-StdScaler stdcol2 is already fitted
-StdScaler stdcol2 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
-StdScaler stdcol3_col4 is already fitted
-StdScaler stdcol3_col4 skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.
-"""
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(testFunc, self.expectedPrint['testFitAgain'])
 
     def testInverseTransformCol(self):
         self.inverseTransformSetUp()
@@ -71,8 +76,7 @@ StdScaler stdcol3_col4 skipping transform: Mean of dataToFit is between -1 and 1
             self.dfAssertDummy['col3']=self.transformedDf['col3']
             self.dfAssertDummy['col4']=self.transformedDf['col4']
             assert equalDfs(self.dfToDoTest, self.dfAssertDummy)
-        expectedPrint = "StdScaler stdcol1 skipping inverse transform: Mean of dataToInverseTransformed is not between -1 and 1, since seems the dataToInverseTransformed not to be normalized\n"
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(testFunc, self.expectedPrint['testInverseTransformColAgain'])
 
     def testInverseIransform(self):
         self.inverseTransformSetUp()
@@ -81,9 +85,6 @@ StdScaler stdcol3_col4 skipping transform: Mean of dataToFit is between -1 and 1
 
     #kkk add test for addNormalizer in NormalizerStack
     #kkk what meaningful tests can be added??
-#%% 
-
-        
 #%%
 if __name__ == '__main__':
     unittest.main()
