@@ -256,3 +256,27 @@ def npDictToDf(df, dic):
     for col in dic.keys():
         npDictToDfForCol(df, dic, col)
 #%% utils misc
+def equalDfs(df1, df2, floatPrecision=0.0001):
+    # Check if both DataFrames have the same shape
+    if df1.shape != df2.shape:
+        return False
+
+    # Iterate through columns and compare them individually
+    for col in df1.columns:
+        if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
+            # Check if all elements in the numeric column are close
+            if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
+                return False
+        else:
+            # If the column is non-numeric, skip the check
+            continue
+
+    # If all numeric columns are close, return True
+    return True
+
+def checkAllItemsInList1ExistInList2(list1, list2):
+    setList2 = set(list2)
+    for item in list1:
+        if item not in setList2:
+            return False
+    return True
