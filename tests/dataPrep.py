@@ -115,6 +115,29 @@ LblEncoder lblcol3_col4 is already fitted\nLblEncoder lblcol3_col4 skipping tran
                                            'col4': [8, 7, 6, 4, 2]})
         # self.transformedDfUntouched = self.transformedDf.copy()
         # self.floatPrecision= 0.001
+#%% makeIntLabelsStringTest
+class makeIntLabelsStringTest(BaseTestClass):
+    def setUp(self):
+        self.df =pd.DataFrame({'col1': [5, 3, 5, 1, 0]})
+        self.dfAfterMakeIntLabelsString =pd.DataFrame({'col1': ['col10', 'col11', 'col10', 'col12', 'col13']})
+        self.dfEncoded =pd.DataFrame({'col1': [0, 1, 0, 2, 3]})
+        self.normalizerStack = NormalizerStack(SingleColsLblEncoder(['col1']))
+
+    def testLblEncoderRaiseValErrorOverIntCols(self):
+        #nip#htd this example of expecting error with specific error message
+        self.setUp()
+        with self.assertRaises(ValueError) as context:
+            self.normalizerStack.fitNTransform(self.df)
+        
+        # Check the exception message
+        self.assertEqual(str(context.exception), "Integer labels detected. Use makeIntLabelsString to convert them to string labels.")
+
+    def testApplyMakeIntLabelsString(self):
+        self.setUp()
+        makeIntLabelsString(self.df, 'col1')
+        assert equalDfs(self.df, self.dfAfterMakeIntLabelsString)
+        self.normalizerStack.fitNTransform(self.df)
+        assert equalDfs(self.df, self.dfEncoded)
 #%%
 if __name__ == '__main__':
     unittest.main()
