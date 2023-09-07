@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-#%% datasets
+#%% general vars
 datasetsRelativePath=r'..\..\data\datasets'
+LblEncoderValueErrorMsg="Integer labels detected. Use makeIntLabelsString to convert them to string labels."
+#%% datasets
 
 def getDatasetFiles(fileName: str):
     currentDir = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +39,7 @@ class StdScaler:
             else:
                 return self.scaler.transform(dataToFit)
         else:
-            print(f'StdScaler {self.name} skipping transform: is not fitted; fit it first')
+            print(f'StdScaler {self.name} skipping transform: is not fitted; fit it first')#kkkMinor this is not in the tests
             return dataToFit
 
     def inverseTransform(self, dataToInverseTransformed, colShape=1):
@@ -50,14 +52,8 @@ class StdScaler:
                 print(f'StdScaler {self.name} skipping inverse transform: Mean of dataToInverseTransformed is not between -1 and 1, since seems the dataToInverseTransformed not to be normalized')
                 return dataToInverseTransformed
         else:
-            print(f'StdScaler {self.name} is not fitted; cannot inverse transform.')
+            print(f'StdScaler {self.name} is not fitted; cannot inverse transform.')#kkkMinor this is not in the tests
             return dataToInverseTransformed
-
-def makeIntLabelsString(df, colName):
-    #kkk needs asserts
-    uniqueVals = df[colName].unique()
-    intToLabelMapping = {intVal: f'{colName}{label}' for label, intVal in enumerate(uniqueVals)}
-    df[colName] = df[colName].map(intToLabelMapping)
 
 class LblEncoder:
     #kkk it cant handle None or np.nan or other common missing values
@@ -70,10 +66,11 @@ class LblEncoder:
         return hasattr(self.encoder, 'classes_') and self.encoder.classes_ is not None
 
     def fit(self, dataToFit):
+        assert isinstance(dataToFit, (pd.Series, pd.DataFrame)), "LblEncoder dataToFit is not a pandas Series or DataFrame"
         if not self.isFitted:
             # Check if there are integer labels
             if any(isinstance(label, int) for label in dataToFit):
-                raise ValueError("Integer labels detected. Use makeIntLabelsString to convert them to string labels.")
+                raise ValueError(LblEncoderValueErrorMsg)#kkk should in the tests
             self.encoder.fit(dataToFit.values.reshape(-1))
         else:
             print(f'LblEncoder {self.name} is already fitted')
@@ -90,7 +87,7 @@ class LblEncoder:
             else:
                 return self.encoder.transform(dataToFit)
         else:
-            print(f'LblEncoder {self.name} skipping transform: is not fitted; fit it first')
+            print(f'LblEncoder {self.name} skipping transform: is not fitted; fit it first')#kkkMinor this is not in the tests
             return dataToFit
 
     def doesdataToInverseTransformedSeemToBeAlreadyDone(self, data):
@@ -105,7 +102,7 @@ class LblEncoder:
             else:
                 return self.encoder.inverse_transform(dataToInverseTransformed)
         else:
-            print(f'LblEncoder {self.name} is not fitted; cannot inverse transform.')
+            print(f'LblEncoder {self.name} is not fitted; cannot inverse transform.')#kkkMinor this is not in the tests
             return dataToInverseTransformed
 
 class NormalizerStack:
@@ -121,11 +118,11 @@ class NormalizerStack:
                 self._normalizers.update({col: newNormalizer})
             else:
                 print(f'{col} is already in normalizers')
-    
+
     @property
     def normalizers(self):
         return self._normalizers
-    
+
     @property
     def uniqueNormalizers(self):
         uniqueNormalizers=[]
@@ -144,37 +141,68 @@ class NormalizerStack:
         assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
         return self._normalizers[col].inverseTransformCol(df[col], col)
 
+    def ultimateInverseTransform(self, df):
+        for col in self.normalizers.keys():
+            df[col] = self._normalizers[col].ultimateInverseTransformCol(df, col)
+
+    def ultimateInverseTransformCol(self, df, col):
+        return self._normalizers[col].ultimateInverseTransformCol(df[col], col)
+
 class BaseSingleColsNormalizer:
+    """for instances of SingleColsLblEncoder if they have/need makeIntLabelsStrings, we wont use 3 transforms.
+    for i.e. in if we have 5->'colA0'->0, BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0"""#kkk maybe comment needs a more detailed explanation
     def __init__(self):
-        self.makeIntLabelsStrings={}
+        self.isFitted={col:False for col in self.colNames}
 
     @property
     def colNames(self):
         return self.scalers.keys()
-    
+
     def fitNTransform(self, df):
         for col in self.colNames:
             self.fitNTransformCol(df, col)
 
     def fitNTransformCol(self, df, col):
         assert col in df.columns, f'{col} is not in df columns'
-        self.scalers[col].fit(df[col])
-                
-        df[col] = self.scalers[col].transform(df[[col]])
+        if self.isFitted[col]:
+            print(f'{self.__repr__()} {col} is already fitted')
+            return
+        try:
+            self.scalers[col].fit(df[col])
+        except ValueError as e:
+            if str(e) == LblEncoderValueErrorMsg and isinstance(self, SingleColsLblEncoder):
+                self.makeIntLabelsStrings[col]=makeIntLabelsString(col)
+                df[col] = self.makeIntLabelsStrings[col].fitNTransform(df[col])
+                self.scalers[col].fit(df[col])
+        self.isFitted[col]=True
+        df[col] = self.transformCol(df, col)
+
+    def transformCol(self, df, col):
+        assert col in df.columns, f'{col} is not in df columns'
+        return self.scalers[col].transform(df[col])
 
     def inverseTransformCol(self, dataToInverseTransformed, col):
         return self.scalers[col].inverseTransform(dataToInverseTransformed)
 
+    def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
+        dataToInverseTransformed = self.inverseTransformCol(dataToInverseTransformed[col], col)
+        if col in self.makeIntLabelsStrings.keys():
+            dataToInverseTransformed = self.makeIntLabelsStrings[col].inverseTransform(dataToInverseTransformed)
+        return dataToInverseTransformed
+
 class SingleColsStdNormalizer(BaseSingleColsNormalizer):
     def __init__(self, colNames:list):
         self.scalers={col:StdScaler(f'std{col}') for col in colNames}
+        super().__init__()
 
     def __repr__(self):
         return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
 
 class SingleColsLblEncoder(BaseSingleColsNormalizer):
     def __init__(self, colNames:list):
+        self.makeIntLabelsStrings={}
         self.encoders={col:LblEncoder(f'lbl{col}') for col in colNames}
+        super().__init__()
 
     @property
     def scalers(self):
@@ -185,12 +213,15 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
 
 class BaseMultiColNormalizer:
     def __init__(self):
-        pass
+        self.isFitted=False
 
     def assertColNames(self, df):
         for col in self.colNames:
             assert col in df.columns, f'{col} is not in df columns'
-    
+
+    def areTheseIntCols(self, df):
+        return df[self.colNames].apply(lambda col: col.apply(lambda x: isinstance(x, int))).all().all()
+
     def fit(self, df):
         self.assertColNames(df)
         self.scaler.fit(df[self.colNames])
@@ -198,9 +229,16 @@ class BaseMultiColNormalizer:
     def transform(self, df):
         self.assertColNames(df)
         df[self.colNames] = self.scaler.transform(df[self.colNames]).reshape(-1, len(self.colNames))
-    
+
     def fitNTransform(self, df):
+        if self.isFitted:
+            print(f'{self.__repr__()} is already fitted')
+            return
+        if isinstance(self, MultiColLblEncoder) and self.areTheseIntCols(df):
+            self.makeIntLabelsString=makeIntLabelsString(self.shortRep())
+            df[self.colNames]=self.makeIntLabelsString.fitNTransform(df[self.colNames])
         self.fit(df)
+        self.isFitted=True
         self.transform(df)
     
     #kkk could have add many fit, transform, assert and their other combinations for single col
@@ -210,25 +248,65 @@ class BaseMultiColNormalizer:
         '#ccc col is not used and its just for compatibleness'#kkk is this acceptable in terms of software engineering
         return self.scaler.inverseTransform(dataToInverseTransformed)
 
+    def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
+        assert col in dataToInverseTransformed.columns,'ultimateInverseTransformCol "{self}" "{col}" col is not in df columns'
+        res = self.inverseTransformCol(dataToInverseTransformed[col])
+        if self.makeIntLabelsString:
+            res = self.makeIntLabelsString.inverseTransform(res)
+        return res
+        
 class MultiColStdNormalizer(BaseMultiColNormalizer):
     def __init__(self, colNames):
-        self.scaler = StdScaler('std'+'_'.join(colNames))
+        super().__init__()
         self.colNames = colNames
+        self.scaler = StdScaler(self.shortRep())
+
+    def shortRep(self):
+        return 'std:'+'_'.join(self.colNames)
 
     def __repr__(self):
         return f"MultiColStdNormalizer+{'_'.join(self.colNames)}"
 
 class MultiColLblEncoder(BaseMultiColNormalizer):
     def __init__(self, colNames):
-        self.encoder = LblEncoder('lbl'+'_'.join(colNames))
+        super().__init__()
+        self.makeIntLabelsString = None
         self.colNames = colNames
+        self.encoder = LblEncoder(self.shortRep())
 
     @property
     def scaler(self):
         return self.encoder
-    
+
+    def shortRep(self):
+        return 'lbl:'+'_'.join(self.colNames)
+
     def __repr__(self):
         return f"MultiColLblEncoder+{'_'.join(self.colNames)}"
+
+class makeIntLabelsString:
+    def __init__(self, name):
+        self.name = name
+        self.isFitted = False
+
+    def fitNTransform(self, inputData):
+        if self.isFitted:
+            print(f'skipping fit:{self.name} makeIntLabelsString is already fitted')
+            return inputData
+        array=inputData.values.reshape(-1)
+        uniqueVals = np.unique(array)
+        assert np.all(np.equal(uniqueVals, uniqueVals.astype(int))), "makeIntLabelsString {colName} All values should be integers."
+        intToLabelMapping = {intVal: f'{self.name}:{label}' for label, intVal in enumerate(uniqueVals)}
+        if isinstance(inputData, pd.Series):
+            output = inputData.map(intToLabelMapping)
+        elif isinstance(inputData, pd.DataFrame):
+            output = inputData.applymap(lambda x: intToLabelMapping.get(x, x))
+        self.intToLabelMapping={value: key for key, value in intToLabelMapping.items()}
+        self.isFitted=True
+        return output
+
+    def inverseTransform(self, dataToInverseTransformed):
+        return np.vectorize(self.intToLabelMapping.get)(dataToInverseTransformed)
 #%% series
 def splitToNSeries(df, pastCols, renameCol):
     processedData=pd.DataFrame({})
