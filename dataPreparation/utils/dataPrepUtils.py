@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import inspect
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 #%% general vars
 datasetsRelativePath=r'..\..\data\datasets'
@@ -32,12 +33,7 @@ class StdScaler:
     def transform(self, dataToFit, colShape=1):
         dataToFit =dataToFit.values.reshape(-1,colShape)
         if self.isFitted:
-            mean = dataToFit.mean()
-            if -1 <= mean <= 1:
-                print(f'StdScaler {self.name} skipping transform: Mean of dataToFit is between -1 and 1; so seems to be already fitted.')
-                return dataToFit
-            else:
-                return self.scaler.transform(dataToFit)
+            return self.scaler.transform(dataToFit)
         else:
             print(f'StdScaler {self.name} skipping transform: is not fitted; fit it first')#kkkMinor this is not in the tests
             return dataToFit
@@ -45,12 +41,7 @@ class StdScaler:
     def inverseTransform(self, dataToInverseTransformed, colShape=1):
         dataToInverseTransformed =dataToInverseTransformed.values.reshape(-1,colShape)
         if self.isFitted:
-            mean = dataToInverseTransformed.mean()
-            if -1 <= mean <= 1:
-                return self.scaler.inverse_transform(dataToInverseTransformed)
-            else:
-                print(f'StdScaler {self.name} skipping inverse transform: Mean of dataToInverseTransformed is not between -1 and 1, since seems the dataToInverseTransformed not to be normalized')
-                return dataToInverseTransformed
+            return self.scaler.inverse_transform(dataToInverseTransformed)
         else:
             print(f'StdScaler {self.name} is not fitted; cannot inverse transform.')#kkkMinor this is not in the tests
             return dataToInverseTransformed
@@ -177,8 +168,15 @@ class BaseSingleColsNormalizer:
         self.isFitted[col]=True
         df[col] = self.transformCol(df, col)
 
+    def transform(self, df):
+        for col in self.colNames:
+            df[col]=self.transformCol(df, col)
+
     def transformCol(self, df, col):
         assert col in df.columns, f'{col} is not in df columns'
+        if not self.isFitted[col]:
+            print(f'{self.__repr__()} {col} is not fitted; fit it first')
+            return df[col]
         return self.scalers[col].transform(df[col])
 
     def inverseTransformCol(self, dataToInverseTransformed, col):
@@ -186,8 +184,9 @@ class BaseSingleColsNormalizer:
 
     def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
         dataToInverseTransformed = self.inverseTransformCol(dataToInverseTransformed[col], col)
-        if col in self.makeIntLabelsStrings.keys():
-            dataToInverseTransformed = self.makeIntLabelsStrings[col].inverseTransform(dataToInverseTransformed)
+        if hasattr(self, 'makeIntLabelsStrings'):
+            if col in self.makeIntLabelsStrings.keys():
+                dataToInverseTransformed = self.makeIntLabelsStrings[col].inverseTransform(dataToInverseTransformed)
         return dataToInverseTransformed
 
 class SingleColsStdNormalizer(BaseSingleColsNormalizer):

@@ -16,7 +16,6 @@ class stdNormalizerTest(BaseTestClass):
 SingleColsStdNormalizer+col1_col2 col2 is already fitted
 MultiColStdNormalizer+col3_col4 is already fitted
 """
-        self.expectedPrint['testInverseTransformColAgain']="StdScaler stdcol1 skipping inverse transform: Mean of dataToInverseTransformed is not between -1 and 1, since seems the dataToInverseTransformed not to be normalized\n"
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
             'col1': range(0, 11),
@@ -65,18 +64,6 @@ MultiColStdNormalizer+col3_col4 is already fitted
         self.dfAssertDummy['col3']=self.transformedDf['col3']
         assert equalDfs(self.dfToDoTest, self.dfAssertDummy)
 
-    def testInverseTransformColAgain(self):
-        def testFunc():
-            self.inverseTransformSetUp()
-            self.dfToDoTest['col1'] = self.normalizerStack.inverseTransformCol(self.dfToDoTest, 'col1')
-            self.dfToDoTest['col1'] = self.normalizerStack.inverseTransformCol(self.dfToDoTest, 'col1')
-            # for assert modification
-            self.dfAssertDummy['col2']=self.transformedDf['col2']
-            self.dfAssertDummy['col3']=self.transformedDf['col3']
-            self.dfAssertDummy['col4']=self.transformedDf['col4']
-            assert equalDfs(self.dfToDoTest, self.dfAssertDummy)
-        self.assertPrint(testFunc, self.expectedPrint['testInverseTransformColAgain'])
-
     def testInverseIransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
@@ -93,7 +80,6 @@ class lblEncoderTest(stdNormalizerTest):
 SingleColsLblEncoder+col1_col2 col2 is already fitted
 MultiColLblEncoder+col3_col4 is already fitted
 """
-        self.expectedPrint['testInverseTransformColAgain']="LabelEncoder lblcol1 skipping inverse transform: data already seems inverse transformed.\n"
 
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
