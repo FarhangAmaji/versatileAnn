@@ -4,8 +4,9 @@ from tests.baseTest import BaseTestClass
 import unittest
 #%%
 from dataPreparation.utils.dataPrepUtils import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
-                                                 SingleColsLblEncoder, MultiColLblEncoder, equalDfs, dfToNpDict,
-                                                 makeIntLabelsString, LblEncoder, LblEncoderValueErrorMsg)
+                                                 SingleColsLblEncoder, MultiColLblEncoder, equalDfs,
+                                                 makeIntLabelsString, LblEncoder, LblEncoderValueErrorMsg, Combo,
+                                                 MainGroupBaseNormalizer)
 import pandas as pd
 #%% stdNormalizerTest
 class stdNormalizerTest(BaseTestClass):
@@ -139,6 +140,73 @@ class lblEncoderWithMakeIntLabelsStringTest(BaseTestClass):
         self.inverseTransformSetUp()
         self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)#!!! 
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
+#%% MainGroupBaseNormalizer tests
+class MainGroupBaseNormalizerTest(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame({
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C2','C2'],
+            'col1': [3, 3, 0, 0, 1, 4],
+            'col2': [0, 3, 0, 1, 0, 2],
+            'col3': [2, 1, 0, 3, 4, 0]},index=range(100, 106))
+        self.getRowsByCombination1Res= pd.DataFrame({'A': ['A1', 'A1'],
+         'B': ['B1', 'B1'],
+         'C': ['C1', 'C1'],
+         'col1': [3, 1],
+         'col2': [0, 0],
+         'col3': [2, 4]},index=[0,4])
+        self.getRowsByCombination2Res= pd.DataFrame({'A': ['A1'],
+         'B': ['B1'],
+         'C': ['C1'],
+         'col1': [3],
+         'col2': [0],
+         'col3': [2]},index=[0])
+
+    def UniqueCombosBaseTest(self, mainGroupColNames, uniqueCombosAssertComboDefs):
+        self.setUp()
+        MainGroupBaseNormalizer_ = MainGroupBaseNormalizer(self.df, mainGroupColNames)
+        uniqueCombos=MainGroupBaseNormalizer_.uniqueCombos
+
+        testSuccessRes=True
+        for com in uniqueCombosAssertComboDefs:
+            if not MainGroupBaseNormalizer_.findMatchingDictReprCombo(com):
+                testSuccessRes=False
+        
+        for com in uniqueCombos:
+            if com.defDict not in uniqueCombosAssertComboDefs:
+                testSuccessRes=False
+                
+        assert testSuccessRes
+
+    def testUniqueCombos1(self):
+        uniqueCombosAssertComboDefs=[{'A': 'A1', 'B': 'B1'}, {'A': 'A2', 'B': 'B2'}, {'A': 'A3', 'B': 'B2'},
+                  {'A': 'A3', 'B': 'B4'}, {'A': 'A4', 'B': 'B4'}]
+        mainGroupColNames=["A", "B"]
+        self.UniqueCombosBaseTest(mainGroupColNames, uniqueCombosAssertComboDefs)
+
+    def testUniqueCombos2(self):
+        mainGroupColNames=["A", "B", "C"]
+        uniqueCombosAssertComboDefs=[{'A': 'A1', 'B': 'B1', 'C': 'C1'}, {'A': 'A1', 'B': 'B1', 'C': 'C2'},
+                                     {'A': 'A2', 'B': 'B2', 'C': 'C4'}, {'A': 'A3', 'B': 'B2', 'C': 'C2'},
+                                     {'A': 'A3', 'B': 'B4', 'C': 'C4'}, {'A': 'A4', 'B': 'B4', 'C': 'C4'}]
+        self.UniqueCombosBaseTest(mainGroupColNames, uniqueCombosAssertComboDefs)
+
+    def GetRowsByCombinationBaseTest(self, comboToFind, mainGroupColNames, getRowsByCombinationRes):
+        self.setUp()
+        MainGroupBaseNormalizer_ = MainGroupBaseNormalizer(self.df, mainGroupColNames)
+        res=MainGroupBaseNormalizer_.getRowsByCombination(self.df, comboToFind)
+        assert equalDfs(getRowsByCombinationRes, res)
+
+    def testGetRowsByCombination1(self):
+        comboToFind={'A': 'A1', 'B': 'B1'}
+        mainGroupColNames=["A", "B"]
+        self.GetRowsByCombinationBaseTest(comboToFind, mainGroupColNames, self.getRowsByCombination1Res)
+
+    def testGetRowsByCombination2(self):
+        comboToFind={'A': 'A1', 'B': 'B1','C':'C1'}
+        mainGroupColNames=["A", "B", "C"]
+        self.GetRowsByCombinationBaseTest(comboToFind, mainGroupColNames, self.getRowsByCombination2Res)
 #%% other tests
 class otherTests(BaseTestClass):
     def testNormalizerStack_addNormalizer(self):
