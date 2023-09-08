@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 import os
+os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import inspect
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from utils.vAnnGeneralUtils import NpDict
 #%% general vars
 datasetsRelativePath=r'..\..\data\datasets'
 LblEncoderValueErrorMsg="Integer labels detected. Use makeIntLabelsString to convert them to string labels."
@@ -318,20 +321,6 @@ def splitToNSeries(df, pastCols, renameCol):
     return processedData
 #%% data split
 
-#%% data conversion
-def dfToNpDict(df):
-    return {col:df[col].values for col in df.columns}
-
-def npDictToDfForCol(df, dic, col):
-    "works also with dfs with multiple indexes"
-    assert col in dic.keys(),f'{col} is not in dictionary cols'
-    assert col in df.columns,f'{col} is not in dataframe cols'
-    assert len(dic[col])==len(df[col]),f'{col} lens in dataframe and dictionary are equal'
-    df[col]=dic[col]
-    
-def npDictToDf(df, dic):
-    for col in dic.keys():
-        npDictToDfForCol(df, dic, col)
 #%% utils misc
 def equalDfs(df1, df2, floatPrecision=0.0001):
     # Check if both DataFrames have the same shape
