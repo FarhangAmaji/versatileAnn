@@ -17,7 +17,7 @@ def getDatasetFiles(fileName: str):
     os.makedirs(datasetsDir, exist_ok=True)
     filePath=os.path.join(datasetsDir, fileName)
     return pd.read_csv(filePath)
-#%% normalizers
+#%% normalizers: base normalizers
 class StdScaler:
     def __init__(self, name=None):
         self.name = name
@@ -99,6 +99,30 @@ class LblEncoder:
             print(f'LblEncoder {self.name} is not fitted; cannot inverse transform.')#kkkMinor this is not in the tests
             return dataToInverseTransformed
 
+class makeIntLabelsString:
+    def __init__(self, name):
+        self.name = name
+        self.isFitted = False
+
+    def fitNTransform(self, inputData):
+        if self.isFitted:
+            print(f'skipping fit:{self.name} makeIntLabelsString is already fitted')
+            return inputData
+        array=inputData.values.reshape(-1)
+        uniqueVals = np.unique(array)
+        assert np.all(np.equal(uniqueVals, uniqueVals.astype(int))), "makeIntLabelsString {colName} All values should be integers."
+        intToLabelMapping = {intVal: f'{self.name}:{label}' for label, intVal in enumerate(uniqueVals)}
+        if isinstance(inputData, pd.Series):
+            output = inputData.map(intToLabelMapping)
+        elif isinstance(inputData, pd.DataFrame):
+            output = inputData.applymap(lambda x: intToLabelMapping.get(x, x))
+        self.intToLabelMapping={value: key for key, value in intToLabelMapping.items()}
+        self.isFitted=True
+        return output
+
+    def inverseTransform(self, dataToInverseTransformed):
+        return np.vectorize(self.intToLabelMapping.get)(dataToInverseTransformed)
+#%% normalizers: NormalizerStack
 class NormalizerStack:
     def __init__(self, *stdNormalizers):
         self._normalizers = {}
@@ -141,7 +165,7 @@ class NormalizerStack:
 
     def ultimateInverseTransformCol(self, df, col):
         return self._normalizers[col].ultimateInverseTransformCol(df[col], col)
-
+#%% normalizers: SingleColsNormalizers
 class BaseSingleColsNormalizer:
     """for instances of SingleColsLblEncoder if they have/need makeIntLabelsStrings, we wont use 3 transforms.
     for i.e. in if we have 5->'colA0'->0, BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0"""#kkk maybe comment needs a more detailed explanation
@@ -212,7 +236,7 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
 
     def __repr__(self):
         return f"SingleColsLblEncoder+{'_'.join(self.colNames)}"
-
+#%% normalizers: BaseMultiColNormalizers
 class BaseMultiColNormalizer:
     def __init__(self):
         self.isFitted=False
@@ -285,30 +309,26 @@ class MultiColLblEncoder(BaseMultiColNormalizer):
 
     def __repr__(self):
         return f"MultiColLblEncoder+{'_'.join(self.colNames)}"
+#%% normalizers: MainGroupNormalizers
+class Combo:
+    def __init__(self, defDict, mainGroupColNames):
+        assert isinstance(defDict, dict) and all(key in defDict for key in mainGroupColNames), "defDict format is invalid."
+        
+        for key in defDict:
+            if key not in mainGroupColNames:
+                raise ValueError(f"'{key}' is not a valid column name in mainGroupColNames.")
+        
+        for col in mainGroupColNames:
+            if col not in defDict:
+                raise ValueError(f"'{col}' is missing in combo definition.")
+        
+        self.defDict=defDict
 
-class makeIntLabelsString:
-    def __init__(self, name):
-        self.name = name
-        self.isFitted = False
-
-    def fitNTransform(self, inputData):
-        if self.isFitted:
-            print(f'skipping fit:{self.name} makeIntLabelsString is already fitted')
-            return inputData
-        array=inputData.values.reshape(-1)
-        uniqueVals = np.unique(array)
-        assert np.all(np.equal(uniqueVals, uniqueVals.astype(int))), "makeIntLabelsString {colName} All values should be integers."
-        intToLabelMapping = {intVal: f'{self.name}:{label}' for label, intVal in enumerate(uniqueVals)}
-        if isinstance(inputData, pd.Series):
-            output = inputData.map(intToLabelMapping)
-        elif isinstance(inputData, pd.DataFrame):
-            output = inputData.applymap(lambda x: intToLabelMapping.get(x, x))
-        self.intToLabelMapping={value: key for key, value in intToLabelMapping.items()}
-        self.isFitted=True
-        return output
-
-    def inverseTransform(self, dataToInverseTransformed):
-        return np.vectorize(self.intToLabelMapping.get)(dataToInverseTransformed)
+    def shortRepr_(self):
+        return '_'.join(self.defDict.values())
+    
+    def __repr__(self):
+        return str(self.defDict)
 #%% series
 def splitToNSeries(df, pastCols, renameCol):
     processedData=pd.DataFrame({})
