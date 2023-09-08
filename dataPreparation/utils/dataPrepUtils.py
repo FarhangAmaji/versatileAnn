@@ -329,6 +329,62 @@ class Combo:
     
     def __repr__(self):
         return str(self.defDict)
+
+class MainGroupBaseNormalizer:
+    def __init__(self, df, mainGroupColNames):
+        self.mainGroupColNames = mainGroupColNames
+        self.uniqueCombos = self._getUniqueCombinations(df)
+
+    def uniqueCombosShortReprs(self):
+        return [combo.shortRepr_() for combo in self.uniqueCombos]
+
+    def findMatchingShortReprCombo(self, combo):
+        for uniqueCombo in self.uniqueCombos:
+            if combo == uniqueCombo.shortRepr_():
+                return uniqueCombo
+        return None
+
+    def uniqueCombosDictReprs(self):
+        return [combo.defDict for combo in self.uniqueCombos]
+
+    def findMatchingDictReprCombo(self, combo):
+        for uniqueCombo in self.uniqueCombos:
+            if combo == uniqueCombo.defDict:
+                return uniqueCombo
+        return None
+
+    def comboInUniqueCombos(self, combo):
+        if isinstance(combo, Combo):
+            if combo in self.uniqueCombos:
+                return combo
+        elif isinstance(combo, str):
+            if self.findMatchingShortReprCombo(combo):
+                return self.findMatchingShortReprCombo(combo)
+        elif isinstance(combo, dict):
+            if self.findMatchingDictReprCombo(combo):
+                return self.findMatchingDictReprCombo(combo)
+        return
+
+    def _getUniqueCombinations(self, df):
+        uniqueCombos  = df.groupby(self.mainGroupColNames).size().reset_index().rename(columns={0: 'count'})
+        uniqueCombos  = uniqueCombos.rename(columns={0: 'count'})
+        comboObjs = []
+        for index, row in uniqueCombos.iterrows():
+            comboDict = {col: row[col] for col in self.mainGroupColNames}
+            combo = Combo(comboDict, self.mainGroupColNames)
+            comboObjs.append(combo)
+        
+        return comboObjs
+
+    def getRowsByCombination(self, df, combo):
+        comboObj=self.comboInUniqueCombos(combo)
+        assert comboObj, "Combo is not in uniqueCombos"
+        tempDf=df[(df[self.mainGroupColNames] == comboObj.defDict).all(axis=1)]
+        
+        # this is to correct dtypes
+        npDict=NpDict(tempDf)
+        tempDf=npDict.toDf(resetDtype=True)
+        return tempDf
 #%% series
 def splitToNSeries(df, pastCols, renameCol):
     processedData=pd.DataFrame({})
