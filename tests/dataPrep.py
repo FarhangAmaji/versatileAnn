@@ -6,12 +6,13 @@ import unittest
 from dataPreparation.utils.dataPrepUtils import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
                                                  SingleColsLblEncoder, MultiColLblEncoder, equalDfs,
                                                  makeIntLabelsString, LblEncoder, LblEncoderValueErrorMsg, Combo,
-                                                 MainGroupBaseNormalizer)
+                                                 MainGroupBaseNormalizer,MainGroupSingleColsStdNormalizer,
+                                                 MainGroupSingleColsLblEncoder)
 import pandas as pd
 #%% stdNormalizerTest
-class stdNormalizerTest(BaseTestClass):
+class stdNormalizerTests(BaseTestClass):
     def __init__(self, *args, **kwargs):
-        super(stdNormalizerTest, self).__init__(*args, **kwargs)
+        super(stdNormalizerTests, self).__init__(*args, **kwargs)
         self.expectedPrint={}
         self.expectedPrint['testFitAgain']="""SingleColsStdNormalizer+col1_col2 col1 is already fitted
 SingleColsStdNormalizer+col1_col2 col2 is already fitted
@@ -73,7 +74,7 @@ MultiColStdNormalizer+col3_col4 is already fitted
     #kkk add test for addNormalizer in NormalizerStack
     #kkk what meaningful tests can be added??
 #%% lblEncoderTest
-class lblEncoderTest(stdNormalizerTest):
+class lblEncoderTest(stdNormalizerTests):
     def __init__(self, *args, **kwargs):
         super(lblEncoderTest, self).__init__(*args, **kwargs)
         self.expectedPrint={}
@@ -103,10 +104,10 @@ MultiColLblEncoder+col3_col4 is already fitted
 
     def testUltimateInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)#!!! 
+        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 
-class lblEncoderWithMakeIntLabelsStringTest(BaseTestClass):
+class lblEncoderWithMakeIntLabelsStringTests(BaseTestClass):
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({'col1': [3, 3, 0, 0, 1, 4],
                                            'col2': [0, 3, 0, 1, 0, 2],
@@ -126,10 +127,10 @@ class lblEncoderWithMakeIntLabelsStringTest(BaseTestClass):
             MultiColLblEncoder(['col2', 'col3']))
 
     def inverseTransformSetUp(self):
-        stdNormalizerTest.inverseTransformSetUp(self)
+        stdNormalizerTests.inverseTransformSetUp(self)
 
     def testFitNTransform(self):
-        stdNormalizerTest.testFitNTransform(self)
+        stdNormalizerTests.testFitNTransform(self)
 
     def testInverseIransform(self):
         self.inverseTransformSetUp()
@@ -141,7 +142,7 @@ class lblEncoderWithMakeIntLabelsStringTest(BaseTestClass):
         self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)#!!! 
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 #%% MainGroupBaseNormalizer tests
-class MainGroupBaseNormalizerTest(BaseTestClass):
+class MainGroupBaseNormalizerTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({
             'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3'],
@@ -207,6 +208,90 @@ class MainGroupBaseNormalizerTest(BaseTestClass):
         comboToFind={'A': 'A1', 'B': 'B1','C':'C1'}
         mainGroupColNames=["A", "B", "C"]
         self.GetRowsByCombinationBaseTest(comboToFind, mainGroupColNames, self.getRowsByCombination2Res)
+#%% MainGroupSingleColsNormalizerTests
+class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame(data = {#kkk could had a better example
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2'],
+            'col1': [3, 3, 0, 0, 1, 4],
+            'col2': [0, 3, 0, 1, 0, 2],
+            'col3': [2, 1, 0, 3, 4, 0]},index=range(100, 106))
+        self.dfUntouched = self.df.copy()
+        self.dfFitNTransform = pd.DataFrame(data = {
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2'],
+            'col1': [1,  0,  0,  0, -1,  0],
+            'col2': [0, 0, 0, 0, 0, 0],
+            'col3': [2, 1, 0, 3, 4, 0]},index=range(100, 106))
+
+    def normalizerStackSetUp(self):
+        self.normalizerStack = NormalizerStack(
+            MainGroupSingleColsStdNormalizer(self.df, ['A','B'], ['col1','col2']))
+
+    def testStraightFitNTransform(self):
+        self.setUp()
+        MainGroupBaseNormalizer_=MainGroupSingleColsStdNormalizer(self.df, ['A','B'], ['col1','col2'])
+        MainGroupBaseNormalizer_.fitNTransform(self.df)
+        assert equalDfs(self.df, self.dfFitNTransform)
+
+    def testNormalizerStackFitNTransform(self):
+        self.setUp()
+        self.normalizerStackSetUp()
+        self.normalizerStack.fitNTransform(self.df)
+        assert equalDfs(self.df, self.dfFitNTransform)
+
+    def testNormalizerStackInverseTransform(self):
+        self.testNormalizerStackFitNTransform()
+        self.normalizerStack.inverseTransform(self.df)
+        assert equalDfs(self.df, self.dfUntouched)
+
+    def testNormalizerStackUltimateInverseTransform(self):
+        self.testNormalizerStackFitNTransform()
+        self.normalizerStack.ultimateInverseTransform(self.df)
+        assert equalDfs(self.df, self.dfUntouched)
+
+class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
+    def setUp(self):
+        self.df = pd.DataFrame(data = {#kkk could had a better example
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3','A2'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2','C3'],
+            'col1': [3, 3, 0, 0, 1, 4, 4],
+            'col2': ['a', 'v', 'a', 'o', 'o', 'v','z'],
+            'col3': [2, 1, 0, 3, 4, 0,4]},index=range(100, 107))
+        self.dfUntouched = self.df.copy()
+        self.dfFitNTransform = pd.DataFrame(data = {
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3','A2'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2','C3'],
+            'col1': [1, 0, 0, 0, 0, 0, 1],
+            'col2': [0, 0, 0, 0, 1, 0, 1],
+            'col3': [2, 1, 0, 3, 4, 0,4]},index=range(100, 107))
+        self.dfInverseRes = pd.DataFrame(data = {
+            'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3','A2'],
+            'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2','B2'],
+            'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2','C3'],
+            'col1': ['col1:1', 'col1:0', 'col1:0', 'col1:0', 'col1:0', 'col1:0', 'col1:1'],
+            'col2': ['a', 'v', 'a', 'o', 'o', 'v','z'],
+            'col3': [2, 1, 0, 3, 4, 0,4]},index=range(100, 107))
+
+    def normalizerStackSetUp(self):
+        self.normalizerStack = NormalizerStack(
+            MainGroupSingleColsLblEncoder(self.df, ['A','B'], ['col1','col2']))
+
+    def testStraightFitNTransform(self):
+        self.setUp()
+        MainGroupBaseNormalizer_=MainGroupSingleColsLblEncoder(self.df, ['A','B'], ['col1','col2'])
+        MainGroupBaseNormalizer_.fitNTransform(self.df)
+        assert equalDfs(self.df, self.dfFitNTransform)
+
+    def testNormalizerStackInverseTransform(self):
+        self.testNormalizerStackFitNTransform()
+        self.normalizerStack.inverseTransform(self.df)
+        assert equalDfs(self.df, self.dfInverseRes)
 #%% other tests
 class otherTests(BaseTestClass):
     def testNormalizerStack_addNormalizer(self):
