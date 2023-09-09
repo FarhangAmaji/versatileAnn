@@ -22,7 +22,73 @@ def splitToNSeries(df, pastCols, renameCol):
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 #%% data split
+splitDefaultCondition='__possibleStartPoint__ == 1'
+def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
+    newIndexes = set()
+    
+    # Add sequent indexes
+    if seqLenWithSequents>0:
+        for num in indexes:
+            newIndexes.update(range(num + 1, num + seqLenWithSequents))# adds sequents so the seqLen will be seqLenWithSequents
+    
+    # Add antecedent indexes
+    if seqLenWithAntecedents>0:
+        for num in indexes:
+            newIndexes.update(range(num - seqLenWithAntecedents+ 1, num))# adds antecedents so the seqLen will be seqLenWithAntecedents
+    
+    newIndexes.difference_update(indexes)  # Remove existing elements from the newIndexes set
+    indexes = np.concatenate((indexes, np.array(list(newIndexes))))
+    indexes.sort()
+    return indexes
 
+def splitTrainValTest(df, trainRatio, valRatio,
+                      trainSeqLen=0, valSeqLen=None, testSeqLen=None,
+                      shuffle=True, conditions=[splitDefaultCondition]):
+    """
+    note this func expects conditions which indicate the first(older in time|backer in sequence);
+    therefore for seq lens pass the (backcastLen+ forecastLen)
+    """
+    trainRatio, valRatio=round(trainRatio,6), round(valRatio,6)#kkk whole code
+    testRatio=round(1-trainRatio-valRatio,6)
+    assert sum([trainRatio, valRatio, testRatio])==1, 'sum of train, val and test ratios must be 1'
+
+    if valSeqLen==None:
+        valSeqLen = trainSeqLen
+    if testSeqLen==None:
+        testSeqLen = trainSeqLen
+
+    isCondtionsApplied=False
+    filteredDf = df.copy()
+    doQueryNTurnIsCondtionsApplied= lambda df,con,ica:(df.query(con),True)
+    for condition in conditions:
+        if condition==splitDefaultCondition:
+            try:
+                filteredDf, isCondtionsApplied = doQueryNTurnIsCondtionsApplied(filteredDf, condition, isCondtionsApplied)
+            except:
+                pass
+        else:
+            filteredDf, isCondtionsApplied = doQueryNTurnIsCondtionsApplied(filteredDf, condition, isCondtionsApplied)
+
+    if isCondtionsApplied:
+        indexes=np.array(filteredDf.index)
+    else:
+        indexes=np.array(filteredDf.index.tolist()[:-max(trainSeqLen, valSeqLen, testSeqLen)])
+    if shuffle:#kkk add compatibility to seed everything
+        np.random.shuffle(indexes)
+
+    trainIndexes=indexes[:int(trainRatio*len(indexes))]
+    valIndexes=indexes[int(trainRatio*len(indexes)):int((trainRatio+valRatio)*len(indexes))]
+    testIndexes=indexes[int((trainRatio+valRatio)*len(indexes)):]
+    print(trainIndexes, valIndexes, testIndexes)
+
+    trainIndexes=addSequentAndAntecedentIndexes(trainIndexes, seqLenWithSequents=trainSeqLen)
+    valIndexes=addSequentAndAntecedentIndexes(valIndexes, seqLenWithSequents=valSeqLen)
+    testIndexes=addSequentAndAntecedentIndexes(testIndexes, seqLenWithSequents=testSeqLen)
+
+    train=filteredDf.loc[trainIndexes]
+    val=filteredDf.loc[valIndexes]
+    test=filteredDf.loc[testIndexes]
+    return train, val, test
 #%% utils misc
 def equalDfs(df1, df2, floatPrecision=0.0001):
     # Check if both DataFrames have the same shape
