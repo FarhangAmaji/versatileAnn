@@ -385,6 +385,53 @@ class MainGroupBaseNormalizer:
         npDict=NpDict(tempDf)
         tempDf=npDict.toDf(resetDtype=True)
         return tempDf
+#%% MainGroup SingleColsStdNormalizer
+class MainGroupBaseSingleColsStdNormalizer(MainGroupBaseNormalizer):
+    def __init__(self, classType, df, mainGroupColNames, colNames:list):
+        super().__init__(df, mainGroupColNames)
+        self.colNames=colNames
+        self.container={}
+        for col in colNames:
+            self.container[col]={}
+            for combo in self.uniqueCombos:
+                self.container[col][combo.shortRepr_()]=classType([col])
+
+    def fitNTransform(self, df):
+        for col in self.colNames:
+            for combo in self.uniqueCombos:
+                dfToFit=self.getRowsByCombination(df, combo)
+                inds=dfToFit.index
+                dfToFit=dfToFit.reset_index(drop=True)
+                self.container[col][combo.shortRepr_()].fitNTransform(dfToFit)
+                dfToFit.index=inds
+                df.loc[inds,col]=dfToFit
+
+    def inverseTransformCol(self, df, col):
+        for combo in self.uniqueCombos:
+            dfToFit=self.getRowsByCombination(df, combo)
+            inds=dfToFit.index
+            dfToFit=dfToFit.reset_index(drop=True)
+            invRes=self.container[col][combo.shortRepr_()].inverseTransformCol(dfToFit[col], col)
+            df.loc[inds,col]=invRes
+
+    def ultimateInverseTransformCol(self, df, col):
+        for combo in self.uniqueCombos:
+            dfToFit=self.getRowsByCombination(df, combo)
+            inds=dfToFit.index
+            dfToFit=dfToFit.reset_index(drop=True)
+            invRes=self.container[col][combo.shortRepr_()].ultimateInverseTransformCol(dfToFit, col)
+            #kkk only difference between this and inverseTransformCol is that here we cant pass dfToFit[col]
+            #...maybe we correcting this we may can write both funcs in a helper(base) func which only takes ultimateInverseTransformCol or inverseTransformCol
+            df.loc[inds,col]=invRes
+
+class MainGroupSingleColsStdNormalizer(MainGroupBaseNormalizer):
+    def __init__(self, df, mainGroupColNames, colNames:list):
+        super().__init__(SingleColsStdNormalizer, df, mainGroupColNames, colNames)
+
+class MainGroupSingleColsLblEncoder(MainGroupBaseNormalizer):
+    "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
+    def __init__(self, df, mainGroupColNames, colNames:list):
+        super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
 #%% series
 def splitToNSeries(df, pastCols, renameCol):
     processedData=pd.DataFrame({})
