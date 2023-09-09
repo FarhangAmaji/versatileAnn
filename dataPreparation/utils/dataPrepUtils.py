@@ -456,6 +456,11 @@ def equalDfs(df1, df2, floatPrecision=0.0001):
             if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
                 return False
         else:
+            if any([pd.api.types.is_numeric_dtype(df1[col]), pd.api.types.is_numeric_dtype(df2[col])]):
+                npd1=NpDict(df1).getDfDict(True)
+                npd2=NpDict(df2).getDfDict(True)
+                if any([pd.api.types.is_numeric_dtype(npd1[col]), pd.api.types.is_numeric_dtype(npd2[col])]):
+                    return False
             # If the column is non-numeric, skip the check
             continue
 
