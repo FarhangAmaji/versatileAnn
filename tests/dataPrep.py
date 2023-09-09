@@ -3,11 +3,11 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPreparation.utils.dataPrepUtils import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
-                                                 SingleColsLblEncoder, MultiColLblEncoder, equalDfs,
-                                                 makeIntLabelsString, LblEncoder, LblEncoderValueErrorMsg, Combo,
-                                                 MainGroupBaseNormalizer,MainGroupSingleColsStdNormalizer,
-                                                 MainGroupSingleColsLblEncoder)
+from dataPrep.normalizers import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
+                                                 SingleColsLblEncoder, MultiColLblEncoder, makeIntLabelsString, 
+                                                 LblEncoder, LblEncoderValueErrorMsg, Combo, MainGroupBaseNormalizer,
+                                                 MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
+from dataPrep.utils import equalDfs
 import pandas as pd
 #%% stdNormalizerTest
 class stdNormalizerTests(BaseTestClass):
@@ -156,13 +156,13 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
          'C': ['C1', 'C1'],
          'col1': [3, 1],
          'col2': [0, 0],
-         'col3': [2, 4]},index=[0,4])
+         'col3': [2, 4]},index=[100,104])
         self.getRowsByCombination2Res= pd.DataFrame({'A': ['A1'],
          'B': ['B1'],
          'C': ['C1'],
          'col1': [3],
          'col2': [0],
-         'col3': [2]},index=[0])
+         'col3': [2]},index=[100])
 
     def UniqueCombosBaseTest(self, mainGroupColNames, uniqueCombosAssertComboDefs):
         self.setUp()
