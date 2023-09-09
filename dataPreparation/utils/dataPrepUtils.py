@@ -130,7 +130,7 @@ class NormalizerStack:
             self.addNormalizer(stdNormalizer)
 
     def addNormalizer(self, newNormalizer):
-        assert isinstance(newNormalizer, (BaseSingleColsNormalizer, BaseMultiColNormalizer))
+        assert isinstance(newNormalizer, (BaseSingleColsNormalizer, BaseMultiColNormalizer, MainGroupBaseSingleColsStdNormalizer))
         for col in newNormalizer.colNames:
             if col not in self._normalizers.keys():
                 self._normalizers.update({col: newNormalizer})
@@ -157,7 +157,7 @@ class NormalizerStack:
 
     def inverseTransformCol(self, df, col):
         assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
-        return self._normalizers[col].inverseTransformCol(df[col], col)
+        return self._normalizers[col].inverseTransformCol(df, col)
 
     def ultimateInverseTransform(self, df):
         for col in self.normalizers.keys():
@@ -206,11 +206,12 @@ class BaseSingleColsNormalizer:
             return df[col]
         return self.scalers[col].transform(df[col])
 
-    def inverseTransformCol(self, dataToInverseTransformed, col):
+    def inverseTransformCol(self, df, col):
+        dataToInverseTransformed=df[col]
         return self.scalers[col].inverseTransform(dataToInverseTransformed)
 
     def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
-        dataToInverseTransformed = self.inverseTransformCol(dataToInverseTransformed[col], col)
+        dataToInverseTransformed = self.inverseTransformCol(dataToInverseTransformed, col)
         if hasattr(self, 'makeIntLabelsStrings'):
             if col in self.makeIntLabelsStrings.keys():
                 dataToInverseTransformed = self.makeIntLabelsStrings[col].inverseTransform(dataToInverseTransformed)
@@ -270,13 +271,13 @@ class BaseMultiColNormalizer:
     #kkk could have add many fit, transform, assert and their other combinations for single col
     #kkk could have added inverseTransform which does inverse on self.colNames in df 
     
-    def inverseTransformCol(self, dataToInverseTransformed, col=None):
-        '#ccc col is not used and its just for compatibleness'#kkk is this acceptable in terms of software engineering
+    def inverseTransformCol(self, df, col):
+        dataToInverseTransformed=df[col]
         return self.scaler.inverseTransform(dataToInverseTransformed)
 
     def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
         assert col in dataToInverseTransformed.columns,'ultimateInverseTransformCol "{self}" "{col}" col is not in df columns'
-        res = self.inverseTransformCol(dataToInverseTransformed[col])
+        res = self.inverseTransformCol(dataToInverseTransformed, col)
         if self.makeIntLabelsString:
             res = self.makeIntLabelsString.inverseTransform(res)
         return res
