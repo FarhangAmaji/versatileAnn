@@ -21,13 +21,23 @@ def getDatasetFiles(fileName: str, dateTimeCols=[]):
         convertdateTimeCols(df, dateTimeCols)
     return df
 #%% series
-def splitToNSeries(df, pastCols, renameCol):
+def addCorrespondentRow(df, correspondentRowsDf, targets, targetNewColNameType, targetMapping={}):
+    if targetMapping=={}:
+        targetMapping = {tr:idx for tr,idx in zip(targets, correspondentRowsDf.index)}
+
+    for target in targets:
+        if target in targetMapping:
+            target_index = targetMapping[target]
+            condition = df[targetNewColNameType] == target
+            df.loc[condition, correspondentRowsDf.columns] = correspondentRowsDf.iloc[target_index].values
+
+def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
     processedData=pd.DataFrame({})
     otherCols= [col for col in df.columns if col not in pastCols]
     for i,pc in enumerate(pastCols):
         thisSeriesDf=df[otherCols+[pc]]
-        thisSeriesDf=thisSeriesDf.rename(columns={pc:renameCol})
-        thisSeriesDf[renameCol+'Type']=pc
+        thisSeriesDf=thisSeriesDf.rename(columns={pc:newColName})
+        thisSeriesDf[newColName+'Type']=pc
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 #%% data split
