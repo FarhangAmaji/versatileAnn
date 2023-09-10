@@ -22,8 +22,8 @@ class nBeats(ann):
         
         self.postInitForBlocks(backcastLength, forecastLength)
         
-        self.tsInputWindow=backcastLength
-        self.tsOutputWindow=forecastLength
+        self.backcastLen=backcastLength
+        self.forecastLen=forecastLength
         self.timeSeriesMode=True
         self.isItUnivariate=False
     

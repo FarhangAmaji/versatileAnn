@@ -45,10 +45,11 @@ class TransformerInfo:
         PE = torch.flatten(stacked, start_dim=1, end_dim=2).to(self.device)# shape: maxLen * embedSize
         """#ccc
         PE for position i: [sin(i\denominator[0]),cos(i\denominator[0]), sin(i\denominator[1]),cos(i\denominator[1]), sin(i\denominator[2]),cos(i\denominator[2]),...]        
-        thus PE for even position i starts at sin(i\denominator[0]) and goes to 0 because the denominator[self.embedSize-1] is a really large number sin(0)=0        thus PE for odd position i starts at cos(i\denominator[0]) and goes to 1 because the denominator[self.embedSize-1] is a really large number cos(0)=1
-                note for different'i's the sin(i\denominator[0]) just circulates and its not confined like (i/maxRows*2*pi)
-                therefore the maxRows plays really doesnt affect the positional encoding and for each position we can get PE for position i without having maxRows
-                #kkk why the positional embeddings for a specific position i, each embedding element different?
+        thus PE for even position i starts at sin(i\denominator[0]) and goes to 0 because the denominator[self.embedSize-1] is a really large number sin(0)=0
+        thus PE for odd position i starts at cos(i\denominator[0]) and goes to 1 because the denominator[self.embedSize-1] is a really large number cos(0)=1
+        note for different'i's the sin(i\denominator[0]) just circulates and its not confined to sth like (i/maxRows*2*pi)
+        therefore the maxRows plays really doesnt affect the positional encoding and for each position we can get PE for position i without having maxRows
+        #kkk why the positional embeddings for a specific position i, each embedding element different?
         """
         return PE #ccc in order PE to be summable with other embeddings, we fill for the rest of values upto maxLen with some padding
 
@@ -221,8 +222,8 @@ class univariateTransformer(ann):
         super(univariateTransformer, self).__init__()
 
         self.transformerInfo= transformerInfo
-        self.tsInputWindow=transformerInfo.inpLen
-        self.tsOutputWindow=transformerInfo.outputLen
+        self.backcastLen=transformerInfo.inpLen
+        self.forecastLen=transformerInfo.outputLen
         self.timeSeriesMode=True
         self.transformerMode=True
         self.encoder = Encoder(transformerInfo)
@@ -246,7 +247,7 @@ class univariateTransformer(ann):
             output=torch.cat([output,newOutput[:,-1].unsqueeze(0)],dim=1)
         return output
     
-    def forwardForUnknownStraight(self, src, outputLen):#jjj
+    def forwardForUnknownStraight(self, src, outputLen):
         self.eval()
         if len(src.shape)==1:
             src=src.unsqueeze(0)

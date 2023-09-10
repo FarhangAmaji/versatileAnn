@@ -42,7 +42,7 @@ def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
     return processedData
 #%% data split
 tsStartPointColName='__possibleStartPoint__'#kkk make this enviromental variable
-splitDefaultCondition=f'{tsStartPointColName} == 1'
+splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
     newIndexes = set()
     

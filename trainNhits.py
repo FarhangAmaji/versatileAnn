@@ -38,10 +38,10 @@ blocks=[nHitsBlock(nFreqDownsample=4, mlpUnits=3 * [[512, 512]], nPoolKernelSize
         nHitsBlock(nFreqDownsample=1, mlpUnits=3 * [[512, 512]], nPoolKernelSize=1, interpolationMode='linear', pooling_mode='MaxPool1d', dropoutRate=0, activation='LeakyReLU'),
     ]
 externalKwargs={'batchDatapreparation':{'futureExogenousCols':['genForecast', 'weekDay'], 'historyExogenousCols':['systemLoad'], 'staticExogenousCols':['market0', 'market1']}}
-nHitsModel=nHits(blocks, backcastLen=110, forecastLen=22, externalKwargs=externalKwargs)
+nHitsModel=nHits(blocks, backcastLen=110, forecastLen=22, externalKwargs=externalKwargs)#kkk in create it shouldnt be in 'batchDatapreparation' externalKwargs
 len(list(nHitsModel.parameters()))
 #%% preprocessTrainValTestData
-trainDataProcessed, valDataProcessed, testDataProcessed = nHitsModel.preprocessTrainValTestData(dfPath=r'.\data\datasets\EPF_FR_BE2.csv', \
+trainDataProcessed, valDataProcessed, testDataProcessed, scalers = nHitsModel.preprocessTrainValTestData(dfPath=r'.\data\datasets\EPF_FR_BE.csv', \
     trainRatio=.7, valRatio=.15, ysCols=['yFR', 'yBE'], externalKwargs=externalKwargs, staticDfPath=r'.\data\datasets\EPF_FR_BE_static.csv')
 #%%
 workerNum=8
@@ -51,7 +51,14 @@ criterion = torch.nn.MSELoss()
 nHitsModel.trainModel(trainDataProcessed, None, valDataProcessed, None, criterion, numEpochs=30, savePath=r'data\bestModels\nHits1', workerNum=workerNum, externalKwargs=externalKwargs)#kkk rename savePath for all train examples
 #%% test
 nHitsModel.evaluateModel(testDataProcessed, None, criterion,stepNum=0, evalMode='test', workerNum=workerNum, externalKwargs=externalKwargs)
-#%%
+#%% predict
+"""#ccc note for prediction the data doesn't have the ysCols, also often doesnt have historyExogenousCols.
+but the model needs at least backcastLen of of data with all existing ExogenousCols defined in the trained model.
+for i.e. if we have the trained model with 'futureExogenousCols' and 'historyExogenousCols'(without 'staticExogenousCols') the model we pass to
+predict should have the at least backcastLen of those cols.
+for the 'futureExogenousCols' we also need data for forecastLen but no need for 'historyExogenousCols'
+"""
+#kkk add datapredict with r'.\data\datasets\EPF_FR_BE_futr.csv'' later
 #%%
 #%%
 #%%

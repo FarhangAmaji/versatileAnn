@@ -51,7 +51,7 @@ class Block(nn.Module):
 
     def __str__(self):
         block_type = type(self).__name__
-        rep=f'{block_type}(units={self.units}, thetasDim={self.thetasDim},'
+        rep=f'nbeatsBlock {block_type}(units={self.units}, thetasDim={self.thetasDim},'
         if hasattr(self, 'backcastLength'):
             rep+= f' backcastLength={self.backcastLength},'
         if hasattr(self, 'forecastLength'):

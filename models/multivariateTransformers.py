@@ -8,6 +8,7 @@ from versatileAnn import ann
 import torch
 from torch import nn
 #%% define model
+#kkk rename the classes
 class TransformerInfo:
     def __init__(self, embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=10, outputLen=10, inputDim=1, outputDim=1):
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -32,7 +33,7 @@ class TransformerInfo:
         trgMask = torch.tril(torch.ones((outputLen, outputLen))).unsqueeze(1).unsqueeze(-1)
         return trgMask.to(self.device)
     
-    def positionalEmbedding2d(self, maxRows, maxCols):#jjj add shapes and comment
+    def positionalEmbedding2d(self, maxRows, maxCols):#kkk add shapes and comment
         positionRows = (torch.arange(maxRows).reshape(maxRows, 1).repeat(1, maxCols))
         positionEnc = torch.zeros(maxRows, maxCols, self.embedSize)
         # Calculate positional encodings for rows and columns
@@ -43,7 +44,7 @@ class TransformerInfo:
         return positionEnc.to(self.device)
     
 class multiHeadAttention(nn.Module):
-    def __init__(self, transformerInfo, queryDim, valueDim):#jjj correct comments
+    def __init__(self, transformerInfo, queryDim, valueDim):#kkk correct comments
         super(multiHeadAttention, self).__init__()
         '''#ccc its important to know the network is independent of sequence length because we didnt make any layer(linear)
         which takes input equal to sequence length
@@ -52,7 +53,7 @@ class multiHeadAttention(nn.Module):
         self.valueLayer = nn.Linear(valueDim * transformerInfo.embedSize, valueDim * transformerInfo.embedSize)
         self.keyLayer = nn.Linear(valueDim * transformerInfo.embedSize, valueDim * transformerInfo.embedSize)
         self.queryLayer = nn.Linear(queryDim * transformerInfo.embedSize, queryDim * transformerInfo.embedSize)
-        self.outLayer = nn.Linear(queryDim * transformerInfo.embedSize, queryDim * transformerInfo.embedSize)#jjj
+        self.outLayer = nn.Linear(queryDim * transformerInfo.embedSize, queryDim * transformerInfo.embedSize)
 
     def forward(self, query, key, value, mask):
         'multiHeadAttention'
@@ -70,11 +71,11 @@ class multiHeadAttention(nn.Module):
         query = self.queryLayer(query.reshape(N, queryLen, -1))  # N * queryLen * queryDim * embedSize
 
         # Split the embedding into heads different pieces
-        value = value.reshape(N, valueLen, valueDim, self.transformerInfo.heads, self.transformerInfo.headDim)#jjj
+        value = value.reshape(N, valueLen, valueDim, self.transformerInfo.heads, self.transformerInfo.headDim)
         key = key.reshape(N, valueLen, valueDim, self.transformerInfo.heads, self.transformerInfo.headDim)
         query = query.reshape(N, queryLen, queryDim, self.transformerInfo.heads, self.transformerInfo.headDim)
 
-        energy = torch.einsum("nqxhd,nkyhd->nhqxky", [query, key])#jjj#kkk
+        energy = torch.einsum("nqxhd,nkyhd->nhqxky", [query, key])
         'qxd,kyd->qxky'
         'qxky=qx1*ky1+qx2*ky2+...'
         """#ccc Einsum does matrix multiplication
@@ -93,10 +94,10 @@ class multiHeadAttention(nn.Module):
 
         # Mask padded indices so their weights become 0
         if mask is not None:
-            energy = energy.masked_fill(mask == 0, float("-1e20"))#jjj mask for decoder
+            energy = energy.masked_fill(mask == 0, float("-1e20"))
         
         energy=energy.reshape(N, self.transformerInfo.heads, queryLen, queryDim, -1)
-        attention = torch.softmax(energy / (self.transformerInfo.embedSize ** (1 / 2)), dim=4)#jjj#kkk
+        attention = torch.softmax(energy / (self.transformerInfo.embedSize ** (1 / 2)), dim=4)
         attention=attention.reshape(N, self.transformerInfo.heads, queryLen, queryDim, valueLen, valueDim)
         # attention shape: N * heads * queryLen * valueLen
         '''#ccc we Normalize energy value for better stability
@@ -107,7 +108,6 @@ class multiHeadAttention(nn.Module):
         value get so less softmax output
         '''
         out = torch.einsum("nhqxvy,nvyhd->nqxhd", [attention, value]).reshape(N, queryLen, queryDim, self.transformerInfo.heads * self.transformerInfo.headDim)#N * queryLen * heads * headDim
-        #jjj
         """#ccc this line is equal to == out = torch.einsum("nhqv,nvhd->nhqd", [attention, value]); out= out.permute(0, 2, 1, 3)
         
         we have 3 sets of words(value, key, query). now 2 of them (key and query) are consummed to create the attentionTable
@@ -136,7 +136,7 @@ class layerNorm2D(nn.Module):
             normalized[:, :, i] = self.layerNorms[i](x[:, :, i])
         return normalized
 
-class transformerBlock(nn.Module):#jjj should be encoder block
+class transformerBlock(nn.Module):
     def __init__(self, transformerInfo, queryDim, valueDim, dropout):
         '#ccc this is used in both encoder and decoder'
         super(transformerBlock, self).__init__()
@@ -151,7 +151,7 @@ class transformerBlock(nn.Module):#jjj should be encoder block
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, query, key, value, mask=None):#jjj 1 query set is needed only
+    def forward(self, query, key, value, mask=None):
         'transformerBlock'
         attention = self.attention(query, key, value, mask)
         N, seqLen, dim, _ = query.shape
@@ -168,14 +168,14 @@ class Encoder(nn.Module):
     def __init__(self, transformerInfo):
         super(Encoder, self).__init__()
         self.transformerInfo= transformerInfo
-        self.embeddings = nn.Linear(transformerInfo.inputDim, transformerInfo.inputDim * transformerInfo.embedSize)#jjj d to d*embedSize
+        self.embeddings = nn.Linear(transformerInfo.inputDim, transformerInfo.inputDim * transformerInfo.embedSize)
         self.layers = nn.ModuleList(
             [transformerBlock(transformerInfo, queryDim=transformerInfo.inputDim, valueDim=transformerInfo.inputDim, dropout=transformerInfo.dropoutRate+i*(1-transformerInfo.dropoutRate)/transformerInfo.encoderLayersNum) for i in range(transformerInfo.encoderLayersNum)])
 
     def forward(self, x):
         'Encoder'
         N, inputSeqLength, inputDim = x.shape
-        x = self.embeddings(x).reshape(N, inputSeqLength, inputDim, self.transformerInfo.embedSize) + self.transformerInfo.encoderPositionalEmbedding#jjj
+        x = self.embeddings(x).reshape(N, inputSeqLength, inputDim, self.transformerInfo.embedSize) + self.transformerInfo.encoderPositionalEmbedding
             
         # In the Encoder the query, key, value are all the same, it's in the
         # decoder this will change. This might look a bit odd in this case.
@@ -188,8 +188,8 @@ class DecoderBlock(nn.Module):
         super(DecoderBlock, self).__init__()
         self.transformerInfo= transformerInfo
         self.norm = layerNorm2D(transformerInfo.outputDim, transformerInfo.embedSize)
-        self.attention = multiHeadAttention(transformerInfo, transformerInfo.outputDim, transformerInfo.outputDim)#jjj
-        self.transformerBlock = transformerBlock(transformerInfo, queryDim=transformerInfo.outputDim, valueDim=transformerInfo.inputDim,dropout=dropout)#jjj
+        self.attention = multiHeadAttention(transformerInfo, transformerInfo.outputDim, transformerInfo.outputDim)
+        self.transformerBlock = transformerBlock(transformerInfo, queryDim=transformerInfo.outputDim, valueDim=transformerInfo.inputDim,dropout=dropout)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, query, key, value, trgMask):
@@ -217,10 +217,10 @@ class Decoder(nn.Module):
     def forward(self, outputSeq, outputOfEncoder):
         'Decoder'
         N, outputSeqLength, outputDim = outputSeq.shape
-        outputSeq = self.embeddings(outputSeq).reshape(N, outputSeqLength, outputDim, self.transformerInfo.embedSize) + self.transformerInfo.decoderPositionalEmbedding[:outputSeqLength]#jjj
+        outputSeq = self.embeddings(outputSeq).reshape(N, outputSeqLength, outputDim, self.transformerInfo.embedSize) + self.transformerInfo.decoderPositionalEmbedding[:outputSeqLength]
 
         for layer in self.layers:
-            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.makeTrgMask(outputSeqLength))#jjj check mask
+            outputSeq = layer(outputSeq, outputOfEncoder, outputOfEncoder, self.transformerInfo.makeTrgMask(outputSeqLength))
         '#ccc note outputSeq is query, outputOfEncoder is value and key'
 
         outputSeq = self.outLayer(outputSeq.reshape(N,outputSeqLength,-1))
@@ -231,8 +231,8 @@ class multivariateTransformer(ann):
         super(multivariateTransformer, self).__init__()
 
         self.transformerInfo= transformerInfo
-        self.tsInputWindow=transformerInfo.inpLen
-        self.tsOutputWindow=transformerInfo.outputLen
+        self.backcastLen=transformerInfo.inpLen
+        self.forecastLen=transformerInfo.outputLen
         self.timeSeriesMode=True
         self.transformerMode=True
         self.encoder = Encoder(transformerInfo)
@@ -240,15 +240,15 @@ class multivariateTransformer(ann):
 
     def forward(self, src, trg):
         'Transformer'
-        assert src.shape[2]==self.transformerInfo.inputDim,f'src dim={src.shape[2]} and transformerInfo inputDim ={self.transformerInfo.inputDim}; u should either change ur inputs or create suitable transformerInfo'#jjj assert dims with transformerInfo.inputDim outputDim
-        assert trg.shape[2]==self.transformerInfo.outputDim,f'trg dim={trg.shape[2]} and transformerInfo outputDim ={self.transformerInfo.outputDim}; u should either change ur targets or create suitable transformerInfo'#jjj assert dims with transformerInfo.inputDim outputDim
+        assert src.shape[2]==self.transformerInfo.inputDim,f'src dim={src.shape[2]} and transformerInfo inputDim ={self.transformerInfo.inputDim}; u should either change ur inputs or create suitable transformerInfo'
+        assert trg.shape[2]==self.transformerInfo.outputDim,f'trg dim={trg.shape[2]} and transformerInfo outputDim ={self.transformerInfo.outputDim}; u should either change ur targets or create suitable transformerInfo'
         src=src.to(self.device)
         trg=trg.to(self.device)
         encSrc = self.encoder(src)
         out = self.decoder(trg, encSrc)
-        return out#jjj
+        return out
     
-    def forwardForUnknown(self, src, outputLen):#jjj
+    def forwardForUnknown(self, src, outputLen):
         self.eval()
         output=torch.zeros(1, 1, self.transformerInfo.outputDim).to(self.device)
         for i in range(outputLen):
@@ -256,7 +256,7 @@ class multivariateTransformer(ann):
             output=torch.cat([output,newOutput[:,-1].unsqueeze(0)],dim=1)#kkk find a pair of input and output with known and pass it to the trained model: doesnt reproduce the same results
         return output#kkk if I could get same results; also correct forwardForUnknown for univariate
     
-    def forwardForUnknownStraight(self, src, outputLen):#jjj
+    def forwardForUnknownStraight(self, src, outputLen):
         self.eval()
         src=src.to(self.device)
         N, _, _ = src.shape

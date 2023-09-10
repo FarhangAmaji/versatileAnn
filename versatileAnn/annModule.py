@@ -4,24 +4,21 @@ import torch.nn as nn
 import torch.optim as optim
 import inspect
 import os
+import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
 from .utils import randomIdFunc
 from .layers.customLayers import CustomLayer
 
-#kkk check all dropoutRates in repo; I thought p==1 means it would pass all but it means it would zero out
-#kkk timer and time estimation of finishing the trainning
-#kkk make a module to copy trained models weights to raw model with same architecture
-#kkk add weight inits orthogonal he_uniform he_normal glorot_uniform glorot_normal lecun_normal
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
         obj.__post_init__()
         return obj
 
-class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe with mopso(note to utilize the tensorboard)
+class ann(nn.Module, metaclass=PostInitCaller):
     modeNames = ['evalScoreMode', 'variationalAutoEncoderMode', 'dropoutEnsembleMode','timeSeriesMode','transformerMode']
-    def __init__(self):#kkk add comments 
+    def __init__(self):
         super(ann, self).__init__()
         self.getInitInpArgs()
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -229,7 +226,75 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def divideLearningRate(self,factor):
         self.changeLearningRate(self.optimizer.param_groups[0]['lr']/factor)
+
+    def getBackForeCast(self, dfOrTensor, batchIndexes, mode='backcast', colsOrIndexes='___all___'):
+        assert mode in ['backcast', 'forecast', 'fullcast'], "mode should be either 'backcast', 'forecast' or 'fullcast'"
+        def getDfRows(df, lowerBoundGap, upperBoundGap, cols, batchIndexes):
+            assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
+            if cols=='___all___':
+                return [df.loc[idx + lowerBoundGap:idx + upperBoundGap-1] for idx in batchIndexes]
+            else:
+                return [df.loc[idx + lowerBoundGap:idx + upperBoundGap-1, cols] for idx in batchIndexes]
+        
+        def getTensorRows(tensor, lowerBoundGap, upperBoundGap, colIndexes, batchIndexes):
+            if colIndexes=='___all___':
+                return [tensor[idx + lowerBoundGap:idx + upperBoundGap,:] for idx in batchIndexes]
+            else:
+                return [tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes] for idx in batchIndexes]
+            
+        if isinstance(dfOrTensor, pd.DataFrame):
+            if mode=='backcast':
+                return getDfRows(dfOrTensor, 0, self.backcastLen, colsOrIndexes, batchIndexes)
+            elif mode=='forecast':
+                return getDfRows(dfOrTensor, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+            elif mode=='fullcast':
+                return getDfRows(dfOrTensor, 0, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+        elif isinstance(dfOrTensor, torch.Tensor):
+            if mode=='backcast':
+                return getTensorRows(dfOrTensor, 0, self.backcastLen, colsOrIndexes, batchIndexes)
+            elif mode=='forecast':
+                return getTensorRows(dfOrTensor, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+            elif mode=='fullcast':
+                return getTensorRows(dfOrTensor, 0, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+        else:
+            assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor'
+
+    def stackListOfDfs(self, lodfs, dtypeChange=True):
+        tensorList=[]
+        for df in lodfs:
+            assert df.isnull().any().any()==False,'the data should be cleaned in order not to have nan or None data'
+            tensorList.append(torch.tensor(df.values))
+        
+        tensor = torch.stack(tensorList).to(self.device)
+        if dtypeChange:
+            tensor = tensor.to(torch.float32)
+        return tensor
     
+    def rightPadDf(self, dfOrSeries, maxLen):
+
+        def rightPadSeries(data, maxLen, label):
+            currentLength = len(data)
+            assert currentLength <= maxLen, f"The {label} length is greater than {maxLen}: {currentLength}"
+            if currentLength < maxLen:
+                padding = pd.Series([0] * (maxLen - currentLength))
+                data = pd.concat([data, padding], ignore_index=True)
+            return data
+        
+        if isinstance(dfOrSeries, pd.DataFrame):
+            for col in dfOrSeries.columns:
+                dfOrSeries[col] = rightPadSeries(dfOrSeries[col], maxLen, col)
+            return dfOrSeries
+        elif isinstance(dfOrSeries, pd.Series):
+            return rightPadSeries(dfOrSeries, maxLen, "series")
+        else:
+            raise ValueError("Input must be either a DataFrame or a Series")
+
+    def listToStackTensor(self, list_, changeDevice=True):
+        stackTensor=torch.stack(list_)
+        if changeDevice:
+            stackTensor=stackTensor.to(self.device)
+        return stackTensor
+
     def saveModel(self, bestModel, bestValScore):
         dicToSave={'className':self.__class__.__name__,'classDefinition':self.neededDefinitions,'inputArgs':self.inputArgs,
                     'bestValScore': bestValScore,'model':bestModel}
@@ -351,19 +416,19 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
         return klLoss
     
-    def batchDatapreparation(self,indexesIndex, indexes, inputs, outputs, batchSize, mode=None, identifier=None, externalKwargs=None):
+    def batchDatapreparation(self, indexesIndex, indexes, inputs, outputs, batchSize, mode=None, identifier=None, externalKwargs=None):
         if self.timeSeriesMode:
             raise NotImplementedError("with timeSeriesMode 'batchDatapreparation' needs to be reimplemented.")
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
-        batchInputs = inputs[batchIndexes].to(self.device)#kkk add memory or speed priority to have the whole data in gpu or add it here to gpu
+        batchInputs = inputs[batchIndexes].to(self.device)
         batchOutputs = outputs[batchIndexes].to(self.device)
         outPutMask=None
         return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
     
     # Get all definitions needed to create an instance
-    def getAllNeededDefinitions(self,obj):#kkk add metaclass, function and classmethod and methods of class 
+    def getAllNeededDefinitions(self,obj):
         
         def findClassNamesAndDependencies(classDefinitions):
             classDefinitionsWithInfo = []
@@ -473,6 +538,13 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             tensor = tensor.squeeze(-1)
         return tensor
     
+    def getTrainBatchIndexes(self, trainInputs):
+        lenOfIndexes=len(trainInputs)
+        if self.timeSeriesMode:
+            lenOfIndexes += -(self.backcastLen+self.forecastLen) + 1
+        indexes = torch.randperm(lenOfIndexes).tolist()
+        return indexes
+    
     def getPreTrainStats(self, trainInputs):
         if self.evalScoreMode == 'accuracy':
             bestValScore = 0
@@ -485,10 +557,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         bestModelCounter = 1
         
         # Create random indexes for sampling
-        lenOfIndexes=len(trainInputs)
-        if self.timeSeriesMode:
-            lenOfIndexes += -(self.backcastLen+self.forecastLen) + 1
-        indexes = torch.randperm(lenOfIndexes).tolist()
+        indexes = self.getTrainBatchIndexes(trainInputs)
         batchIterLen = len(indexes)//self.batchSize
         batchIterLen += 0 if len(indexes) % self.batchSize == 0 else  1
         return indexes, batchIterLen, bestValScore, patienceCounter, bestModel, bestModelCounter
@@ -634,6 +703,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
     
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0, externalKwargs=None):
         self.havingOptimizerCheck()
+        self.externalKwargs = externalKwargs
         randomId=randomIdFunc()
         nameDifferentiator=''
         if self.modelNameDifferentiator:
@@ -645,7 +715,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
             tensorboardPath+=nameDifferentiator
         else:
             tensorboardPath = self.savePath
-        self.tensorboardWriter = tensorboardPath#kkk may add print 'access to tensorboard with "tensorboard --logdir=data" from terminal' (I need to take first part of path from tensorboardPath)
+        self.tensorboardWriter = tensorboardPath
         
         if not self.neededDefinitions:
             self.neededDefinitions=self.getAllNeededDefinitions(self)
@@ -671,7 +741,7 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         return self
     
     def transformerModeForward(self, inputs, outputs):
-        if self.transformerMode:#kkk may change it to take inputs as a dictionary and in model separates it
+        if self.transformerMode:
             return self.forward(inputs, outputs)
         return self.forward(inputs)
     
@@ -693,17 +763,21 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
                 self.tensorboardWriter.add_scalar(f'{evalMode} {self.evalScoreMode}', evalScore, stepNum)
             return evalScore
     
-    def getPreEvalStats(self, inputs):
+    def getEvalBatchIndexes(self, inputs):
         lenOfIndexes=len(inputs)
         if self.timeSeriesMode:
             lenOfIndexes+=-(self.backcastLen+self.forecastLen)+1
         indexes = torch.arange(lenOfIndexes).tolist()
+        return indexes
+    
+    def getPreEvalStats(self, inputs):
+        indexes = self.getEvalBatchIndexes(inputs)
         batchIterLen = len(indexes)//self.evalBatchSize
         batchIterLen += 0 if len(indexes) % self.evalBatchSize == 0 else  1
         return indexes, batchIterLen
     
     def updateEvalScoreBasedOnMode(self, evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask):
-        if self.evalScoreMode == 'accuracy':#kkk add dropoutEnsemble certainty based accuracy
+        if self.evalScoreMode == 'accuracy':
             predicted = torch.argmax(batchEvalOutputsPred, dim=1)
             evalScore += (predicted == batchEvalOutputs).sum().item()
         elif self.evalScoreMode == 'loss':
@@ -717,8 +791,9 @@ class ann(nn.Module, metaclass=PostInitCaller):#kkk do hyperparam search maybe w
         for i in range(0, batchIterLen):
             batchEvalInputs, batchEvalOutputs, appliedBatchSize, outPutMask, _ = self.batchDatapreparation(i, indexes, inputs, outputs, batchSize=self.evalBatchSize, mode=evalMode, identifier=None, externalKwargs=externalKwargs)
             
+            
             batchEvalOutputsPred, mean, logvar = self.forwardModelForEvalDueToMode(batchEvalInputs, batchEvalOutputs, appliedBatchSize)
-            evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask)#kkk check for onehot vectors
+            evalScore=self.updateEvalScoreBasedOnMode(evalScore, batchEvalOutputs, batchEvalOutputsPred, criterion, outPutMask)
         
         evalScore /= len(inputs)
         return evalScore

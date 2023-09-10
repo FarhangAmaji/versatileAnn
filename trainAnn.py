@@ -69,7 +69,7 @@ class myAnn(ann):
         logvar = self.fcLogvar(x)
         x = self.layer1(x)
         x = self.layer3(x)
-        return x#, mean, logvar
+        return x, mean, logvar
 #%% make model instance
 z1=myAnn(40,1)
 #%%
@@ -87,10 +87,11 @@ z1=myAnn(40,1)
 # z1.patience=10
 # z1.saveOnDiskPeriod=1
 # z1.lossMode='accuracy'
-# z1.variationalAutoEncoderMode=True #kkk will it have problems of not saving these to saveModel
+# z1.variationalAutoEncoderMode=True
 #%% regression test
 z1.dropoutEnsembleMode=True
-workerNum=8
+z1.variationalAutoEncoderMode=True
+workerNum=0
 # Set random seed for reproducibility
 torch.manual_seed(42)
 import time
@@ -122,7 +123,7 @@ runcell('regression test', 'F:/projects/public github projects/private repos/ver
 #%%
 #%% reload model
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
-bestModel=ann.loadModel(r'data\bestModels\a1_UjNC')
+bestModel=ann.loadModel(r'data\bestModels\a1_InM9')
 # bestModel.evaluateModel(testInputs, testOutputs, criterion)
 #%% 
 

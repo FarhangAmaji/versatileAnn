@@ -79,7 +79,7 @@ class nHits(ann):
         else:
             assert not staticExogenousCols,'the "staticExogenousCols" are introduced while you have not passed staticDfPath'
             staticDf=pd.DataFrame({})
-        
+
         dfNormalized=df.copy()
         "#ccc this model assumes that y data are in the same range so one scaler is applied to them"
         scalers={'ysScaler':StandardScaler(), 'futureHistoryScaler':StandardScaler()}
@@ -87,10 +87,10 @@ class nHits(ann):
     
         futureHistoryCols=[*futureExogenousCols, *historyExogenousCols]
         dfNormalized[futureHistoryCols]=scalers['futureHistoryScaler'].fit_transform(df[futureHistoryCols])
-    
+
         # add mask ==1 for existing data
         dfNormalized['mask']=1
-        
+
         trainLen=int(trainRatio * len(dfNormalized))
         trainPlusValLen=int((trainRatio+valRatio) * len(dfNormalized))
         assert trainLen>self.backcastLen,'the trainLen should be bigger than backcastLen'
@@ -122,7 +122,7 @@ class nHits(ann):
         valDataProcessed = putYColsAlongEachotherAndAddCorrespondantStatic(valData, ysCols, staticDf, staticExogenousCols)
         testDataProcessed = putYColsAlongEachotherAndAddCorrespondantStatic(testData, ysCols, staticDf, staticExogenousCols)
         
-        return trainDataProcessed, valDataProcessed, testDataProcessed
+        return trainDataProcessed, valDataProcessed, testDataProcessed, scalers
         
     def getExogenousColNames(self, externalKwargs, colNames):
         return externalKwargs['batchDatapreparation'][colNames]
@@ -137,14 +137,7 @@ class nHits(ann):
         batchIndexes = indexes[indexesIndex*batchSize:indexesIndex*batchSize + batchSize]
         appliedBatchSize = len(batchIndexes)
         
-        def stackListOfDfs(lodfs):
-            tensorList=[]
-            for df in lodfs:
-                assert df.isnull().any().any()==False,'the data should be cleaned in order not to have nan or None data'
-                tensorList.append(torch.tensor(df.values))
-            
-            tensor = torch.stack(tensorList).to(self.device).to(torch.float32)
-            return tensor
+        #kkk may do externalKwargs=externalKwargs['batchDatapreparation']
         
         futureExogenousCols, historyExogenousCols, staticExogenousCols = [self.getExogenousColNames(externalKwargs,colNames) for colNames in ['futureExogenousCols', 'historyExogenousCols', 'staticExogenousCols']]
         
@@ -155,18 +148,18 @@ class nHits(ann):
         historyExogenousData=[inputs.loc[idx:idx + self.backcastLen-1, historyExogenousCols] for idx in batchIndexes]
         staticExogenousData=[inputs.loc[idx, staticExogenousCols] for idx in batchIndexes]
         
-        targetDataForInput=stackListOfDfs(targetDataForInput)
-        maskData=stackListOfDfs(maskData)
-        futureExogenousData=stackListOfDfs(futureExogenousData)
-        historyExogenousData=stackListOfDfs(historyExogenousData)
-        staticExogenousData=stackListOfDfs(staticExogenousData)
+        targetDataForInput=self.stackListOfDfs(targetDataForInput)
+        maskData=self.stackListOfDfs(maskData)
+        futureExogenousData=self.stackListOfDfs(futureExogenousData)
+        historyExogenousData=self.stackListOfDfs(historyExogenousData)
+        staticExogenousData=self.stackListOfDfs(staticExogenousData)
         batchInputs = {'target':targetDataForInput, 'mask':maskData, 'futureExogenous':futureExogenousData, 'historyExogenous':historyExogenousData, 'staticExogenous':staticExogenousData}
         
         targetDataForOutput=[inputs.loc[idx+self.backcastLen:idx + self.backcastLen+self.forecastLen-1,'y'] for idx in batchIndexes]
-        batchOutputs=stackListOfDfs(targetDataForOutput)
+        batchOutputs=self.stackListOfDfs(targetDataForOutput)
         
         outPutMask=[inputs.loc[idx+self.backcastLen:idx + self.backcastLen+self.forecastLen-1,'mask'] for idx in batchIndexes]
-        outPutMask=stackListOfDfs(outPutMask)
+        outPutMask=self.stackListOfDfs(outPutMask)
         return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
     
     def forward(self, inputs):
