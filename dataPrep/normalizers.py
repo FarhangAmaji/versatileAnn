@@ -3,8 +3,7 @@ import numpy as np
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from utils.vAnnGeneralUtils import NpDict
-from dataPrep.utils import checkAllItemsInList1ExistInList2
+from utils.vAnnGeneralUtils import NpDict, checkAllItemsInList1ExistInList2
 #%% general vars
 LblEncoderValueErrorMsg="Integer labels detected. Use makeIntLabelsString to convert them to string labels."
 #%% normalizers: base normalizers

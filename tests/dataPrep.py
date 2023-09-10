@@ -7,7 +7,7 @@ from dataPrep.normalizers import (NormalizerStack, SingleColsStdNormalizer, Mult
                                                  SingleColsLblEncoder, MultiColLblEncoder, makeIntLabelsString, 
                                                  LblEncoder, LblEncoderValueErrorMsg, Combo, MainGroupBaseNormalizer,
                                                  MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
-from dataPrep.utils import equalDfs
+from utils.vAnnGeneralUtils import equalDfs
 import pandas as pd
 #%% stdNormalizerTest
 class stdNormalizerTests(BaseTestClass):
