@@ -41,7 +41,8 @@ def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 #%% data split
-splitDefaultCondition='__possibleStartPoint__ == 1'
+tsStartPointColName='__possibleStartPoint__'#kkk make this enviromental variable
+splitDefaultCondition=f'{tsStartPointColName} == 1'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
     newIndexes = set()
     
@@ -60,21 +61,34 @@ def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAnte
     indexes.sort()
     return indexes
 
-def splitTrainValTest(df, trainRatio, valRatio,
-                      trainSeqLen=0, valSeqLen=None, testSeqLen=None,
-                      shuffle=True, conditions=[splitDefaultCondition]):
+def ratiosCheck(trainRatio, valRatio):
+    trainRatio, valRatio=round(trainRatio,6), round(valRatio,6)
+    testRatio=round(1-trainRatio-valRatio,6)
+    assert round(sum([trainRatio, valRatio, testRatio]),6)==1, 'sum of train, val and test ratios must be 1'
+    return trainRatio, valRatio, testRatio
+
+def simpleSplit(obj, trainRatio, valRatio):
+    trainRatio, valRatio, testRatio=ratiosCheck(trainRatio, valRatio)
+    train=obj[:int(trainRatio*len(obj))]
+    val=obj[int(trainRatio*len(obj)):int((trainRatio+valRatio)*len(obj))]
+    test=obj[int((trainRatio+valRatio)*len(obj)):]
+    return train, val, test
+
+def splitTrainValTest(df, trainRatio, valRatio, seqLen=0,
+                      trainSeqLen=None, valSeqLen=None, testSeqLen=None,
+                      shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
     """
     note this func expects conditions which indicate the first(older in time|backer in sequence);
     therefore for seq lens pass the (backcastLen+ forecastLen)
+    note if you are passing multipleSeries data, more likely you should gonna use df query conditions
     """
-    trainRatio, valRatio=round(trainRatio,6), round(valRatio,6)#kkk whole code
-    testRatio=round(1-trainRatio-valRatio,6)
-    assert sum([trainRatio, valRatio, testRatio])==1, 'sum of train, val and test ratios must be 1'
-
+    trainRatio, valRatio, testRatio=ratiosCheck(trainRatio, valRatio)
+    if trainSeqLen==None:
+        trainSeqLen = seqLen
     if valSeqLen==None:
-        valSeqLen = trainSeqLen
+        valSeqLen = seqLen
     if testSeqLen==None:
-        testSeqLen = trainSeqLen
+        testSeqLen = seqLen
 
     isCondtionsApplied=False
     filteredDf = df.copy()
@@ -87,27 +101,34 @@ def splitTrainValTest(df, trainRatio, valRatio,
                 pass
         else:
             filteredDf, isCondtionsApplied = doQueryNTurnIsCondtionsApplied(filteredDf, condition, isCondtionsApplied)
+    
+    indexes=np.array(filteredDf.index)
+    if isCondtionsApplied==False:
+        lenToSubtract=0
+        for endIdx,sl in zip([int(trainRatio*len(indexes)), int((trainRatio+valRatio)*len(indexes)), len(indexes)],[trainSeqLen, valSeqLen, testSeqLen]):
+            lenToSubtract=max(endIdx-len(indexes)+sl-1,lenToSubtract)
 
-    if isCondtionsApplied:
-        indexes=np.array(filteredDf.index)
-    else:
-        indexes=np.array(filteredDf.index.tolist()[:-max(trainSeqLen, valSeqLen, testSeqLen)])
+        if lenToSubtract!=0:
+            indexes=indexes[:-lenToSubtract]
+    
     if shuffle:#kkk add compatibility to seed everything
         np.random.shuffle(indexes)
+    trainIndexes, valIndexes, testIndexes=simpleSplit(indexes, trainRatio, valRatio)
+    if giveIndexes:
+        return trainIndexes, valIndexes, testIndexes
 
-    trainIndexes=indexes[:int(trainRatio*len(indexes))]
-    valIndexes=indexes[int(trainRatio*len(indexes)):int((trainRatio+valRatio)*len(indexes))]
-    testIndexes=indexes[int((trainRatio+valRatio)*len(indexes)):]
-    print(trainIndexes, valIndexes, testIndexes)
-
-    trainIndexes=addSequentAndAntecedentIndexes(trainIndexes, seqLenWithSequents=trainSeqLen)
-    valIndexes=addSequentAndAntecedentIndexes(valIndexes, seqLenWithSequents=valSeqLen)
-    testIndexes=addSequentAndAntecedentIndexes(testIndexes, seqLenWithSequents=testSeqLen)
-
-    train=filteredDf.loc[trainIndexes]
-    val=filteredDf.loc[valIndexes]
-    test=filteredDf.loc[testIndexes]
-    return train, val, test
+    filteredDf.loc[list(set([*trainIndexes,*valIndexes,*testIndexes])),tsStartPointColName]=True
+    nonStartPointCondition=filteredDf[tsStartPointColName]!=True
+    filteredDf.loc[nonStartPointCondition, tsStartPointColName]=False
+    
+    trainIndexes2=addSequentAndAntecedentIndexes(trainIndexes, seqLenWithSequents=trainSeqLen)
+    valIndexes2=addSequentAndAntecedentIndexes(valIndexes, seqLenWithSequents=valSeqLen)
+    testIndexes2=addSequentAndAntecedentIndexes(testIndexes, seqLenWithSequents=testSeqLen)
+    
+    trainData=filteredDf.loc[trainIndexes2]
+    valData=filteredDf.loc[valIndexes2]
+    testData=filteredDf.loc[testIndexes2]
+    return trainData, valData, testData
 #%% utils misc
 def equalDfs(df1, df2, floatPrecision=0.0001):
     # Check if both DataFrames have the same shape
