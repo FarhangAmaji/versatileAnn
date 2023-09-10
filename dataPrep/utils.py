@@ -159,3 +159,41 @@ def checkAllItemsInList1ExistInList2(list1, list2):
         if item not in setList2:
             return False
     return True
+#%% padding
+def rightPadSeriesBatch(series, maxLen, pad=0):
+    if maxLen <= 0:
+        return series
+    currentLength = len(series)
+    assert currentLength <= maxLen, f"The series length is greater than {maxLen}: {currentLength}"
+    if currentLength < maxLen:
+        series = rightPadSeries(series, maxLen - currentLength, pad=pad)
+    return series
+
+def rightPadSeries(series, padLen, pad=0):
+    if padLen <= 0:
+        return series
+    padding = pd.Series([pad] * padLen)
+    series = pd.concat([series, padding], ignore_index=True)
+    return series
+
+def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):#kkk do similar for left, and reduce all to another base func
+    'also works with series'
+    if isinstance(dfOrSeries, pd.DataFrame):
+        tempDict={}
+        for i, col in enumerate(dfOrSeries.columns):
+            tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=pad)
+        for i, col in enumerate(dfOrSeries.columns):
+            if i==0:
+                dfOrSeries=dfOrSeries.reindex(tempDict[col].index)
+            dfOrSeries[col]=tempDict[col]
+        return dfOrSeries
+    elif isinstance(dfOrSeries, pd.Series):
+        return rightPadSeries(dfOrSeries, padLen, pad=pad)
+    else:
+        raise ValueError("Input must be either a DataFrame or a Series")
+
+def rightPadDfBatch(dfOrSeries, maxLen, pad=0):
+    return rightPadDfBaseFunc(rightPadSeriesBatch, dfOrSeries, maxLen, pad=pad)
+
+def rightPadDf(dfOrSeries, padLen, pad=0):
+    return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
