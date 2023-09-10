@@ -5,12 +5,21 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.vAnnGeneralUtils import NpDict
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
-def getDatasetFiles(fileName: str):
+knownDatasetsDateTimeCols={"EPF_FR_BE.csv":['dateTime']}
+
+def convertdateTimeCols(df, dateTimeCols):
+    for dc in dateTimeCols:
+        df[dc] = pd.to_datetime(df[dc])
+
+def getDatasetFiles(fileName: str, dateTimeCols=[]):
     currentDir = os.path.dirname(os.path.abspath(__file__))
-    datasetsDir = os.path.normpath(os.path.join(currentDir, datasetsRelativePath))
-    os.makedirs(datasetsDir, exist_ok=True)
-    filePath=os.path.join(datasetsDir, fileName)
-    return pd.read_csv(filePath)
+    filePath = os.path.normpath(os.path.join(currentDir, datasetsRelativePath, fileName))
+    df=pd.read_csv(filePath)
+    if fileName in knownDatasetsDateTimeCols.keys():
+        convertdateTimeCols(df, knownDatasetsDateTimeCols[fileName])
+    else:
+        convertdateTimeCols(df, dateTimeCols)
+    return df
 #%% series
 def splitToNSeries(df, pastCols, renameCol):
     processedData=pd.DataFrame({})
