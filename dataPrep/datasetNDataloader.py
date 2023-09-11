@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from utils.vAnnGeneralUtils import NpDict
+from utils.vAnnGeneralUtils import NpDict, DotDict
 import warnings
 import pandas as pd
 import numpy as np
@@ -28,6 +28,7 @@ class VAnnTsDataset(Dataset):#kkk needs tests
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         for key, value in kwargs.items():
             setattr(self, key, value)
+        self.pointTypes=DotDict({'backcast':'backcast', 'forecast':'forecast', 'fullcast':'fullcast','singlePoint':'singlePoint'})
 
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
@@ -77,15 +78,15 @@ class VAnnTsDataset(Dataset):#kkk needs tests
             return npArray[idx + lowerBoundGap:idx + upperBoundGap,colIndexes]
 
     def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___'):#kkk may add query taking ability to df part
-        assert mode in ['backcast', 'forecast', 'fullcast','singlePoint'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
-        def getCastByMode(typeFunc, data, idx, mode='backcast', colsOrIndexes='___all___'):
-            if mode=='backcast':
+        assert mode in self.pointTypes.keys(), "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
+        def getCastByMode(typeFunc, data, idx, mode=self.pointTypes.backcast, colsOrIndexes='___all___'):
+            if mode==self.pointTypes.backcast:
                 return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes)
-            elif mode=='forecast':
+            elif mode==self.pointTypes.forecast:
                 return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes)
-            elif mode=='fullcast':
+            elif mode==self.pointTypes.fullcast:
                 return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
-            elif mode=='singlePoint':
+            elif mode==self.pointTypes.singlePoint:
                 return typeFunc(data, idx, 0, 0, colsOrIndexes)
 
         if isinstance(data, NpDict):
@@ -99,7 +100,7 @@ class VAnnTsDataset(Dataset):#kkk needs tests
         else:
             assert False, 'data type should be pandas.DataFrame or torch.Tensor or np ndarray or NpDict'
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx):#kkk give warning if the idx is not in tsStartpoints#kkk other thing is that we should be able to turn the warnings off by type for i.e. we can turn off this type of warning
         if self.indexes is None:
             return self.data.loc[idx]
         return self.data[self.indexes[idx]]
