@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.vAnnGeneralUtils import NpDict
+from utils.globalVars import tsStartPointColName
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
 knownDatasetsDateTimeCols={"EPF_FR_BE.csv":['dateTime']}
@@ -41,7 +41,6 @@ def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 #%% data split
-tsStartPointColName='__possibleStartPoint__'#kkk make this enviromental variable
 splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
     newIndexes = set()
