@@ -42,6 +42,9 @@ class NpDict(DotDict):
     def __getitem__(self, key):
         if key in self.getDfCols():
             return self.data[key]
+        elif isinstance(key, list):
+            # If a list of keys is provided, return a dictionary with selected columns
+            return np.column_stack([self[col] for col in key])
         elif isinstance(key, slice):
             if key == slice(None, None, None):
                 # If the slice is [:], return the stacked data of all columns

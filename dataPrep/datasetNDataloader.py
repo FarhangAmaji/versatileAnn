@@ -64,6 +64,12 @@ class VAnnTsDataset(Dataset):#kkk needs tests
         else:
             return tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
 
+    def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes):
+        if colIndexes=='___all___':
+            return npDict[:][idx + lowerBoundGap:idx + upperBoundGap]
+        else:
+            return npDict[colIndexes][idx + lowerBoundGap:idx + upperBoundGap]
+
     def getBackForeCastData(self, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):#kkk may add query taking ability to df part
         assert mode in ['backcast', 'forecast', 'fullcast','singlePoint'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
         def getCastByMode(typeFunc, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):
@@ -73,16 +79,18 @@ class VAnnTsDataset(Dataset):#kkk needs tests
                 return typeFunc(dfOrTensor, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes)
             elif mode=='fullcast':
                 return typeFunc(dfOrTensor, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
-            elif mode=='fullcast':
+            elif mode=='singlePoint':
                 return typeFunc(dfOrTensor, idx, 0, 0, colsOrIndexes)
 
-        if isinstance(dfOrTensor, pd.DataFrame):
+        if isinstance(dfOrTensor, NpDict):
+            return getCastByMode(self.getNpDictRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+        elif isinstance(dfOrTensor, pd.DataFrame):
             #kkk add NpDict
             return getCastByMode(self.getDfRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(dfOrTensor, torch.Tensor):
             return getCastByMode(self.getTensorRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
-        elif isinstance(dfOrTensor, torch.Tensor):
-            assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor'
+        else:
+            assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor or np array or NpDict'
 
     def __getitem__(self, idx):
         if self.indexes is None:
