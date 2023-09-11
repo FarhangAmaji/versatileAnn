@@ -21,17 +21,18 @@ def getDatasetFiles(fileName: str, dateTimeCols=[]):
         convertdateTimeCols(df, dateTimeCols)
     return df
 #%% multi series data
-def addCorrespondentRow(df, correspondentRowsDf, targets, targetNewColNameType, targetMapping={}):
+def addCorrespondentRow(df, correspondentRowsDf, targets, newColName, targetMapping={}):
     if targetMapping=={}:
         targetMapping = {tr:idx for tr,idx in zip(targets, correspondentRowsDf.index)}
 
     for target in targets:
         if target in targetMapping:
             target_index = targetMapping[target]
-            condition = df[targetNewColNameType] == target
+            condition = df[newColName+'Type'] == target
             df.loc[condition, correspondentRowsDf.columns] = correspondentRowsDf.iloc[target_index].values
 
 def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
+    assert newColName not in df.columns,'splitToNSeries: newColName must not be in df columns'
     processedData=pd.DataFrame({})
     otherCols= [col for col in df.columns if col not in pastCols]
     for i,pc in enumerate(pastCols):
@@ -40,6 +41,28 @@ def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
         thisSeriesDf[newColName+'Type']=pc
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
+
+def combineNSeries(df, newColName):
+    # Find unique values in the 'newColName' column to identify different series
+    seriesTypes = df[newColName + 'Type'].unique()
+    
+    combinedData = pd.DataFrame()
+    
+    for seriesType in seriesTypes:
+        # Filter rows for the current series type
+        seriesData = df[df[newColName + 'Type'] == seriesType].copy()
+        seriesData=seriesData.reset_index(drop=True)
+        
+        # Rename the columns to the original column name
+        seriesData.rename(columns={newColName: seriesType}, inplace=True)
+        
+        # Drop the type and newColName column
+        seriesData.drop(columns=[newColName + 'Type'], inplace=True)
+
+        colsNotPresentIn=[sc for sc in seriesData.columns if sc not in combinedData.columns]
+        # Merge the current series into the combined data
+        combinedData = pd.concat([combinedData, seriesData[colsNotPresentIn]], axis=1)
+    return combinedData
 #%% data split
 splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
