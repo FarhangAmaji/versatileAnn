@@ -43,7 +43,6 @@ class VAnnTsDataset(Dataset):
     #kkk we dont have batches here
     def getBackForeCastData(self, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___', toTensor=True, dtypeChange=True):#kkk may add query taking ability to df part
         assert mode in ['backcast', 'forecast', 'fullcast','singlePoint'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
-        #kkk add singlePoint mode
         def getCastByMode(typeFunc, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):
             if mode=='backcast':
                 return typeFunc(dfOrTensor, idx, 0, self.backcastLen, colsOrIndexes)
@@ -68,6 +67,17 @@ class VAnnTsDataset(Dataset):
         else:
             assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor'
 
+    def __getitem__(self, idx):
+        if self.indexes is None:
+            return self.data.loc[idx]
+        return self.data[self.indexes[idx]]
+
+class VAnnTsDataloader(DataLoader):
+    #kkk seed everything
+    def __init__(self, dataset, *args, **kwargs):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        super().__init__(dataset, *args, **kwargs)
+
     def stackListOfDfsTensor(self, listOfDfs, dtypeChange=True):#kkk to dataloader
         tensorList=[torch.tensor(df.values) for df in listOfDfs]
         return self.stackTensors(tensorList, dtypeChange=dtypeChange)
@@ -78,16 +88,6 @@ class VAnnTsDataset(Dataset):
             stackTensor = stackTensor.to(torch.float32)#kkk make it compatible to global precision
         return stackTensor
 
-    def __getitem__(self, idx):
-        if self.indexes is None:
-            return self.data.loc[idx]
-        return self.data[self.indexes[idx]]
-
-class VAnnTsDataloader(DataLoader):
-    def __init__(self, dataset, *args, **kwargs):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        super().__init__(dataset, *args, **kwargs)
-    #kkk seed everything
     def __iter__(self):
         for batch in super().__iter__():
             # Move the batch to GPU before returning it
