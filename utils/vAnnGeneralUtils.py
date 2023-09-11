@@ -38,6 +38,19 @@ class NpDict(DotDict):
 
     def toDf(self, resetDtype=False):
         return pd.DataFrame(self.getDfDict(resetDtype),index=self.__index__,columns=self.getDfCols())
+
+    def __getitem__(self, key):
+        if key in self.getDfCols():
+            return self.data[key]
+        elif isinstance(key, slice):
+            if key == slice(None, None, None):
+                # If the slice is [:], return the stacked data of all columns
+                return np.column_stack([self[col] for col in self.getDfCols()])
+            else:
+                # Raise an error for other slice types
+                raise ValueError("Only [:] is allowed for slicing.")
+        else:
+            raise KeyError(key)
 #%% lists
 def checkAllItemsInList1ExistInList2(list1, list2):
     setList2 = set(list2)
