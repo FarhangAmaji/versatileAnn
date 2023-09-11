@@ -42,9 +42,10 @@ def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 
-def combineNSeries(df, newColName):
+def combineNSeries(df, newColName, seriesTypes=None):
     # Find unique values in the 'newColName' column to identify different series
-    seriesTypes = df[newColName + 'Type'].unique()
+    if seriesTypes is None:
+        seriesTypes = df[newColName + 'Type'].unique()
     
     combinedData = pd.DataFrame()
     
@@ -96,9 +97,15 @@ def simpleSplit(obj, trainRatio, valRatio):
     test=obj[int((trainRatio+valRatio)*len(obj)):]
     return train, val, test
 
-def splitTrainValTest(df, trainRatio, valRatio, seqLen=0,
+def nontsStartPointsFalse(df):
+    nonStartPointCondition=df[tsStartPointColName]!=True
+    df.loc[nonStartPointCondition, tsStartPointColName]=False
+    return df
+
+def splitTrainValTestDf(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
+    #kkk do it also for other datatypes
     """
     note this func expects conditions which indicate the first(older in time|backer in sequence);
     therefore for seq lens pass the (backcastLen+ forecastLen)
@@ -139,18 +146,18 @@ def splitTrainValTest(df, trainRatio, valRatio, seqLen=0,
     if giveIndexes:
         return trainIndexes, valIndexes, testIndexes
 
-    filteredDf.loc[list(set([*trainIndexes,*valIndexes,*testIndexes])),tsStartPointColName]=True
-    nonStartPointCondition=filteredDf[tsStartPointColName]!=True
-    filteredDf.loc[nonStartPointCondition, tsStartPointColName]=False
-    
-    trainIndexes2=addSequentAndAntecedentIndexes(trainIndexes, seqLenWithSequents=trainSeqLen)
-    valIndexes2=addSequentAndAntecedentIndexes(valIndexes, seqLenWithSequents=valSeqLen)
-    testIndexes2=addSequentAndAntecedentIndexes(testIndexes, seqLenWithSequents=testSeqLen)
-    
-    trainData=filteredDf.loc[trainIndexes2]
-    valData=filteredDf.loc[valIndexes2]
-    testData=filteredDf.loc[testIndexes2]
-    return trainData, valData, testData
+    sets=[]
+    for idx,sl in zip([trainIndexes, valIndexes, testIndexes],[trainSeqLen,valSeqLen,testSeqLen]):
+        set_=filteredDf.loc[idx]
+        set_[tsStartPointColName]=True
+        idx2=addSequentAndAntecedentIndexes(idx, seqLenWithSequents=sl)
+        sequenceTailIndexes=[item for item in idx2 if item not in idx]
+        sequenceTailData=filteredDf.loc[sequenceTailIndexes]
+        sequenceTailData[tsStartPointColName]=False
+        set_=pd.concat([set_,sequenceTailData]).reset_index(drop=True)
+        sets+=[set_]
+    trainDf, valDf, testDf=sets
+    return trainDf, valDf, testDf
 #%% padding
 def rightPadSeriesBatch(series, maxLen, pad=0):
     if maxLen <= 0:
@@ -173,7 +180,10 @@ def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):#kkk do similar for left
     if isinstance(dfOrSeries, pd.DataFrame):
         tempDict={}
         for i, col in enumerate(dfOrSeries.columns):
-            tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=pad)
+            if col==tsStartPointColName:
+                tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=False)
+            else:
+                tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=pad)
         for i, col in enumerate(dfOrSeries.columns):
             if i==0:
                 dfOrSeries=dfOrSeries.reindex(tempDict[col].index)
