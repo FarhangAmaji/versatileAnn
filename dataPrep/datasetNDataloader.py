@@ -1,15 +1,23 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import pandas as pd
+from utils.globalVars import tsStartPointColName
 #%%
 class VAnnTsDataset(Dataset):
     def __init__(self, data, backcastLen, forecastLen, indexes=None, **kwargs):
-        self.data = data
+        self.data = data#kkk make sure its compatible with lists and np arrays
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
-        self.indexes = indexes#kkk would it give error if no indexes are available#kkk point to start then is needed
-        assert data.isnull().any().any()==False,'the data should be cleaned in order not to have nan or None data'#kkk assert here
+        if indexes is None:
+            assert not (backcastLen==0 and backcastLen==0 and tsStartPointColName not in data.columns),"u can't have timeseries data, without passing indexes or __startPoint__ column" #kkk supposes data only is df
+            if tsStartPointColName in data.columns:
+                indexes=data[data[tsStartPointColName]==True].index
+        self.indexes = indexes
+        assert data.loc[indexes].isnull().any().any()==False,'the data should be cleaned in order not to have nan or None data'
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         for key, value in kwargs.items():
             setattr(self, key, value)
