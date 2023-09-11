@@ -27,39 +27,41 @@ class VAnnTsDataset(Dataset):
             return len(self.data)
         return len(self.indexes)
 
-    #kkk we dont have batches here
-    def getBackForeCastData(self, dfOrTensor, batchIndexes, mode='backcast', colsOrIndexes='___all___', toTensor=True, dtypeChange=True):#kkk may add query taking ability to df part
-        assert mode in ['backcast', 'forecast', 'fullcast'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
-        def getDfRows(df, lowerBoundGap, upperBoundGap, cols, batchIndexes):#kkk move it to self?#kkk batchIndexes from self.indexes?
-        #kkk add singlePoint mode
-            assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
-            if cols=='___all___':
-                return [df.loc[idx + lowerBoundGap:idx + upperBoundGap-1] for idx in batchIndexes]
-            else:
-                return [df.loc[idx + lowerBoundGap:idx + upperBoundGap-1, cols] for idx in batchIndexes]
-        
-        def getTensorRows(tensor, lowerBoundGap, upperBoundGap, colIndexes, batchIndexes):
-            if colIndexes=='___all___':
-                return [tensor[idx + lowerBoundGap:idx + upperBoundGap,:] for idx in batchIndexes]
-            else:
-                return [tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes] for idx in batchIndexes]
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move it to self?#kkk batchIndexes from self.indexes?
+        assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
+        if cols=='___all___':
+            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
+        else:
+            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1, cols]
 
-        def getCastByMode(typeFunc, dfOrTensor, batchIndexes, mode='backcast', colsOrIndexes='___all___'):
+    def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes):
+        if colIndexes=='___all___':
+            return tensor[idx + lowerBoundGap:idx + upperBoundGap,:]
+        else:
+            return tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
+
+    #kkk we dont have batches here
+    def getBackForeCastData(self, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___', toTensor=True, dtypeChange=True):#kkk may add query taking ability to df part
+        assert mode in ['backcast', 'forecast', 'fullcast','singlePoint'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
+        #kkk add singlePoint mode
+        def getCastByMode(typeFunc, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):
             if mode=='backcast':
-                return typeFunc(dfOrTensor, 0, self.backcastLen, colsOrIndexes, batchIndexes)
+                return typeFunc(dfOrTensor, idx, 0, self.backcastLen, colsOrIndexes)
             elif mode=='forecast':
-                return typeFunc(dfOrTensor, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+                return typeFunc(dfOrTensor, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes)
             elif mode=='fullcast':
-                return typeFunc(dfOrTensor, 0, self.backcastLen+self.forecastLen, colsOrIndexes, batchIndexes)
+                return typeFunc(dfOrTensor, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
+            elif mode=='fullcast':
+                return typeFunc(dfOrTensor, idx, 0, 0, colsOrIndexes)
 
         if isinstance(dfOrTensor, pd.DataFrame):
             #kkk add NpDict
-            res=getCastByMode(getDfRows, dfOrTensor, mode=mode, colsOrIndexes=colsOrIndexes, batchIndexes=batchIndexes)
+            res=getCastByMode(self.getDfRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
             if toTensor:
                 res=self.stackListOfDfsTensor(res, dtypeChange=dtypeChange)
             return res
         elif isinstance(dfOrTensor, torch.Tensor):
-            res=getCastByMode(getTensorRows, dfOrTensor, mode=mode, colsOrIndexes=colsOrIndexes, batchIndexes=batchIndexes)
+            res=getCastByMode(self.getTensorRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
             if toTensor:
                 res=self.stackTensors(res, dtypeChange=dtypeChange)
             return res
