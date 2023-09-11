@@ -4,23 +4,47 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from utils.vAnnGeneralUtils import NpDict
+import warnings
 import pandas as pd
+import numpy as np
+from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
 #%%
-class VAnnTsDataset(Dataset):
-    def __init__(self, data, backcastLen, forecastLen, indexes=None, **kwargs):
+class VAnnTsDataset(Dataset):#kkk needs tests
+    def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
         self.data = data#kkk make sure its compatible with lists and np arrays
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
         if indexes is None:
-            assert not (backcastLen==0 and backcastLen==0 and tsStartPointColName not in data.columns),"u can't have timeseries data, without passing indexes or __startPoint__ column" #kkk supposes data only is df
+            assert not ((backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName not in data.columns)),"u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df with __startPoint__ columns"
             if tsStartPointColName in data.columns:
                 indexes=data[data[tsStartPointColName]==True].index
         self.indexes = indexes
-        assert data.loc[indexes].isnull().any().any()==False,'the data should be cleaned in order not to have nan or None data'
+        self.shapeWarning()
+        self.noNanOrNoneData()
+        if useNpDictForDfs:
+            self.data=NpDict(self.data)
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def shapeWarning(self):
+        if isinstance(self.data, (torch.Tensor, np.ndarray)):
+            shape = self.data.shape
+            if shape[0] < shape[1]:
+                warnings.warn("The data shape suggests that different features may be along shape[1]. "
+                              "Consider transposing the data to have features along shape[0].")
+
+    def noNanOrNoneData(self):
+        if isinstance(self.data, (pd.DataFrame, pd.Series)):
+            noNanOrNoneData(self.data.loc[self.indexes])
+        elif isinstance(self.data, np.ndarray):
+            noNanOrNoneData(self.data[:,self.indexes])
+        elif isinstance(self.data, NpDict):
+            noNanOrNoneData(self.data[:][self.indexes])
+        elif isinstance(self.data, torch.Tensor):
+            noNanOrNoneData(self.data[:,self.indexes])
 
     def __len__(self):
         if self.indexes is None:
@@ -57,7 +81,7 @@ class VAnnTsDataset(Dataset):
             return getCastByMode(self.getDfRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(dfOrTensor, torch.Tensor):
             return getCastByMode(self.getTensorRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
-        else:
+        elif isinstance(dfOrTensor, torch.Tensor):
             assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor'
 
     def __getitem__(self, idx):
