@@ -27,7 +27,7 @@ class VAnnTsDataset(Dataset):
             return len(self.data)
         return len(self.indexes)
 
-    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move it to self?#kkk batchIndexes from self.indexes?
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         if cols=='___all___':
             return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
@@ -40,8 +40,7 @@ class VAnnTsDataset(Dataset):
         else:
             return tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
 
-    #kkk we dont have batches here
-    def getBackForeCastData(self, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___', toTensor=True, dtypeChange=True):#kkk may add query taking ability to df part
+    def getBackForeCastData(self, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):#kkk may add query taking ability to df part
         assert mode in ['backcast', 'forecast', 'fullcast','singlePoint'], "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
         def getCastByMode(typeFunc, dfOrTensor, idx, mode='backcast', colsOrIndexes='___all___'):
             if mode=='backcast':
@@ -55,15 +54,9 @@ class VAnnTsDataset(Dataset):
 
         if isinstance(dfOrTensor, pd.DataFrame):
             #kkk add NpDict
-            res=getCastByMode(self.getDfRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
-            if toTensor:
-                res=self.stackListOfDfsTensor(res, dtypeChange=dtypeChange)
-            return res
+            return getCastByMode(self.getDfRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(dfOrTensor, torch.Tensor):
-            res=getCastByMode(self.getTensorRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
-            if toTensor:
-                res=self.stackTensors(res, dtypeChange=dtypeChange)
-            return res
+            return getCastByMode(self.getTensorRows, dfOrTensor, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         else:
             assert False, 'dfOrTensor type should be pandas.DataFrame or torch.Tensor'
 
@@ -78,13 +71,13 @@ class VAnnTsDataloader(DataLoader):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         super().__init__(dataset, *args, **kwargs)
 
-    def stackListOfDfsTensor(self, listOfDfs, dtypeChange=True):#kkk to dataloader
+    def stackListOfDfsTensor(self, listOfDfs):
         tensorList=[torch.tensor(df.values) for df in listOfDfs]
-        return self.stackTensors(tensorList, dtypeChange=dtypeChange)
+        return self.stackTensors(tensorList)
 
-    def stackTensors(self, list_, dtypeChange=True):#kkk to dataloader
+    def stackTensors(self, list_):
         stackTensor=torch.stack(list_).to(self.device)
-        if dtypeChange:#kkk check if its float, then change it to float32
+        if stackTensor.dtype == torch.float16 or stackTensor.dtype == torch.float64:
             stackTensor = stackTensor.to(torch.float32)#kkk make it compatible to global precision
         return stackTensor
 
