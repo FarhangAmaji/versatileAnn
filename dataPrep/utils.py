@@ -232,3 +232,16 @@ class returnDictStruct:
                     except:
                         returnDict[key] = str(type(value))
         return returnDict
+
+def appendValueToListForNestedDictPath(dictionary, path, value):
+    current = dictionary
+    for i,key in enumerate(path[:-1]):
+        assert isinstance(current, dict),f'{path[:i+1]} is not a dictionary'
+        assert key in current.keys(),f'{key} is not in {path[:i]}'
+        current = current[key]
+    last_key = path[-1]
+    assert last_key in current.keys(),f'{last_key} is not in {path}'
+    if isinstance(current[last_key], list):
+        current[last_key].append(value)
+    else:
+        assert False, f'{path} doesnt lead to a list'
