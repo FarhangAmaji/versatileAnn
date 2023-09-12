@@ -34,30 +34,36 @@ class appendValueToListForNestedDictPathTests(BaseTestClass):
         self.avtl=appendValueToListForNestedDictPath
 
     def test1(self):
+        self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
         assert self.item1=={'a': {'a1': {'b1': [5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
         
     def test2(self):
+        self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 6)
         self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
         assert self.item1=={'a': {'a1': {'b1': [6,5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
 
     def testDoesntLeadToAList(self):
+        self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1'], 4)
         self.assertEqual(str(context.exception), "['a', 'a1'] doesnt lead to a list")
 
     def testNoKeyWithSomeName(self):
+        self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1', 'b2']")
 
     def testNotADict(self):
+        self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a4','b2','xs'], 4)
         self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dictionary")
 
     def testKeyNotInDict(self):
+        self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
@@ -74,6 +80,7 @@ class fillDataWithDictStructTests(BaseTestClass):
                                   'a2': {'b1': [[2], [3]], 'b2': [{}, {}], 'b3': [4, 11], 'b4': [True, False]},
                                   'a3': [4, 41], 'a4': [True, True]}}
     def test(self):
+        self.setUp()
         dictStruct = returnDictStruct(self.item1).dictStruct
         dictToFill = dictStruct.copy()
         fillDataWithDictStruct(self.item1, dictToFill, path=[])
