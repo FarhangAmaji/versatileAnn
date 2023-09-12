@@ -199,3 +199,36 @@ def rightPadDfBatch(dfOrSeries, maxLen, pad=0):
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
+#%% dataset output for batch structure detection
+class returnDictStruct:
+    def __init__(self, Type, inputDict):
+        assert Type in ['emptyList','types'],"type must be either 'emptyList' or 'types'"
+        self.type=Type
+        self.dictStruct=self.returnDictStruct(inputDict)
+
+    def returnDictStruct(self, inputDict):
+        def returnEmpty():
+            if self.type=='emptyList':
+                return []
+            if self.type=='types':
+                return 'empty'
+        if not isinstance(inputDict, dict):
+            return returnEmpty()
+        returnDict={}
+        if len(inputDict)==0:
+            return returnEmpty()
+        for key, value in inputDict.items():
+            if isinstance(value, dict):
+                returnDict[key] = self.returnDictStruct(value)
+            else:
+                if self.type=='emptyList':
+                    returnDict[key] = []
+                if self.type=='types':
+                    try:
+                        if value:
+                            returnDict[key] = str(type(value))
+                        else:
+                            returnDict[key] = 'empty'
+                    except:
+                        returnDict[key] = str(type(value))
+        return returnDict
