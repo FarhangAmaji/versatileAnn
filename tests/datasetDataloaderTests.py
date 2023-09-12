@@ -27,5 +27,42 @@ class returnDictStructTests(BaseTestClass):
         returnDictStructOfTYPEType=returnDictStruct('emptyList',self.item1)
         assert returnDictStructOfTYPEType.dictStruct==self.item1TYPEEmptyList
 #%%
+class appendValueToListForNestedDictPathTests(BaseTestClass):
+    def setUp(self):
+        self.item1 = {'a': {'a1': {'b1': []},
+                     'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []},
+                     'a3': [],
+                     'a4': []}}
+        self.avtl=appendValueToListForNestedDictPath
+
+    def test1(self):
+        self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
+        assert self.item1=={'a': {'a1': {'b1': [5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
+        
+    def test2(self):
+        self.avtl(self.item1, ['a', 'a1', 'b1'], 6)
+        self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
+        assert self.item1=={'a': {'a1': {'b1': [6,5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
+
+    def testDoesntLeadToAList(self):
+        with self.assertRaises(AssertionError) as context:
+            self.avtl(self.item1, ['a', 'a1'], 4)
+        self.assertEqual(str(context.exception), "['a', 'a1'] doesnt lead to a list")
+
+    def testNoKeyWithSomeName(self):
+        with self.assertRaises(AssertionError) as context:
+            self.avtl(self.item1, ['a', 'a1','b2'], 4)
+        self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1', 'b2']")
+
+    def testNotADict(self):
+        with self.assertRaises(AssertionError) as context:
+            self.avtl(self.item1, ['a', 'a4','b2','xs'], 4)
+        self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dictionary")
+
+    def testKeyNotInDict(self):
+        with self.assertRaises(AssertionError) as context:
+            self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
+        self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
+#%%
 if __name__ == '__main__':
     unittest.main()
