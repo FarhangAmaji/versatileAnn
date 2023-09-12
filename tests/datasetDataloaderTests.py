@@ -3,9 +3,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPrep.utils import returnDictStruct, appendValueToListForNestedDictPath
-from utils.vAnnGeneralUtils import equalDfs
-import pandas as pd
+from dataPrep.utils import returnDictStruct, appendValueToListForNestedDictPath, fillDataWithDictStruct
 #%% batch data tests
 class returnDictStructTests(BaseTestClass):
     def setUp(self):
@@ -19,14 +17,14 @@ class returnDictStructTests(BaseTestClass):
 
     def testReturnDictStructOfTYPESType(self):
         self.setUp()
-        returnDictStructOfTYPEType=returnDictStruct('types',self.item1)
+        returnDictStructOfTYPEType=returnDictStruct(self.item1,'types')
         assert returnDictStructOfTYPEType.dictStruct==self.item1TYPETypeRes
     
     def testReturnDictStructOfTYPEEmptyList(self):
         self.setUp()
-        returnDictStructOfTYPEType=returnDictStruct('emptyList',self.item1)
+        returnDictStructOfTYPEType=returnDictStruct(self.item1,'emptyList')
         assert returnDictStructOfTYPEType.dictStruct==self.item1TYPEEmptyList
-#%%
+#%% appendValueToListForNestedDictPathTests
 class appendValueToListForNestedDictPathTests(BaseTestClass):
     def setUp(self):
         self.item1 = {'a': {'a1': {'b1': []},
@@ -63,6 +61,24 @@ class appendValueToListForNestedDictPathTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
+#%% fillDataWithDictStructTests
+class fillDataWithDictStructTests(BaseTestClass):
+    def setUp(self):
+        self.item1={'a':{'a1':[2],
+                         'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
+                         'a3':4,'a4':True}}
+        self.item2={'a':{'a1':[4],
+                         'a2':{'b1':[3],'b2':{},'b3':11,'b4':False},
+                         'a3':41,'a4':True}}
+        self.dictToFillRes={'a': {'a1': [[2], [4]],
+                                  'a2': {'b1': [[2], [3]], 'b2': [{}, {}], 'b3': [4, 11], 'b4': [True, False]},
+                                  'a3': [4, 41], 'a4': [True, True]}}
+    def test(self):
+        dictStruct = returnDictStruct(self.item1).dictStruct
+        dictToFill = dictStruct.copy()
+        fillDataWithDictStruct(self.item1, dictToFill, path=[])
+        fillDataWithDictStruct(self.item2, dictToFill, path=[])
+        assert dictToFill==self.dictToFillRes
 #%%
 if __name__ == '__main__':
     unittest.main()
