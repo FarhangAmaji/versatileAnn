@@ -154,6 +154,9 @@ class NormalizerStack:
 
     def ultimateInverseTransformCol(self, df, col):
         return self._normalizers[col].ultimateInverseTransformCol(df[col], col)
+
+    def __repr__(self):
+        return str(self.uniqueNormalizers)
 #%% normalizers: SingleColsNormalizers
 class BaseSingleColsNormalizer:
     """for instances of SingleColsLblEncoder if they have/need makeIntLabelsStrings, we wont use 3 transforms.
