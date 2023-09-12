@@ -105,6 +105,7 @@ def nontsStartPointsFalse(df):
 def splitTrainValTestDf(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
+    #kkk needs tests
     #kkk do it also for other datatypes
     """
     note this func expects conditions which indicate the first(older in time|backer in sequence);
@@ -201,7 +202,7 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
 #%% dataset output for batch structure detection
 class returnDictStruct:
-    def __init__(self, Type, inputDict):
+    def __init__(self, inputDict, Type='emptyList'):
         assert Type in ['emptyList','types'],"type must be either 'emptyList' or 'types'"
         self.type=Type
         self.dictStruct=self.returnDictStruct(inputDict)
@@ -245,3 +246,14 @@ def appendValueToListForNestedDictPath(dictionary, path, value):
         current[last_key].append(value)
     else:
         assert False, f'{path} doesnt lead to a list'
+
+def fillDataWithDictStruct(fillerDict, dictToFill, path=[]):
+    path=path[:]
+    if len(fillerDict)==0:
+        appendValueToListForNestedDictPath(dictToFill, path, {})
+    for key, value in fillerDict.items():
+        path2=path+[key]
+        if isinstance(value, dict):
+            fillDataWithDictStruct(value, dictToFill, path2)
+        else:
+            appendValueToListForNestedDictPath(dictToFill, path2, value)
