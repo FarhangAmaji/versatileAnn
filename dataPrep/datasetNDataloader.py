@@ -140,21 +140,21 @@ class returnDictStruct_Non_ReturnDictStruct_Objects:
 
         #kkk add npDict
         if self.type in knownTypesToBeTensored.tensor.values():
-            self.funcToUse='stackTensors'
+            self.toTensorFunc='stackTensors'
         elif self.type in knownTypesToBeTensored.directTensorables.values():
-            self.funcToUse='stackListOfDirectTensorablesToTensor'
+            self.toTensorFunc='stackListOfDirectTensorablesToTensor'
         elif self.type in knownTypesToBeTensored.df.values():
-            self.funcToUse='stackListOfDfsToTensor'
+            self.toTensorFunc='stackListOfDfsToTensor'
         elif self.type in knownTypesToBeTensored.notTensorables.values():
-            self.funcToUse='notTensorables'
+            self.toTensorFunc='notTensorables'
         else:#includes knownTypesToBeTensored.errorPrones
             if isTensorable(obj):
-                self.funcToUse='stackListOfErrorPronesToTensor'#kkk if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorablesToTensor
+                self.toTensorFunc='stackListOfErrorPronesToTensor'#kkk if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorablesToTensor
             else:
-                self.funcToUse='notTensorables'
+                self.toTensorFunc='notTensorables'
 
     def __repr__(self):
-        return '{'+f'values:{self.values}, type:{self.type}, funcToUse:{self.funcToUse}'+'}'
+        return '{'+f'values:{self.values}, type:{self.type}, toTensorFunc:{self.toTensorFunc}'+'}'
 
 def appendValueToNestedDictPath(inputDictStyle, path, value):
     assert isinstance(inputDictStyle, (dict, NpDict, returnDictStruct)),'inputDictStyle must be in one of dict, NpDict, returnDictStruct types'
@@ -176,7 +176,7 @@ def appendValueToNestedDictPath(inputDictStyle, path, value):
         current[last_key].append(value)
 
 class TensorStacker:
-    def __init(self):
+    def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def stackTensors(self, list_):
@@ -198,7 +198,7 @@ class TensorStacker:
 
     def stackListOfDfsToTensor(self, listOfDfs):
         listOfNpArrays=[df.values for df in listOfDfs]
-        return self.stackListOfNpArraysToTensor(listOfNpArrays)
+        return self.stackListOfDirectTensorablesToTensor(listOfNpArrays)
 
     def notTensorables(self, listOfNotTensorables):
         return listOfNotTensorables
@@ -236,21 +236,31 @@ class returnDictStruct(TensorStacker):
             else:
                 appendValueToNestedDictPath(self, path2, value)
 
-    def getDictStructDictionaryValues(self, dictionary):
+    def getDictStructDictionaryValues(self, dictionary, toTensor=False):
         returnDict={}
         if len(dictionary)==0:
             return {}
         for key, value in dictionary.items():
             if isinstance(value, dict):
-                returnDict[key] = self.getDictStructDictionaryValues(value)
+                returnDict[key] = self.getDictStructDictionaryValues(value, toTensor=toTensor)
             else:
-                returnDict[key] = value.values
+                if toTensor:
+                    toTensorFunc = getattr(self,value.toTensorFunc)
+                    returnDict[key] = toTensorFunc(value.values)
+                else:
+                    returnDict[key] = value.values
         return returnDict
 
-    def getDictStructValues(self):
+    def getDictStructValues(self, toTensor=False):
         if isinstance(self.dictStruct, returnDictStruct_Non_ReturnDictStruct_Objects):#this is for the case we have made returnDictStruct of non dictionary object
+            if toTensor:
+                toTensorFunc = getattr(self,self.dictStruct.toTensorFunc)
+                return toTensorFunc (self.dictStruct.values)
             return self.dictStruct.values
-        return self.getDictStructDictionaryValues(self.dictStruct)
+        return self.getDictStructDictionaryValues(self.dictStruct, toTensor=toTensor)
+
+    def getDictStructTensors(self):
+        return self.getDictStructValues(toTensor=True)
 
     def __repr__(self):
         return str(self.dictStruct)
