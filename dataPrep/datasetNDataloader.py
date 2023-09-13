@@ -105,6 +105,58 @@ class VAnnTsDataset(Dataset):
             return self.data.loc[idx]
         return self.data[self.indexes[idx]]
 #%% dataset output for batch structure detection
+def isTensorable(obj):
+    try:
+        torch.tensor(obj)
+        return True
+    except:
+        return False
+
+"#ccc eventhough npArray, tuple, df,series may contain str, which cant converted to tensor, but still we keep it this way"
+knownTypesToBeTensored=DotDict({
+    'directTensorables':DotDict({
+        'int':"<class 'int'>", 'float':"<class 'float'>", 'complex':"<class 'complex'>", 
+        'tuple':"<class 'tuple'>", 'npArray':"<class 'numpy.ndarray'>", 
+        'pdSeries':"<class 'pandas.core.series.Series'>", 
+        'bool':"<class 'bool'>", 'bytearray': "<class 'bytearray'>"}),
+
+    'tensor':
+        DotDict({'tensor':"<class 'torch.Tensor'>"}),
+
+    'errorPrones':
+        DotDict({'list':"<class 'list'>"}),# depending on items ok and not
+
+    'df':#indirectTensorables
+        DotDict({'df':"<class 'pandas.core.frame.DataFrame'>"}),# cant directly be changed to tensor
+
+    'notTensorables':DotDict({#these below can't be changed to tensor
+        'set':"<class 'set'>", 'dict':"<class 'dict'>",'str':"<class 'str'>",
+        'none':"<class 'NoneType'>", 'bytes':"<class 'bytes'>"})
+    })
+
+class returnDictStruct_Non_ReturnDictStruct_Objects:
+    def __init__(self, obj):
+        self.values=[]
+        self.type=str(type(obj))
+
+        #kkk add npDict
+        if self.type in knownTypesToBeTensored.tensor.values():
+            self.funcToUse='stackTensors'
+        elif self.type in knownTypesToBeTensored.directTensorables.values():
+            self.funcToUse='stackListOfDirectTensorablesToTensor'
+        elif self.type in knownTypesToBeTensored.df.values():
+            self.funcToUse='stackListOfDfsToTensor'
+        elif self.type in knownTypesToBeTensored.notTensorables.values():
+            self.funcToUse='notTensorables'
+        else:#includes knownTypesToBeTensored.errorPrones
+            if isTensorable(obj):
+                self.funcToUse='stackListOfErrorPronesToTensor'#kkk if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorablesToTensor
+            else:
+                self.funcToUse='notTensorables'
+
+    def __repr__(self):
+        return '{'+f'values:{self.values}, type:{self.type}, funcToUse:{self.funcToUse}'+'}'
+
 class returnDictStruct:
     def __init__(self, inputDict):
         self.ObjsFunc=returnDictStruct_Non_ReturnDictStruct_Objects
