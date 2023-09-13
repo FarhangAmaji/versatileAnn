@@ -119,6 +119,31 @@ class fillDataWithDictStructTests(BaseTestClass):
         self.item4=[7,9,6]
         self.nonDictionaryRes=[[4,6,8], [7,9,6]]
 
+    def tensorSetUp(self):
+        def toTensorFunc(obj):
+            obj = torch.tensor(obj)
+            if obj.dtype == torch.float16 or obj.dtype == torch.float64:
+                obj = obj.to(torch.float32)
+            return obj.to(self.device)
+
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.dictToFillTensorRes={'a':{'a1':toTensorFunc([[6.1,7.3],[2,2.4]]),
+                                 'a2':{'b1':toTensorFunc([4.11, 3.4]),'b2':[{}, {}],'b3':toTensorFunc([53, 4]),'b4':toTensorFunc([False, True])},
+                                 'a3':toTensorFunc([np.array([[9.2,14.3],[6.1,1.1]]), np.array([[3.1,4.1],[5.1,6.1]])]),
+                                 'a4':{'z1':toTensorFunc([False, True])},
+                                 'a5':{'m2':toTensorFunc([bytearray(i*9 for i in range(10)), bytearray(i*15 for i in range(10))]),
+                                       'm3':[bytes(i*13 for i in range(10)), bytes(i*12 for i in range(10))],
+                                       'm4':toTensorFunc([(4,1.3,7.8), (4,3.2,6.7)]),
+                                       'm5':torch.stack([torch.tensor(np.array([[77.6,8.5],[7.2,7.3]])), torch.tensor(np.array([[3.1,4.1],[5.1,6.1]]))]).to(torch.float32).to(self.device),
+                                       'm6':[set([13,24]), set([12,43])],
+                                       'm7':['fvb r', 'dsdnk'],
+                                       'm8':[None, None],
+                                       },
+                         'df':{'df':torch.stack([toTensorFunc(pd.DataFrame({'y1': [8,7,16], 'y2': [14, 35, 61]}).values),#first converted to nparray then tensor
+                                     toTensorFunc(pd.DataFrame({'y1': [1, 2, 3], 'y2': [4, 5, 6]}).values)]),
+                               'series':torch.stack([toTensorFunc(pd.Series(np.array([6.5,7.2]))), toTensorFunc(pd.Series(np.array([3.1,4.1])))])},
+                     }}
+
     def testWithDictionaryDictStruct(self):
         self.setUp()
         dictToFill=returnDictStruct(self.item1)
@@ -134,6 +159,14 @@ class fillDataWithDictStructTests(BaseTestClass):
         dictToFill.fillDataWithDictStruct(self.item3)
         dictToFill.fillDataWithDictStruct(self.item4)
         assert dictToFill.getDictStructValues()==self.nonDictionaryRes
+
+    def testGetDictStructTensors(self):
+        self.setUp()
+        self.tensorSetUp()
+        dictToFill=returnDictStruct(self.item1)
+        dictToFill.fillDataWithDictStruct(self.item2)
+        dictToFill.fillDataWithDictStruct(self.item1)
+        assert str(dictToFill.getDictStructTensors())==str(self.dictToFillTensorRes)
 #%%
 if __name__ == '__main__':
     unittest.main()
