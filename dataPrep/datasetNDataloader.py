@@ -2,16 +2,16 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from utils.vAnnGeneralUtils import NpDict, DotDict
 import warnings
 import pandas as pd
 import numpy as np
 from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
-#%%
-class VAnnTsDataset(Dataset):#kkk needs tests
+#%% VAnnTsDataset
+class VAnnTsDataset(Dataset):
+    #kkk needs tests
     def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
         self.data = data#kkk make sure its compatible with lists and np arrays
         self.backcastLen = backcastLen
@@ -28,7 +28,7 @@ class VAnnTsDataset(Dataset):#kkk needs tests
         self.device= torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.pointTypes=DotDict({'backcast':'backcast', 'forecast':'forecast', 'fullcast':'fullcast','singlePoint':'singlePoint'})
+        self.pointTypes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
 
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
@@ -52,7 +52,7 @@ class VAnnTsDataset(Dataset):#kkk needs tests
             return len(self.data)
         return len(self.indexes)
 
-    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         if cols=='___all___':
             return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
@@ -93,27 +93,73 @@ class VAnnTsDataset(Dataset):#kkk needs tests
             return getCastByMode(self.getNpDictRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(data, pd.DataFrame):
             return getCastByMode(self.getDfRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
-        elif isinstance(data, np.ndarray):#kkk do I need single col np.array
+        elif isinstance(data, np.ndarray):
             return getCastByMode(self.getNpArrayRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(data, torch.Tensor):
             return getCastByMode(self.getTensorRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         else:
-            assert False, 'data type should be pandas.DataFrame or torch.Tensor or np ndarray or NpDict'
+            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np ndarray or NpDict'
 
     def __getitem__(self, idx):#kkk give warning if the idx is not in tsStartpoints#kkk other thing is that we should be able to turn the warnings off by type for i.e. we can turn off this type of warning
         if self.indexes is None:
             return self.data.loc[idx]
         return self.data[self.indexes[idx]]
+#%% dataset output for batch structure detection
+class returnDictStruct:
+    def __init__(self, inputDict):
+        self.ObjsFunc=returnDictStruct_Non_ReturnDictStruct_Objects
+        self.dictStruct=self.returnDictStructFunc(inputDict)
 
-class VAnnTsDataloader(DataLoader):
-    #kkk seed everything
-    def __init__(self, dataset, *args, **kwargs):
+    def returnDictStructFunc(self, inputDict):
+        if not isinstance(inputDict, dict):
+            return self.ObjsFunc(inputDict)
+        returnDict={}
+        if len(inputDict)==0:
+            return self.ObjsFunc(inputDict)
+        for key, value in inputDict.items():
+            if isinstance(value, dict):
+                returnDict[key] = self.returnDictStructFunc(value)
+            else:
+                returnDict[key] = self.ObjsFunc(value)
+        return returnDict
+
+    def fillDataWithDictStruct(self, itemToAdd, path=[]):
+        if not isinstance(self.dictStruct, dict) and path==[]:#this is for the case we have made returnDictStruct of non dictionary object
+            self.dictStruct.values.append(itemToAdd)
+            return
+        path=path[:]
+        if len(itemToAdd)==0:#this is for the case we are retrieving an empty object, somewhere in the .dictStruct dictionaries' items
+            appendValueToNestedDictPath(self, path, {})
+        for key, value in itemToAdd.items():
+            path2=path+[key]
+            if isinstance(value, dict):
+                self.fillDataWithDictStruct(value, path2)
+            else:
+                appendValueToNestedDictPath(self, path2, value)
+
+    def getDictStructDictionaryValues(self, dictionary):
+        returnDict={}
+        if len(dictionary)==0:
+            return {}
+        for key, value in dictionary.items():
+            if isinstance(value, dict):
+                returnDict[key] = self.getDictStructDictionaryValues(value)
+            else:
+                returnDict[key] = value.values
+        return returnDict
+
+    def getDictStructValues(self):
+        if isinstance(self.dictStruct, returnDictStruct_Non_ReturnDictStruct_Objects):#this is for the case we have made returnDictStruct of non dictionary object
+            return self.dictStruct.values
+        return self.getDictStructDictionaryValues(self.dictStruct)
+
+    def __repr__(self):
+        return str(self.dictStruct)
+
+#%% VAnnTsDataloader
+class TensorStacker:
+    def __init(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        super().__init__(dataset, *args, **kwargs)
-
-    def stackListOfDfsTensor(self, listOfDfs):
-        tensorList=[torch.tensor(df.values) for df in listOfDfs]
-        return self.stackTensors(tensorList)
 
     def stackTensors(self, list_):
         stackTensor=torch.stack(list_).to(self.device)
@@ -123,5 +169,4 @@ class VAnnTsDataloader(DataLoader):
 
     def __iter__(self):
         for batch in super().__iter__():
-            # Move the batch to GPU before returning it
             yield [item.to(self.device) for item in batch]#kkk make it compatible to self.device of vAnn

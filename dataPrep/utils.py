@@ -1,7 +1,7 @@
-import pandas as pd
-import numpy as np
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import pandas as pd
+import numpy as np
 from utils.globalVars import tsStartPointColName
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
@@ -200,60 +200,3 @@ def rightPadDfBatch(dfOrSeries, maxLen, pad=0):
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
-#%% dataset output for batch structure detection
-class returnDictStruct:
-    def __init__(self, inputDict, Type='emptyList'):
-        assert Type in ['emptyList','types'],"type must be either 'emptyList' or 'types'"
-        self.type=Type
-        self.dictStruct=self.returnDictStruct(inputDict)
-
-    def returnDictStruct(self, inputDict):
-        def returnEmpty():
-            if self.type=='emptyList':
-                return []
-            if self.type=='types':
-                return 'empty'
-        if not isinstance(inputDict, dict):
-            return returnEmpty()
-        returnDict={}
-        if len(inputDict)==0:
-            return returnEmpty()
-        for key, value in inputDict.items():
-            if isinstance(value, dict):
-                returnDict[key] = self.returnDictStruct(value)
-            else:
-                if self.type=='emptyList':
-                    returnDict[key] = []
-                if self.type=='types':
-                    try:
-                        if value:
-                            returnDict[key] = str(type(value))
-                        else:
-                            returnDict[key] = 'empty'
-                    except:
-                        returnDict[key] = str(type(value))
-        return returnDict
-
-def appendValueToListForNestedDictPath(dictionary, path, value):
-    current = dictionary
-    for i,key in enumerate(path[:-1]):
-        assert isinstance(current, dict),f'{path[:i+1]} is not a dictionary'
-        assert key in current.keys(),f'{key} is not in {path[:i]}'
-        current = current[key]
-    last_key = path[-1]
-    assert last_key in current.keys(),f'{last_key} is not in {path}'
-    if isinstance(current[last_key], list):
-        current[last_key].append(value)
-    else:
-        assert False, f'{path} doesnt lead to a list'
-
-def fillDataWithDictStruct(fillerDict, dictToFill, path=[]):
-    path=path[:]
-    if len(fillerDict)==0:
-        appendValueToListForNestedDictPath(dictToFill, path, {})
-    for key, value in fillerDict.items():
-        path2=path+[key]
-        if isinstance(value, dict):
-            fillDataWithDictStruct(value, dictToFill, path2)
-        else:
-            appendValueToListForNestedDictPath(dictToFill, path2, value)
