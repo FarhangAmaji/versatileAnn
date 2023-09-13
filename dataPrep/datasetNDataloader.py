@@ -208,16 +208,30 @@ class returnDictStruct:
     def __repr__(self):
         return str(self.dictStruct)
 
-#%% VAnnTsDataloader
-class TensorStacker:
-    def __init(self):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def appendValueToNestedDictPath(inputDictStyle, path, value):
+    assert isinstance(inputDictStyle, (dict, NpDict, returnDictStruct)),'inputDictStyle must be in one of dict, NpDict, returnDictStruct types'
+    current = inputDictStyle
+    if isinstance(current, returnDictStruct):
+        current = current.dictStruct
+    for i, key in enumerate(path[:-1]):
+        assert isinstance(current, (dict, NpDict)), f'{path[:i+1]} is not a dict or NpDict'
+        assert key in current.keys(), f'{key} is not in {path[:i]}'
+        current = current[key]
+    last_key = path[-1]
+    assert last_key in current.keys(), f'{last_key} is not in {path}'
 
-    def stackTensors(self, list_):
-        stackTensor=torch.stack(list_).to(self.device)
-        if stackTensor.dtype == torch.float16 or stackTensor.dtype == torch.float64:
-            stackTensor = stackTensor.to(torch.float32)#kkk make it compatible to global precision
-        return stackTensor
+    if isinstance(inputDictStyle, returnDictStruct):
+        assert isinstance(current[last_key].values, list), f'{path} doesn\'t lead to a list'
+        current[last_key].values.append(value)
+    else:
+        assert isinstance(current[last_key], list), f'{path} doesn\'t lead to a list'
+        current[last_key].append(value)
+#%% VAnnTsDataloader
+class VAnnTsDataloader(DataLoader):
+    #kkk needs tests
+    #kkk seed everything
+    def __init__(self, dataset, doDictStructureCheckOnAllData=False, *args, **kwargs):
+        super().__init__(dataset, *args, **kwargs)
 
     def __iter__(self):
         for batch in super().__iter__():
