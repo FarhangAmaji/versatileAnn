@@ -227,6 +227,34 @@ def appendValueToNestedDictPath(inputDictStyle, path, value):
         assert isinstance(current[last_key], list), f'{path} doesn\'t lead to a list'
         current[last_key].append(value)
 #%% VAnnTsDataloader
+class TensorStacker:
+    def __init(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    def stackTensors(self, list_):
+        stackTensor=torch.stack(list_).to(self.device)
+        if stackTensor.dtype == torch.float16 or stackTensor.dtype == torch.float64:
+            stackTensor = stackTensor.to(torch.float32)#kkk make it compatible to global precision
+        return stackTensor
+
+    def stackListOfErrorPronesToTensor(self, listOfErrorPrones):
+        try:
+            tensorList=[torch.tensor(na) for na in listOfErrorPrones]
+        except:
+            return listOfErrorPrones
+        return self.stackTensors(tensorList)
+
+    def stackListOfDirectTensorablesToTensor(self, listOfDirectTensorables):
+        tensorList=[torch.tensor(na) for na in listOfDirectTensorables]
+        return self.stackTensors(tensorList)
+
+    def stackListOfDfsToTensor(self, listOfDfs):
+        listOfNpArrays=[df.values for df in listOfDfs]
+        return self.stackListOfNpArraysToTensor(listOfNpArrays)
+
+    def notTensorables(self, listOfNotTensorables):
+        return listOfNotTensorables
+
 class VAnnTsDataloader(DataLoader):
     #kkk needs tests
     #kkk seed everything
