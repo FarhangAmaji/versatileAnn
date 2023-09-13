@@ -3,35 +3,35 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPrep.utils import returnDictStruct, appendValueToListForNestedDictPath, fillDataWithDictStruct
+from dataPrep.datasetNDataloader import returnDictStruct, appendValueToNestedDictPath
+from dataPrep.datasetNDataloader import returnDictStruct_Non_ReturnDictStruct_Objects as rdsObjFunc
+import torch
+import pandas as pd
+import numpy as np
 #%% batch data tests
 class returnDictStructTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2],
                          'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
                          'a3':4,'a4':True}}
-        self.item1TYPETypeRes={'a': {'a1': "<class 'list'>",
-                                      'a2': {'b1': "<class 'list'>", 'b2': 'empty', 'b3': "<class 'int'>", 'b4': "<class 'bool'>"},
-                                      'a3': "<class 'int'>", 'a4': "<class 'bool'>"}}
-        self.item1TYPEEmptyList={'a': {'a1': [], 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
+        self.item1Res={'a':{'a1':rdsObjFunc([2]),
+                         'a2':{'b1':rdsObjFunc([2]),'b2':rdsObjFunc({}),'b3':rdsObjFunc(4),'b4':rdsObjFunc(True)},
+                         'a3':rdsObjFunc(4),'a4':rdsObjFunc(True)}}
 
-    def testReturnDictStructOfTYPESType(self):
+    def test(self):
         self.setUp()
-        returnDictStructOfTYPEType=returnDictStruct(self.item1,'types')
-        assert returnDictStructOfTYPEType.dictStruct==self.item1TYPETypeRes
-    
-    def testReturnDictStructOfTYPEEmptyList(self):
-        self.setUp()
-        returnDictStructOfTYPEType=returnDictStruct(self.item1,'emptyList')
-        assert returnDictStructOfTYPEType.dictStruct==self.item1TYPEEmptyList
-#%% appendValueToListForNestedDictPathTests
-class appendValueToListForNestedDictPathTests(BaseTestClass):
+        assert str(returnDictStruct(self.item1))==str(self.item1Res)
+        """#ccc seems to be a not secure way
+        but because we have only returnDictStruct and returnDictStruct_Non_ReturnDictStruct_Objects types with defined __repr__s
+        so seems to be ok"""
+#%% appendValueToNestedDictPathTests
+class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
     def setUp(self):
         self.item1 = {'a': {'a1': {'b1': []},
                      'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []},
                      'a3': [],
                      'a4': []}}
-        self.avtl=appendValueToListForNestedDictPath
+        self.avtl=appendValueToNestedDictPath
 
     def test1(self):
         self.setUp()
@@ -48,7 +48,7 @@ class appendValueToListForNestedDictPathTests(BaseTestClass):
         self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1'], 4)
-        self.assertEqual(str(context.exception), "['a', 'a1'] doesnt lead to a list")
+        self.assertEqual(str(context.exception), "['a', 'a1'] doesn't lead to a list")
 
     def testNoKeyWithSomeName(self):
         self.setUp()
@@ -60,7 +60,7 @@ class appendValueToListForNestedDictPathTests(BaseTestClass):
         self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a4','b2','xs'], 4)
-        self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dictionary")
+        self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dict or NpDict")
 
     def testKeyNotInDict(self):
         self.setUp()
@@ -70,22 +70,70 @@ class appendValueToListForNestedDictPathTests(BaseTestClass):
 #%% fillDataWithDictStructTests
 class fillDataWithDictStructTests(BaseTestClass):
     def setUp(self):
-        self.item1={'a':{'a1':[2],
-                         'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
-                         'a3':4,'a4':True}}
-        self.item2={'a':{'a1':[4],
-                         'a2':{'b1':[3],'b2':{},'b3':11,'b4':False},
-                         'a3':41,'a4':True}}
-        self.dictToFillRes={'a': {'a1': [[2], [4]],
-                                  'a2': {'b1': [[2], [3]], 'b2': [{}, {}], 'b3': [4, 11], 'b4': [True, False]},
-                                  'a3': [4, 41], 'a4': [True, True]}}
-    def test(self):
+        self.item1={'a':{'a1':[2,2.4],
+                         'a2':{'b1':3.4,'b2':{},'b3':4,'b4':True},
+                         'a3':np.array([[3.1,4.1],[5.1,6.1]]),
+                         'a4':{'z1':True},
+                         'a5':{'m2':bytearray(i*15 for i in range(10)),
+                               'm3':bytes(i*12 for i in range(10)),
+                               'm4':(4,3.2,6.7),
+                               'm5':torch.tensor(np.array([[3.1,4.1],[5.1,6.1]])),
+                               'm6':set([12,43]),
+                               'm7':'dsdnk',
+                               'm8':None,
+                               },
+                    'df':{'df':pd.DataFrame({'y1': [1, 2, 3], 'y2': [4, 5, 6]}),
+                          'series':pd.Series(np.array([3.1,4.1]))},
+                     }}
+        self.item2={'a':{'a1':[6.1,7.3],
+                         'a2':{'b1':4.11,'b2':{},'b3':53,'b4':False},
+                         'a3':np.array([[9.2,14.3],[6.1,1.1]]),
+                         'a4':{'z1':False},
+                         'a5':{'m2':bytearray(i*9 for i in range(10)),
+                               'm3':bytes(i*13 for i in range(10)),
+                               'm4':(4,1.3,7.8),
+                               'm5':torch.tensor(np.array([[77.6,8.5],[7.2,7.3]])),
+                               'm6':set([13,24]),
+                               'm7':'fvb r',
+                               'm8':None,
+                               },
+                    'df':{'df':pd.DataFrame({'y1': [8,7,16], 'y2': [14, 35, 61]}),
+                          'series':pd.Series(np.array([6.5,7.2]))},
+                     }}
+        self.dictToFillRes={'a':{'a1':[[6.1,7.3],[2,2.4]],
+                                 'a2':{'b1':[4.11, 3.4],'b2':[{}, {}],'b3':[53, 4],'b4':[False, True]},
+                                 'a3':[np.array([[9.2,14.3],[6.1,1.1]]), np.array([[3.1,4.1],[5.1,6.1]])],
+                                 'a4':{'z1':[False, True]},
+                                 'a5':{'m2':[bytearray(i*9 for i in range(10)), bytearray(i*15 for i in range(10))],
+                                       'm3':[bytes(i*13 for i in range(10)), bytes(i*12 for i in range(10))],
+                                       'm4':[(4,1.3,7.8), (4,3.2,6.7)],
+                                       'm5':[torch.tensor(np.array([[77.6,8.5],[7.2,7.3]])), torch.tensor(np.array([[3.1,4.1],[5.1,6.1]]))],
+                                       'm6':[set([13,24]), set([12,43])],
+                                       'm7':['fvb r', 'dsdnk'],
+                                       'm8':[None, None],
+                                       },
+                         'df':{'df':[pd.DataFrame({'y1': [8,7,16], 'y2': [14, 35, 61]}), pd.DataFrame({'y1': [1, 2, 3], 'y2': [4, 5, 6]})],
+                               'series':[pd.Series(np.array([6.5,7.2])), pd.Series(np.array([3.1,4.1]))]},
+                     }}
+        self.item3=[4,6,8]
+        self.item4=[7,9,6]
+        self.nonDictionaryRes=[[4,6,8], [7,9,6]]
+
+    def testWithDictionaryDictStruct(self):
         self.setUp()
-        dictStruct = returnDictStruct(self.item1).dictStruct
-        dictToFill = dictStruct.copy()
-        fillDataWithDictStruct(self.item1, dictToFill, path=[])
-        fillDataWithDictStruct(self.item2, dictToFill, path=[])
-        assert dictToFill==self.dictToFillRes
+        dictToFill=returnDictStruct(self.item1)
+        dictToFill.fillDataWithDictStruct(self.item2)
+        dictToFill.fillDataWithDictStruct(self.item1)
+        assert str(dictToFill.getDictStructValues())==str(self.dictToFillRes)
+        """#ccc seems to be a not secure way, but because we have verified types
+        which are either default python types or torch, np, pd types so seems to be ok"""
+
+    def testWithNonDictionaryDictStruct(self):
+        self.setUp()
+        dictToFill=returnDictStruct(self.item3)
+        dictToFill.fillDataWithDictStruct(self.item3)
+        dictToFill.fillDataWithDictStruct(self.item4)
+        assert dictToFill.getDictStructValues()==self.nonDictionaryRes
 #%%
 if __name__ == '__main__':
     unittest.main()
