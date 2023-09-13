@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset, DataLoader
-from utils.vAnnGeneralUtils import NpDict, DotDict
+from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet
 import warnings
 import pandas as pd
 import numpy as np
@@ -133,7 +133,7 @@ knownTypesToBeTensored=DotDict({
         'none':"<class 'NoneType'>", 'bytes':"<class 'bytes'>"})
     })
 
-class returnDictStruct_Non_ReturnDictStruct_Objects:
+class ReturnDictStruct_Non_ReturnDictStruct_Objects:
     def __init__(self, obj):
         self.values=[]
         self.type=str(type(obj))
@@ -157,9 +157,9 @@ class returnDictStruct_Non_ReturnDictStruct_Objects:
         return '{'+f'values:{self.values}, type:{self.type}, toTensorFunc:{self.toTensorFunc}'+'}'
 
 def appendValueToNestedDictPath(inputDictStyle, path, value):
-    assert isinstance(inputDictStyle, (dict, NpDict, returnDictStruct)),'inputDictStyle must be in one of dict, NpDict, returnDictStruct types'
+    assert isinstance(inputDictStyle, (dict, NpDict, ReturnDictStruct)),'inputDictStyle must be in one of dict, NpDict, ReturnDictStruct types'
     current = inputDictStyle
-    if isinstance(current, returnDictStruct):
+    if isinstance(current, ReturnDictStruct):
         current = current.dictStruct
     for i, key in enumerate(path[:-1]):
         assert isinstance(current, (dict, NpDict)), f'{path[:i+1]} is not a dict or NpDict'
@@ -168,7 +168,7 @@ def appendValueToNestedDictPath(inputDictStyle, path, value):
     last_key = path[-1]
     assert last_key in current.keys(), f'{last_key} is not in {path}'
 
-    if isinstance(inputDictStyle, returnDictStruct):
+    if isinstance(inputDictStyle, ReturnDictStruct):
         assert isinstance(current[last_key].values, list), f'{path} doesn\'t lead to a list'
         current[last_key].values.append(value)
     else:
@@ -203,10 +203,10 @@ class TensorStacker:
     def notTensorables(self, listOfNotTensorables):
         return listOfNotTensorables
 
-class returnDictStruct(TensorStacker):
+class ReturnDictStruct(TensorStacker):
     def __init__(self, inputDict):
         super().__init__()
-        self.ObjsFunc=returnDictStruct_Non_ReturnDictStruct_Objects
+        self.ObjsFunc=ReturnDictStruct_Non_ReturnDictStruct_Objects
         self.dictStruct=self.returnDictStructFunc(inputDict)
 
     def returnDictStructFunc(self, inputDict):
@@ -223,7 +223,7 @@ class returnDictStruct(TensorStacker):
         return returnDict
 
     def fillDataWithDictStruct(self, itemToAdd, path=[]):
-        if not isinstance(self.dictStruct, dict) and path==[]:#this is for the case we have made returnDictStruct of non dictionary object
+        if not isinstance(self.dictStruct, dict) and path==[]:#this is for the case we have made ReturnDictStruct of non dictionary object
             self.dictStruct.values.append(itemToAdd)
             return
         path=path[:]
@@ -252,7 +252,7 @@ class returnDictStruct(TensorStacker):
         return returnDict
 
     def getDictStructValues(self, toTensor=False):
-        if isinstance(self.dictStruct, returnDictStruct_Non_ReturnDictStruct_Objects):#this is for the case we have made returnDictStruct of non dictionary object
+        if isinstance(self.dictStruct, ReturnDictStruct_Non_ReturnDictStruct_Objects):#this is for the case we have made ReturnDictStruct of non dictionary object
             if toTensor:
                 toTensorFunc = getattr(self,self.dictStruct.toTensorFunc)
                 return toTensorFunc (self.dictStruct.values)
@@ -270,7 +270,63 @@ class VAnnTsDataloader(DataLoader):
     #kkk seed everything
     def __init__(self, dataset, doDictStructureCheckOnAllData=False, *args, **kwargs):
         super().__init__(dataset, *args, **kwargs)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#kkk make it compatible to self.device of vAnn
+        if doDictStructureCheckOnAllData:
+            self.doDictStructureCheckOnAllData()
+        self.findItemsReturnDictStruct()
+
+    def doDictStructureCheckOnAllData(self):
+        pass
+        #kkk implement it later
+        #kkk find dictStruct which is sure works on all items of 1epoch, and in case of type incompatibility change the explicit
+        #...type for i.e. "<class 'list'>" to 'MIX'
+        #kkk do it in parallel
+
+    def findItemsReturnDictStruct(self):
+        if self.dataset.indexes is not None:
+            firstBatchItem=self.dataset.data[self.dataset.indexes[0]]
+        else:
+            firstBatchItem=self.dataset.data[0]
+        if isListTupleOrSet(firstBatchItem):
+            itemsReturnDictStruct=[]
+            for item in firstBatchItem:
+                itemsReturnDictStruct.append(ReturnDictStruct(item))
+            self.itemsReturnDictStruct = itemsReturnDictStruct
+        else:
+            self.itemsReturnDictStruct = ReturnDictStruct(firstBatchItem)
+
+    def assertIsReturnDictStructOrListOfReturnDictStructs(self, obj):
+        assert isinstance(obj, ReturnDictStruct) or \
+        (isinstance(obj, list) and all([isinstance(it, ReturnDictStruct) for it in obj])),\
+            'this is not, list of ReturnDictStructs or ReturnDictStruct type'
+
+    def fillBatchItems(self, itemsReturnDictStruct, batch):
+        self.assertIsReturnDictStructOrListOfReturnDictStructs(itemsReturnDictStruct)
+
+        #kkk can this part done in parallel?:short answer is no, unless we have divided it to some meaning full number and redo all of this for results
+        for item in batch:
+            if isinstance(itemsReturnDictStruct, list):
+                for i, itemInItem in enumerate(item):
+                    itemsReturnDictStruct[i].fillDataWithDictStruct(itemInItem)
+            else:
+                itemsReturnDictStruct.fillDataWithDictStruct(item)
+        return itemsReturnDictStruct
+
+    def getTensoredBatch(self, itemsReturnDictStruct):
+        self.assertIsReturnDictStructOrListOfReturnDictStructs(itemsReturnDictStruct)
+        if isinstance(itemsReturnDictStruct, list):
+            batchResult=[]
+            for itemInItemsReturnDictStruct in itemsReturnDictStruct:
+                batchResult.append(itemInItemsReturnDictStruct.getDictStructTensors())
+            else:
+                batchResult= itemsReturnDictStruct.getDictStructTensors()
+        return batchResult
 
     def __iter__(self):
+        # here we move the batch to GPU before returning it; this makes use of gpu memory much more efficient
         for batch in super().__iter__():
-            yield [item.to(self.device) for item in batch]#kkk make it compatible to self.device of vAnn
+            if hasattr(self, 'itemsReturnDictStruct'):
+                itemsReturnDictStruct = self.fillBatchItems(self.itemsReturnDictStruct.copy(), batch)
+                yield self.getTensoredBatch(itemsReturnDictStruct )
+            else:
+                yield [item.to(self.device) for item in batch]
