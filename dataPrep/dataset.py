@@ -11,31 +11,42 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
 #%% VAnnTsDataset
 class TsRowFetcher:
+    #kkk needs tests
+    def __init__(self):
+        self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
+
+    def singleFeatureShapeCorrection(self, data):
+        if len(data.shape)==2 and data.shape[1]==1:
+            return data.squeeze(-1)
+        return data
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         if cols=='___all___':
             return df[idx + lowerBoundGap:idx + upperBoundGap]
         else:
-            return df[idx + lowerBoundGap:idx + upperBoundGap, cols]
+            return df[cols][idx + lowerBoundGap:idx + upperBoundGap]
 
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
-            return tensor[idx + lowerBoundGap:idx + upperBoundGap,:]
+            res = tensor[idx + lowerBoundGap:idx + upperBoundGap,:]
         else:
-            return tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
-
+            res = tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
+        return self.singleFeatureShapeCorrection(res)
+        
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
-            return npDict[:][idx + lowerBoundGap:idx + upperBoundGap]
+            res =  npDict[:][idx + lowerBoundGap:idx + upperBoundGap]
         else:
-            return npDict[colIndexes][idx + lowerBoundGap:idx + upperBoundGap]
+            res =  npDict[colIndexes][idx + lowerBoundGap:idx + upperBoundGap]
+        return self.singleFeatureShapeCorrection(res)
 
     def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
-            return npArray[idx + lowerBoundGap:idx + upperBoundGap,:]
+            res =  npArray[idx + lowerBoundGap:idx + upperBoundGap,:]
         else:
-            return npArray[idx + lowerBoundGap:idx + upperBoundGap,colIndexes]
+            res =  npArray[idx + lowerBoundGap:idx + upperBoundGap,colIndexes]
+        return self.singleFeatureShapeCorrection(res)
 
     def makeTensor(self,input_):
         tensor = torch.tensor(input_)
@@ -43,7 +54,8 @@ class TsRowFetcher:
         return tensor
 
     def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True):#kkk may add query taking ability to df part
-        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
+        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
+        assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
 
         def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
             if mode==self.modes.backcast:
@@ -73,6 +85,7 @@ class TsRowFetcher:
 class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk needs tests
     def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
+        super().__init__()
         self.data = data#kkk make sure its compatible with lists and np arrays
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
@@ -87,7 +100,6 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             self.data=NpDict(self.data)
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
 
     def noNanOrNoneData(self):
         if isinstance(self.data, (pd.DataFrame, pd.Series)):
@@ -102,10 +114,10 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape
+            assert len(shape)<=2,'only upto 2d tensors and np arrays can be passed'
             if shape[0] < shape[1]:
                 warnings.warn("The data shape suggests that different features may be along shape[1]. "
                               "Consider transposing the data to have features along shape[0].")
-
     def __len__(self):
         if self.indexes is None:
             return len(self.data)
