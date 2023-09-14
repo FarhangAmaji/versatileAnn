@@ -147,8 +147,8 @@ class fillBatchStructWithDataTests(BaseTestClass):
     def testWithDictionaryDictStruct(self):
         self.setUp()
         dictToFill=BatchStructTemplate(self.item1)
-        dictToFill.fillBatchStructWithData(self.item2)
-        dictToFill.fillBatchStructWithData(self.item1)
+        dictToFill.fillWithData(self.item2)
+        dictToFill.fillWithData(self.item1)
         assert str(dictToFill.getBatchStructValues())==str(self.dictToFillRes)
         """#ccc seems to be a not secure way, but because we have verified types
         which are either default python types or torch, np, pd types so seems to be ok"""
@@ -156,16 +156,16 @@ class fillBatchStructWithDataTests(BaseTestClass):
     def testWithNonDictionaryDictStruct(self):
         self.setUp()
         dictToFill=BatchStructTemplate(self.item3)
-        dictToFill.fillBatchStructWithData(self.item3)
-        dictToFill.fillBatchStructWithData(self.item4)
+        dictToFill.fillWithData(self.item3)
+        dictToFill.fillWithData(self.item4)
         assert dictToFill.getBatchStructValues()==self.nonDictionaryRes
 
     def testGetDictStructTensors(self):
         self.setUp()
         self.tensorSetUp()
         dictToFill=BatchStructTemplate(self.item1)
-        dictToFill.fillBatchStructWithData(self.item2)
-        dictToFill.fillBatchStructWithData(self.item1)
+        dictToFill.fillWithData(self.item2)
+        dictToFill.fillWithData(self.item1)
         assert str(dictToFill.getBatchStructTensors())==str(self.dictToFillTensorRes)
 #%%
 if __name__ == '__main__':
