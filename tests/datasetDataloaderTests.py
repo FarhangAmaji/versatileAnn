@@ -3,26 +3,26 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPrep.datasetNDataloader import returnDictStruct, appendValueToNestedDictPath
-from dataPrep.datasetNDataloader import returnDictStruct_Non_ReturnDictStruct_Objects as rdsObjFunc
+from dataPrep.datasetNDataloader import BatchStructTemplate, appendValueToNestedDictPath
+from dataPrep.datasetNDataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
 import torch
 import pandas as pd
 import numpy as np
 #%% batch data tests
-class returnDictStructTests(BaseTestClass):
+class batchStructTemplateTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2],
                          'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
                          'a3':4,'a4':True}}
-        self.item1Res={'a':{'a1':rdsObjFunc([2]),
-                         'a2':{'b1':rdsObjFunc([2]),'b2':rdsObjFunc({}),'b3':rdsObjFunc(4),'b4':rdsObjFunc(True)},
-                         'a3':rdsObjFunc(4),'a4':rdsObjFunc(True)}}
+        self.item1Res={'a':{'a1':bstObjFunc([2]),
+                         'a2':{'b1':bstObjFunc([2]),'b2':bstObjFunc({}),'b3':bstObjFunc(4),'b4':bstObjFunc(True)},
+                         'a3':bstObjFunc(4),'a4':bstObjFunc(True)}}
 
     def test(self):
         self.setUp()
-        assert str(returnDictStruct(self.item1))==str(self.item1Res)
+        assert str(BatchStructTemplate(self.item1))==str(self.item1Res)
         """#ccc seems to be a not secure way
-        but because we have only returnDictStruct and returnDictStruct_Non_ReturnDictStruct_Objects types with defined __repr__s
+        but because we have only batchStructTemplate and BatchStructTemplate_Non_BatchStructTemplate_Objects types with defined __repr__s
         so seems to be ok"""
 #%% appendValueToNestedDictPathTests
 class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
@@ -67,8 +67,8 @@ class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
-#%% fillDataWithDictStructTests
-class fillDataWithDictStructTests(BaseTestClass):
+#%% fillBatchStructWithDataTests
+class fillBatchStructWithDataTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2,2.4],
                          'a2':{'b1':3.4,'b2':{},'b3':4,'b4':True},
@@ -146,27 +146,27 @@ class fillDataWithDictStructTests(BaseTestClass):
 
     def testWithDictionaryDictStruct(self):
         self.setUp()
-        dictToFill=returnDictStruct(self.item1)
-        dictToFill.fillDataWithDictStruct(self.item2)
-        dictToFill.fillDataWithDictStruct(self.item1)
-        assert str(dictToFill.getDictStructValues())==str(self.dictToFillRes)
+        dictToFill=BatchStructTemplate(self.item1)
+        dictToFill.fillBatchStructWithData(self.item2)
+        dictToFill.fillBatchStructWithData(self.item1)
+        assert str(dictToFill.getBatchStructValues())==str(self.dictToFillRes)
         """#ccc seems to be a not secure way, but because we have verified types
         which are either default python types or torch, np, pd types so seems to be ok"""
 
     def testWithNonDictionaryDictStruct(self):
         self.setUp()
-        dictToFill=returnDictStruct(self.item3)
-        dictToFill.fillDataWithDictStruct(self.item3)
-        dictToFill.fillDataWithDictStruct(self.item4)
-        assert dictToFill.getDictStructValues()==self.nonDictionaryRes
+        dictToFill=BatchStructTemplate(self.item3)
+        dictToFill.fillBatchStructWithData(self.item3)
+        dictToFill.fillBatchStructWithData(self.item4)
+        assert dictToFill.getBatchStructValues()==self.nonDictionaryRes
 
     def testGetDictStructTensors(self):
         self.setUp()
         self.tensorSetUp()
-        dictToFill=returnDictStruct(self.item1)
-        dictToFill.fillDataWithDictStruct(self.item2)
-        dictToFill.fillDataWithDictStruct(self.item1)
-        assert str(dictToFill.getDictStructTensors())==str(self.dictToFillTensorRes)
+        dictToFill=BatchStructTemplate(self.item1)
+        dictToFill.fillBatchStructWithData(self.item2)
+        dictToFill.fillBatchStructWithData(self.item1)
+        assert str(dictToFill.getBatchStructTensors())==str(self.dictToFillTensorRes)
 #%%
 if __name__ == '__main__':
     unittest.main()
