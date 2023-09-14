@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset
-from utils.vAnnGeneralUtils import NpDict, DotDict
+from utils.vAnnGeneralUtils import NpDict, DotDict, floatDtypeChange
 import warnings
 import pandas as pd
 import numpy as np
@@ -76,8 +76,14 @@ class VAnnTsDataset(Dataset):
         else:
             return npArray[idx + lowerBoundGap:idx + upperBoundGap,colIndexes]
 
-    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___'):#kkk may add query taking ability to df part
+    def makeTensor(self,input_):
+        tensor = torch.tensor(input_)
+        tensor = floatDtypeChange(tensor)
+        return tensor
+        
+    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True):#kkk may add query taking ability to df part
         assert mode in self.pointTypes.keys(), "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
+
         def getCastByMode(typeFunc, data, idx, mode=self.pointTypes.backcast, colsOrIndexes='___all___'):
             if mode==self.pointTypes.backcast:
                 return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes)
@@ -89,15 +95,19 @@ class VAnnTsDataset(Dataset):
                 return typeFunc(data, idx, 0, 0, colsOrIndexes)
 
         if isinstance(data, NpDict):
-            return getCastByMode(self.getNpDictRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getNpDictRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(data, pd.DataFrame):
-            return getCastByMode(self.getDfRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getDfRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(data, np.ndarray):
-            return getCastByMode(self.getNpArrayRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getNpArrayRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         elif isinstance(data, torch.Tensor):
-            return getCastByMode(self.getTensorRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getTensorRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         else:
             assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np ndarray or NpDict'
+
+        if makeTensor:
+            res = self.makeTensor(res)
+        return res
 
     def __getitem__(self, idx):#kkk give warning if the idx is not in tsStartpoints#kkk other thing is that we should be able to turn the warnings off by type for i.e. we can turn off this type of warning
         if self.indexes is None:
