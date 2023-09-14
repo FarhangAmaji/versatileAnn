@@ -15,9 +15,9 @@ class TsRowFetcher:
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         if cols=='___all___':
-            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
+            return df[idx + lowerBoundGap:idx + upperBoundGap]
         else:
-            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1, cols]
+            return df[idx + lowerBoundGap:idx + upperBoundGap, cols]
 
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
@@ -53,7 +53,7 @@ class TsRowFetcher:
             elif mode==self.modes.fullcast:
                 return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
             elif mode==self.modes.singlePoint:
-                return typeFunc(data, idx, 0, 0, colsOrIndexes)
+                return typeFunc(data, idx, 0, 1, colsOrIndexes)
 
         if isinstance(data, NpDict):
             res = getCastByMode(self.getNpDictRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
