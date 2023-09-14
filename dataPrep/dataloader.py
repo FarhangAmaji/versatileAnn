@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import DataLoader
-from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet, floatDtypeChange
+from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet, floatDtypeChange, isIterable
 from torch.utils.data.dataloader import default_collate
 import copy
 #%% batch structure detection
@@ -60,8 +60,8 @@ class BatchStructTemplate_Non_BatchStructTemplate_Objects:
     def __repr__(self):
         return '{'+f'values:{self.values}, type:{self.type}, toTensorFunc:{self.toTensorFunc}'+'}'
 
-def appendValueToNestedDictPath(inputDictStyle, path, value):
-    assert isinstance(inputDictStyle, (dict, NpDict, BatchStructTemplate)),'inputDictStyle must be in one of dict, NpDict, BatchStructTemplate types'
+def updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=False):
+    assert isinstance(inputDictStyle, (dict, NpDict, BatchStructTemplate)), 'inputDictStyle must be in one of dict, NpDict, BatchStructTemplate types'
     current = inputDictStyle
     if isinstance(current, BatchStructTemplate):
         current = current.dictStruct
@@ -71,13 +71,26 @@ def appendValueToNestedDictPath(inputDictStyle, path, value):
         current = current[key]
     last_key = path[-1]
     assert last_key in current.keys(), f'{last_key} is not in {path}'
-
+    
     if isinstance(inputDictStyle, BatchStructTemplate):
         assert isinstance(current[last_key].values, list), f'{path} doesn\'t lead to a list'
-        current[last_key].values.append(value)
+        if extendIfPossible and isIterable(value):
+            current[last_key].values.extend(value)
+        else:
+            current[last_key].values.append(value)
     else:
         assert isinstance(current[last_key], list), f'{path} doesn\'t lead to a list'
-        current[last_key].append(value)
+        if extendIfPossible and isIterable(value):
+            current[last_key].extend(value)
+        else:
+            current[last_key].append(value)
+
+def appendValueToNestedDictPath(inputDictStyle, path, value):
+    updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=False)
+
+def extendIfPossibleValueToNestedDictPath(inputDictStyle, path, value):
+    updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=True)
+
 
 class TensorStacker:
     def __init__(self):
@@ -109,20 +122,20 @@ class TensorStacker:
 class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to collateStruct
     def __init__(self, inputDict):
         super().__init__()
-        self.ObjsFunc=BatchStructTemplate_Non_BatchStructTemplate_Objects
+        self.objsType=BatchStructTemplate_Non_BatchStructTemplate_Objects
         self.dictStruct=self.batchStructTemplateFunc(inputDict)
 
     def batchStructTemplateFunc(self, inputDict):
         if not isinstance(inputDict, dict):
-            return self.ObjsFunc(inputDict)
+            return self.objsType(inputDict)
         returnDict={}
         if len(inputDict)==0:
-            return self.ObjsFunc(inputDict)
+            return self.objsType(inputDict)
         for key, value in inputDict.items():
             if isinstance(value, dict):
                 returnDict[key] = self.batchStructTemplateFunc(value)
             else:
-                returnDict[key] = self.ObjsFunc(value)
+                returnDict[key] = self.objsType(value)
         return returnDict
 
     def fillWithData(self, itemToAdd, path=[]):
@@ -153,6 +166,13 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
         else:
             batchStructTemplates.fillWithData(itemsToAdd)
 
+    def squeezeshape0of1(self, tensor):
+        if not isinstance(tensor, torch.Tensor):
+            return tensor
+        while tensor.shape[0]==1:
+            tensor = tensor.squeeze(0)
+        return tensor
+
     def getBatchStructDictionaryValues(self, dictionary, toTensor=False):
         returnDict={}
         if len(dictionary)==0:
@@ -163,7 +183,7 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
             else:
                 if toTensor:
                     toTensorFunc = getattr(self,value.toTensorFunc)
-                    returnDict[key] = toTensorFunc(value.values)
+                    returnDict[key] = self.squeezeshape0of1(toTensorFunc(value.values))#kkk maybe could have found better but more complex solution than squeezeshape0of1; this one has problem with batchSize 1!!!
                 else:
                     returnDict[key] = value.values
         return returnDict
@@ -172,7 +192,7 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
         if isinstance(self.dictStruct, BatchStructTemplate_Non_BatchStructTemplate_Objects):#this is for the case we have made BatchStructTemplate of non dictionary object
             if toTensor:
                 toTensorFunc = getattr(self,self.dictStruct.toTensorFunc)
-                return toTensorFunc (self.dictStruct.values)
+                return self.squeezeshape0of1(toTensorFunc(self.dictStruct.values))
             return self.dictStruct.values
         return self.getBatchStructDictionaryValues(self.dictStruct, toTensor=toTensor)
 
