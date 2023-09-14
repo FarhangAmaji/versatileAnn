@@ -59,16 +59,16 @@ class TsRowFetcher:
         return tensor
 
     def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True):#kkk may add query taking ability to df part
-        assert mode in self.pointTypes.keys(), "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
+        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast' or 'fullcast'"#kkk if query is added, these modes have to be more flexible
 
-        def getCastByMode(typeFunc, data, idx, mode=self.pointTypes.backcast, colsOrIndexes='___all___'):
-            if mode==self.pointTypes.backcast:
+        def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
+            if mode==self.modes.backcast:
                 return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes)
-            elif mode==self.pointTypes.forecast:
+            elif mode==self.modes.forecast:
                 return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes)
-            elif mode==self.pointTypes.fullcast:
+            elif mode==self.modes.fullcast:
                 return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
-            elif mode==self.pointTypes.singlePoint:
+            elif mode==self.modes.singlePoint:
                 return typeFunc(data, idx, 0, 0, colsOrIndexes)
 
         if isinstance(data, NpDict):
@@ -103,7 +103,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             self.data=NpDict(self.data)
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.pointTypes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
+        self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
 
     def __len__(self):
         if self.indexes is None:
