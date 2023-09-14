@@ -3,8 +3,8 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-from dataPrep.datasetNDataloader import BatchStructTemplate, appendValueToNestedDictPath
-from dataPrep.datasetNDataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
+from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath
+from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
 import torch
 import pandas as pd
 import numpy as np
