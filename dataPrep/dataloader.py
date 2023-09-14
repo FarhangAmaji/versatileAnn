@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet, floatDtypeChange
 from torch.utils.data.dataloader import default_collate
+import copy
 #%% batch structure detection
 def isTensorable(obj):
     try:
@@ -124,7 +125,7 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
                 returnDict[key] = self.ObjsFunc(value)
         return returnDict
 
-    def fillBatchStructWithData(self, itemToAdd, path=[]):
+    def fillWithData(self, itemToAdd, path=[]):
         if not isinstance(self.dictStruct, dict) and path==[]:#this is for the case we have made BatchStructTemplate of non dictionary object
             self.dictStruct.values.append(itemToAdd)
             return
@@ -134,9 +135,23 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
         for key, value in itemToAdd.items():
             path2=path+[key]
             if isinstance(value, dict):
-                self.fillBatchStructWithData(value, path2)
+                self.fillWithData(value, path2)
             else:
                 appendValueToNestedDictPath(self, path2, value)
+
+    def assertIsBatchStructTemplateOrListOfBatchStructTemplates(obj):
+        assert isinstance(obj, BatchStructTemplate) or \
+        (isinstance(obj, list) and all([isinstance(it, BatchStructTemplate) for it in obj])),\
+            'this is not, list of BatchStructTemplates or BatchStructTemplate type'
+
+    def fillSingleOrMultipleWithData(batchStructTemplates, itemsToAdd):
+        BatchStructTemplate.assertIsBatchStructTemplateOrListOfBatchStructTemplates(batchStructTemplates)
+        if isinstance(batchStructTemplates, list):
+            assert len(batchStructTemplates)==len(itemsToAdd),'batchStructTemplates and itemsToAdd dont have the same length'
+            for i, batchStructTemplate in enumerate(batchStructTemplates):
+                batchStructTemplate.fillWithData(itemsToAdd[i])
+        else:
+            batchStructTemplates.fillWithData(itemsToAdd)
 
     def getBatchStructDictionaryValues(self, dictionary, toTensor=False):
         returnDict={}
@@ -163,12 +178,26 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
 
     def getBatchStructTensors(self):
         return self.getBatchStructValues(toTensor=True)
+    
+    def getSingleOrMultipleBatchStructValues(batchStructTemplates, toTensor=False):
+        BatchStructTemplate.assertIsBatchStructTemplateOrListOfBatchStructTemplates(batchStructTemplates)
+        if isinstance(batchStructTemplates, list):
+            res=[]
+            for batchStructTemplate in batchStructTemplates:
+                res.append(batchStructTemplate.getBatchStructValues(toTensor))
+        else:
+            res=batchStructTemplates.getBatchStructValues(toTensor)
+        return res
+
+    def getSingleOrMultipleBatchStructTensors(batchStructTemplates):
+        return BatchStructTemplate.getSingleOrMultipleBatchStructValues(batchStructTemplates, toTensor=True)
 
     def __repr__(self):
         return str(self.dictStruct)
 #%% VAnnTsDataloader
 class VAnnTsDataloader(DataLoader):
     #kkk needs tests
+    #kkk num_workers>0 problem
     #kkk seed everything
     #kkk can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
     def __init__(self, dataset, batch_size=64, collate_fn=None, doBatchStructureCheckOnAllData=False, *args, **kwargs):
@@ -207,6 +236,6 @@ class VAnnTsDataloader(DataLoader):
         defaultCollateRes=default_collate(batch)
         if not hasattr(self, 'batchStruct'):
             self.findBatchStruct(defaultCollateRes)
-        batchStructCopy=self.batchStruct.copy()
-        batchStructCopy.fillBatchStructWithData(defaultCollateRes)
-        return batchStructCopy.getBatchStructTensors()
+        batchStructCopy=copy.deepcopy(self.batchStruct)
+        BatchStructTemplate.fillSingleOrMultipleWithData(batchStructCopy, defaultCollateRes)
+        return BatchStructTemplate.getSingleOrMultipleBatchStructTensors(batchStructCopy)
