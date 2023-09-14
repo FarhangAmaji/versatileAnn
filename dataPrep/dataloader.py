@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import DataLoader
-from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet
+from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet, floatDtypeChange
 from torch.utils.data.dataloader import default_collate
 #%% batch structure detection
 def isTensorable(obj):
@@ -84,8 +84,7 @@ class TensorStacker:
 
     def stackTensors(self, list_):
         stackTensor=torch.stack(list_).to(self.device)
-        if stackTensor.dtype == torch.float16 or stackTensor.dtype == torch.float64:
-            stackTensor = stackTensor.to(torch.float32)#kkk make it compatible to global precision
+        stackTensor = floatDtypeChange(stackTensor)
         return stackTensor
 
     def stackListOfErrorPronesToTensor(self, listOfErrorPrones):

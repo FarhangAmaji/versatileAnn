@@ -1,9 +1,22 @@
+import torch
 import pandas as pd
 import numpy as np
-#%%
+#%% DotDict NpDict
 class DotDict:
     def __init__(self, data):
         self.data = data
+
+    def keys(self):
+        return self.data.keys()
+
+    def values(self):
+        return self.data.values()
+
+    def items(self):
+        return self.data.items()
+
+    def __len__(self):
+        return len(self.keys())
 
     def __getattr__(self, key):
         if key in self.data:
@@ -17,12 +30,20 @@ class DotDict:
         else:
             raise KeyError(key)
 
+    def __iter__(self):
+        return iter(self.data.items())
+
 class NpDict(DotDict):
     """
     converts cols of df to a dict of np arrays or help reassign
     also helps reassigning the dtypes of df subsets
     """
+    #kkk make sure other functionalities of pd df, except the things defined below are kept
+    #kkk maybe also works with pd series(probably not needed)
+    #kkk add setItem
     def __init__(self, df):
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError('only pandas DataFrames are accepted')
         super().__init__({col: df[col].values for col in df.columns})
         self.__index__ = df.index
 
@@ -39,13 +60,17 @@ class NpDict(DotDict):
     def toDf(self, resetDtype=False):
         return pd.DataFrame(self.getDfDict(resetDtype),index=self.__index__,columns=self.getDfCols())
 
+    @property
+    def df(self):
+        return self.toDf()
+
     def __getitem__(self, key):
         if key in self.getDfCols():
             return self.data[key]
         elif isinstance(key, list):
             # If a list of keys is provided, return a dictionary with selected columns
             return np.column_stack([self[col] for col in key])
-        elif isinstance(key, slice):
+        elif isinstance(key, slice):#kkk add number slices
             if key == slice(None, None, None):
                 # If the slice is [:], return the stacked data of all columns
                 return np.column_stack([self[col] for col in self.getDfCols()])
@@ -54,15 +79,17 @@ class NpDict(DotDict):
                 raise ValueError("Only [:] is allowed for slicing.")
         else:
             raise KeyError(key)
-#%% lists
-def checkAllItemsInList1ExistInList2(list1, list2):
-    setList2 = set(list2)
-    for item in list1:
-        if item not in setList2:
-            return False
-    return True
+
+    def __repr__(self):
+        return str(self.toDf())
+#%% tensor
+def floatDtypeChange(tensor):
+    if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
+        tensor = tensor.to(torch.float32)#kkk make it compatible to global precision
+    return tensor
 #%% dfs
 def equalDfs(df1, df2, floatPrecision=0.0001):
+    #kkk needs tests
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
         return False
@@ -84,3 +111,20 @@ def equalDfs(df1, df2, floatPrecision=0.0001):
 
     # If all numeric columns are close, return True
     return True
+#%% lists
+def checkAllItemsInList1ExistInList2(list1, list2):
+    setList2 = set(list2)
+    for item in list1:
+        if item not in setList2:
+            return False
+    return True
+
+def isListTupleOrSet(obj):
+    return isinstance(obj, (list, tuple, set))
+
+def isIterable(obj):
+    try:
+        iter(obj)
+        return True
+    except TypeError:
+        return False
