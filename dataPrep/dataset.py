@@ -11,22 +11,6 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
 #%% VAnnTsDataset
 class TsRowFetcher:
-    def noNanOrNoneData(self):
-        if isinstance(self.data, (pd.DataFrame, pd.Series)):
-            noNanOrNoneData(self.data.loc[self.indexes])
-        elif isinstance(self.data, np.ndarray):
-            noNanOrNoneData(self.data[:,self.indexes])
-        elif isinstance(self.data, NpDict):
-            noNanOrNoneData(self.data[:][self.indexes])
-        elif isinstance(self.data, torch.Tensor):
-            noNanOrNoneData(self.data[:,self.indexes])
-
-    def shapeWarning(self):
-        if isinstance(self.data, (torch.Tensor, np.ndarray)):
-            shape = self.data.shape
-            if shape[0] < shape[1]:
-                warnings.warn("The data shape suggests that different features may be along shape[1]. "
-                              "Consider transposing the data to have features along shape[0].")
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
@@ -104,6 +88,23 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
+
+    def noNanOrNoneData(self):
+        if isinstance(self.data, (pd.DataFrame, pd.Series)):
+            noNanOrNoneData(self.data.loc[self.indexes])
+        elif isinstance(self.data, np.ndarray):
+            noNanOrNoneData(self.data[:,self.indexes])
+        elif isinstance(self.data, NpDict):
+            noNanOrNoneData(self.data[:][self.indexes])
+        elif isinstance(self.data, torch.Tensor):
+            noNanOrNoneData(self.data[:,self.indexes])
+    
+    def shapeWarning(self):
+        if isinstance(self.data, (torch.Tensor, np.ndarray)):
+            shape = self.data.shape
+            if shape[0] < shape[1]:
+                warnings.warn("The data shape suggests that different features may be along shape[1]. "
+                              "Consider transposing the data to have features along shape[0].")
 
     def __len__(self):
         if self.indexes is None:
