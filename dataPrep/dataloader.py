@@ -67,12 +67,12 @@ class BatchStructTemplate_Non_BatchStructTemplate_Objects:
         return '{'+f'values:{self.values}, type:{self.type}, toTensorFunc:{self.toTensorFunc}'+'}'
 
 def updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=False):
-    assert isinstance(inputDictStyle, (dict, NpDict, BatchStructTemplate)), 'inputDictStyle must be in one of dict, NpDict, BatchStructTemplate types'
+    assert isinstance(inputDictStyle, (dict, DotDict, BatchStructTemplate)), 'inputDictStyle must be in one of dict, DotDict, BatchStructTemplate types'
     current = inputDictStyle
     if isinstance(current, BatchStructTemplate):
         current = current.dictStruct
     for i, key in enumerate(path[:-1]):
-        assert isinstance(current, (dict, NpDict)), f'{path[:i+1]} is not a dict or NpDict'
+        assert isinstance(current, (dict, DotDict)), f'{path[:i+1]} is not a dict or DotDict'
         assert key in current.keys(), f'{key} is not in {path[:i]}'
         current = current[key]
     last_key = path[-1]

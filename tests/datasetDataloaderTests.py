@@ -60,7 +60,7 @@ class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
         self.setUp()
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a4','b2','xs'], 4)
-        self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dict or NpDict")
+        self.assertEqual(str(context.exception), "['a', 'a4', 'b2'] is not a dict or DotDict")
 
     def testKeyNotInDict(self):
         self.setUp()
@@ -167,6 +167,6 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
         assert str(dictToFill.getBatchStructTensors())==str(self.dictToFillTensorRes)
-#%%
+#%% run test
 if __name__ == '__main__':
     unittest.main()
