@@ -1,6 +1,3 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import Dataset
 from utils.vAnnGeneralUtils import NpDict, DotDict, floatDtypeChange
@@ -12,8 +9,10 @@ from utils.globalVars import tsStartPointColName
 #%% VAnnTsDataset
 class TsRowFetcher:
     #kkk needs tests
-    def __init__(self):
+    def __init__(self, backcastLen, forecastLen):
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
+        self.backcastLen = backcastLen
+        self.forecastLen = forecastLen
 
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)==2 and data.shape[1]==1:
@@ -49,6 +48,8 @@ class TsRowFetcher:
         return self.singleFeatureShapeCorrection(res)
 
     def makeTensor(self,input_):
+        if isinstance(input_, pd.DataFrame):
+            input_=input_.values
         tensor = torch.tensor(input_)
         tensor = floatDtypeChange(tensor)
         return tensor
@@ -76,7 +77,7 @@ class TsRowFetcher:
         elif isinstance(data, torch.Tensor):
             res = getCastByMode(self.getTensorRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
         else:
-            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np ndarray or NpDict'
+            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
 
         if makeTensor:
             res = self.makeTensor(res)
@@ -84,13 +85,14 @@ class TsRowFetcher:
 
 class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk needs tests
+    #kkk model should check device, backcastLen, forecastLen with this
     def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
-        super().__init__()
-        self.data = data#kkk make sure its compatible with lists and np arrays
-        self.backcastLen = backcastLen
-        self.forecastLen = forecastLen
+        super().__init__(backcastLen, forecastLen)
+        self.data = data
         if indexes is None:
-            assert not ((backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName not in data.columns)),"u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df with __startPoint__ columns"
+            assert not ((backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName not in data.columns)\
+                or (isinstance(data, NpDict) and tsStartPointColName not in data.cols())),\
+                "u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
             if tsStartPointColName in data.columns:
                 indexes=data[data[tsStartPointColName]==True].index
         self.indexes = indexes

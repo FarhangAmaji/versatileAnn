@@ -6,7 +6,7 @@ from utils.vAnnGeneralUtils import equalDfs
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
-#%% 
+#%% SplitTests
 class SplitTests(BaseTestClass):
     def setUp(self):
         np.random.seed(seed=30)
