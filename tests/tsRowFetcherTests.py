@@ -259,6 +259,93 @@ class TestTsRowFetcherNpDictTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
         self.assertTrue(torch.equal(result, torch.tensor([[4, 19]], dtype=torch.float32)))
+#%% TestTsRowFetcherTorchTensorTests
+class TestTsRowFetcherTorchTensorTests(BaseTestClass):
+    def setUp(self):
+        self.fetcher = TsRowFetcher(backcastLen=3, forecastLen=2)
+        self.df = pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],
+                                'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                                'y3': [32, 33, 34, 35, 36, 37, 38, 39]},
+                               index=[130, 131, 132, 133, 134, 135, 136, 137])
+        self.tensor = torch.tensor([[1, 16, 32], [2, 17, 33], [3, 18, 34], [4, 19, 35], [5, 20, 36], [6, 21, 37], [7, 22, 38], [8, 23, 39]], dtype=torch.float32)
+
+    def test_backcastModeMakeTensorTrueColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 0, mode='backcast', colsOrIndexes=[0, 1], makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (3, 2))
+        self.assertTrue(torch.equal(result, torch.tensor([[1, 16], [2, 17], [3, 18]], dtype=torch.float32)))
+
+    def test_backcastModeMakeTensorTrueColIndexesAll(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 1, mode='backcast', colsOrIndexes='___all___', makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (3, 3))
+        self.assertTrue(torch.equal(result, torch.tensor([[2, 17, 33], [3, 18, 34], [4, 19, 35]], dtype=torch.float32)))
+
+    def test_backcastModeMakeTensorFalseColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 1, mode='backcast', colsOrIndexes=[0, 1], makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (3, 2))
+        expected_result = np.array([[2, 17], [3, 18], [4, 19]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_forecastModeMakeTensorFalseColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 2, mode='forecast', colsOrIndexes=[0, 1], makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (2, 2))
+        expected_result = np.array([[6, 21], [7, 22]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_forecastModeMakeTensorFalseColIndexesAll(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 3, mode='forecast', colsOrIndexes='___all___', makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (2, 3))
+        expected_result = np.array([[7, 22, 38], [8, 23, 39]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_forecastModeMakeTensorTrueColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 3, mode='forecast', colsOrIndexes=[0, 1], makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (2, 2))
+        self.assertTrue(torch.equal(result, torch.tensor([[7, 22], [8, 23]], dtype=torch.float32)))
+
+    def test_fullcastModeMakeTensorTrueColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 0, mode='fullcast', colsOrIndexes=[0, 1], makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (5, 2))
+        self.assertTrue(torch.equal(result, torch.tensor([[1, 16], [2, 17], [3, 18], [4, 19], [5, 20]], dtype=torch.float32)))
+
+    def test_fullcastModeMakeTensorTrueColIndexesAll(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 1, mode='fullcast', colsOrIndexes='___all___', makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (5, 3))
+        self.assertTrue(torch.equal(result, torch.tensor([[2, 17, 33], [3, 18, 34], [4, 19, 35], [5, 20, 36], [6, 21, 37]], dtype=torch.float32)))
+
+    def test_fullcastModeMakeTensorFalseColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 1, mode='fullcast', colsOrIndexes=[0, 1], makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (5, 2))
+        expected_result = np.array([[2, 17], [3, 18], [4, 19], [5, 20], [6, 21]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_singlePointModeMakeTensorFalseColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 2, mode='singlePoint', colsOrIndexes=[0, 1], makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (1, 2))
+        expected_result = np.array([[3, 18]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_singlePointModeMakeTensorFalseColIndexesAll(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 3, mode='singlePoint', colsOrIndexes='___all___', makeTensor=False)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (1, 3))
+        expected_result = np.array([[4, 19, 35]])
+        np.testing.assert_array_equal(expected_result, result)
+
+    def test_singlePointModeMakeTensorTrueColIndexesList(self):
+        result = self.fetcher.getBackForeCastData(self.tensor, 3, mode='singlePoint', colsOrIndexes=[0, 1], makeTensor=True)
+        self.assertTrue(isinstance(result, torch.Tensor))
+        self.assertEqual(result.shape, (1, 2))
+        self.assertTrue(torch.equal(result, torch.tensor([[4, 19]], dtype=torch.float32)))
 #%% run test
 if __name__ == '__main__':
     unittest.main()
