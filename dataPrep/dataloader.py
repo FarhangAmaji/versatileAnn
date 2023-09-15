@@ -29,12 +29,16 @@ knownTypesToBeTensored=DotDict({
     'errorPrones':
         DotDict({'list':"<class 'list'>"}),# depending on items ok and not
 
+    'NpDict':#indirectTensorables
+        DotDict({'NpDict':"<class 'utils.vAnnGeneralUtils.NpDict'>"}),# cant directly be changed to tensor
+
     'df':#indirectTensorables
         DotDict({'df':"<class 'pandas.core.frame.DataFrame'>"}),# cant directly be changed to tensor
 
     'notTensorables':DotDict({#these below can't be changed to tensor
         'set':"<class 'set'>", 'dict':"<class 'dict'>",'str':"<class 'str'>",
-        'none':"<class 'NoneType'>", 'bytes':"<class 'bytes'>"})
+        'none':"<class 'NoneType'>", 'bytes':"<class 'bytes'>",
+        'DotDict':"<class 'utils.vAnnGeneralUtils.DotDict'>"})
     })
 
 class BatchStructTemplate_Non_BatchStructTemplate_Objects:
@@ -49,6 +53,8 @@ class BatchStructTemplate_Non_BatchStructTemplate_Objects:
             self.toTensorFunc='stackListOfDirectTensorablesToTensor'
         elif self.type in knownTypesToBeTensored.df.values():
             self.toTensorFunc='stackListOfDfsToTensor'
+        elif self.type in knownTypesToBeTensored.NpDict.values():
+            self.toTensorFunc='stackListOfNpDictsToTensor'
         elif self.type in knownTypesToBeTensored.notTensorables.values():
             self.toTensorFunc='notTensorables'
         else:#includes knownTypesToBeTensored.errorPrones
@@ -115,6 +121,10 @@ class TensorStacker:
     def stackListOfDfsToTensor(self, listOfDfs):
         listOfNpArrays=[df.values for df in listOfDfs]
         return self.stackListOfDirectTensorablesToTensor(listOfNpArrays)
+    
+    def stackListOfNpDictsToTensor(self, listOfNpDicts):
+        listOfDfs=[npDict.df for npDict in listOfNpDicts]
+        return self.stackListOfDirectTensorablesToTensor(listOfDfs)
 
     def notTensorables(self, listOfNotTensorables):
         return listOfNotTensorables
