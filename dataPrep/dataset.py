@@ -17,7 +17,7 @@ class TsRowFetcher:
 
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)==2 and data.shape[1]==1:
-            return data.squeeze(-1)
+            return data.squeeze(1)
         return data
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
@@ -114,7 +114,6 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape
-            assert len(shape)<=2,'only upto 2d tensors and np arrays can be passed'
             if shape[0] < shape[1]:
                 warnings.warn("The data shape suggests that different features may be along shape[1]. "
                               "Consider transposing the data to have features along shape[0].")
