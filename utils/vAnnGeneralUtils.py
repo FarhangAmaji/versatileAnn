@@ -33,6 +33,9 @@ class DotDict:
     def __iter__(self):
         return iter(self.data.items())
 
+    def __repr__(self):
+        return 'DotDict: '+str({key:self.data[key] for key in self.keys()})
+
 class NpDict(DotDict):
     """
     converts cols of df to a dict of np arrays or help reassign

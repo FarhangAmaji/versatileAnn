@@ -1,9 +1,6 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from torch.utils.data import DataLoader
-from utils.vAnnGeneralUtils import NpDict, DotDict, isListTupleOrSet, floatDtypeChange, isIterable
+from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, floatDtypeChange, isIterable
 from torch.utils.data.dataloader import default_collate
 import copy
 #%% batch structure detection
@@ -124,7 +121,7 @@ class TensorStacker:
     
     def stackListOfNpDictsToTensor(self, listOfNpDicts):
         listOfDfs=[npDict.df for npDict in listOfNpDicts]
-        return self.stackListOfDirectTensorablesToTensor(listOfDfs)
+        return self.stackListOfDfsToTensor(listOfDfs)
 
     def notTensorables(self, listOfNotTensorables):
         return listOfNotTensorables
@@ -160,7 +157,7 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
             if isinstance(value, dict):
                 self.fillWithData(value, path2)
             else:
-                appendValueToNestedDictPath(self, path2, value)
+                appendValueToNestedDictPath(self, path2, value)#kkk this is making problems for shape or for set,...
 
     def assertIsBatchStructTemplateOrListOfBatchStructTemplates(obj):
         assert isinstance(obj, BatchStructTemplate) or \
@@ -179,8 +176,8 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
     def squeezeshape0of1(self, tensor):
         if not isinstance(tensor, torch.Tensor):
             return tensor
-        while tensor.shape[0]==1:
-            tensor = tensor.squeeze(0)
+        while len(tensor.shape)>1 and tensor.shape[0]==1:
+                tensor = tensor.squeeze(0)
         return tensor
 
     def getBatchStructDictionaryValues(self, dictionary, toTensor=False):

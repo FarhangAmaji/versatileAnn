@@ -5,6 +5,7 @@ import unittest
 #%%
 from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath
 from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
+from utils.vAnnGeneralUtils import DotDict, NpDict
 import torch
 import pandas as pd
 import numpy as np
@@ -119,14 +120,16 @@ class fillBatchStructWithDataTests(BaseTestClass):
         self.item4=[7,9,6]
         self.nonDictionaryRes=[[4,6,8], [7,9,6]]
 
-    def tensorSetUp(self):
-        def toTensorFunc(obj):
-            obj = torch.tensor(obj)
-            if obj.dtype == torch.float16 or obj.dtype == torch.float64:
-                obj = obj.to(torch.float32)
-            return obj.to(self.device)
+    def toTensorFunc(self, obj):
+        obj = torch.tensor(obj)
+        if obj.dtype == torch.float16 or obj.dtype == torch.float64:
+            obj = obj.to(torch.float32)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        return obj.to(device)
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    def tensorSetUp(self):
+        toTensorFunc=self.toTensorFunc
+
         self.dictToFillTensorRes={'a':{'a1':toTensorFunc([[6.1,7.3],[2,2.4]]),
                                  'a2':{'b1':toTensorFunc([4.11, 3.4]),'b2':[{}, {}],'b3':toTensorFunc([53, 4]),'b4':toTensorFunc([False, True])},
                                  'a3':toTensorFunc([np.array([[9.2,14.3],[6.1,1.1]]), np.array([[3.1,4.1],[5.1,6.1]])]),
@@ -134,7 +137,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
                                  'a5':{'m2':toTensorFunc([bytearray(i*9 for i in range(10)), bytearray(i*15 for i in range(10))]),
                                        'm3':[bytes(i*13 for i in range(10)), bytes(i*12 for i in range(10))],
                                        'm4':toTensorFunc([(4,1.3,7.8), (4,3.2,6.7)]),
-                                       'm5':torch.stack([torch.tensor(np.array([[77.6,8.5],[7.2,7.3]])), torch.tensor(np.array([[3.1,4.1],[5.1,6.1]]))]).to(torch.float32).to(self.device),
+                                       'm5':toTensorFunc(torch.stack([torch.tensor(np.array([[77.6,8.5],[7.2,7.3]])), torch.tensor(np.array([[3.1,4.1],[5.1,6.1]]))])),
                                        'm6':[set([13,24]), set([12,43])],
                                        'm7':['fvb r', 'dsdnk'],
                                        'm8':[None, None],
@@ -143,6 +146,50 @@ class fillBatchStructWithDataTests(BaseTestClass):
                                      toTensorFunc(pd.DataFrame({'y1': [1, 2, 3], 'y2': [4, 5, 6]}).values)]),
                                'series':torch.stack([toTensorFunc(pd.Series(np.array([6.5,7.2]))), toTensorFunc(pd.Series(np.array([3.1,4.1])))])},
                      }}
+
+    def setUpAllTypesCheck(self):
+        toTensorFunc=self.toTensorFunc
+
+        self.inputs = {
+            'df':pd.DataFrame({'y1': [i for i in range(10, 20)], 'y2': [i for i in range(20, 30)]}),
+            'npDict':NpDict(pd.DataFrame({'y1': [i for i in range(10, 20)], 'y2': [i for i in range(20, 30)]})),
+            'series':pd.Series(np.array([i for i in range(10, 20)])),
+            'npArray':np.array([i for i in range(10, 20)]),
+            'tensor':torch.tensor(np.array([i for i in range(10, 20)])),
+            'npArray2d':np.array([[i,i+3] for i in range(10, 20)]),
+            'tensor2d':torch.tensor(np.array([[i,i+3] for i in range(10, 20)])),
+            'byteArray':bytearray(i for i in range(10, 20)),
+            'bytes':bytes(i for i in range(10, 20)),
+            'list':[i+.1 for i in range(10, 20)],
+            'list2Elements':[[i+.1, i+3.1] for i in range(10, 20)],
+            'tuple':[i+.1 for i in range(10, 20)],
+            'set':set(i+.1 for i in range(10, 20)),
+            'listStr':['fvb r' for i in range(10, 20)],
+            'listBool':[bool(i%5) for i in range(10, 20)],
+            'listNone':[None for i in range(10, 20)],
+            'dict':{'s':1},
+            'dotDict':DotDict({'s':1}),
+            }
+        self.inputsRes = {
+            'df':toTensorFunc(pd.DataFrame({'y1': [i for i in range(10, 20)], 'y2': [i for i in range(20, 30)]}).values),
+            'npDict':toTensorFunc(NpDict(pd.DataFrame({'y1': [i for i in range(10, 20)], 'y2': [i for i in range(20, 30)]})).df.values),
+            'series':toTensorFunc(pd.Series(np.array([i for i in range(10, 20)]))),
+            'npArray':toTensorFunc(np.array([i for i in range(10, 20)])),
+            'tensor':toTensorFunc(torch.tensor(np.array([i for i in range(10, 20)]))),
+            'npArray2d':toTensorFunc(np.array([[i,i+3] for i in range(10, 20)])),
+            'tensor2d':toTensorFunc(torch.tensor(np.array([[i,i+3] for i in range(10, 20)]))),
+            'byteArray':toTensorFunc(bytearray(i for i in range(10, 20))),
+            'bytes':[bytes(i for i in range(10, 20))],
+            'list':toTensorFunc([i+.1 for i in range(10, 20)]),
+            'list2Elements':toTensorFunc([[i+.1, i+3.1] for i in range(10, 20)]),
+            'tuple':toTensorFunc([i+.1 for i in range(10, 20)]),
+            'set':[{i+.1 for i in range(10, 20)}],#kkk working correct for set because of append to BatchStruct .values
+            'listStr':[['fvb r' for i in range(10, 20)]],#kkk these extra [ ] around is because of appendValueToNestedDictPath
+            'listBool':toTensorFunc([bool(i%5) for i in range(10, 20)]),
+            'listNone':[[None for i in range(10, 20)]],
+            'dict':{'s':toTensorFunc([1])},#[1] is is because of appendValueToNestedDictPath
+            'dotDict':[DotDict({'s':1})],#kkk didnt work for dotDict
+            }
 
     def testWithDictionaryDictStruct(self):
         self.setUp()
@@ -167,6 +214,12 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
         assert str(dictToFill.getBatchStructTensors())==str(self.dictToFillTensorRes)
+
+    def testAllTypesCheck(self):
+        self.setUpAllTypesCheck()
+        dictToFill=BatchStructTemplate(self.inputs)
+        dictToFill.fillWithData(self.inputs)
+        assert str(dictToFill.getBatchStructTensors())==str(self.inputsRes)
 #%% run test
 if __name__ == '__main__':
     unittest.main()
