@@ -4,7 +4,7 @@ this is data preparation steps of hourly electricity price forecasts (EPF) for F
 the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE_static.csv files
 """
 #kkk EPF_FR_BE_futr has 24 nans
-from dataPrep.utils import getDatasetFiles, splitTrainValTestDf, addCorrespondentRow, rightPadDf, splitToNSeries, nontsStartPointsFalse
+from dataPrep.utils import getDatasetFiles, splitTsTrainValTestDfNNpDict, addCorrespondentRow, rightPadDf, splitToNSeries, nontsStartPointsFalse
 from dataPrep.normalizers import NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import VAnnTsDataloader
@@ -22,7 +22,7 @@ def getEpfFrBeProcessed(backcastLen=110, forecastLen=22, rightPadTrain=True, new
                     MultiColStdNormalizer(targets))
     mainDf['mask']=1
     normalizer.fitNTransform(mainDf)
-    trainDf, valDf, testDf=splitTrainValTestDf(mainDf, trainRatio=.7, valRatio=.2, seqLen=backcastLen+forecastLen, shuffle=False)
+    trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(mainDf, trainRatio=.7, valRatio=.2, seqLen=backcastLen+forecastLen, shuffle=False)
     if rightPadTrain:
         trainDf=rightPadDf(trainDf, forecastLen-1)
 

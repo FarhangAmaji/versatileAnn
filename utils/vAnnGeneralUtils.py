@@ -93,6 +93,7 @@ def floatDtypeChange(tensor):
 #%% dfs
 def equalDfs(df1, df2, floatPrecision=0.0001):
     #kkk needs tests
+    #kkk its not index sensetive
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
         return False

@@ -1,8 +1,8 @@
 import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
+from utils.vAnnGeneralUtils import NpDict
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
 knownDatasetsDateTimeCols={"EPF_FR_BE.csv":['dateTime']}
@@ -102,15 +102,18 @@ def nontsStartPointsFalse(df):
     df.loc[nonStartPointCondition, tsStartPointColName]=False
     return df
 
-def splitTrainValTestDf(df, trainRatio, valRatio, seqLen=0,
+def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
     #kkk needs tests
     #kkk do it also for other datatypes
     """
-    note this func expects conditions which indicate the first(older in time|backer in sequence);
-    therefore for seq lens pass the (backcastLen+ forecastLen)
-    note if you are passing multipleSeries data, more likely you should gonna use df query conditions
+    - for seq lens pass (backcastLen+ forecastLen)
+    - note this func expects conditions which indicate the first point(older in time|backer in sequence), beginning of backcast point;
+            this can be done with having '__startPoint__' with True values or other query conditions
+    - note if u want to preserve u starting points use another column than '__startPoint__'(and use query conditions) 
+            because it is gonna be manipulated in this func for each train,val or test set
+    - note if your df has multipleSeries(NSeries) data, more likely you should gonna use df query conditions
     """
     trainRatio, valRatio, testRatio=ratiosCheck(trainRatio, valRatio)
     if trainSeqLen==None:
@@ -120,8 +123,13 @@ def splitTrainValTestDf(df, trainRatio, valRatio, seqLen=0,
     if testSeqLen==None:
         testSeqLen = seqLen
 
-    isCondtionsApplied=False
+    npDictMode=False
+    if isinstance(df, NpDict):
+        df = df.df
+        npDictMode=True
     filteredDf = df.copy()
+
+    isCondtionsApplied=False
     doQueryNTurnIsCondtionsApplied= lambda df,con,ica:(df.query(con),True)
     for condition in conditions:
         if condition==splitDefaultCondition:
@@ -153,11 +161,17 @@ def splitTrainValTestDf(df, trainRatio, valRatio, seqLen=0,
         set_[tsStartPointColName]=True
         idx2=addSequentAndAntecedentIndexes(idx, seqLenWithSequents=sl)
         sequenceTailIndexes=[item for item in idx2 if item not in idx]
-        sequenceTailData=filteredDf.loc[sequenceTailIndexes]
+        try:
+            sequenceTailData=df.loc[sequenceTailIndexes]
+        except:
+            print("sequence tails(points which can't be the start point because of time series data)"\
+                  +" should have '__startPoint__', False or indicated with other query conditions")
         sequenceTailData[tsStartPointColName]=False
-        set_=pd.concat([set_,sequenceTailData]).reset_index(drop=True)
+        set_=pd.concat([set_,sequenceTailData]).sort_index().reset_index(drop=True)
         sets+=[set_]
     trainDf, valDf, testDf=sets
+    if npDictMode:
+        trainDf, valDf, testDf=NpDict(trainDf), NpDict(valDf), NpDict(testDf)
     return trainDf, valDf, testDf
 #%% padding
 def rightPadSeriesBatch(series, maxLen, pad=0):
