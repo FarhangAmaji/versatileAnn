@@ -75,6 +75,26 @@ class VAnnTsDatasetNoIndexesAssertionTests(BaseTestClass):
         indexes = [0, 2]  # Include only rows at index 0 and 2
         dataset = VAnnTsDataset(npArray, backcastLen=1, forecastLen=1, startPointsIndexes=indexes)
         self.assertEqual(len(dataset), 2)  # Only specified indexes should be included
+
+class VAnnTsDatasetNoNanOrNoneDataAssertionTests(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, np.nan, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
+
+    def testDfWithStartPoint(self):
+        with self.assertRaises(ValueError) as context:
+            VAnnTsDataset(self.df, backcastLen=1, forecastLen=1, useNpDictForDfs=False)
+        self.assertEqual(str(context.exception), "The DataFrame contains NaN values.")
+
+    def testNpDictWithStartPoint(self):
+        with self.assertRaises(ValueError) as context:
+            VAnnTsDataset(NpDict(self.df), backcastLen=1, forecastLen=1)
+        self.assertEqual(str(context.exception), "The NpDict array contains NaN values.")
+
+    def testNpArrayWithStartPoint(self):
+        npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, np.nan]])
+        with self.assertRaises(ValueError) as context:
+            VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
+        self.assertEqual(str(context.exception), "The NumPy array contains NaN values.")
 #%% batch data tests
 class batchStructTemplateTests(BaseTestClass):
     def setUp(self):
