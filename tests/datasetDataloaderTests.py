@@ -95,6 +95,54 @@ class VAnnTsDatasetNoNanOrNoneDataAssertionTests(BaseTestClass):
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
         self.assertEqual(str(context.exception), "The NumPy array contains NaN values.")
+
+class VAnnTsDatasetGetItemTests(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, 7, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
+        self.npDict = NpDict(self.df)
+        self.npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    def testGetItemDfInStartPoints(self):
+        dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
+        idx = 9  # Index is in startPointsIndexes
+        expected = self.df.loc[idx]
+        result = dataset[idx]
+        self.assertTrue(result.equals(expected))
+
+    def testGetItemDfNotInStartPoints(self):
+        dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
+        idx = 8  # Index is not in startPointsIndexes
+        with self.assertRaises(AssertionError) as context:
+            dataset[idx]
+        self.assertEqual(str(context.exception), f"{idx} is not startPointsIndexes")
+
+    def testGetItemNpDictInStartPoints(self):
+        dataset = VAnnTsDataset(self.npDict, backcastLen=0, forecastLen=0)
+        idx = 2  # Index is in startPointsIndexes
+        expected = np.array([3, 7, 1])
+        result = dataset[idx]
+        np.testing.assert_array_equal(result, expected)
+
+    def testGetItemNpDictNotInStartPoints(self):
+        dataset = VAnnTsDataset(self.npDict, backcastLen=0, forecastLen=0)
+        idx = 0  # Index is not in startPointsIndexes
+        with self.assertRaises(AssertionError) as context:
+            dataset[idx]
+        self.assertEqual(str(context.exception), f"{idx} is not startPointsIndexes")
+
+    def testGetItemNpArrayInStartPoints(self):
+        dataset = VAnnTsDataset(self.npArray, backcastLen=0, forecastLen=0)
+        idx = 1
+        expected = np.array([4, 5, 6])
+        result = dataset[idx]
+        np.testing.assert_array_equal(result, expected)
+
+    def testGetItemNpArrayNotInStartPoints(self):
+        dataset = VAnnTsDataset(self.npArray, backcastLen=0, forecastLen=0, startPointsIndexes=[0,2])
+        idx = 1
+        with self.assertRaises(AssertionError) as context:
+            dataset[idx]
+        self.assertEqual(str(context.exception), f"{idx} is not startPointsIndexes")
 #%% batch data tests
 class batchStructTemplateTests(BaseTestClass):
     def setUp(self):
