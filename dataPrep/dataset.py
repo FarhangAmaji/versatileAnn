@@ -6,25 +6,29 @@ import pandas as pd
 import numpy as np
 from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
-#%% VAnnTsDataset
+#%% TsRowFetcher
 class TsRowFetcher:
-    #kkk needs tests
     def __init__(self, backcastLen, forecastLen):
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
+        self.startPointsIndexes=None
+
+    def assertIdxInStartPointsIndexes(self, idx):
+        if not self.startPointsIndexes is None:
+            assert idx in self.startPointsIndexes,f'{idx} is not startPointsIndexes'
 
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)==2 and data.shape[1]==1:
             return data.squeeze(1)
         return data
 
-    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk move these to class getTsRows
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk does this idx match with getItem of dataset
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         if cols=='___all___':
-            return df[idx + lowerBoundGap:idx + upperBoundGap]
+            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
         else:
-            return df[cols][idx + lowerBoundGap:idx + upperBoundGap]
+            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1,cols]
 
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
@@ -32,7 +36,7 @@ class TsRowFetcher:
         else:
             res = tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
         return self.singleFeatureShapeCorrection(res)
-        
+
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes):
         if colIndexes=='___all___':
             res =  npDict[:][idx + lowerBoundGap:idx + upperBoundGap]
@@ -54,9 +58,11 @@ class TsRowFetcher:
         tensor = floatDtypeChange(tensor)
         return tensor
 
-    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True):#kkk may add query taking ability to df part
+    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True, canBeOutStartIndex=False):#kkk may add query taking ability to df part
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
+        if canBeOutStartIndex:
+            self.assertIdxInStartPointsIndexes(idx)
 
         def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
             if mode==self.modes.backcast:
@@ -82,36 +88,37 @@ class TsRowFetcher:
         if makeTensor:
             res = self.makeTensor(res)
         return res
-
+#%% VAnnTsDataset
 class VAnnTsDataset(Dataset, TsRowFetcher):
+    noStartPointsIndexesAssertionMsg="u have to pass startPointsIndexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
     #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
-    def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
-        super().__init__(backcastLen, forecastLen)
-        self.data = data
-        if indexes is None:
-            assert not ((backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName not in data.columns)\
-                or (isinstance(data, NpDict) and tsStartPointColName not in data.cols())),\
-                "u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
-            if tsStartPointColName in data.columns:
-                indexes=data[data[tsStartPointColName]==True].index
-        self.indexes = indexes
+    def __init__(self, data, backcastLen, forecastLen, startPointsIndexes=None, useNpDictForDfs=True, **kwargs):
+        super().__init__(backcastLen=backcastLen, forecastLen=forecastLen)
+        if useNpDictForDfs and isinstance(data,pd.DataFrame):
+            self.data=NpDict(data)
+        else:
+            self.data = data
+        if startPointsIndexes is None:
+            assert (backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns)\
+                or (isinstance(data, NpDict) and tsStartPointColName  in data.cols()),\
+                VAnnTsDataset.noStartPointsIndexesAssertionMsg
+            if isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns:
+                startPointsIndexes=data[data[tsStartPointColName]==True].index
+                "#ccc note indexes has kept their values"
+            if isinstance(data, NpDict) and tsStartPointColName  in data.cols():
+                startPointsIndexes=data.__index__[data['__startPoint__']==True]
+                startPointsIndexes=[list(data.__index__).index(i) for i in startPointsIndexes]
+                "#ccc note indexes for NpDict are according to their order"
+        self.startPointsIndexes = startPointsIndexes
+        assert len(self)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
         self.shapeWarning()
-        self.noNanOrNoneData()
-        if useNpDictForDfs:
-            self.data=NpDict(self.data)
+        self.noNanOrNoneDataAssertion()
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def noNanOrNoneData(self):
-        if isinstance(self.data, (pd.DataFrame, pd.Series)):
-            noNanOrNoneData(self.data.loc[self.indexes])
-        elif isinstance(self.data, np.ndarray):
-            noNanOrNoneData(self.data[:,self.indexes])
-        elif isinstance(self.data, NpDict):
-            noNanOrNoneData(self.data[:][self.indexes])
-        elif isinstance(self.data, torch.Tensor):
-            noNanOrNoneData(self.data[:,self.indexes])
+    def noNanOrNoneDataAssertion(self):
+        noNanOrNoneData(self.data)
     
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
@@ -119,12 +126,17 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             if shape[0] < shape[1]:
                 warnings.warn("The data shape suggests that different features may be along shape[1]. "
                               "Consider transposing the data to have features along shape[0].")
-    def __len__(self):
-        if self.indexes is None:
-            return len(self.data)
-        return len(self.indexes)
 
-    def __getitem__(self, idx):#kkk give warning if the idx is not in tsStartpoints#kkk other thing is that we should be able to turn the warnings off by type for i.e. we can turn off this type of warning
-        if self.indexes is None:
+    def __len__(self):
+        if self.startPointsIndexes is None:
+            return len(self.data)
+        return len(self.startPointsIndexes)
+
+    def __getitem__(self, idx):
+        self.assertIdxInStartPointsIndexes(idx)
+        if isinstance(self.data, (pd.DataFrame, pd.Series)):
             return self.data.loc[idx]
-        return self.data[self.indexes[idx]]
+        elif isinstance(self.data, NpDict):
+            return self.data[:][idx]
+        elif isinstance(self.data, (np.ndarray, torch.Tensor)):
+            return self.data[idx]

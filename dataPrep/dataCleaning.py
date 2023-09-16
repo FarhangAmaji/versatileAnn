@@ -13,9 +13,9 @@ def noNanOrNoneData(data):
             raise ValueError("The NumPy array contains NaN values.")
 
     elif isinstance(data, NpDict):
-        data=NpDict[:]
+        data=data[:]
         if np.isnan(data).any():
-            raise ValueError("The NumPy array contains NaN values.")
+            raise ValueError("The NpDict array contains NaN values.")
 
     elif isinstance(data, torch.Tensor):
         if torch.isnan(data).any().item():

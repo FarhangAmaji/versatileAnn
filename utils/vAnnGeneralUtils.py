@@ -50,25 +50,25 @@ class NpDict(DotDict):
         super().__init__({col: df[col].values for col in df.columns})
         self.__index__ = df.index
 
-    def getDfCols(self):
+    def cols(self):
         keys=list(self.data.keys())
         return keys
 
-    def getDfDict(self, resetDtype=False):
-        keys=self.getDfCols()
+    def getDict(self, resetDtype=False):
+        keys=self.cols()
         if resetDtype:
             return {col: self[col].tolist() for col in keys}
         return {col: self[col] for col in keys}
 
     def toDf(self, resetDtype=False):
-        return pd.DataFrame(self.getDfDict(resetDtype),index=self.__index__,columns=self.getDfCols())
+        return pd.DataFrame(self.getDict(resetDtype),index=self.__index__,columns=self.cols())
 
     @property
     def df(self):
         return self.toDf()
 
     def __getitem__(self, key):
-        if key in self.getDfCols():
+        if key in self.cols():
             return self.data[key]
         elif isinstance(key, list):
             # If a list of keys is provided, return a dictionary with selected columns
@@ -76,15 +76,20 @@ class NpDict(DotDict):
         elif isinstance(key, slice):#kkk add number slices
             if key == slice(None, None, None):
                 # If the slice is [:], return the stacked data of all columns
-                return np.column_stack([self[col] for col in self.getDfCols()])
+                return np.column_stack([self[col] for col in self.cols()])
             else:
                 # Raise an error for other slice types
                 raise ValueError("Only [:] is allowed for slicing.")
         else:
             raise KeyError(key)
 
+    def __len__(self):
+        return len(self.df)
+
     def __repr__(self):
-        return str(self.toDf())
+        tempDf=self.toDf()
+        tempDf=tempDf.reset_index(drop=True)
+        return str(tempDf)
 #%% tensor
 def floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
@@ -106,8 +111,8 @@ def equalDfs(df1, df2, floatPrecision=0.0001):
                 return False
         else:
             if any([pd.api.types.is_numeric_dtype(df1[col]), pd.api.types.is_numeric_dtype(df2[col])]):
-                npd1=NpDict(df1).getDfDict(True)
-                npd2=NpDict(df2).getDfDict(True)
+                npd1=NpDict(df1).getDict(True)
+                npd2=NpDict(df2).getDict(True)
                 if any([pd.api.types.is_numeric_dtype(npd1[col]), pd.api.types.is_numeric_dtype(npd2[col])]):
                     return False
             # If the column is non-numeric, skip the check
