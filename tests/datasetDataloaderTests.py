@@ -1,7 +1,6 @@
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
-import unittest
 #%%
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath

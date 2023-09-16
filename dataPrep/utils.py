@@ -31,7 +31,7 @@ def addCorrespondentRow(df, correspondentRowsDf, targets, newColName, targetMapp
             condition = df[newColName+'Type'] == target
             df.loc[condition, correspondentRowsDf.columns] = correspondentRowsDf.iloc[target_index].values
 
-def splitToNSeries(df, pastCols, newColName):#kkk make a reverse func
+def splitToNSeries(df, pastCols, newColName):
     assert newColName not in df.columns,'splitToNSeries: newColName must not be in df columns'
     processedData=pd.DataFrame({})
     otherCols= [col for col in df.columns if col not in pastCols]
@@ -107,6 +107,7 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
                       shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
     #kkk needs tests
     #kkk do it also for other datatypes
+    #kkk splitTsTrainValTestDfNNpDict doesnt involve last point(in 'SplitTests.testWithSeqLen' here 109)
     """
     - for seq lens pass (backcastLen+ forecastLen)
     - note this func expects conditions which indicate the first point(older in time|backer in sequence), beginning of backcast point;
