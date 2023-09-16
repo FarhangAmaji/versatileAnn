@@ -155,7 +155,7 @@ class batchStructTemplateTests(BaseTestClass):
 
     def test(self):
         self.setUp()
-        assert str(BatchStructTemplate(self.item1))==str(self.item1Res)
+        self.assertEqual(str(BatchStructTemplate(self.item1)),str(self.item1Res))
         """#ccc seems to be a not secure way
         but because we have only batchStructTemplate and BatchStructTemplate_Non_BatchStructTemplate_Objects types with defined __repr__s
         so seems to be ok"""
@@ -171,13 +171,13 @@ class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
     def test1(self):
         self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
-        assert self.item1=={'a': {'a1': {'b1': [5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
+        self.assertEqual(self.item1,{'a': {'a1': {'b1': [5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}})
         
     def test2(self):
         self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 6)
         self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
-        assert self.item1=={'a': {'a1': {'b1': [6,5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}}
+        self.assertEqual(self.item1,{'a': {'a1': {'b1': [6,5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}})
 
     def testDoesntLeadToAList(self):
         self.setUp()
@@ -330,7 +330,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill=BatchStructTemplate(self.item1)
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
-        assert str(dictToFill.getBatchStructValues())==str(self.dictToFillRes)
+        self.assertEqual(str(dictToFill.getBatchStructValues()), str(self.dictToFillRes))
         """#ccc seems to be a not secure way, but because we have verified types
         which are either default python types or torch, np, pd types so seems to be ok"""
 
@@ -339,7 +339,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill=BatchStructTemplate(self.item3)
         dictToFill.fillWithData(self.item3)
         dictToFill.fillWithData(self.item4)
-        assert dictToFill.getBatchStructValues()==self.nonDictionaryRes
+        self.assertEqual(dictToFill.getBatchStructValues(), self.nonDictionaryRes)
 
     def testGetDictStructTensors(self):
         self.setUp()
@@ -347,13 +347,13 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill=BatchStructTemplate(self.item1)
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
-        assert str(dictToFill.getBatchStructTensors())==str(self.dictToFillTensorRes)
+        self.assertEqual(str(dictToFill.getBatchStructTensors()), str(self.dictToFillTensorRes))
 
     def testAllTypesCheck(self):
         self.setUpAllTypesCheck()
         dictToFill=BatchStructTemplate(self.inputs)
         dictToFill.fillWithData(self.inputs)
-        assert str(dictToFill.getBatchStructTensors())==str(self.inputsRes)
+        self.assertEqual(str(dictToFill.getBatchStructTensors()), str(self.inputsRes))
 #%% run test
 if __name__ == '__main__':
     unittest.main()

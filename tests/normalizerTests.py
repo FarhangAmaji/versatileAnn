@@ -139,7 +139,7 @@ class lblEncoderWithMakeIntLabelsStringTests(BaseTestClass):
 
     def testUltimateInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)#!!! 
+        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 #%% MainGroupBaseNormalizer tests
 class MainGroupBaseNormalizerTests(BaseTestClass):
@@ -178,7 +178,7 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
             if com.defDict not in uniqueCombosAssertComboDefs:
                 testSuccessRes=False
                 
-        assert testSuccessRes
+        self.assertTrue(testSuccessRes)
 
     def testUniqueCombos1(self):
         uniqueCombosAssertComboDefs=[{'A': 'A1', 'B': 'B1'}, {'A': 'A2', 'B': 'B2'}, {'A': 'A3', 'B': 'B2'},
@@ -306,6 +306,6 @@ class otherTests(BaseTestClass):
             df= pd.DataFrame({'col1': [3, 3, 0, 0, 1, 2]})
             lblEnc.fit(df['col1'])
         self.assertEqual(str(context.exception), LblEncoderValueErrorMsg)
-#%%
+#%% run test
 if __name__ == '__main__':
     unittest.main()
