@@ -23,28 +23,39 @@ class TsRowFetcher:
             return data.squeeze(1)
         return data
 
-    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols):#kkk does this idx match with getItem of dataset
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0, canBeOutStartIndex=False):#kkk does this idx match with getItem of dataset
+        if not canBeOutStartIndex:
+            self.assertIdxInIndexes(idx)
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
+        slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap-1 + shiftForward)
         if cols=='___all___':
-            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1]
+            return df.loc[slice_]
         else:
-            return df.loc[idx + lowerBoundGap:idx + upperBoundGap-1,cols]
+            return df.loc[slice_,cols]
 
-    def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes):
+    def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+        if not canBeOutStartIndex:
+            self.assertIdxInIndexes(idx)
+        slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
-            res = tensor[idx + lowerBoundGap:idx + upperBoundGap,:]
+            res = tensor[slice_,:]
         else:
-            res = tensor[idx + lowerBoundGap:idx + upperBoundGap, colIndexes]
+            res = tensor[slice_, colIndexes]
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes):
+    def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+        if not canBeOutStartIndex:
+            self.assertIdxInIndexes(idx)
+        slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
-            res =  npDict[:][idx + lowerBoundGap:idx + upperBoundGap]
+            res =  npDict[:][slice_]
         else:
-            res =  npDict[colIndexes][idx + lowerBoundGap:idx + upperBoundGap]
+            res =  npDict[colIndexes][slice_]
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes):
+    def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+        if not canBeOutStartIndex:
+            self.assertIdxInIndexes(idx)
         if colIndexes=='___all___':
             res =  npArray[idx + lowerBoundGap:idx + upperBoundGap,:]
         else:
@@ -58,10 +69,10 @@ class TsRowFetcher:
         tensor = floatDtypeChange(tensor)
         return tensor
 
-    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', makeTensor=True, canBeOutStartIndex=False):#kkk may add query taking ability to df part
+    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True, canBeOutStartIndex=False):#kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20' 
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
-        if canBeOutStartIndex:
+        if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
 
         def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
@@ -93,6 +104,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     noIndexesAssertionMsg="u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
     #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
+    #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
     def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
         super().__init__(backcastLen=backcastLen, forecastLen=forecastLen)
         if useNpDictForDfs and isinstance(data,pd.DataFrame):
