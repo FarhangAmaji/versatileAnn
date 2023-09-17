@@ -5,22 +5,31 @@ from utils.globalVars import tsStartPointColName
 from utils.vAnnGeneralUtils import NpDict
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
-knownDatasetsDateTimeCols={"EPF_FR_BE.csv":['dateTime']}
+knownDatasetsDateTimeCols={"EPF_FR_BE.csv":{'dateTimeCols':["dateTime"],'sortCols':['dateTime']},
+                           "electricity.csv":{'dateTimeCols':["date"],'sortCols':['consumerId','hoursFromStart']}}
 
-def convertdateTimeCols(df, dateTimeCols):
+def sortDfByCols(df, sortCols):
+    df=df.sort_values(by=sortCols).reset_index(drop=True)
+
+def convertDateTimeCols(df, dateTimeCols):
     for dc in dateTimeCols:
         df[dc] = pd.to_datetime(df[dc])
 
-def getDatasetFiles(fileName: str, dateTimeCols=[]):
+def convertDatetimeNSortCols(df, dateTimeCols, sortCols):
+    convertDateTimeCols(df, dateTimeCols)
+    sortDfByCols(df, sortCols)
+
+def getDatasetFiles(fileName: str, dateTimeCols=[],sortCols=[]):
     currentDir = os.path.dirname(os.path.abspath(__file__))
     filePath = os.path.normpath(os.path.join(currentDir, datasetsRelativePath, fileName))
     df=pd.read_csv(filePath)
     if fileName in knownDatasetsDateTimeCols.keys():
-        convertdateTimeCols(df, knownDatasetsDateTimeCols[fileName])
+        dataset=knownDatasetsDateTimeCols[fileName]
+        convertDatetimeNSortCols(df, dataset['dateTimeCols'],dataset['sortCols'])
     else:
-        convertdateTimeCols(df, dateTimeCols)
+        convertDateTimeCols(df, dateTimeCols, sortCols)
     return df
-#%% multi series data
+#%% multi series(NSeries) data
 def addCorrespondentRow(df, correspondentRowsDf, targets, newColName, targetMapping={}):
     if targetMapping=={}:
         targetMapping = {tr:idx for tr,idx in zip(targets, correspondentRowsDf.index)}
