@@ -12,11 +12,11 @@ class TsRowFetcher:
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
-        self.startPointsIndexes=None
+        self.indexes=None
 
-    def assertIdxInStartPointsIndexes(self, idx):
-        if not self.startPointsIndexes is None:
-            assert idx in self.startPointsIndexes,f'{idx} is not startPointsIndexes'
+    def assertIdxInIndexes(self, idx):
+        if not self.indexes is None:
+            assert idx in self.indexes,f'{idx} is not indexes'
 
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)==2 and data.shape[1]==1:
@@ -62,7 +62,7 @@ class TsRowFetcher:
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
         if canBeOutStartIndex:
-            self.assertIdxInStartPointsIndexes(idx)
+            self.assertIdxInIndexes(idx)
 
         def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
             if mode==self.modes.backcast:
@@ -90,27 +90,27 @@ class TsRowFetcher:
         return res
 #%% VAnnTsDataset
 class VAnnTsDataset(Dataset, TsRowFetcher):
-    noStartPointsIndexesAssertionMsg="u have to pass startPointsIndexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
+    noIndexesAssertionMsg="u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
     #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
-    def __init__(self, data, backcastLen, forecastLen, startPointsIndexes=None, useNpDictForDfs=True, **kwargs):
+    def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
         super().__init__(backcastLen=backcastLen, forecastLen=forecastLen)
         if useNpDictForDfs and isinstance(data,pd.DataFrame):
             self.data=NpDict(data)
         else:
             self.data = data
-        if startPointsIndexes is None:
+        if indexes is None:
             assert (backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns)\
                 or (isinstance(data, NpDict) and tsStartPointColName  in data.cols()),\
-                VAnnTsDataset.noStartPointsIndexesAssertionMsg
+                VAnnTsDataset.noIndexesAssertionMsg
             if isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns:
-                startPointsIndexes=data[data[tsStartPointColName]==True].index
+                indexes=data[data[tsStartPointColName]==True].index
                 "#ccc note indexes has kept their values"
             if isinstance(data, NpDict) and tsStartPointColName  in data.cols():
-                startPointsIndexes=data.__index__[data['__startPoint__']==True]
-                startPointsIndexes=[list(data.__index__).index(i) for i in startPointsIndexes]
+                indexes=data.__index__[data['__startPoint__']==True]
+                indexes=[list(data.__index__).index(i) for i in indexes]
                 "#ccc note indexes for NpDict are according to their order"
-        self.startPointsIndexes = startPointsIndexes
+        self.indexes = indexes
         assert len(self)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
         self.shapeWarning()
         self.noNanOrNoneDataAssertion()
@@ -128,12 +128,12 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                               "Consider transposing the data to have features along shape[0].")
 
     def __len__(self):
-        if self.startPointsIndexes is None:
+        if self.indexes is None:
             return len(self.data)
-        return len(self.startPointsIndexes)
+        return len(self.indexes)
 
     def __getitem__(self, idx):
-        self.assertIdxInStartPointsIndexes(idx)
+        self.assertIdxInIndexes(idx)
         if isinstance(self.data, (pd.DataFrame, pd.Series)):
             return self.data.loc[idx]
         elif isinstance(self.data, NpDict):
