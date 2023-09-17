@@ -73,6 +73,10 @@ def combineNSeries(df, newColName, seriesTypes=None):
         # Merge the current series into the combined data
         combinedData = pd.concat([combinedData, seriesData[colsNotPresentIn]], axis=1)
     return combinedData
+
+def calculateNSeriesMinDifference(df, mainGroups, valueCol, resultCol):
+    minValues = df.groupby(mainGroups)[valueCol].transform('min')
+    df[resultCol] = df[valueCol] - minValues
 #%% data split
 splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
@@ -224,3 +228,6 @@ def rightPadDfBatch(dfOrSeries, maxLen, pad=0):
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
+#%% misc
+def calculateSingleColMinDifference(df, valueCol, resultCol):
+    df[resultCol] = df[valueCol] - df[valueCol].min()
