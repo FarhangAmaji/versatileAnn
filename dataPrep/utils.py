@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
 from utils.vAnnGeneralUtils import NpDict
+import warnings
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
 knownDatasetsDateTimeCols={"EPF_FR_BE.csv":{'dateTimeCols':["dateTime"],'sortCols':['dateTime']},
@@ -77,6 +78,22 @@ def combineNSeries(df, newColName, seriesTypes=None):
 def calculateNSeriesMinDifference(df, mainGroups, valueCol, resultCol):
     minValues = df.groupby(mainGroups)[valueCol].transform('min')
     df[resultCol] = df[valueCol] - minValues
+
+def excludeValuesFromEndNSeries(df, mainGroups, excludeVal, valueCol, resultCol):
+    uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
+    uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
+    if (uniqueMainGroupMax-uniqueMainGroupMin).min()>excludeVal:
+        warnings.warn(f'by excluding values form the end, for some groups there would be no {resultCol} equal to True')
+    df.loc[df[valueCol] <= uniqueMainGroupMax - excludeVal, resultCol] = True
+    df.loc[df[resultCol] != True, resultCol] = False
+
+def excludeValuesFromBeginningNSeries(df, mainGroups, excludeVal, valueCol, resultCol):
+    uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
+    uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
+    if (uniqueMainGroupMax-uniqueMainGroupMin).min()>excludeVal:
+        warnings.warn(f'by excluding values form the beginning, for some groups there would be no {resultCol} equal to True')
+    df.loc[df[valueCol] >= uniqueMainGroupMin + excludeVal, resultCol] = True
+    df.loc[df[resultCol] != True, resultCol] = False
 #%% data split
 splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
@@ -231,3 +248,19 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
 #%% misc
 def calculateSingleColMinDifference(df, valueCol, resultCol):
     df[resultCol] = df[valueCol] - df[valueCol].min()
+
+def excludeValuesFromBeginningSingleCol(df, excludeVal, valueCol, resultCol):
+    maxVal = df[valueCol].max()
+    minVal = df[valueCol].min()
+    if maxVal-minVal>excludeVal:
+        warnings.warn(f'by excluding values form the beginning, no {resultCol} equal to True')
+    df.loc[df[valueCol] >= minVal + excludeVal, resultCol] = True
+    df.loc[df[resultCol] != True, resultCol] = False
+
+def excludeValuesFromEndSingleCol(df, excludeVal, valueCol, resultCol):
+    maxVal = df[valueCol].max()
+    minVal = df[valueCol].min()
+    if maxVal-minVal>excludeVal:
+        warnings.warn(f'by excluding values form the end, no {resultCol} equal to True')
+    df.loc[df[valueCol] <= maxVal - excludeVal, resultCol] = True
+    df.loc[df[resultCol] != True, resultCol] = False
