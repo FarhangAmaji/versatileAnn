@@ -22,6 +22,10 @@ class TsRowFetcher:
         if not allowance:
             self.assertIdxInIndexes(idx)
 
+    def assertCanHaveLowerLengthDependingOnAllowance(self, allowance, len_, slice_):
+        if not allowance:
+            assert len_==slice_.stop-slice_.start
+
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)==2 and data.shape[1]==1:
             return data.squeeze(1)
@@ -48,8 +52,7 @@ class TsRowFetcher:
             res = tensor[slice_,:]
         else:
             res = tensor[slice_, colIndexes]
-        if not canHaveLowerLength:
-            assert len(res)==slice_.stop-slice_.start
+        self.assertCanHaveLowerLengthDependingOnAllowance(canHaveLowerLength, len(res), slice_)
         return self.singleFeatureShapeCorrection(res)
 
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
@@ -60,8 +63,7 @@ class TsRowFetcher:
             res =  npDict[:][slice_]
         else:
             res =  npDict[colIndexes][slice_]
-        if not canHaveLowerLength:
-            assert len(res)==slice_.stop-slice_.start
+        self.assertCanHaveLowerLengthDependingOnAllowance(canHaveLowerLength, len(res), slice_)
         return self.singleFeatureShapeCorrection(res)
 
     def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
@@ -72,8 +74,7 @@ class TsRowFetcher:
             res =  npArray[slice_,:]
         else:
             res =  npArray[slice_,colIndexes]
-        if not canHaveLowerLength:
-            assert len(res)==slice_.stop-slice_.start
+        self.assertCanHaveLowerLengthDependingOnAllowance(canHaveLowerLength, len(res), slice_)
         return self.singleFeatureShapeCorrection(res)
 
     def makeTensor(self,input_):
