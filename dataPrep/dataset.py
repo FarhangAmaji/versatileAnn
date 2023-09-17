@@ -23,17 +23,22 @@ class TsRowFetcher:
             return data.squeeze(1)
         return data
 
-    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0, canBeOutStartIndex=False):#kkk does this idx match with getItem of dataset
+    def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0,
+                  canBeOutStartIndex=False, canHaveLowerLength=False):#kkk does this idx match with getItem of dataset
         if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap-1 + shiftForward)
         if cols=='___all___':
-            return df.loc[slice_]
+            res = df.loc[slice_]
         else:
-            return df.loc[slice_,cols]
+            res = df.loc[slice_,cols]
+        if not canHaveLowerLength:
+            assert len(res)==slice_.stop-slice_.start+1
+        return res
 
-    def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+    def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
+                      canBeOutStartIndex=False, canHaveLowerLength=False):
         if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
@@ -41,9 +46,12 @@ class TsRowFetcher:
             res = tensor[slice_,:]
         else:
             res = tensor[slice_, colIndexes]
+        if not canHaveLowerLength:
+            assert len(res)==slice_.stop-slice_.start
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+    def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
+                      canBeOutStartIndex=False, canHaveLowerLength=False):
         if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
@@ -51,15 +59,21 @@ class TsRowFetcher:
             res =  npDict[:][slice_]
         else:
             res =  npDict[colIndexes][slice_]
+        if not canHaveLowerLength:
+            assert len(res)==slice_.stop-slice_.start
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0, canBeOutStartIndex=False):
+    def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
+                       canBeOutStartIndex=False, canHaveLowerLength=False):
         if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
+        slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
-            res =  npArray[idx + lowerBoundGap:idx + upperBoundGap,:]
+            res =  npArray[slice_,:]
         else:
-            res =  npArray[idx + lowerBoundGap:idx + upperBoundGap,colIndexes]
+            res =  npArray[slice_,colIndexes]
+        if not canHaveLowerLength:
+            assert len(res)==slice_.stop-slice_.start
         return self.singleFeatureShapeCorrection(res)
 
     def makeTensor(self,input_):
@@ -69,7 +83,8 @@ class TsRowFetcher:
         tensor = floatDtypeChange(tensor)
         return tensor
 
-    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True, canBeOutStartIndex=False):#kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20' 
+    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
+                            canBeOutStartIndex=False, canHaveLowerLength=False):#kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20' 
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
         if not canBeOutStartIndex:
@@ -77,13 +92,13 @@ class TsRowFetcher:
 
         def getCastByMode(typeFunc):
             if mode==self.modes.backcast:
-                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)#ccc canBeOutStartIndex=True is in order not to check it again
+                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True, canHaveLowerLength=canHaveLowerLength)#ccc canBeOutStartIndex=True is in order not to check it again
             elif mode==self.modes.forecast:
-                return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
+                return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True, canHaveLowerLength=canHaveLowerLength)
             elif mode==self.modes.fullcast:
-                return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
+                return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True, canHaveLowerLength=canHaveLowerLength)
             elif mode==self.modes.singlePoint:
-                return typeFunc(data, idx, 0, 1, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
+                return typeFunc(data, idx, 0, 1, colsOrIndexes, shiftForward, canBeOutStartIndex=True, canHaveLowerLength=canHaveLowerLength)
 
         if isinstance(data, NpDict):
             res = getCastByMode(self.getNpDictRows)
