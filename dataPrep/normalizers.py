@@ -359,11 +359,10 @@ class MainGroupBaseNormalizer:
         return
 
     def _getUniqueCombinations(self, df):
-        uniqueCombos  = df.groupby(self.mainGroupColNames).size().reset_index().rename(columns={0: 'count'})
-        uniqueCombos  = uniqueCombos.rename(columns={0: 'count'})
         comboObjs = []
-        for index, row in uniqueCombos.iterrows():
-            comboDict = {col: row[col] for col in self.mainGroupColNames}
+
+        for groupName, groupDf in df.groupby(self.mainGroupColNames):
+            comboDict = dict(zip(self.mainGroupColNames, groupName))
             combo = Combo(comboDict, self.mainGroupColNames)
             comboObjs.append(combo)
         
