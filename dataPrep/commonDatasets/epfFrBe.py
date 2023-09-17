@@ -56,6 +56,7 @@ def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64, rightPa
     epfFrBeTrainDataset=EpfFrBeDataset(trainDf, backcastLen=backcastLen, forecastLen=forecastLen, indexes=None, **datasetKwargs)
     epfFrBeValDataset=EpfFrBeDataset(valDf, backcastLen=backcastLen, forecastLen=forecastLen, indexes=None, **datasetKwargs)
     epfFrBeTestDataset=EpfFrBeDataset(testDf, backcastLen=backcastLen, forecastLen=forecastLen, indexes=None, **datasetKwargs)
+    del trainDf, valDf, testDf
 
     epfFrBeTrainDataloader=VAnnTsDataloader(epfFrBeTrainDataset, batch_size=batchSize)
     epfFrBeValDataloader=VAnnTsDataloader(epfFrBeValDataset, batch_size=batchSize)
