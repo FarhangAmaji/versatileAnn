@@ -4,6 +4,8 @@ import numpy as np
 from utils.globalVars import tsStartPointColName
 from utils.vAnnGeneralUtils import NpDict
 import warnings
+#%%
+splitDefaultCondition=f'{tsStartPointColName} == True'
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
 knownDatasetsDateTimeCols={"EPF_FR_BE.csv":{'dateTimeCols':["dateTime"],'sortCols':['dateTime']},
@@ -75,27 +77,55 @@ def combineNSeries(df, newColName, seriesTypes=None):
         combinedData = pd.concat([combinedData, seriesData[colsNotPresentIn]], axis=1)
     return combinedData
 
+def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
+                      trainSeqLen=None, valSeqLen=None, testSeqLen=None,
+                      shuffle=True, conditions=[splitDefaultCondition]):
+    grouped = df.groupby(mainGroups)
+
+    groupedDfs = {}
+    groupNames=[]
+    
+    for groupName, groupDf in grouped:
+        groupNames+=[groupName]
+        groupDfCopy = groupDf.copy()
+        groupedDfs[groupName] = splitTsTrainValTestDfNNpDict(groupDfCopy, trainRatio=trainRatio, valRatio=valRatio,
+                             seqLen=seqLen, trainSeqLen=trainSeqLen, valSeqLen=None, testSeqLen=None,
+                              shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False)
+    del grouped
+
+    trainDf, valDf, testDf=pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    #these loops could have been in 1 loop but seems this way the memory management is easier
+    for groupName in groupNames:
+        trainDf = pd.concat([trainDf, groupedDfs[groupName][0]])
+
+    for groupName in groupNames:
+        valDf = pd.concat([valDf, groupedDfs[groupName][1]])
+
+    for groupName in groupNames:
+        testDf = pd.concat([testDf, groupedDfs[groupName][2]])
+
+    return trainDf, valDf, testDf
+
 def calculateNSeriesMinDifference(df, mainGroups, valueCol, resultCol):
     minValues = df.groupby(mainGroups)[valueCol].transform('min')
     df[resultCol] = df[valueCol] - minValues
 
-def excludeValuesFromEndNSeries(df, mainGroups, excludeVal, valueCol, resultCol):
+def excludeValuesFromEnd_NSeries(df, mainGroups, excludeVal, valueCol, resultCol):
     uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
     uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
-    if (uniqueMainGroupMax-uniqueMainGroupMin).min()>excludeVal:
+    if (uniqueMainGroupMax-uniqueMainGroupMin).min()<=excludeVal:
         warnings.warn(f'by excluding values form the end, for some groups there would be no {resultCol} equal to True')
     df.loc[df[valueCol] <= uniqueMainGroupMax - excludeVal, resultCol] = True
     df.loc[df[resultCol] != True, resultCol] = False
 
-def excludeValuesFromBeginningNSeries(df, mainGroups, excludeVal, valueCol, resultCol):
+def excludeValuesFromBeginning_NSeries(df, mainGroups, excludeVal, valueCol, resultCol):
     uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
     uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
-    if (uniqueMainGroupMax-uniqueMainGroupMin).min()>excludeVal:
+    if (uniqueMainGroupMax-uniqueMainGroupMin).min()<=excludeVal:
         warnings.warn(f'by excluding values form the beginning, for some groups there would be no {resultCol} equal to True')
     df.loc[df[valueCol] >= uniqueMainGroupMin + excludeVal, resultCol] = True
     df.loc[df[resultCol] != True, resultCol] = False
 #%% data split
-splitDefaultCondition=f'{tsStartPointColName} == True'
 def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAntecedents=0):
     newIndexes = set()
     
@@ -154,10 +184,10 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
     if testSeqLen==None:
         testSeqLen = seqLen
 
-    npDictMode=False
+    npDictUsed=False
     if isinstance(df, NpDict):
         df = df.df
-        npDictMode=True
+        npDictUsed=True
     filteredDf = df.copy()
 
     isCondtionsApplied=False
@@ -177,7 +207,7 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         for endIdx,sl in zip([int(trainRatio*len(indexes)), int((trainRatio+valRatio)*len(indexes)), len(indexes)],[trainSeqLen, valSeqLen, testSeqLen]):
             lenToSubtract=max(endIdx-len(indexes)+sl-1,lenToSubtract)
 
-        if lenToSubtract!=0:
+        if lenToSubtract>0:
             indexes=indexes[:-lenToSubtract]
     
     if shuffle:#kkk add compatibility to seed everything
@@ -201,7 +231,7 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         set_=pd.concat([set_,sequenceTailData]).sort_index().reset_index(drop=True)
         sets+=[set_]
     trainDf, valDf, testDf=sets
-    if npDictMode:
+    if npDictUsed:
         trainDf, valDf, testDf=NpDict(trainDf), NpDict(valDf), NpDict(testDf)
     return trainDf, valDf, testDf
 #%% padding
@@ -249,18 +279,18 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
 def calculateSingleColMinDifference(df, valueCol, resultCol):
     df[resultCol] = df[valueCol] - df[valueCol].min()
 
-def excludeValuesFromBeginningSingleCol(df, excludeVal, valueCol, resultCol):
+def excludeValuesFromBeginning_SingleCol(df, excludeVal, valueCol, resultCol):
     maxVal = df[valueCol].max()
     minVal = df[valueCol].min()
-    if maxVal-minVal>excludeVal:
+    if maxVal-minVal<=excludeVal:
         warnings.warn(f'by excluding values form the beginning, no {resultCol} equal to True')
     df.loc[df[valueCol] >= minVal + excludeVal, resultCol] = True
     df.loc[df[resultCol] != True, resultCol] = False
 
-def excludeValuesFromEndSingleCol(df, excludeVal, valueCol, resultCol):
+def excludeValuesFromEnd_SingleCol(df, excludeVal, valueCol, resultCol):
     maxVal = df[valueCol].max()
     minVal = df[valueCol].min()
-    if maxVal-minVal>excludeVal:
+    if maxVal-minVal<=excludeVal:
         warnings.warn(f'by excluding values form the end, no {resultCol} equal to True')
     df.loc[df[valueCol] <= maxVal - excludeVal, resultCol] = True
     df.loc[df[resultCol] != True, resultCol] = False
