@@ -75,24 +75,24 @@ class TsRowFetcher:
         if not canBeOutStartIndex:
             self.assertIdxInIndexes(idx)
 
-        def getCastByMode(typeFunc, data, idx, mode=self.modes.backcast, colsOrIndexes='___all___'):
+        def getCastByMode(typeFunc):
             if mode==self.modes.backcast:
-                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes)
+                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)#ccc canBeOutStartIndex=True is in order not to check it again
             elif mode==self.modes.forecast:
-                return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes)
+                return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
             elif mode==self.modes.fullcast:
-                return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes)
+                return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
             elif mode==self.modes.singlePoint:
-                return typeFunc(data, idx, 0, 1, colsOrIndexes)
+                return typeFunc(data, idx, 0, 1, colsOrIndexes, shiftForward, canBeOutStartIndex=True)
 
         if isinstance(data, NpDict):
-            res = getCastByMode(self.getNpDictRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getNpDictRows)
         elif isinstance(data, pd.DataFrame):
-            res = getCastByMode(self.getDfRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getDfRows)
         elif isinstance(data, np.ndarray):
-            res = getCastByMode(self.getNpArrayRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getNpArrayRows)
         elif isinstance(data, torch.Tensor):
-            res = getCastByMode(self.getTensorRows, data, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes)
+            res = getCastByMode(self.getTensorRows)
         else:
             assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
 
