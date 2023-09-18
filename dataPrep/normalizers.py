@@ -139,13 +139,13 @@ class NormalizerStack:
         for nrm in self.uniqueNormalizers:
             nrm.fitNTransform(df)
 
-    def inverseTransform(self, df):
+    def inverseMiddleTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
-            df[col] = self.inverseTransformCol(df, col)
+            df[col] = self.inverseMiddleTransformCol(df, col)
 
-    def inverseTransformCol(self, df, col):
+    def inverseMiddleTransformCol(self, df, col):
         assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
-        return self._normalizers[col].inverseTransformCol(df, col)
+        return self._normalizers[col].inverseMiddleTransformCol(df, col)
 
     def ultimateInverseTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
@@ -197,12 +197,12 @@ class BaseSingleColsNormalizer:
             return df[col]
         return self.scalers[col].transform(df[col])
 
-    def inverseTransformCol(self, df, col):
+    def inverseMiddleTransformCol(self, df, col):
         dataToInverseTransformed=df[col]
         return self.scalers[col].inverseTransform(dataToInverseTransformed)
 
     def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
-        dataToInverseTransformed = self.inverseTransformCol(dataToInverseTransformed, col)
+        dataToInverseTransformed = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
         if hasattr(self, 'intLabelsStrings'):#kkk does this part hav tests
             if col in self.intLabelsStrings.keys():
                 dataToInverseTransformed = self.intLabelsStrings[col].inverseTransform(dataToInverseTransformed)
@@ -263,15 +263,15 @@ class BaseMultiColNormalizer:
         self.transform(df)
     
     #kkk could have add many fit, transform, assert and their other combinations for single col
-    #kkk could have added inverseTransform which does inverse on self.colNames in df 
+    #kkk could have added inverseMiddleTransform which does inverse on self.colNames in df 
     
-    def inverseTransformCol(self, df, col):
+    def inverseMiddleTransformCol(self, df, col):
         dataToInverseTransformed=df[col]
         return self.scaler.inverseTransform(dataToInverseTransformed)
 
     def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
         assert col in dataToInverseTransformed.columns,'ultimateInverseTransformCol "{self}" "{col}" col is not in df columns'
-        res = self.inverseTransformCol(dataToInverseTransformed, col)
+        res = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
         if self.intLabelsString:
             res = self.intLabelsString.inverseTransform(res)
         return res
@@ -413,8 +413,8 @@ class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer):
             df.loc[inds,col]=invRes
         return df[col]
 
-    def inverseTransformCol(self, df, col):
-        return self.inverseTransformColBase(df, col, 'inverseTransformCol')
+    def inverseMiddleTransformCol(self, df, col):
+        return self.inverseTransformColBase(df, col, 'inverseMiddleTransformCol')
 
     def ultimateInverseTransformCol(self, df, col):
         return self.inverseTransformColBase(df, col, 'ultimateInverseTransformCol')
@@ -422,6 +422,19 @@ class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer):
 class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames, colNames)
+
+    def getMeanNStd(self, df):
+        for col in self.colNames:
+            for combo in self.uniqueCombos:
+                dfToFit=self.getRowsByCombination(df, combo)
+                inds=dfToFit.index
+                dfToFit=dfToFit.reset_index(drop=True)
+                dfToFit.index=inds
+                df.loc[inds,col]=dfToFit
+
+
+
+
 #kkk normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
 #... normalizer.fitNTransform(df)
 #... this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform

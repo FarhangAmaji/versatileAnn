@@ -59,8 +59,8 @@ MultiColStdNormalizer+col3_col4 is already fitted
 
     def testInverseTransformCol(self):
         self.inverseTransformSetUp()
-        self.dfToDoTest['col1'] = self.normalizerStack.inverseTransformCol(self.dfToDoTest, 'col1')#SingleColsStdNormalizer
-        self.dfToDoTest['col4'] = self.normalizerStack.inverseTransformCol(self.dfToDoTest, 'col4')#MultiColStdNormalizer
+        self.dfToDoTest['col1'] = self.normalizerStack.inverseMiddleTransformCol(self.dfToDoTest, 'col1')#SingleColsStdNormalizer
+        self.dfToDoTest['col4'] = self.normalizerStack.inverseMiddleTransformCol(self.dfToDoTest, 'col4')#MultiColStdNormalizer
         # for assert modification
         self.dfAssertDummy['col2']=self.transformedDf['col2']
         self.dfAssertDummy['col3']=self.transformedDf['col3']
@@ -68,10 +68,9 @@ MultiColStdNormalizer+col3_col4 is already fitted
 
     def testInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.inverseTransform(self.dfToDoTest)
+        self.normalizerStack.inverseMiddleTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 
-    #kkk add test for addNormalizer in NormalizerStack
     #kkk what meaningful tests can be added??
 #%% lblEncoderTest
 class lblEncoderTest(stdNormalizerTests):
@@ -134,7 +133,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
 
     def testInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.inverseTransform(self.dfToDoTest)
+        self.normalizerStack.inverseMiddleTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.inverseTransforRes)
 
     def testUltimateInverseIransform(self):
@@ -245,7 +244,7 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
     def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
-        self.normalizerStack.inverseTransform(self.df)
+        self.normalizerStack.inverseMiddleTransform(self.df)
         assert equalDfs(self.df, self.dfUntouched)
 
     def testNormalizerStackUltimateInverseTransform(self):
@@ -290,7 +289,7 @@ class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
 
     def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
-        self.normalizerStack.inverseTransform(self.df)
+        self.normalizerStack.inverseMiddleTransform(self.df)
         assert equalDfs(self.df, self.dfInverseRes)
 #%% other tests
 class otherTests(BaseTestClass):
