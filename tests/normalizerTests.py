@@ -4,8 +4,8 @@ from tests.baseTest import BaseTestClass
 import unittest
 #%%
 from dataPrep.normalizers import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
-                                                 SingleColsLblEncoder, MultiColLblEncoder, makeIntLabelsString, 
-                                                 LblEncoder, LblEncoderValueErrorMsg, Combo, MainGroupBaseNormalizer,
+                                                 SingleColsLblEncoder, MultiColLblEncoder, IntLabelsString, 
+                                                 LblEncoder, Combo, MainGroupBaseNormalizer,
                                                  MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
 from utils.vAnnGeneralUtils import equalDfs
 import pandas as pd
@@ -107,7 +107,7 @@ MultiColLblEncoder+col3_col4 is already fitted
         self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 
-class lblEncoderWithMakeIntLabelsStringTests(BaseTestClass):
+class lblEncoderWithIntLabelsStringTests(BaseTestClass):
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({'col1': [3, 3, 0, 0, 1, 4],
                                            'col2': [0, 3, 0, 1, 0, 2],
@@ -299,13 +299,14 @@ class otherTests(BaseTestClass):
             SingleColsLblEncoder(['col1']),
             MultiColLblEncoder(['col2', 'col3']))
         self.normalizerStack.addNormalizer(SingleColsLblEncoder(['col4']))
+        #kkk print or assert sth
 
     def testLblEncoderRaiseValueError(self):
         lblEnc=LblEncoder()
         with self.assertRaises(ValueError) as context:
             df= pd.DataFrame({'col1': [3, 3, 0, 0, 1, 2]})
             lblEnc.fit(df['col1'])
-        self.assertEqual(str(context.exception), LblEncoderValueErrorMsg)
+        self.assertEqual(str(context.exception), LblEncoder.LblEncoderValueErrorMsg)
 #%% run test
 if __name__ == '__main__':
     unittest.main()
