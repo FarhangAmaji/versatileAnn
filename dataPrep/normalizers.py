@@ -163,7 +163,7 @@ class NormalizerStack:
 
     def inverseTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
-            df[col] = self._normalizers[col].inverseTransformCol(df, col)
+            df[col] = self.inverseTransformCol(df, col)
 
     def inverseTransformCol(self, df, col):
         return self._normalizers[col].inverseTransformCol(df[col], col)
@@ -202,14 +202,7 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
         self.assertColNameInDf(df, col)
         if self.isColFitted(col, printFitted=True):
             return
-        try:
-            self.scalers[col].fit(df[col])
-        except ValueError as e:
-            if str(e) == LblEncoder.LblEncoderValueErrorMsg and isinstance(self, SingleColsLblEncoder):#kkk in oop check isinstance of child is not ok
-                self.intLabelsStrings[col]=IntLabelsString(col)
-                self.intLabelsStrings[col].fit(df[col])
-                intLabelsStringsTransformed = self.intLabelsStrings[col].transform(df[col])
-                self.scalers[col].fit(intLabelsStringsTransformed)
+        self.scalers[col].fit(df[col])
         self.isFitted[col]=True
 
     def fitNTransformCol(self, df, col):
@@ -222,14 +215,6 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
     def transform(self, df):
         for col in self.colNames:
             df[col]=self.transformCol(df, col)
-
-    def transformCol(self, df, col):
-        self.assertColNameInDf(df, col)
-        if not self.isColFitted(col, printNotFitted=True):
-            return df[col]
-        if isinstance(self, SingleColsLblEncoder) and col in self.intLabelsStrings.keys():#kkk in oop check isinstance of child is not ok
-            df[col] = self.intLabelsStrings[col].transform(df[col])
-        return self.scalers[col].transform(df[col])
 
     def inverseMiddleTransformCol(self, df, col):
         if not self.isColFitted(col, printNotFitted=True):
@@ -251,6 +236,12 @@ class SingleColsStdNormalizer(BaseSingleColsNormalizer):
         self.scalers={col:StdScaler(f'std{col}') for col in colNames}
         super().__init__()
 
+    def transformCol(self, df, col):
+        self.assertColNameInDf(df, col)
+        if not self.isColFitted(col, printNotFitted=True):
+            return df[col]
+        return self.scalers[col].transform(df[col])
+
     def __repr__(self):
         return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
 
@@ -263,6 +254,24 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
     @property
     def scalers(self):
         return self.encoders
+
+    def fitCol(self, df, col):
+        try:
+            super().fitCol(df, col)
+        except ValueError as e:
+            if str(e) == LblEncoder.LblEncoderValueErrorMsg:
+                self.intLabelsStrings[col]=IntLabelsString(col)
+                self.intLabelsStrings[col].fit(df[col])
+                intLabelsStringsTransformed = self.intLabelsStrings[col].transform(df[col])
+                self.scalers[col].fit(intLabelsStringsTransformed)
+
+    def transformCol(self, df, col):
+        self.assertColNameInDf(df, col)
+        if not self.isColFitted(col, printNotFitted=True):
+            return df[col]
+        if col in self.intLabelsStrings.keys():
+            df[col] = self.intLabelsStrings[col].transform(df[col])
+        return self.scalers[col].transform(df[col])
 
     def getClasses(self):
         return {col:enc.encoder.classes_ for col,enc in self.encoders.items()}
@@ -468,6 +477,15 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames, colNames)
 
+    def getMeanNStd(self, df):
+        for col in self.colNames:
+            for combo in self.uniqueCombos:
+                dfToFit=self.getRowsByCombination(df, combo)
+                inds=dfToFit.index
+                dfToFit=dfToFit.reset_index(drop=True)
+                self.container[col][combo.shortRepr_()].fitNTransform(dfToFit)
+                dfToFit.index=inds
+                df.loc[inds,col]=dfToFit
 
 #kkk normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
 #... normalizer.fitNTransform(df)
