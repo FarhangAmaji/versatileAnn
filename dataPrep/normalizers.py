@@ -115,14 +115,8 @@ class IntLabelsString:
         elif isinstance(dataToTransformed, pd.DataFrame):
             output = dataToTransformed.applymap(lambda x: self.intToLabelMapping.get(x, x))
         return output
-        # return np.vectorize(self.intToLabelMapping.get)(dataToTransformed)
 
     def inverseTransform(self, dataToInverseTransformed):
-        # if isinstance(dataToInverseTransformed, pd.Series):#kkk not sure about this
-        #     output = dataToInverseTransformed.map(intToLabelMapping)
-        # elif isinstance(dataToInverseTransformed, pd.DataFrame):
-        #     output = dataToInverseTransformed.applymap(lambda x: intToLabelMapping.get(x, x))
-        # return 
         return np.vectorize(self.labelToIntMapping.get)(dataToInverseTransformed)
 #%% normalizers: NormalizerStack
 class NormalizerStack:
@@ -166,7 +160,7 @@ class NormalizerStack:
             df[col] = self.inverseTransformCol(df, col)
 
     def inverseTransformCol(self, df, col):
-        return self._normalizers[col].inverseTransformCol(df[col], col)
+        return self._normalizers[col].inverseTransformCol(df, col)
 
     def __repr__(self):
         return str(self.uniqueNormalizers)
@@ -195,7 +189,7 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
                 print(f'{self.__repr__()} {col} is already fitted')
             return True
         if printNotFitted:
-            print(f'{self.__repr__()} {col} is not fitted yet')
+            print(f'{self.__repr__()} {col} is not fitted yet; fit it first')
         return False
 
     def fitCol(self, df, col):
@@ -264,6 +258,7 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
                 self.intLabelsStrings[col].fit(df[col])
                 intLabelsStringsTransformed = self.intLabelsStrings[col].transform(df[col])
                 self.scalers[col].fit(intLabelsStringsTransformed)
+                self.isFitted[col]=True
 
     def transformCol(self, df, col):
         self.assertColNameInDf(df, col)
@@ -289,45 +284,64 @@ class BaseMultiColNormalizer(BaseNormalizerChecks):
 
     def areTheseIntCols(self, df):
         return df[self.colNames].apply(lambda col: col.apply(lambda x: isinstance(x, int))).all().all()
-
-    def fit(self, df):
-        self.assertColNames(df)
-        self.scaler.fit(df[self.colNames])
     
-    def transform(self, df):
-        self.assertColNames(df)
-        df[self.colNames] = self.scaler.transform(df[self.colNames]).reshape(-1, len(self.colNames))
-
-    def fitNTransform(self, df):
+    def isFittedFunc(self, printFitted=False, printNotFitted=False):
         if self.isFitted:
-            print(f'{self.__repr__()} is already fitted')
-            return
-        if isinstance(self, MultiColLblEncoder) and self.areTheseIntCols(df):
-            self.intLabelsString=IntLabelsString(self.shortRep())
-            df[self.colNames]=self.intLabelsString.fitNTransform(df[self.colNames])
-        self.fit(df)
-        self.isFitted=True
-        self.transform(df)
-    
-    #kkk could have add many fit, transform, assert and their other combinations for single col
-    #kkk could have added inverseMiddleTransform which does inverse on self.colNames in df
+            if printFitted:
+                print(f'{self.__repr__()} is already fitted')
+            return True
+        if printNotFitted:
+            print(f'{self.__repr__()} is not fitted yet; fit it first')
+        return False
 
     def transformCol(self, df, col):
         self.assertColNameInDf(df, col)
-        if not self.isFitted:
-            print(f'{self.__repr__()} is not fitted; fit it first')
+        if not self.isFittedFunc(printNotFitted=True):
             return df[col]
-        return self.scaler.transform(df[col])
+        res=df[col]
+        if isinstance(self, MultiColLblEncoder) and self.intLabelsString:#kkk oop
+            res=self.intLabelsString.transform(res)
+        return self.scaler.transform(res)
+
+    def transform(self, df):
+        self.assertColNames(df)
+        for col in self.colNames:
+            df[col] = self.transformCol(df, col)
+
+    def fit(self, df):
+        self.assertColNames(df)
+        if self.isFittedFunc(printFitted=True):
+            return
+        dfColsCopy=df[self.colNames].copy()
+        if isinstance(self, MultiColLblEncoder) and self.areTheseIntCols(df):#kkk oop
+            self.intLabelsString=IntLabelsString(self.shortRep())
+            self.intLabelsString.fit(dfColsCopy)
+            dfColsCopy=self.intLabelsString.transform(dfColsCopy)
+        self.scaler.fit(dfColsCopy)
+        self.isFitted=True
+
+    def fitNTransform(self, df):
+        if self.isFittedFunc(printFitted=True):
+            return
+        self.fit(df)
+        self.transform(df)
+
+    #kkk could have add many fit, transform, assert and their other combinations for single col
+    #kkk could have added inverseMiddleTransform and inverseTransform which does inverse on self.colNames in df
 
     def inverseMiddleTransformCol(self, df, col):
+        if not self.isFittedFunc(printNotFitted=True):
+            return df[col]
         dataToInverseTransformed=df[col]
         return self.scaler.inverseTransform(dataToInverseTransformed)
 
     def inverseTransformCol(self, dataToInverseTransformed, col):
         assert col in dataToInverseTransformed.columns,'inverseTransformCol "{self}" "{col}" col is not in df columns'
+        if not self.isFittedFunc(printNotFitted=True):
+            return dataToInverseTransformed[col]
         res = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
-        if self.intLabelsString:
-            res = self.intLabelsString.inverseTransform(res)
+        if isinstance(self, MultiColLblEncoder) and self.intLabelsString:
+            res = self.intLabelsString.inverseTransform(res)#kkk does the singlecol has done intlabel invTrans after its main transform
         return res
         
 class MultiColStdNormalizer(BaseMultiColNormalizer):
@@ -493,6 +507,7 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
 #... of SingleColsLblEncoder, values of mainGroups are changed
 #... kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
 #kkk for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
+#kkk add test for this
 class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
     def __init__(self, df, mainGroupColNames, colNames:list):

@@ -42,7 +42,6 @@ MultiColStdNormalizer+col3_col4 is already fitted
         self.transformSetUp()
         self.normalizerStack.fitNTransform(self.dfToDoTest)
 
-
     def testFitNTransform(self):
         self.transformSetUp()#kkk if the self.setUp is not used give a warning
         self.normalizerStack.fitNTransform(self.dfToDoTest)
@@ -101,7 +100,7 @@ MultiColLblEncoder+col3_col4 is already fitted
         # self.transformedDfUntouched = self.transformedDf.copy()
         # self.floatPrecision= 0.001
 
-    def testUltimateInverseIransform(self):
+    def testInverseIransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
@@ -116,7 +115,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
         self.transformedDf = pd.DataFrame({'col1': [2, 2, 0, 0, 1, 3],
                                            'col2': [0, 3, 0, 1, 0, 2],
                                            'col3': [2, 1, 0, 3, 4, 0]},index=range(100, 106))
-        self.inverseTransforRes = pd.DataFrame({'col1': ['col1:3', 'col1:3', 'col1:0', 'col1:0', 'col1:1', 'col1:2'],
+        self.inverseMiddleTransforRes = pd.DataFrame({'col1': ['col1:3', 'col1:3', 'col1:0', 'col1:0', 'col1:1', 'col1:2'],
                                             'col2': ['lbl:col2_col3:0', 'lbl:col2_col3:3', 'lbl:col2_col3:0',
                                             'lbl:col2_col3:1', 'lbl:col2_col3:0', 'lbl:col2_col3:2'],
                                             'col3': ['lbl:col2_col3:2', 'lbl:col2_col3:1', 'lbl:col2_col3:0',
@@ -131,12 +130,12 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
     def testFitNTransform(self):
         stdNormalizerTests.testFitNTransform(self)
 
-    def testInverseIransform(self):
+    def testInverseMiddleIransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseMiddleTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.inverseTransforRes)
+        assert equalDfs(self.dfToDoTest, self.inverseMiddleTransforRes)
 
-    def testUltimateInverseIransform(self):
+    def testInverseIransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
@@ -242,12 +241,12 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
         self.normalizerStack.fitNTransform(self.df)
         assert equalDfs(self.df, self.dfFitNTransform)
 
-    def testNormalizerStackInverseTransform(self):
+    def testNormalizerStackMiddleInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseMiddleTransform(self.df)
         assert equalDfs(self.df, self.dfUntouched)
 
-    def testNormalizerStackUltimateInverseTransform(self):
+    def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseTransform(self.df)
         assert equalDfs(self.df, self.dfUntouched)
