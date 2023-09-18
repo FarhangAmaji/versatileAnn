@@ -226,6 +226,9 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
     def scalers(self):
         return self.encoders
 
+    def getClasses(self):
+        return {col:enc.encoder.classes_ for col,enc in self.encoders.items()}
+
     def __repr__(self):
         return f"SingleColsLblEncoder+{'_'.join(self.colNames)}"
 #%% normalizers: BaseMultiColNormalizers
@@ -295,6 +298,9 @@ class MultiColLblEncoder(BaseMultiColNormalizer):
     @property
     def scaler(self):
         return self.encoder
+
+    def getClasses(self):
+        return self.encoder.encoder.classes_
 
     def shortRep(self):
         return 'lbl:'+'_'.join(self.colNames)
@@ -421,3 +427,4 @@ class MainGroupSingleColsLblEncoder(MainGroupBaseSingleColsStdNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
+    #kkk maybe add getClasses()
