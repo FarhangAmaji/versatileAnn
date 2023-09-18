@@ -118,7 +118,7 @@ class NormalizerStack:
             self.addNormalizer(stdNormalizer)
 
     def addNormalizer(self, newNormalizer):
-        assert isinstance(newNormalizer, (BaseSingleColsNormalizer, BaseMultiColNormalizer, MainGroupBaseSingleColsStdNormalizer))
+        assert isinstance(newNormalizer, (BaseSingleColsNormalizer, BaseMultiColNormalizer, MainGroupSingleColsNormalizer))
         for col in newNormalizer.colNames:
             if col not in self._normalizers.keys():
                 self._normalizers.update({col: newNormalizer})
@@ -140,7 +140,7 @@ class NormalizerStack:
             nrm.fitNTransform(df)
 
     def inverseTransform(self, df):
-        for col in self.normalizers.keys():
+        for col in list(self.normalizers.keys())[::-1]:
             df[col] = self.inverseTransformCol(df, col)
 
     def inverseTransformCol(self, df, col):
@@ -148,7 +148,7 @@ class NormalizerStack:
         return self._normalizers[col].inverseTransformCol(df, col)
 
     def ultimateInverseTransform(self, df):
-        for col in self.normalizers.keys():
+        for col in list(self.normalizers.keys())[::-1]:
             df[col] = self._normalizers[col].ultimateInverseTransformCol(df, col)
 
     def ultimateInverseTransformCol(self, df, col):
@@ -323,7 +323,7 @@ class Combo:
         self.defDict=defDict
 
     def shortRepr_(self):
-        return '_'.join(self.defDict.values())
+        return '_'.join([str(item) for item in self.defDict.values()])
     
     def __repr__(self):
         return str(self.defDict)
@@ -382,8 +382,8 @@ class MainGroupBaseNormalizer:
         npDict=NpDict(tempDf)
         tempDf=npDict.toDf(resetDtype=True)
         return tempDf
-#%% MainGroupSingleColsStdNormalizer
-class MainGroupBaseSingleColsStdNormalizer(MainGroupBaseNormalizer):
+#%% MainGroupSingleColsNormalizer
+class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer):
     def __init__(self, classType, df, mainGroupColNames, colNames:list):
         super().__init__(df, mainGroupColNames)
         self.colNames=colNames
@@ -419,11 +419,15 @@ class MainGroupBaseSingleColsStdNormalizer(MainGroupBaseNormalizer):
     def ultimateInverseTransformCol(self, df, col):
         return self.inverseTransformColBase(df, col, 'ultimateInverseTransformCol')
 
-class MainGroupSingleColsStdNormalizer(MainGroupBaseSingleColsStdNormalizer):
+class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames, colNames)
-
-class MainGroupSingleColsLblEncoder(MainGroupBaseSingleColsStdNormalizer):
+#kkk normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
+#... normalizer.fitNTransform(df)
+#... this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
+#... of SingleColsLblEncoder, values of mainGroups are changed
+#... correct way right now
+class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
