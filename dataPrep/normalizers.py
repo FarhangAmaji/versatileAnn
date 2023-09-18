@@ -147,12 +147,12 @@ class NormalizerStack:
         assert col in self._normalizers.keys(),f'{col} is not in normalizers cols'
         return self._normalizers[col].inverseMiddleTransformCol(df, col)
 
-    def ultimateInverseTransform(self, df):
+    def inverseTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
-            df[col] = self._normalizers[col].ultimateInverseTransformCol(df, col)
+            df[col] = self._normalizers[col].inverseTransformCol(df, col)
 
-    def ultimateInverseTransformCol(self, df, col):
-        return self._normalizers[col].ultimateInverseTransformCol(df[col], col)
+    def inverseTransformCol(self, df, col):
+        return self._normalizers[col].inverseTransformCol(df[col], col)
 
     def __repr__(self):
         return str(self.uniqueNormalizers)
@@ -201,7 +201,7 @@ class BaseSingleColsNormalizer:
         dataToInverseTransformed=df[col]
         return self.scalers[col].inverseTransform(dataToInverseTransformed)
 
-    def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
+    def inverseTransformCol(self, dataToInverseTransformed, col):
         dataToInverseTransformed = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
         if hasattr(self, 'intLabelsStrings'):#kkk does this part hav tests
             if col in self.intLabelsStrings.keys():
@@ -269,8 +269,8 @@ class BaseMultiColNormalizer:
         dataToInverseTransformed=df[col]
         return self.scaler.inverseTransform(dataToInverseTransformed)
 
-    def ultimateInverseTransformCol(self, dataToInverseTransformed, col):
-        assert col in dataToInverseTransformed.columns,'ultimateInverseTransformCol "{self}" "{col}" col is not in df columns'
+    def inverseTransformCol(self, dataToInverseTransformed, col):
+        assert col in dataToInverseTransformed.columns,'inverseTransformCol "{self}" "{col}" col is not in df columns'
         res = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
         if self.intLabelsString:
             res = self.intLabelsString.inverseTransform(res)
@@ -416,23 +416,12 @@ class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer):
     def inverseMiddleTransformCol(self, df, col):
         return self.inverseTransformColBase(df, col, 'inverseMiddleTransformCol')
 
-    def ultimateInverseTransformCol(self, df, col):
-        return self.inverseTransformColBase(df, col, 'ultimateInverseTransformCol')
+    def inverseTransformCol(self, df, col):
+        return self.inverseTransformColBase(df, col, 'inverseTransformCol')
 
 class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames, colNames)
-
-    def getMeanNStd(self, df):
-        for col in self.colNames:
-            for combo in self.uniqueCombos:
-                dfToFit=self.getRowsByCombination(df, combo)
-                inds=dfToFit.index
-                dfToFit=dfToFit.reset_index(drop=True)
-                dfToFit.index=inds
-                df.loc[inds,col]=dfToFit
-
-
 
 
 #kkk normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))

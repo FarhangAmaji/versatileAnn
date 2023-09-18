@@ -103,7 +103,7 @@ MultiColLblEncoder+col3_col4 is already fitted
 
     def testUltimateInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)
+        self.normalizerStack.inverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 
 class lblEncoderWithIntLabelsStringTests(BaseTestClass):
@@ -138,7 +138,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
 
     def testUltimateInverseIransform(self):
         self.inverseTransformSetUp()
-        self.normalizerStack.ultimateInverseTransform(self.dfToDoTest)
+        self.normalizerStack.inverseTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.dfUntouched)
 #%% MainGroupBaseNormalizer tests
 class MainGroupBaseNormalizerTests(BaseTestClass):
@@ -249,7 +249,7 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
     def testNormalizerStackUltimateInverseTransform(self):
         self.testNormalizerStackFitNTransform()
-        self.normalizerStack.ultimateInverseTransform(self.df)
+        self.normalizerStack.inverseTransform(self.df)
         assert equalDfs(self.df, self.dfUntouched)
 
 class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
