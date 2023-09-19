@@ -521,12 +521,13 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     def getMeanNStd(self, df):
         for col in self.colNames:
             for combo in self.uniqueCombos:
-                dfToFit=self.getRowsByCombination(df, combo)
+                dfToFit = self.getRowsByCombination(df, combo)
                 inds=dfToFit.index
-                dfToFit=dfToFit.reset_index(drop=True)
-                self.container[col][combo.shortRepr_()].fitNTransform(dfToFit)
-                dfToFit.index=inds
-                df.loc[inds,col]=dfToFit
+                scaler=self.container[col][combo.shortRepr_()].scalers[col].scaler
+                comboMean=scaler.mean_[0]
+                comboStd=scaler.scale_[0]
+                df.loc[inds,f'{col}Mean']=comboMean
+                df.loc[inds,f'{col}Std']=comboStd
 
 #kkk normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
 #... normalizer.fitNTransform(df)
