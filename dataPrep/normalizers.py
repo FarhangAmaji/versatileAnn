@@ -147,6 +147,8 @@ class NormalizerStack:
         for nrm in self.uniqueNormalizers:
             nrm.fitNTransform(df)
 
+    #kkk add transformCol
+
     def inverseMiddleTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
             df[col] = self.inverseMiddleTransformCol(df, col)
@@ -179,10 +181,6 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
     def colNames(self):
         return self.scalers.keys()
 
-    def fitNTransform(self, df):
-        for col in self.colNames:
-            self.fitNTransformCol(df, col)
-
     def isColFitted(self, col, printFitted=False, printNotFitted=False):
         if self.isFitted[col]:
             if printFitted:
@@ -199,6 +197,10 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
         self.scalers[col].fit(df[col])
         self.isFitted[col]=True
 
+    def fit(self, df):
+        for col in self.colNames:
+            self.fitCol(df, col)
+
     def fitNTransformCol(self, df, col):
         self.assertColNameInDf(df, col)
         if self.isColFitted(col, printFitted=True):
@@ -209,6 +211,10 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
     def transform(self, df):
         for col in self.colNames:
             df[col]=self.transformCol(df, col)
+
+    def fitNTransform(self, df):
+        for col in self.colNames:
+            self.fitNTransformCol(df, col)
 
     def inverseMiddleTransformCol(self, df, col):
         if not self.isColFitted(col, printNotFitted=True):
@@ -312,7 +318,7 @@ class BaseMultiColNormalizer(BaseNormalizerChecks):
         self.assertColNames(df)
         if self.isFittedFunc(printFitted=True):
             return
-        dfColsCopy=df[self.colNames].copy()
+        dfColsCopy=df[self.colNames].copy()#kkk is copying needed
         if isinstance(self, MultiColLblEncoder) and self.areTheseIntCols(df):#kkk oop
             self.intLabelsString=IntLabelsString(self.shortRep())
             self.intLabelsString.fit(dfColsCopy)
@@ -461,25 +467,45 @@ class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer, BaseNormalizerCheck
             for combo in self.uniqueCombos:
                 self.container[col][combo.shortRepr_()]=classType([col])
 
-    def fitNTransform(self, df):
+    def fitCol(self, df, col):
+        for combo in self.uniqueCombos:
+            dfToFit=self.getRowsByCombination(df, combo)
+            dfToFit=dfToFit.reset_index(drop=True)#kkk does it need reset_index
+            self.container[col][combo.shortRepr_()].fit(dfToFit)
+
+    def fit(self, df):
         for col in self.colNames:
-            for combo in self.uniqueCombos:
-                dfToFit=self.getRowsByCombination(df, combo)
-                inds=dfToFit.index
-                dfToFit=dfToFit.reset_index(drop=True)
-                self.container[col][combo.shortRepr_()].fitNTransform(dfToFit)
-                dfToFit.index=inds
-                df.loc[inds,col]=dfToFit
+            self.fitCol(df, col)
+
+    def transformCol(self, df, col):
+        dfCopy=df.copy()
+        for combo in self.uniqueCombos:
+            dfToFit=self.getRowsByCombination(df, combo)
+            inds=dfToFit.index
+            dfToFit=dfToFit.reset_index(drop=True)#kkk does it need reset_index
+            self.container[col][combo.shortRepr_()].transform(dfToFit)
+            dfToFit.index=inds
+            dfCopy.loc[inds,col]=dfToFit
+        return dfCopy[col]
+
+    def transform(self, df):
+        for col in self.colNames:
+            df[col]=self.transformCol(df, col)
+
+    def fitNTransform(self, df):
+        self.fit(df)
+        self.transform(df)
 
     def inverseTransformColBase(self, df, col, funcName):
+        dfCopy=df.copy()
         for combo in self.uniqueCombos:
             dfToFit=self.getRowsByCombination(df, combo)
             inds=dfToFit.index
             dfToFit=dfToFit.reset_index(drop=True)
             func = getattr(self.container[col][combo.shortRepr_()], funcName)
             invRes=func(dfToFit, col)
-            df.loc[inds,col]=invRes
-        return df[col]
+            dfCopy.loc[inds,col]=invRes
+        return dfCopy[col]
 
     def inverseMiddleTransformCol(self, df, col):
         return self.inverseTransformColBase(df, col, 'inverseMiddleTransformCol')
@@ -508,8 +534,14 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
 #... kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
 #kkk for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
 #kkk add test for this
+    def __repr__(self):
+        return f"MainGroupSingleColsStdNormalizer+{'_'.join(list(map(str, self.uniqueCombos)))}+{'_'.join(self.colNames)}"
+
 class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
     def __init__(self, df, mainGroupColNames, colNames:list):
         super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
     #kkk maybe add getClasses()
+
+    def __repr__(self):
+        return f"MainGroupSingleColsLblEncoder+{'_'.join(list(map(str, self.uniqueCombos)))}+{'_'.join(self.colNames)}"
