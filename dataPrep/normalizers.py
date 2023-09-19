@@ -147,7 +147,8 @@ class NormalizerStack:
         for nrm in self.uniqueNormalizers:
             nrm.fitNTransform(df)
 
-    #kkk add transformCol
+    def transformCol(self, df, col):#kkk needs tests
+        return self._normalizers[col].transformCol(df, col)
 
     def inverseMiddleTransform(self, df):
         for col in list(self.normalizers.keys())[::-1]:
