@@ -9,6 +9,7 @@ splitDefaultCondition=f'{tsStartPointColName} == True'
 #%% datasets
 datasetsRelativePath=r'..\data\datasets'
 knownDatasetsDateTimeCols={"EPF_FR_BE.csv":{'dateTimeCols':["dateTime"],'sortCols':['dateTime']},
+                           "stallion.csv":{'dateTimeCols':["date"],'sortCols':["agency", "sku"]},
                            "electricity.csv":{'dateTimeCols':["date"],'sortCols':['consumerId','hoursFromStart']}}
 
 def sortDfByCols(df, sortCols):
@@ -79,7 +80,8 @@ def combineNSeries(df, newColName, seriesTypes=None):
 
 def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
-                      shuffle=True, conditions=[splitDefaultCondition]):
+                      shuffle=True, conditions=[splitDefaultCondition], tailIndexesAsPossible=False):
+    "#ccc this makes sure that tailIndexes are also from this NSeries"
     grouped = df.groupby(mainGroups)
 
     groupedDfs = {}
@@ -87,10 +89,10 @@ def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
     
     for groupName, groupDf in grouped:
         groupNames+=[groupName]
-        groupDfCopy = groupDf.copy()
-        groupedDfs[groupName] = splitTsTrainValTestDfNNpDict(groupDfCopy, trainRatio=trainRatio, valRatio=valRatio,
-                             seqLen=seqLen, trainSeqLen=trainSeqLen, valSeqLen=None, testSeqLen=None,
-                              shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False)
+        groupedDfs[groupName] = splitTsTrainValTestDfNNpDict(groupDf, trainRatio=trainRatio, valRatio=valRatio,
+                             seqLen=seqLen, trainSeqLen=trainSeqLen, valSeqLen=valSeqLen, testSeqLen=testSeqLen,
+                              shuffle=shuffle, conditions=conditions, tailIndexesAsPossible=tailIndexesAsPossible,
+                              giveStartPointsIndexes=False)
     del grouped
 
     trainDf, valDf, testDf=pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -164,7 +166,7 @@ def nontsStartPointsFalse(df):
 
 def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
-                      shuffle=True, conditions=[splitDefaultCondition], giveIndexes=False):
+                      shuffle=True, conditions=[splitDefaultCondition], tailIndexesAsPossible=False, giveStartPointsIndexes=False):
     #kkk needs tests
     #kkk do it also for other datatypes
     #kkk splitTsTrainValTestDfNNpDict doesnt involve last point(in 'SplitTests.testWithSeqLen' here 109)
@@ -213,10 +215,11 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
     if shuffle:#kkk add compatibility to seed everything
         np.random.shuffle(indexes)
     trainIndexes, valIndexes, testIndexes=simpleSplit(indexes, trainRatio, valRatio)
-    if giveIndexes:
+    if giveStartPointsIndexes:
         return trainIndexes, valIndexes, testIndexes
 
     sets=[]
+    dfIndexes=df.index
     for idx,sl in zip([trainIndexes, valIndexes, testIndexes],[trainSeqLen,valSeqLen,testSeqLen]):
         set_=filteredDf.loc[idx]
         set_[tsStartPointColName]=True
@@ -225,8 +228,12 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         try:
             sequenceTailData=df.loc[sequenceTailIndexes]
         except:
-            print("sequence tails(points which can't be the start point because of time series data)"\
-                  +" should have '__startPoint__', False or indicated with other query conditions")
+            if tailIndexesAsPossible:
+                sequenceTailIndexes=[sti for sti in sequenceTailIndexes if sti in dfIndexes]
+                sequenceTailData=df.loc[sequenceTailIndexes]    
+            else:
+                raise IndexError("sequence tails(points which can't be the start point because of time series data)"\
+                  +"df should have '__startPoint__', False or indicated with other query conditions")
         sequenceTailData[tsStartPointColName]=False
         set_=pd.concat([set_,sequenceTailData]).sort_index().reset_index(drop=True)
         sets+=[set_]
