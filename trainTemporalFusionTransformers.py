@@ -26,32 +26,24 @@ import torch.optim as optim
 # nHitsModel.lossMode='accuracy'
 # nHitsModel.variationalAutoEncoderMode=True
 #%%
-data = pd.read_csv(r'.\data\datasets\stallion.csv')
+data= pd.read_csv(r'F:\projects\public github projects\private repos\versatileAnnModule\data\datasets\stallion.csv')
+# data = pd.read_csv(r'.\data\datasets\stallion.csv')
 data['date']=pd.to_datetime(data['date'])
 # add time index
-data["time_idx"] = data["date"].dt.year * 12 + data["date"].dt.month
-data["time_idx"] -= data["time_idx"].min()
+data["timeIdx"] = data["date"].dt.year * 12 + data["date"].dt.month
+data["timeIdx"] -= data["timeIdx"].min()
 
 # add additional features
 data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-data["log_volume"] = np.log(data.volume + 1e-8)
-data["avg_volume_by_sku"] = data.groupby(["time_idx", "sku"], observed=True).volume.transform("mean")
-data["avg_volume_by_agency"] = data.groupby(["time_idx", "agency"], observed=True).volume.transform("mean")
+data["logVolume"] = np.log(data.volume + 1e-8)
+data["avgVolumeBySku"] = data.groupby(["timeIdx", "sku"], observed=True).volume.transform("mean")
+data["avgVolumeByAgency"] = data.groupby(["timeIdx", "agency"], observed=True).volume.transform("mean")
 
 # we want to encode special days as one variable and thus need to first reverse one-hot encoding
-specialDays = [
-    "easter_day",
-    "good_friday",
-    "new_year",
-    "christmas",
-    "labor_day",
-    "independence_day",
-    "revolution_day_memorial",
-    "regional_games",
-    "fifa_u_17_world_cup",
-    "football_gold_cup",
-    "beer_capital",
-    "music_fest",
+specialDays = ['easterDay',
+'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
+'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup',
+'footballGoldCup', 'beerCapital', 'musicFest'
 ]
 data[specialDays] = data[specialDays].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
 
@@ -63,14 +55,14 @@ minEncoderLength = maxEncoderLength // 2
 mainGroups=["agency", "sku"]
 categoricalVariableGroups={"specialDays": specialDays}
 
-timeIdx="time_idx"
+timeIdx="timeIdx"
 targets=['volume']
 staticCategoricals=["agency", "sku"]
-staticReals=["avg_population_2017", "avg_yearly_household_income_2017"]
+staticReals=["avgPopulation2017", "avgYearlyHouseholdIncome2017"]
 timeVaryingknownCategoricals=["specialDays", "month"]
-timeVaryingknownReals=["time_idx", "price_regular", "discount_in_percent"]
+timeVaryingknownReals=["timeIdx", "priceRegular", "discountInPercent"]
 timeVaryingUnknownCategoricals=[]
-timeVaryingUnknownReals=["volume","log_volume","industry_volume","soda_volume","avg_max_temp","avg_volume_by_agency","avg_volume_by_sku"]
+timeVaryingUnknownReals=["volume","logVolume","industryVolume","sodaVolume","avgMaxTemp","avgVolumeByAgency","avgVolumeBySku"]
 #%% 
 data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncoders, embeddingSizes, targetsCenterNStd, timeVaryingCategoricalsEncoder, \
     timeVaryingRealsEncoder, timeVaryingCategoricalsDecoder, timeVaryingRealsDecoder, allReals, realScalers = preprocessTemporalFusionTransformerTrainValTestData(
@@ -93,6 +85,8 @@ data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncode
     timeVaryingUnknownReals=timeVaryingUnknownReals
 )
 #%%
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from models.temporalFusionTransformers_components import getEmbeddingSize
 allCategoricalVariableGroups = {vg1: vg for vg in categoricalVariableGroups.keys() for vg1 in categoricalVariableGroups[vg]}
 
 data['relativeTimeIdx'] = 0
@@ -157,7 +151,7 @@ valPredictionRatio=.2
 "here we choose 20% of all length of each mainGroup combinations to be at least in the val data for prediction so 60-12=48"
 trainData=data[data[timeIdx]<aveEachMainGroupCombinations*(1-valPredictionRatio)].reset_index(drop=True)
 def addSequenceEncoderNDecoderLength(df,minEncoderLength,maxEncoderLength,minPredictionLength,maxPredictionLength):
-    maxTimeIdx=df["time_idx"].max()
+    maxTimeIdx=df["timeIdx"].max()
     for i in range(len(df)):
         if df.loc[i,timeIdx]<maxTimeIdx+1-maxPredictionLength-maxEncoderLength+1:
             df.loc[i,'sequenceLength']=maxEncoderLength+maxPredictionLength
