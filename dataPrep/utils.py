@@ -1,4 +1,5 @@
 import os
+import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
@@ -306,6 +307,27 @@ def rightPadNpArrayIfShorter(arr, maxLen, pad=0):
 
 def rightPadNpArray(arr, padLen, pad=0):
     return rightPadNpArrayBaseFunc(arr, padLen, pad=pad)
+#      tensor
+def rightPadTensorBaseFunc(tensor, padLen, pad=0):
+    if padLen <= 0:
+        return tensor
+    currentLength = tensor.size(0)
+    if currentLength < padLen:
+        padding = torch.full((padLen - currentLength,) + tensor.shape[1:], pad)
+        tensor = torch.cat((tensor, padding), dim=0)
+    return tensor
+
+def rightPadTensorIfShorter(tensor, maxLen, pad=0):
+    if maxLen <= 0:
+        return tensor
+    currentLength = tensor.size(0)
+    assert currentLength <= maxLen, f"The tensor length is greater than {maxLen}: {currentLength}"
+    if currentLength < maxLen:
+        tensor = rightPadTensorBaseFunc(tensor, maxLen - currentLength, pad=pad)
+    return tensor
+
+def rightPadTensor(tensor, padLen, pad=0):
+    return rightPadTensorBaseFunc(tensor, padLen, pad=pad)
 #%% misc
 def calculateSingleColMinDifference(df, valueCol, resultCol):
     df[resultCol] = df[valueCol] - df[valueCol].min()

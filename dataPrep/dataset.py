@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 from utils.vAnnGeneralUtils import NpDict, DotDict, floatDtypeChange
-from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter
+from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter, rightPadTensorIfShorter
 import warnings
 import pandas as pd
 import numpy as np
@@ -42,9 +42,9 @@ class TsRowFetcher:
                 if isinstance(resData, (pd.DataFrame,pd.Series)):
                     return rightPadDfIfShorter(resData, sliceLen+1, pad=pad)
                 elif isinstance(resData, np.ndarray):
-                    return rightPadNpArrayIfShorter(resData, sliceLen, pad=pad)#kkk implement rightPadNpArrayIfShorter
-                # elif isinstance(resData, torch.Tensor):
-                #     return rightPadTensorIfShorter(resData, sliceLen, pad=pad)#kkk implement rightPadTensorIfShorter
+                    return rightPadNpArrayIfShorter(resData, sliceLen, pad=pad)
+                elif isinstance(resData, torch.Tensor):
+                    return rightPadTensorIfShorter(resData, sliceLen, pad=pad)
                 else:
                     assert False,'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
             else:
