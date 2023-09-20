@@ -15,6 +15,10 @@ class DotDict:
     def items(self):
         return self.data.items()
 
+    @property
+    def dict(self):
+        return {key:self.data[key] for key in self.keys()}
+
     def __len__(self):
         return len(self.keys())
 
@@ -34,7 +38,7 @@ class DotDict:
         return iter(self.data.items())
 
     def __repr__(self):
-        return 'DotDict: '+str({key:self.data[key] for key in self.keys()})
+        return 'DotDict: '+str(self.dict)
 
 class NpDict(DotDict):
     """
@@ -95,6 +99,11 @@ def floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
         tensor = tensor.to(torch.float32)#kkk make it compatible to global precision
     return tensor
+
+def tensorEqualWithDtype(tensor1, tensor2):
+    if torch.equal(tensor1, tensor2) and tensor1.dtype == tensor2.dtype:
+        return True
+    return False
 #%% dfs
 def equalDfs(df1, df2, floatPrecision=0.0001):
     #kkk needs tests
