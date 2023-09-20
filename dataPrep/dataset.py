@@ -151,12 +151,12 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
     #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
-    def __init__(self, data, backcastLen, forecastLen, indexes=None, useNpDictForDfs=True, **kwargs):
+    def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
         super().__init__(backcastLen=backcastLen, forecastLen=forecastLen)
-        if useNpDictForDfs and isinstance(data,pd.DataFrame):
-            self.data=NpDict(data)
-        else:
-            self.data = data
+        self.mainGroups = mainGroups
+        self.mainGroupsIndexes = {}
+        self.assignData(data, mainGroups, useNpDictForDfs)
+
         if indexes is None:
             assert (backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns)\
                 or (isinstance(data, NpDict) and tsStartPointColName  in data.cols()),\
@@ -169,11 +169,46 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                 indexes=[list(data.__index__).index(i) for i in indexes]
                 "#ccc note indexes for NpDict are according to their order"
         self.indexes = indexes
+
         assert len(self)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
         self.shapeWarning()
         self.noNanOrNoneDataAssertion()
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def assignData(self, data, mainGroups, useNpDictForDfs):
+        if mainGroups:
+            self.data={}
+            if isinstance(data, NpDict):
+                self.doDataNMainGroupIndexes(data.df, mainGroups, convToNpDict=True)
+            elif isinstance(data, pd.DataFrame):
+                if useNpDictForDfs:
+                    self.doDataNMainGroupIndexes(data, mainGroups, convToNpDict=True)
+                else:
+                    self.doDataNMainGroupIndexes(data, mainGroups)
+            else:
+                assert False,'only pd.DataFrame and NpDicts can have mainGroups defined'
+        else:
+            if useNpDictForDfs and isinstance(data,pd.DataFrame):
+                self.data = NpDict(data)
+            else:
+                self.data = data
+
+    def doDataNMainGroupIndexes(self, df, mainGroups, convToNpDict=False):
+        for groupName, groupDf in df.groupby(mainGroups):
+            if convToNpDict:
+                self.data[groupName]=NpDict(groupDf)
+            else:
+                self.data[groupName]=groupDf
+            self.mainGroupsIndexes[groupName]={'indexes':list(groupDf.index)}
+
+    def findIdxInMainGroupsIndexes(self, idx):
+        assert self.mainGroups,'dataset doesnt have mainGroups'
+        for gName in self.mainGroupsIndexes.keys():
+            if idx in self.mainGroupsIndexes[gName]['indexes']:
+                relIdx=self.mainGroupsIndexes[gName]['indexes'].index(idx)
+                return gName, relIdx
+        raise IndexError(f'{idx} is not in any of groups')
 
     def noNanOrNoneDataAssertion(self):
         noNanOrNoneData(self.data)
@@ -192,9 +227,15 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def __getitem__(self, idx):
         self.assertIdxInIndexes(idx)
-        if isinstance(self.data, (pd.DataFrame, pd.Series)):
-            return self.data.loc[idx]
-        elif isinstance(self.data, NpDict):
-            return self.data[:][idx]
-        elif isinstance(self.data, (np.ndarray, torch.Tensor)):
-            return self.data[idx]
+        if self.mainGroups:
+            gName, relIdx=self.findIdxInMainGroupsIndexes(idx)
+            if isinstance(self.data[gName], NpDict):
+                return self.data[gName][:][relIdx]
+            return self.data[gName].loc[idx]
+        else:
+            if isinstance(self.data, (pd.DataFrame, pd.Series)):
+                return self.data.loc[idx]
+            elif isinstance(self.data, NpDict):
+                return self.data[:][idx]
+            elif isinstance(self.data, (np.ndarray, torch.Tensor)):
+                return self.data[idx]
