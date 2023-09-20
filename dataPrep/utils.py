@@ -206,7 +206,8 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
     indexes=np.array(filteredDf.index)
     if isCondtionsApplied==False:
         lenToSubtract=0
-        for endIdx,sl in zip([int(trainRatio*len(indexes)), int((trainRatio+valRatio)*len(indexes)), len(indexes)],[trainSeqLen, valSeqLen, testSeqLen]):
+        for endIdx,sl in zip([int(trainRatio*len(indexes)), int((trainRatio+valRatio)*len(indexes)), len(indexes)],
+                             [trainSeqLen,                  valSeqLen,                               testSeqLen]):
             lenToSubtract=max(endIdx-len(indexes)+sl-1,lenToSubtract)
 
         if lenToSubtract>0:
@@ -220,7 +221,8 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
 
     sets=[]
     dfIndexes=df.index
-    for idx,sl in zip([trainIndexes, valIndexes, testIndexes],[trainSeqLen,valSeqLen,testSeqLen]):
+    for idx,sl in zip([trainIndexes, valIndexes, testIndexes],
+                      [trainSeqLen,valSeqLen,testSeqLen]):
         set_=filteredDf.loc[idx]
         set_[tsStartPointColName]=True
         idx2=addSequentAndAntecedentIndexes(idx, seqLenWithSequents=sl)
@@ -242,7 +244,8 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         trainDf, valDf, testDf=NpDict(trainDf), NpDict(valDf), NpDict(testDf)
     return trainDf, valDf, testDf
 #%% padding
-def rightPadSeriesBatch(series, maxLen, pad=0):
+#      df & series
+def rightPadSeriesIfShorter(series, maxLen, pad=0):
     if maxLen <= 0:
         return series
     currentLength = len(series)
@@ -277,11 +280,32 @@ def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):#kkk do similar for left
     else:
         raise ValueError("Input must be either a DataFrame or a Series")
 
-def rightPadDfBatch(dfOrSeries, maxLen, pad=0):
-    return rightPadDfBaseFunc(rightPadSeriesBatch, dfOrSeries, maxLen, pad=pad)
+def rightPadDfIfShorter(dfOrSeries, maxLen, pad=0):
+    return rightPadDfBaseFunc(rightPadSeriesIfShorter, dfOrSeries, maxLen, pad=pad)
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
+#      np array
+def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
+    if padLen <= 0:
+        return arr
+    currentLength = len(arr)
+    if currentLength < padLen:
+        padding = np.full(padLen - currentLength, pad)
+        arr = np.concatenate((arr, padding))
+    return arr
+
+def rightPadNpArrayIfShorter(arr, maxLen, pad=0):
+    if maxLen <= 0:
+        return arr
+    currentLength = len(arr)
+    assert currentLength <= maxLen, f"The array length is greater than {maxLen}: {currentLength}"
+    if currentLength < maxLen:
+        arr = rightPadNpArrayBaseFunc(arr, maxLen - currentLength, pad=pad)
+    return arr
+
+def rightPadNpArray(arr, padLen, pad=0):
+    return rightPadNpArrayBaseFunc(arr, padLen, pad=pad)
 #%% misc
 def calculateSingleColMinDifference(df, valueCol, resultCol):
     df[resultCol] = df[valueCol] - df[valueCol].min()
