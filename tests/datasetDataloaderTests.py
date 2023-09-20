@@ -1,6 +1,7 @@
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
+import unittest
 #%%
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath
@@ -87,7 +88,7 @@ class VAnnTsDatasetNoNanOrNoneDataAssertionTests(BaseTestClass):
     def testNpDictWithStartPoint(self):
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(NpDict(self.df), backcastLen=1, forecastLen=1)
-        self.assertEqual(str(context.exception), "The NpDict array contains NaN values.")
+        self.assertEqual(str(context.exception), "The NpDict contains NaN values.")
 
     def testNpArrayWithStartPoint(self):
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, np.nan]])
@@ -113,7 +114,7 @@ class VAnnTsDatasetGetItemTests(BaseTestClass):
         idx = 8  # Index is not in indexes
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
-        self.assertEqual(str(context.exception), f"{idx} is not indexes")
+        self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
     def testGetItemNpDictInStartPoints(self):
         dataset = VAnnTsDataset(self.npDict, backcastLen=0, forecastLen=0)
@@ -127,7 +128,7 @@ class VAnnTsDatasetGetItemTests(BaseTestClass):
         idx = 0  # Index is not in indexes
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
-        self.assertEqual(str(context.exception), f"{idx} is not indexes")
+        self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
     def testGetItemNpArrayInStartPoints(self):
         dataset = VAnnTsDataset(self.npArray, backcastLen=0, forecastLen=0)
@@ -141,7 +142,7 @@ class VAnnTsDatasetGetItemTests(BaseTestClass):
         idx = 1
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
-        self.assertEqual(str(context.exception), f"{idx} is not indexes")
+        self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 #%% batch data tests
 class batchStructTemplateTests(BaseTestClass):
     def setUp(self):

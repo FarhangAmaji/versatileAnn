@@ -13,11 +13,11 @@ class TsRowFetcher:
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
-        self.indexes=None
+        self.indexes = None
 
     def assertIdxInIndexes(self, idx):
         if not self.indexes is None:
-            assert idx in self.indexes,f'{idx} is not indexes'
+            assert idx in self.indexes,f'{idx} is not in indexes'
 
     def assertIdxInIndexesDependingOnAllowance(self, allowance, idx):
         if not allowance:
@@ -111,7 +111,7 @@ class TsRowFetcher:
         tensor = floatDtypeChange(tensor)
         return tensor
 
-    def getBackForeCastData(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
+    def getBackForeCastDataGeneral(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
                             canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20' 
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
@@ -204,10 +204,10 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def findIdxInMainGroupsIndexes(self, idx):
         assert self.mainGroups,'dataset doesnt have mainGroups'
-        for gName in self.mainGroupsIndexes.keys():
-            if idx in self.mainGroupsIndexes[gName]['indexes']:
-                relIdx=self.mainGroupsIndexes[gName]['indexes'].index(idx)
-                return gName, relIdx
+        for groupName in self.mainGroupsIndexes.keys():
+            if idx in self.mainGroupsIndexes[groupName]['indexes']:
+                relIdx=self.mainGroupsIndexes[groupName]['indexes'].index(idx)
+                return groupName, relIdx
         raise IndexError(f'{idx} is not in any of groups')
 
     def noNanOrNoneDataAssertion(self):
@@ -220,6 +220,20 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                 warnings.warn("The data shape suggests that different features may be along shape[1]. "
                               "Consider transposing the data to have features along shape[0].")
 
+
+    def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
+                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk should go to dataset def and not here
+        if self.mainGroups:
+            groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
+            dataToSend=self.data[groupName]
+            if isinstance(self.data[groupName], NpDict):
+                idx=relIdx
+        else:
+            dataToSend=self.data
+        return self.getBackForeCastDataGeneral(dataToSend, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes,
+                           shiftForward=shiftForward, makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
+                           canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+
     def __len__(self):
         if self.indexes is None:
             return len(self.data)
@@ -228,10 +242,10 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     def __getitem__(self, idx):
         self.assertIdxInIndexes(idx)
         if self.mainGroups:
-            gName, relIdx=self.findIdxInMainGroupsIndexes(idx)
-            if isinstance(self.data[gName], NpDict):
-                return self.data[gName][:][relIdx]
-            return self.data[gName].loc[idx]
+            groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
+            if isinstance(self.data[groupName], NpDict):
+                return self.data[groupName][:][relIdx]
+            return self.data[groupName].loc[idx]
         else:
             if isinstance(self.data, (pd.DataFrame, pd.Series)):
                 return self.data.loc[idx]
