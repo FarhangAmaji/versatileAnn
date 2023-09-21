@@ -8,7 +8,8 @@ import torch
 import pandas as pd
 import numpy as np
 from utils.vAnnGeneralUtils import NpDict, tensorEqualWithDtype
-from dataPrep.dataset import TsRowFetcher
+from utils.globalVars import tsStartPointColName
+from dataPrep.dataset import TsRowFetcher, VAnnTsDataset
 #%% TsRowFetcherTests
 """
 things have been tested:
@@ -414,7 +415,6 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
                                                     colsOrIndexes=['y1'], makeTensor=False,canHaveShorterLength=True)
         np.testing.assert_array_equal(res,np.array([2, 3, 4, 5, 6, 7, 8]))
 #%%        TestTsRowFetcherRightPad
-"#ccc shift has been checked here"
 class TestTsRowFetcherRightPad(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
@@ -496,6 +496,47 @@ class TestTsRowFetcherSingleFeatureShapeCorrectionTests(BaseTestClass):
             )
         result = self.fetcher.singleFeatureShapeCorrection(inputData)
         self.assertTrue(result.shape==torch.Size([3, 3, 3]))
+#%%        TestDataset_NSeries_getBackForeCastData
+class TestDataset_NSeries_getBackForeCastData(BaseTestClass):
+    #kkk could have added no useNpDictForDfs=True datasets
+    def setUp(self):
+        self.df = pd.DataFrame({
+            'A': 26*['A1'],
+            'B': 7*['B1']+19*['B2'],
+            tsStartPointColName: 3*[True]+4*[False]+15*[True]+4*[False],
+            'y1': list(range(30, 56)),
+            'y2': list(range(130, 156))},index=range(100, 126))
+        self.dataset=VAnnTsDataset(self.df,backcastLen=2, forecastLen=3, mainGroups=['A','B'], useNpDictForDfs=False)
+
+    def testShift_inGroupBound(self):
+        res=self.dataset.getBackForeCastData(101, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False, shiftForward=-1, rightPadIfShorter=False)
+        expectedResult = pd.DataFrame({'y1': list(range(32, 35)), 'y2': list(range(132, 135))},index=range(102, 105))
+        self.assertTrue(res.equals(expectedResult))
+
+    def testForecast_NSeries_rightPadIfShorter(self):
+        "#ccc ensure dataset with mainGroups can only get data from its group"
+        res=self.dataset.getBackForeCastData(103, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False, shiftForward=0, canBeOutStartIndex=True, rightPadIfShorter=True)
+        expectedResult = pd.DataFrame({'y1': [35,36,0], 'y2': [135,136,0]},index=range(105, 108))
+        "#ccc note idx==107 exists in self.df, and is another group"
+        self.assertTrue(res.equals(expectedResult))
+
+    def test_notInDatasetIndexes(self):
+        "#ccc 103 is in dataset but with '__startPoint__'==False"
+        "#ccc this test is for self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)"
+        with self.assertRaises(AssertionError) as context:
+            self.dataset.getBackForeCastData(103, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                    makeTensor=False, shiftForward=0, rightPadIfShorter=False)
+        self.assertTrue("103 is not in indexes",str(context.exception))
+
+    def test_withShift_notInDatasetIndexes(self):
+        "#ccc this test is for self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)"
+        "#ccc idx+shiftForward also must be in dataset indexes"
+        with self.assertRaises(AssertionError) as context:
+            self.dataset.getBackForeCastData(106, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                    makeTensor=False, shiftForward=-2, rightPadIfShorter=False)
+        self.assertTrue("104 is not in indexes",str(context.exception))
 #%% run test
 if __name__ == '__main__':
     unittest.main()

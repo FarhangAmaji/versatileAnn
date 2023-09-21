@@ -76,6 +76,7 @@ class TsRowFetcher:
                   canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         #kkk does this idx match with getItem of dataset
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
         #kkk does it work with series
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         #kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
@@ -91,6 +92,7 @@ class TsRowFetcher:
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
                       canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointTensor']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
@@ -104,6 +106,7 @@ class TsRowFetcher:
                       canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         #kkk may get reduced with using getNpArrayRows
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpDict']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
@@ -116,6 +119,7 @@ class TsRowFetcher:
     def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
                        canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpArray']
         "#ccc for np arrays [-1]results a value so we have to make assertion; no matter it wont give [-1:1] values, but then again even in this case it doesnt assert"
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
@@ -140,6 +144,8 @@ class TsRowFetcher:
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+        "#ccc idx+shiftForward also should be in data indexes"
 
         def getCastByMode(typeFunc):
             if mode==self.modes.backcast:
@@ -188,13 +194,13 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             if isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns:
                 indexes=data[data[tsStartPointColName]==True].index
                 "#ccc note indexes has kept their values"
-            if isinstance(data, NpDict) and tsStartPointColName  in data.cols():
+            elif isinstance(data, NpDict) and tsStartPointColName  in data.cols():
                 indexes=data.__index__[data['__startPoint__']==True]
                 indexes=[list(data.__index__).index(i) for i in indexes]
                 "#ccc note indexes for NpDict are according to their order"
         self.indexes = indexes
 
-        assert len(self)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
+        assert len(data)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
         self.shapeWarning()
         self.noNanOrNoneDataAssertion()
         for key, value in kwargs.items():
@@ -250,13 +256,14 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         #kkk should go to dataset def and not here
         if self.mainGroups:
             groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
-            dataToSend=self.data[groupName]
+            dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
             if isinstance(self.data[groupName], NpDict):
                 idx=relIdx
         else:
-            dataToSend=self.data
-        return self.getBackForeCastDataGeneral(dataToSend, idx=idx, mode=mode, colsOrIndexes=colsOrIndexes,
-                           shiftForward=shiftForward, makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
+            dataToSendTo_getBackForeCastDataGeneral=self.data
+        return self.getBackForeCastDataGeneral(dataToSendTo_getBackForeCastDataGeneral,
+                           idx=idx, mode=mode, colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
+                           makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
                            canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
 
     def __len__(self):
