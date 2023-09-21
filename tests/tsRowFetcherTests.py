@@ -402,9 +402,9 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
 
     def testBackcastModeShorterLenNoErrorNpDict(self):
         self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 0, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)
+        #kkk may have added the result check(maybe not needed ofc, done in other tests)
         
     def testBackcastModeShorterLenErrorNpDict(self):
-        #kkk add canHaveShorterLength
         with self.assertRaises(AssertionError) as context:
             self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 1, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)
         self.assertTrue(TsRowFetcher.errMsgs['shorterLen'],str(context.exception))
@@ -413,6 +413,48 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
         res=self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 1, mode='backcast',
                                                     colsOrIndexes=['y1'], makeTensor=False,canHaveShorterLength=True)
         np.testing.assert_array_equal(res,np.array([2, 3, 4, 5, 6, 7, 8]))
+#%%        TestTsRowFetcherRightPad
+class TestTsRowFetcherRightPad(BaseTestClass):
+    def setUp(self):
+        self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
+        self.df = pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                                'y3': [32, 33, 34, 35, 36, 37, 38, 39]}, index=[130, 131, 132, 133, 134, 135, 136, 137])
+
+    def testBackcastRightPadDf(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df, 134, mode='backcast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False,shiftForward=2,rightPadIfShorter=True)
+        dfRightPadExpectedRes=pd.DataFrame({'y1': [7, 8, 0, 0, 0, 0, 0, 0],'y2': [22, 23, 0, 0, 0, 0, 0, 0]},
+                                           index=[136, 137, 138, 139, 140, 141, 142, 143])
+        self.assertTrue(res.equals(dfRightPadExpectedRes))
+
+    def testBackcastNotToRightPadDf(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df, 130, mode='backcast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False,shiftForward=0,rightPadIfShorter=True)
+        dfRightPadExpectedRes=pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],'y2': [16, 17, 18, 19, 20, 21, 22, 23]},
+                                           index=[130, 131, 132, 133, 134, 135, 136, 137])
+        self.assertTrue(res.equals(dfRightPadExpectedRes))
+
+    def testBackcastRightPadNpArray(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df.values, 4, mode='backcast', colsOrIndexes=[0,2],
+                                                makeTensor=False,shiftForward=2,rightPadIfShorter=True)
+        np.testing.assert_array_equal(res,np.array([[ 7, 38],[ 8, 39],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0]]))
+
+    def testBackcastNotToRightPadNpArray(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df.values, 0, mode='backcast', colsOrIndexes=[0,2],
+                                                makeTensor=False,shiftForward=0,rightPadIfShorter=True)
+        np.testing.assert_array_equal(res,np.array([[ 1, 32],[ 2, 33],[ 3, 34],[ 4, 35],[ 5, 36],[ 6, 37],[ 7, 38],[ 8, 39]]))
+
+    def testBackcastRightPadTensor(self):
+        res=self.fetcher.getBackForeCastDataGeneral(torch.tensor(self.df.values), 4, mode='backcast',
+                                                    colsOrIndexes=[0,2],shiftForward=2, makeTensor=True,rightPadIfShorter=True)
+        expectedResult = torch.tensor([[ 7, 38],[ 8, 39],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0],[ 0,  0]], dtype=torch.int64)
+        self.assertTrue(torch.equal(res, expectedResult))
+        
+    def testBackcastNotToRightPadTensor(self):
+        res=self.fetcher.getBackForeCastDataGeneral(torch.tensor(self.df.values), 0, mode='backcast',
+                                                    colsOrIndexes=[0,2],shiftForward=0, makeTensor=True,rightPadIfShorter=True)
+        expectedResult = torch.tensor([[ 1, 32],[ 2, 33],[ 3, 34],[ 4, 35],[ 5, 36],[ 6, 37],[ 7, 38],[ 8, 39]], dtype=torch.int64)
+        self.assertTrue(torch.equal(res, expectedResult))
 #%%        TestTsRowFetcherOutOfDataError
 '#ccc this is different than, out of dataset indexes. this validate is out of this data(df, npArray,...) indexes or not'
 class TestTsRowFetcherOutOfDataError(BaseTestClass):
@@ -453,6 +495,6 @@ class TestTsRowFetcherSingleFeatureShapeCorrectionTests(BaseTestClass):
         self.assertTrue(tensorEqualWithDtype(result, torch.tensor([1, 2, 3], dtype=torch.int64)))
 #%% run test
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
-runcell('TestTsRowFetcherOutOfDataError', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
+runcell('TestTsRowFetcherRightPad', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
 if __name__ == '__main__':
     unittest.main()

@@ -37,6 +37,7 @@ class TsRowFetcher:
         else:
             sliceLen=normalSliceLen
         assert sliceLen>=len_,"Length is greater than expected"
+        #kkk sliceLen<len_ may not happen, unless internal bug
         if sliceLen>len_:
             return True
         if sliceLen==len_:

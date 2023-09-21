@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast
 import warnings
 #%%
 splitDefaultCondition=f'{tsStartPointColName} == True'
@@ -246,7 +246,7 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         trainDf, valDf, testDf=NpDict(trainDf), NpDict(valDf), NpDict(testDf)
     return trainDf, valDf, testDf
 #%% padding
-#      df & series
+#%%      df & series
 def rightPadSeriesIfShorter(series, maxLen, pad=0):
     if maxLen <= 0:
         return series
@@ -270,16 +270,22 @@ def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):
         tempDict={}
         for i, col in enumerate(dfOrSeries.columns):
             if col==tsStartPointColName:
-                tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=False)
+                tempDict[col]=func(dfOrSeries[col], padLen, pad=False)
             else:
-                tempDict[col]=rightPadSeries(dfOrSeries[col], padLen, pad=pad)
+                tempDict[col]=func(dfOrSeries[col], padLen, pad=pad)
         for i, col in enumerate(dfOrSeries.columns):
             if i==0:
-                dfOrSeries=dfOrSeries.reindex(tempDict[col].index)
-            dfOrSeries[col]=tempDict[col]
+                if dfOrSeries.index.dtype in [np.int16, np.int32, np.int64]:
+                    dfStartInd=dfOrSeries.index.min()
+                    newIndex=[jj for jj in range(dfStartInd,dfStartInd+len(tempDict[col]))]
+                    dfOrSeries=dfOrSeries.reindex(newIndex)
+                else:
+                    newIndex=tempDict[col].index
+                    dfOrSeries=dfOrSeries.reindex(newIndex)
+            dfOrSeries[col]=pd.Series(tempDict[col].values,index=newIndex)
         return dfOrSeries
     elif isinstance(dfOrSeries, pd.Series):
-        return rightPadSeries(dfOrSeries, padLen, pad=pad)
+        return func(dfOrSeries, padLen, pad=pad)
     else:
         raise ValueError("Input must be either a DataFrame or a Series")
 
@@ -288,13 +294,17 @@ def rightPadDfIfShorter(dfOrSeries, maxLen, pad=0):
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeries, dfOrSeries, padLen, pad=pad)
-#      np array
+#%%      np array
 def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
+    #kkk do similar for left, and reduce all to another base func
     if padLen <= 0:
         return arr
     currentLength = len(arr)
     if currentLength < padLen:
         padding = np.full(padLen - currentLength, pad)
+        arrShape=list(arr.shape)
+        arrShape[0] = len(padding)
+        padding= npArrayBroadCast(padding, arrShape)
         arr = np.concatenate((arr, padding))
     return arr
 
@@ -304,13 +314,14 @@ def rightPadNpArrayIfShorter(arr, maxLen, pad=0):
     currentLength = len(arr)
     assert currentLength <= maxLen, f"The array length is greater than {maxLen}: {currentLength}"
     if currentLength < maxLen:
-        arr = rightPadNpArrayBaseFunc(arr, maxLen - currentLength, pad=pad)
+        arr = rightPadNpArrayBaseFunc(arr, maxLen, pad=pad)
     return arr
 
 def rightPadNpArray(arr, padLen, pad=0):
     return rightPadNpArrayBaseFunc(arr, padLen, pad=pad)
-#      tensor
+#%%      tensor
 def rightPadTensorBaseFunc(tensor, padLen, pad=0):
+    #kkk do similar for left, and reduce all to another base func
     if padLen <= 0:
         return tensor
     currentLength = tensor.size(0)
@@ -325,7 +336,7 @@ def rightPadTensorIfShorter(tensor, maxLen, pad=0):
     currentLength = tensor.size(0)
     assert currentLength <= maxLen, f"The tensor length is greater than {maxLen}: {currentLength}"
     if currentLength < maxLen:
-        tensor = rightPadTensorBaseFunc(tensor, maxLen - currentLength, pad=pad)
+        tensor = rightPadTensorBaseFunc(tensor, maxLen, pad=pad)
     return tensor
 
 def rightPadTensor(tensor, padLen, pad=0):

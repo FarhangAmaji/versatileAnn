@@ -131,6 +131,15 @@ def equalDfs(df1, df2, floatPrecision=0.0001):
 
     # If all numeric columns are close, return True
     return True
+#%% np array
+def npArrayBroadCast(arr, shape):
+    shape=tuple(shape)
+    arrShape=arr.shape
+    arrShapeLen=len(arrShape)
+    assert arrShape[:arrShapeLen]==shape[:arrShapeLen], 'np array and the given shape, doesnt have same first dims'
+    repeatCount=np.prod(shape[arrShapeLen:])
+    res= np.repeat(arr, repeatCount).reshape(shape)
+    return res
 #%% lists
 def checkAllItemsInList1ExistInList2(list1, list2):
     setList2 = set(list2)
