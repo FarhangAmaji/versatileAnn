@@ -537,6 +537,24 @@ class TestDataset_NSeries_getBackForeCastData(BaseTestClass):
             self.dataset.getBackForeCastData(106, mode='forecast', colsOrIndexes=['y1', 'y2'],
                                                     makeTensor=False, shiftForward=-2, rightPadIfShorter=False)
         self.assertTrue("104 is not in indexes",str(context.exception))
+#%%        TestTsRowFetcher_Shift
+class TestTsRowFetcher_Shift(BaseTestClass):
+    def setUp(self):
+        self.fetcher = TsRowFetcher(backcastLen=2, forecastLen=3)
+        self.df = pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                                'y3': [32, 33, 34, 35, 36, 37, 38, 39]}, index=[130, 131, 132, 133, 134, 135, 136, 137])
+
+    def testShift(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df, 131, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False, shiftForward=2, rightPadIfShorter=False)
+        expectedResult = pd.DataFrame({'y1': [6,7,8], 'y2': [21,22,23]},index=range(135, 138))
+        self.assertTrue(res.equals(expectedResult))
+
+    def testShiftNeg(self):
+        res=self.fetcher.getBackForeCastDataGeneral(self.df, 134, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                makeTensor=False, shiftForward=-2, rightPadIfShorter=False)
+        expectedResult = pd.DataFrame({'y1': [5,6,7], 'y2': [20,21,22]},index=range(134, 137))
+        self.assertTrue(res.equals(expectedResult))
 #%% run test
 if __name__ == '__main__':
     unittest.main()
