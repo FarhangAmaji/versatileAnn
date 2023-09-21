@@ -555,6 +555,25 @@ class TestTsRowFetcher_Shift(BaseTestClass):
                                                 makeTensor=False, shiftForward=-2, rightPadIfShorter=False)
         expectedResult = pd.DataFrame({'y1': [5,6,7], 'y2': [20,21,22]},index=range(134, 137))
         self.assertTrue(res.equals(expectedResult))
+#%%     TestDataset_nonNSeries_InDatasetIndexes
+class TestDataset_nonNSeries_InDatasetIndexes(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                                'y3': [32, 33, 34, 35, 36, 37, 38, 39], tsStartPointColName:4*[True]+4*[False]},
+                               index=[130, 131, 132, 133, 134, 135, 136, 137])
+        self.dataset=VAnnTsDataset(self.df,backcastLen=2, forecastLen=3, useNpDictForDfs=False)
+
+    def test_notInDatasetIndexes(self):
+        with self.assertRaises(AssertionError) as context:
+            self.dataset.getBackForeCastData(134, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                    makeTensor=False, shiftForward=0, rightPadIfShorter=False)
+        self.assertTrue("134 is not in indexes",str(context.exception))
+
+    def test_withShift_notInDatasetIndexes(self):
+        with self.assertRaises(AssertionError) as context:
+            self.dataset.getBackForeCastData(137, mode='forecast', colsOrIndexes=['y1', 'y2'],
+                                                    makeTensor=False, shiftForward=-2, rightPadIfShorter=False)
+        self.assertTrue("135 is not in indexes",str(context.exception))
 #%% run test
 if __name__ == '__main__':
     unittest.main()
