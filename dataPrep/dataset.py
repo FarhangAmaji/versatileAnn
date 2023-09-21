@@ -11,6 +11,10 @@ from utils.globalVars import tsStartPointColName
 class TsRowFetcher:
     errMsgs={}#kkk change it to dotdict
     errMsgs['shorterLen']="this output is shorter than requested"
+    errMsgs['non-negStartingPointDf']='the starting point is not in df'
+    errMsgs['non-negStartingPointTensor']='the starting point for tensor should be non-negative'
+    errMsgs['non-negStartingPointNpDict']='the starting point for NpDict should be non-negative'
+    errMsgs['non-negStartingPointNpArray']='the starting point for NpArray should be non-negative'
     def __init__(self, backcastLen, forecastLen):
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
@@ -71,7 +75,7 @@ class TsRowFetcher:
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
         #kkk does it work with series
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'#kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
-        assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
+        assert idx + shiftForward in df.index, TsRowFetcher.errMsgs['non-negStartingPointDf']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap-1 + shiftForward)
         if cols=='___all___':
             res = df.loc[slice_]
@@ -83,6 +87,7 @@ class TsRowFetcher:
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
                       canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointTensor']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
             res = tensor[slice_,:]
@@ -94,6 +99,7 @@ class TsRowFetcher:
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
                       canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk may get reduced with using getNpArrayRows
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpDict']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
             res =  npDict[:][slice_]
@@ -105,6 +111,8 @@ class TsRowFetcher:
     def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
                        canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpArray']
+        "#ccc for np arrays [-1]results a value so we have to make assertion; no matter it wont give [-1:1] values, but then again even in this case it doesnt assert"
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
             res =  npArray[slice_,:]

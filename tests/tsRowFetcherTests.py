@@ -412,6 +412,33 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
         res=self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 1, mode='backcast',
                                                     colsOrIndexes=['y1'], makeTensor=False,canHaveShorterLength=True)
         np.testing.assert_array_equal(res,np.array([2, 3, 4, 5, 6, 7, 8]))
+#%%        TestTsRowFetcherOutOfDataError
+'#ccc this is different than, out of dataset indexes. this validate is out of this data(df, npArray,...) indexes or not'
+class TestTsRowFetcherOutOfDataError(BaseTestClass):
+    def setUp(self):
+        self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
+        self.df = pd.DataFrame({'y1': [1, 2, 3, 4, 5, 6, 7, 8],'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                                'y3': [32, 33, 34, 35, 36, 37, 38, 39]}, index=[130, 131, 132, 133, 134, 135, 136, 137])
+
+    def testBackcastOutOfDataErrorDf(self):
+        with self.assertRaises(AssertionError) as context:
+            self.fetcher.getBackForeCastDataGeneral(self.df, 129, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)
+        self.assertTrue(TsRowFetcher.errMsgs['non-negStartingPointDf'],str(context.exception))
+
+    def testBackcastOutOfDataErrorNpDict(self):
+        with self.assertRaises(AssertionError) as context:
+            self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), -1, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)        
+        self.assertTrue(TsRowFetcher.errMsgs['non-negStartingPointNpDict'],str(context.exception))
+
+    def testBackcastOutOfDataErrorNpArray(self):
+        with self.assertRaises(AssertionError) as context:
+            self.fetcher.getBackForeCastDataGeneral(self.df.values, -1, mode='backcast', colsOrIndexes=[0,2], makeTensor=False)
+        self.assertTrue(TsRowFetcher.errMsgs['non-negStartingPointNpArray'],str(context.exception))
+
+    def testBackcastOutOfDataErrorTensor(self):
+        with self.assertRaises(AssertionError) as context:
+            self.fetcher.getBackForeCastDataGeneral(torch.tensor(self.df.values), -1, mode='backcast', colsOrIndexes=[0,2], makeTensor=False)
+        self.assertTrue(TsRowFetcher.errMsgs['non-negStartingPointTensor'],str(context.exception))
 #%%        TestTsRowFetcherSingleFeatureShapeCorrectionTests
 class TestTsRowFetcherSingleFeatureShapeCorrectionTests(BaseTestClass):
     def setUp(self):
