@@ -9,6 +9,8 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
 #%% TsRowFetcher
 class TsRowFetcher:
+    errMsgs={}#kkk change it to dotdict
+    errMsgs['shorterLen']="this output is shorter than requested"
     def __init__(self, backcastLen, forecastLen):
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
@@ -24,14 +26,20 @@ class TsRowFetcher:
             self.assertIdxInIndexes(idx)
 
     def hasShorterLen(self, len_, slice_, isItDfLen=False):
+        normalSliceLen=slice_.stop-slice_.start
         if isItDfLen:
-            return len_==slice_.stop-slice_.start
+            sliceLen=normalSliceLen+1
         else:
-            return len_==slice_.stop-slice_.start+1
+            sliceLen=normalSliceLen
+        assert sliceLen>=len_,"Length is greater than expected"
+        if sliceLen>len_:
+            return True
+        if sliceLen==len_:
+            return False
 
     def assertCanHaveShorterLengthDependingOnAllowance(self, allowance, len_, slice_, isItDfLen=False):
         if not allowance:
-            assert self.hasShorterLen(len_, slice_, isItDfLen=isItDfLen)
+            assert not self.hasShorterLen(len_, slice_, isItDfLen=isItDfLen),TsRowFetcher.errMsgs['shorterLen']
 
     def rightPadShorterIfAllowed(self, shorterLenAllowance, rightPadAllowance, resData, slice_, pad=0, isItDfLen=False):
         dataLen=len(resData)
@@ -54,14 +62,15 @@ class TsRowFetcher:
             return resData
 
     def singleFeatureShapeCorrection(self, data):
-        if len(data.shape)==2 and data.shape[1]==1:
-            return data.squeeze(1)
+        if len(data.shape)>=2 and data.shape[-1]==1:
+            return data.squeeze(-1)
         return data
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0,
                   canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk does this idx match with getItem of dataset
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
         #kkk does it work with series
+        assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'#kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap-1 + shiftForward)
         if cols=='___all___':
@@ -83,7 +92,7 @@ class TsRowFetcher:
         return self.singleFeatureShapeCorrection(res)
 
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
-                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk may get reduced with using getNpArrayRows
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
