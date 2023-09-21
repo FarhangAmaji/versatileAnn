@@ -77,7 +77,8 @@ class NpDict(DotDict):
         elif isinstance(key, list):
             # If a list of keys is provided, return a dictionary with selected columns
             return np.column_stack([self[col] for col in key])
-        elif isinstance(key, slice):#kkk add number slices
+        elif isinstance(key, slice):
+            #kkk add number slices
             if key == slice(None, None, None):
                 # If the slice is [:], return the stacked data of all columns
                 return np.column_stack([self[col] for col in self.cols()])
@@ -97,7 +98,8 @@ class NpDict(DotDict):
 #%% tensor
 def floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
-        tensor = tensor.to(torch.float32)#kkk make it compatible to global precision
+        tensor = tensor.to(torch.float32)
+        #kkk make it compatible to global precision
     return tensor
 
 def tensorEqualWithDtype(tensor1, tensor2):

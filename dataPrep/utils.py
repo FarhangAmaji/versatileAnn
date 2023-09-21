@@ -214,7 +214,8 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         if lenToSubtract>0:
             indexes=indexes[:-lenToSubtract]
     
-    if shuffle:#kkk add compatibility to seed everything
+    if shuffle:
+        #kkk add compatibility to seed everything
         np.random.shuffle(indexes)
     trainIndexes, valIndexes, testIndexes=simpleSplit(indexes, trainRatio, valRatio)
     if giveStartPointsIndexes:
@@ -262,7 +263,8 @@ def rightPadSeries(series, padLen, pad=0):
     series = pd.concat([series, padding], ignore_index=True)
     return series
 
-def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):#kkk do similar for left, and reduce all to another base func
+def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):
+    #kkk do similar for left, and reduce all to another base func
     'also works with series'
     if isinstance(dfOrSeries, pd.DataFrame):
         tempDict={}

@@ -43,7 +43,8 @@ MultiColStdNormalizer+col3_col4 is already fitted
         self.normalizerStack.fitNTransform(self.dfToDoTest)
 
     def testFitNTransform(self):
-        self.transformSetUp()#kkk if the self.setUp is not used give a warning
+        self.transformSetUp()
+        #kkk if the self.setUp is not used give a warning
         self.normalizerStack.fitNTransform(self.dfToDoTest)
         assert equalDfs(self.dfToDoTest, self.transformedDf)
 
@@ -209,7 +210,8 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
 #%% MainGroupSingleColsNormalizerTests
 class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
     def setUp(self):
-        self.df = pd.DataFrame(data = {#kkk could had a better example
+        #kkk could had a better example
+        self.df = pd.DataFrame(data = {
             'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3'],
             'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2'],
             'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2'],
@@ -253,7 +255,8 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
 class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
     def setUp(self):
-        self.df = pd.DataFrame(data = {#kkk could had a better example
+        #kkk could had a better example
+        self.df = pd.DataFrame(data = {
             'A': ['A1', 'A2', 'A3', 'A4', 'A1','A3','A2'],
             'B': ['B1', 'B2', 'B4', 'B4', 'B1','B2','B2'],
             'C': ['C1', 'C4', 'C4', 'C4', 'C1','C2','C3'],

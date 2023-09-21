@@ -9,7 +9,8 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from utils.globalVars import tsStartPointColName
 #%% TsRowFetcher
 class TsRowFetcher:
-    errMsgs={}#kkk change it to dotdict
+    errMsgs={}
+    #kkk change it to dotdict
     errMsgs['shorterLen']="this output is shorter than requested"
     errMsgs['non-negStartingPointDf']='the starting point is not in df'
     errMsgs['non-negStartingPointTensor']='the starting point for tensor should be non-negative'
@@ -71,10 +72,12 @@ class TsRowFetcher:
         return data
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0,
-                  canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk does this idx match with getItem of dataset
+                  canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        #kkk does this idx match with getItem of dataset
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
         #kkk does it work with series
-        assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'#kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
+        assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
+        #kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
         assert idx + shiftForward in df.index, TsRowFetcher.errMsgs['non-negStartingPointDf']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap-1 + shiftForward)
         if cols=='___all___':
@@ -97,7 +100,8 @@ class TsRowFetcher:
         return self.singleFeatureShapeCorrection(res)
 
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
-                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk may get reduced with using getNpArrayRows
+                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        #kkk may get reduced with using getNpArrayRows
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpDict']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
@@ -129,8 +133,10 @@ class TsRowFetcher:
         return tensor
 
     def getBackForeCastDataGeneral(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
-                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20' 
-        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"#kkk if query is added, these modes have to be more flexible
+                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        #kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20'; maybe not needed and the query is better used at other places in data prepration or split
+        #kkk if query is added, these modes have to be more flexible
+        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
         self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
 
@@ -239,7 +245,8 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
 
     def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
-                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):#kkk should go to dataset def and not here
+                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        #kkk should go to dataset def and not here
         if self.mainGroups:
             groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
             dataToSend=self.data[groupName]

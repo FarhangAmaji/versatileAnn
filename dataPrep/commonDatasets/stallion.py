@@ -16,7 +16,8 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from dataPrep.utils import getDatasetFiles, splitTrainValTestNSeries
 from dataPrep.normalizers import NormalizerStack, SingleColsLblEncoder, MainGroupSingleColsStdNormalizer, SingleColsStdNormalizer
-from models.temporalFusionTransformers_components import getEmbeddingSize#kkk replace this from a particular model, to general embedding files
+from models.temporalFusionTransformers_components import getEmbeddingSize
+#kkk replace this from a particular model, to general embedding files
 from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter
 import pandas as pd
 import numpy as np

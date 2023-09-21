@@ -56,7 +56,8 @@ class BatchStructTemplate_Non_BatchStructTemplate_Objects:
             self.toTensorFunc='notTensorables'
         else:#includes knownTypesToBeTensored.errorPrones
             if isTensorable(obj):
-                self.toTensorFunc='stackListOfErrorPronesToTensor'#kkk if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorablesToTensor
+                self.toTensorFunc='stackListOfErrorPronesToTensor'
+                #kkk if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorablesToTensor
             else:
                 self.toTensorFunc='notTensorables'
 
@@ -126,7 +127,9 @@ class TensorStacker:
     def notTensorables(self, listOfNotTensorables):
         return listOfNotTensorables
 
-class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to collateStruct
+class BatchStructTemplate(TensorStacker):
+    #kkk move to collateUtils
+    #kkk rename to collateStruct
     def __init__(self, inputDict):
         super().__init__()
         self.objsType=BatchStructTemplate_Non_BatchStructTemplate_Objects
@@ -157,7 +160,8 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
             if isinstance(value, dict):
                 self.fillWithData(value, path2)
             else:
-                appendValueToNestedDictPath(self, path2, value)#kkk this is making problems for shape or for set,...
+                appendValueToNestedDictPath(self, path2, value)
+                #kkk this is making problems for shape or for set,...
 
     def assertIsBatchStructTemplateOrListOfBatchStructTemplates(obj):
         assert isinstance(obj, BatchStructTemplate) or \
@@ -190,7 +194,8 @@ class BatchStructTemplate(TensorStacker):#kkk move to collateUtils#kkk rename to
             else:
                 if toTensor:
                     toTensorFunc = getattr(self,value.toTensorFunc)
-                    returnDict[key] = self.squeezeshape0of1(toTensorFunc(value.values))#kkk maybe could have found better but more complex solution than squeezeshape0of1; this one has problem with batchSize 1!!!
+                    returnDict[key] = self.squeezeshape0of1(toTensorFunc(value.values))
+                    #kkk maybe could have found better but more complex solution than squeezeshape0of1; this one has problem with batchSize 1!!!
                 else:
                     returnDict[key] = value.values
         return returnDict
@@ -234,11 +239,13 @@ class VAnnTsDataloader(DataLoader):
         if collate_fn is None:
             collate_fn=self.commonCollate_fn
         super().__init__(dataset, batch_size=batch_size, collate_fn=collate_fn, *args, **kwargs)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#kkk make it compatible to self.device of vAnn
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        #kkk make it compatible to self.device of vAnn
         if doBatchStructureCheckOnAllData:
             self.doBatchStructureCheckOnAllData()
 
-    def doBatchStructureCheckOnAllData(self):#kkk do I need this
+    def doBatchStructureCheckOnAllData(self):
+        #kkk do I need this
         pass
         #kkk this useful to check some custom collate_fns
         #kkk implement it later

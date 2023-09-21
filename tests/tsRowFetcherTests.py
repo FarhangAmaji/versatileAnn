@@ -403,7 +403,8 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
     def testBackcastModeShorterLenNoErrorNpDict(self):
         self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 0, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)
         
-    def testBackcastModeShorterLenErrorNpDict(self):#kkk add canHaveShorterLength
+    def testBackcastModeShorterLenErrorNpDict(self):
+        #kkk add canHaveShorterLength
         with self.assertRaises(AssertionError) as context:
             self.fetcher.getBackForeCastDataGeneral(NpDict(self.df), 1, mode='backcast', colsOrIndexes=['y1', 'y2'], makeTensor=False)
         self.assertTrue(TsRowFetcher.errMsgs['shorterLen'],str(context.exception))
@@ -451,5 +452,7 @@ class TestTsRowFetcherSingleFeatureShapeCorrectionTests(BaseTestClass):
         self.assertEqual(result.shape, (3,))
         self.assertTrue(tensorEqualWithDtype(result, torch.tensor([1, 2, 3], dtype=torch.int64)))
 #%% run test
+runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
+runcell('TestTsRowFetcherOutOfDataError', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
 if __name__ == '__main__':
     unittest.main()

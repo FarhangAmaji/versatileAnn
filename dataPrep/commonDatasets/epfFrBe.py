@@ -3,7 +3,6 @@
 this is data preparation steps of hourly electricity price forecasts (EPF) for France and Belgium markets
 the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE_static.csv files
 """
-#kkk EPF_FR_BE_futr has 24 nans
 from dataPrep.utils import getDatasetFiles, splitTsTrainValTestDfNNpDict, addCorrespondentRow, rightPadDf, splitToNSeries, nontsStartPointsFalse
 from dataPrep.normalizers import NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer
 from dataPrep.dataset import VAnnTsDataset
@@ -38,15 +37,15 @@ def getEpfFrBeProcessed(backcastLen=110, forecastLen=22, rightPadTrain=True, new
 class EpfFrBeDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs={}
-        inputs['target']=self.getBackForeCastData(self.data, idx, mode=self.modes.backcast, colsOrIndexes=self.targets)
-        inputs['mask']=self.getBackForeCastData(self.data, idx, mode=self.modes.backcast, colsOrIndexes=['mask'])
-        inputs['historyExogenous']=self.getBackForeCastData(self.data, idx, mode=self.modes.backcast, colsOrIndexes=self.historyExogenousCols)
-        inputs['staticExogenous']=self.getBackForeCastData(self.data, idx, mode=self.modes.singlePoint, colsOrIndexes=self.staticExogenousCols)
-        inputs['futureExogenous']=self.getBackForeCastData(self.data, idx, mode=self.modes.fullcast, colsOrIndexes=self.futureExogenousCols)
+        inputs['target']=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.targets)
+        inputs['mask']=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=['mask'])
+        inputs['historyExogenous']=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.historyExogenousCols)
+        inputs['staticExogenous']=self.getBackForeCastData(idx, mode=self.modes.singlePoint, colsOrIndexes=self.staticExogenousCols)
+        inputs['futureExogenous']=self.getBackForeCastData(idx, mode=self.modes.fullcast, colsOrIndexes=self.futureExogenousCols)
 
         outputs={}
-        outputs['output']=self.getBackForeCastData(self.data, idx, mode=self.modes.forecast, colsOrIndexes=self.targets)
-        outputs['outputMask']=self.getBackForeCastData(self.data, idx, mode=self.modes.forecast, colsOrIndexes=['mask'])
+        outputs['output']=self.getBackForeCastData(idx, mode=self.modes.forecast, colsOrIndexes=self.targets)
+        outputs['outputMask']=self.getBackForeCastData(idx, mode=self.modes.forecast, colsOrIndexes=['mask'])
         return inputs, outputs
 #%% dataloader
 def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64, rightPadTrain=True, newColName='y'):

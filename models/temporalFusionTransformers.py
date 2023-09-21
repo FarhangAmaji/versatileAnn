@@ -207,7 +207,7 @@ class temporalFusionTransformerModel(ann):
                     batchDfs.append(inputs.loc[idx:idx + encoderLength+ decoderLength-1, col1])
             batchInputs[col1]=batchDfs
         
-        batchInputs.update({col1:[self.rightPadSeriesBatch(df1,fullcastLen) for df1 in batchInputs[col1]] for col1 in allCols})#kkk is gonna be 
+        batchInputs.update({col1:[self.rightPadSeriesIfShorter(df1,fullcastLen) for df1 in batchInputs[col1]] for col1 in allCols})#kkk is gonna be 
         batchInputs.update({col1:self.stackListOfDfs(batchInputs[col1], False) for col1 in allCols})
         batchInputs.update({col: val.to(torch.float32) if col in externalKwargs['allReals'] else val for col, val in batchInputs.items()})
         
@@ -220,7 +220,7 @@ class temporalFusionTransformerModel(ann):
                 batchDfs.append(inputs.loc[idx+encoderLength:idx + encoderLength+ decoderLength-1, col1])
             batchOutputs[col1]=batchDfs
             
-        batchOutputs = {col1:[self.rightPadDf(df1,max(batchInputs['decoderLengths'])) for df1 in batchOutputs[col1]] for col1 in externalKwargs['targets']}
+        batchOutputs = {col1:[self.rightPadSeriesIfShorter(df1,max(batchInputs['decoderLengths'])) for df1 in batchOutputs[col1]] for col1 in externalKwargs['targets']}
         batchOutputs = {col1:self.stackListOfDfs(batchOutputs[col1]) for col1 in externalKwargs['targets']}
         batchOutputs= batchOutputs['volume']#kkk correct this in general
         
@@ -233,6 +233,7 @@ class temporalFusionTransformerModel(ann):
         return context[:, None].expand(-1, timesteps, -1)
 
     def forward(self, x):# x is a dictionary for each col used here and their shape is N*timesteps except encoderLengths and decoderLengths
+        #kkk correct the input structure due to the new getStallionTftDataloaders
         encoderLengths = x["encoderLengths"]# shape: N
         decoderLengths = x["decoderLengths"]# shape: N
         batchSize= len(encoderLengths)
