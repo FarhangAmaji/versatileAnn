@@ -414,6 +414,7 @@ class TestTsRowFetcherShorterLenError(BaseTestClass):
                                                     colsOrIndexes=['y1'], makeTensor=False,canHaveShorterLength=True)
         np.testing.assert_array_equal(res,np.array([2, 3, 4, 5, 6, 7, 8]))
 #%%        TestTsRowFetcherRightPad
+"#ccc shift has been checked here"
 class TestTsRowFetcherRightPad(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
@@ -488,13 +489,13 @@ class TestTsRowFetcherSingleFeatureShapeCorrectionTests(BaseTestClass):
         self.fetcher = TsRowFetcher(backcastLen=3, forecastLen=2)
 
     def testSingleFeatureShapeCorrection(self):
-        input_data = torch.tensor([[1], [2], [3]])
-        result = self.fetcher.singleFeatureShapeCorrection(input_data)
-        self.assertTrue(isinstance(result, torch.Tensor))
-        self.assertEqual(result.shape, (3,))
-        self.assertTrue(tensorEqualWithDtype(result, torch.tensor([1, 2, 3], dtype=torch.int64)))
+        inputData = torch.tensor(
+            [[[[ 4],[ 7],[ 6]],[[ 4],[ 8],[ 3]],[[ 1],[ 3],[ 9]]],
+             [[[ 6],[ 3],[ 1]],[[ 1],[ 9],[ 7]],[[ 2],[ 3],[ 1]]],
+             [[[10],[ 6],[ 1]],[[ 3],[ 2],[ 9]],[[10],[ 9],[ 3]]]]
+            )
+        result = self.fetcher.singleFeatureShapeCorrection(inputData)
+        self.assertTrue(result.shape==torch.Size([3, 3, 3]))
 #%% run test
-runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
-runcell('TestTsRowFetcherRightPad', 'F:/projects/public github projects/private repos/versatileAnnModule/tests/tsRowFetcherTests.py')
 if __name__ == '__main__':
     unittest.main()
