@@ -15,9 +15,9 @@ def isTensorable(obj):
 knownTypesToBeTensored=DotDict({
     #kkk add npDict and dotDict
     'directTensorables':DotDict({
-        'int':"<class 'int'>", 'float':"<class 'float'>", 'complex':"<class 'complex'>", 
-        'tuple':"<class 'tuple'>", 'npArray':"<class 'numpy.ndarray'>", 
-        'pdSeries':"<class 'pandas.core.series.Series'>", 
+        'int':"<class 'int'>", 'float':"<class 'float'>", 'complex':"<class 'complex'>",
+        'tuple':"<class 'tuple'>", 'npArray':"<class 'numpy.ndarray'>",
+        'pdSeries':"<class 'pandas.core.series.Series'>",
         'bool':"<class 'bool'>", 'bytearray': "<class 'bytearray'>"}),
 
     'tensor':
@@ -89,10 +89,10 @@ def updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=False):
         else:
             current[last_key].append(value)
 
-def appendValueToNestedDictPath(inputDictStyle, path, value):
+def appendValue_ToNestedDictPath(inputDictStyle, path, value):
     updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=False)
 
-def extendIfPossibleValueToNestedDictPath(inputDictStyle, path, value):
+def extendValueIfPossible_ToNestedDictPath(inputDictStyle, path, value):
     updateNestedDictPath(inputDictStyle, path, value, extendIfPossible=True)
 
 
@@ -128,6 +128,7 @@ class TensorStacker:
         return listOfNotTensorables
 
 class BatchStructTemplate(TensorStacker):
+    #kkk has been tested but no for every single detail
     #kkk move to collateUtils
     #kkk rename to collateStruct
     def __init__(self, inputDict):
@@ -154,21 +155,22 @@ class BatchStructTemplate(TensorStacker):
             return
         path=path[:]
         if len(itemToAdd)==0:#this is for the case we are retrieving an empty object, somewhere in the .dictStruct dictionaries' items
-            appendValueToNestedDictPath(self, path, {})
+            appendValue_ToNestedDictPath(self, path, {})
         for key, value in itemToAdd.items():
             path2=path+[key]
             if isinstance(value, dict):
                 self.fillWithData(value, path2)
             else:
-                appendValueToNestedDictPath(self, path2, value)
+                appendValue_ToNestedDictPath(self, path2, value)
                 #kkk this is making problems for shape or for set,...
 
     def assertIsBatchStructTemplateOrListOfBatchStructTemplates(obj):
-        assert isinstance(obj, BatchStructTemplate) or \
-        (isinstance(obj, list) and all([isinstance(it, BatchStructTemplate) for it in obj])),\
+        BatchStructTemplateInstanceCond=isinstance(obj, BatchStructTemplate)
+        listOfBatchStructTemplatesCond = (isinstance(obj, list) and all([isinstance(it, BatchStructTemplate) for it in obj]))
+        assert BatchStructTemplateInstanceCond or listOfBatchStructTemplatesCond, \
             'this is not, list of BatchStructTemplates or BatchStructTemplate type'
 
-    def fillSingleOrMultipleWithData(batchStructTemplates, itemsToAdd):
+    def fillSingleOrMultiple_WithItemData(batchStructTemplates, itemsToAdd):
         BatchStructTemplate.assertIsBatchStructTemplateOrListOfBatchStructTemplates(batchStructTemplates)
         if isinstance(batchStructTemplates, list):
             assert len(batchStructTemplates)==len(itemsToAdd),'batchStructTemplates and itemsToAdd dont have the same length'
@@ -211,7 +213,7 @@ class BatchStructTemplate(TensorStacker):
     def getBatchStructTensors(self):
         return self.getBatchStructValues(toTensor=True)
     
-    def getSingleOrMultipleBatchStructValues(batchStructTemplates, toTensor=False):
+    def getSingleOrMultiple_BatchStructValues(batchStructTemplates, toTensor=False):
         BatchStructTemplate.assertIsBatchStructTemplateOrListOfBatchStructTemplates(batchStructTemplates)
         if isinstance(batchStructTemplates, list):
             res=[]
@@ -221,8 +223,8 @@ class BatchStructTemplate(TensorStacker):
             res=batchStructTemplates.getBatchStructValues(toTensor)
         return res
 
-    def getSingleOrMultipleBatchStructTensors(batchStructTemplates):
-        return BatchStructTemplate.getSingleOrMultipleBatchStructValues(batchStructTemplates, toTensor=True)
+    def getSingleOrMultiple_BatchStructTensors(batchStructTemplates):
+        return BatchStructTemplate.getSingleOrMultiple_BatchStructValues(batchStructTemplates, toTensor=True)
 
     def __repr__(self):
         return str(self.dictStruct)
@@ -271,5 +273,5 @@ class VAnnTsDataloader(DataLoader):
         if not hasattr(self, 'batchStruct'):
             self.findBatchStruct(defaultCollateRes)
         batchStructCopy=copy.deepcopy(self.batchStruct)
-        BatchStructTemplate.fillSingleOrMultipleWithData(batchStructCopy, defaultCollateRes)
-        return BatchStructTemplate.getSingleOrMultipleBatchStructTensors(batchStructCopy)
+        BatchStructTemplate.fillSingleOrMultiple_WithItemData(batchStructCopy, defaultCollateRes)
+        return BatchStructTemplate.getSingleOrMultiple_BatchStructTensors(batchStructCopy)

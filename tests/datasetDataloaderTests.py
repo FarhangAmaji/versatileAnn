@@ -5,8 +5,8 @@ import unittest
 #%%
 "#ccc some of the tests related to dataset and TsRowFetcher are TsRowFetcherTests"
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath
-from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
+from dataPrep.dataloader import BatchStructTemplate, appendValue_ToNestedDictPath
+from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjInit
 from utils.vAnnGeneralUtils import DotDict, NpDict
 from utils.globalVars import tsStartPointColName
 import torch
@@ -170,15 +170,16 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
-#%% batch data tests
+#%% dataloader tests
+#%%     batch data tests
 class batchStructTemplateTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2],
                          'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
                          'a3':4,'a4':True}}
-        self.item1Res={'a':{'a1':bstObjFunc([2]),
-                         'a2':{'b1':bstObjFunc([2]),'b2':bstObjFunc({}),'b3':bstObjFunc(4),'b4':bstObjFunc(True)},
-                         'a3':bstObjFunc(4),'a4':bstObjFunc(True)}}
+        self.item1Res={'a':{'a1':bstObjInit([2]),
+                         'a2':{'b1':bstObjInit([2]),'b2':bstObjInit({}),'b3':bstObjInit(4),'b4':bstObjInit(True)},
+                         'a3':bstObjInit(4),'a4':bstObjInit(True)}}
 
     def test(self):
         self.setUp()
@@ -186,20 +187,20 @@ class batchStructTemplateTests(BaseTestClass):
         """#ccc seems to be a not secure way
         but because we have only batchStructTemplate and BatchStructTemplate_Non_BatchStructTemplate_Objects types with defined __repr__s
         so seems to be ok"""
-#%% appendValueToNestedDictPathTests
-class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
+#%%     appendValue_ToNestedDictPathTests
+class appendValue_ToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
     def setUp(self):
         self.item1 = {'a': {'a1': {'b1': []},
                      'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []},
                      'a3': [],
                      'a4': []}}
-        self.avtl=appendValueToNestedDictPath
+        self.avtl=appendValue_ToNestedDictPath
 
     def test1(self):
         self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 5)
         self.assertEqual(self.item1,{'a': {'a1': {'b1': [5]}, 'a2': {'b1': [], 'b2': [], 'b3': [], 'b4': []}, 'a3': [], 'a4': []}})
-        
+
     def test2(self):
         self.setUp()
         self.avtl(self.item1, ['a', 'a1', 'b1'], 6)
@@ -229,7 +230,7 @@ class appendValueToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
-#%% fillBatchStructWithDataTests
+#%%     fillBatchStructWithDataTests
 class fillBatchStructWithDataTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2,2.4],
@@ -262,6 +263,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
                     'df':{'df':pd.DataFrame({'y1': [8,7,16], 'y2': [14, 35, 61]}),
                           'series':pd.Series(np.array([6.5,7.2]))},
                      }}
+        "#ccc dictToFillRes is concat of item1 and item2 items"
         self.dictToFillRes={'a':{'a1':[[6.1,7.3],[2,2.4]],
                                  'a2':{'b1':[4.11, 3.4],'b2':[{}, {}],'b3':[53, 4],'b4':[False, True]},
                                  'a3':[np.array([[9.2,14.3],[6.1,1.1]]), np.array([[3.1,4.1],[5.1,6.1]])],
@@ -345,14 +347,14 @@ class fillBatchStructWithDataTests(BaseTestClass):
             'list2Elements':toTensorFunc([[i+.1, i+3.1] for i in range(10, 20)]),
             'tuple':toTensorFunc([i+.1 for i in range(10, 20)]),
             'set':[{i+.1 for i in range(10, 20)}],#kkk working correct for set because of append to BatchStruct .values
-            'listStr':[['fvb r' for i in range(10, 20)]],#kkk these extra [ ] around is because of appendValueToNestedDictPath
+            'listStr':[['fvb r' for i in range(10, 20)]],#kkk these extra [ ] around is because of appendValue_ToNestedDictPath
             'listBool':toTensorFunc([bool(i%5) for i in range(10, 20)]),
             'listNone':[[None for i in range(10, 20)]],
-            'dict':{'s':toTensorFunc([1])},#[1] is is because of appendValueToNestedDictPath
+            'dict':{'s':toTensorFunc([1])},#[1] is is because of appendValue_ToNestedDictPath
             'dotDict':[DotDict({'s':1})],#kkk didnt work for dotDict
             }
 
-    def testWithDictionaryDictStruct(self):
+    def testBatchStructTemplate_forADictItem(self):
         self.setUp()
         dictToFill=BatchStructTemplate(self.item1)
         dictToFill.fillWithData(self.item2)
@@ -361,7 +363,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         """#ccc seems to be a not secure way, but because we have verified types
         which are either default python types or torch, np, pd types so seems to be ok"""
 
-    def testWithNonDictionaryDictStruct(self):
+    def testBatchStructTemplate_forA_NonDictItem(self):
         self.setUp()
         dictToFill=BatchStructTemplate(self.item3)
         dictToFill.fillWithData(self.item3)
