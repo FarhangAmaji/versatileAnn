@@ -188,19 +188,23 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         self.assignData(data, mainGroups, useNpDictForDfs)
 
         if indexes is None:
-            assert (backcastLen==0 and forecastLen==0) or (isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns)\
-                or (isinstance(data, NpDict) and tsStartPointColName  in data.cols()),\
+            noBackNForeLenCond = backcastLen==0 and forecastLen==0
+            dfDataWith_tsStartPointColNameInColsCond = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
+            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols()
+
+            assert noBackNForeLenCond or dfDataWith_tsStartPointColNameInColsCond or npDictData_tsStartPointColNameInColsCond,\
                 VAnnTsDataset.noIndexesAssertionMsg
-            if isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns:
+
+            if dfDataWith_tsStartPointColNameInColsCond:
                 indexes=data[data[tsStartPointColName]==True].index
                 "#ccc note indexes has kept their values"
-            elif isinstance(data, NpDict) and tsStartPointColName  in data.cols():
+
+            elif npDictData_tsStartPointColNameInColsCond:
                 indexes=data.__index__[data['__startPoint__']==True]
                 indexes=[list(data.__index__).index(i) for i in indexes]
                 "#ccc note indexes for NpDict are according to their order"
         self.indexes = indexes
 
-        assert len(data)>=backcastLen + forecastLen,'the data provided should have a length greater equal than (backcastLen+forecastLen)'
         self.shapeWarning()
         self.noNanOrNoneDataAssertion()
         for key, value in kwargs.items():

@@ -3,100 +3,127 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
+"#ccc some of the tests related to dataset and TsRowFetcher are TsRowFetcherTests"
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import BatchStructTemplate, appendValueToNestedDictPath
 from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjFunc
 from utils.vAnnGeneralUtils import DotDict, NpDict
+from utils.globalVars import tsStartPointColName
 import torch
 import pandas as pd
 import numpy as np
 #%% dataset tests
-class VAnnTsDatasetNoIndexesAssertionTests(BaseTestClass):
+#%%         VAnnTsDataset_NoIndexesAssertionTests
+class VAnnTsDataset_NoIndexesAssertionTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, 7, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
 
-    def testDfNoIndexesNoStartPointNo0lens(self):
+    def testDf_NoIndexes_NoStartPoint_No0lens(self):
         self.setUp()
         self.df = self.df.drop('__startPoint__', axis=1)
         with self.assertRaises(AssertionError) as context:
             VAnnTsDataset(self.df, backcastLen=1, forecastLen=1, useNpDictForDfs=False)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
-    def testDfNoIndexesNoStartPoint0lens(self):
+    def testDf_NoIndexes_NoStartPoint_0lens(self):
         self.setUp()
         self.df=self.df.drop('__startPoint__', axis=1)
         dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
         self.assertTrue(dataset.indexes is None)
         self.assertEqual(len(dataset), 4)  # All rows should be included
 
-    def testDfNoIndexesWithStartPointNo0lens(self):
+    def testDf_NoIndexes_WithStartPoint_No0lens(self):
         self.setUp()
         dataset = VAnnTsDataset(self.df, backcastLen=1, forecastLen=1, useNpDictForDfs=False)
         self.assertTrue(list(dataset.indexes) == [9, 10])#ccc note indexes has kept their values
         self.assertEqual(len(dataset), 2)  # Only rows with '__startPoint__' as True should be included
 
-    def testDfNoIndexesWithStartPoint0lens(self):
+    def testDf_NoIndexes_WithStartPoint_0lens(self):
         self.setUp()
         dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
         self.assertTrue(list(dataset.indexes) == [9, 10])
         self.assertEqual(len(dataset), 2)  # Only rows with '__startPoint__' as True should be included
 
-    def testNpArrayNoIndexes0lens(self):
+    def testNpArray_NoIndexes_0lens(self):
         self.setUp()
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         dataset = VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
         self.assertTrue(dataset.indexes is None)
         self.assertEqual(len(dataset), 3)  # All rows should be included
 
-    def testNpArrayNoIndexesNo0lens(self):
+    def testNpArray_NoIndexes_No0lens(self):
         self.setUp()
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         with self.assertRaises(AssertionError) as context:
             VAnnTsDataset(npArray, backcastLen=1, forecastLen=1)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
-    def testNpDictNoIndexesWithStartPointNo0lens(self):
+    def testNpDict_NoIndexes_WithStartPoint_No0lens(self):
         self.setUp()
         npDict = NpDict(self.df)
         dataset = VAnnTsDataset(npDict, backcastLen=1, forecastLen=1)
         self.assertTrue(list(dataset.indexes) == [1, 2])
         self.assertEqual(len(dataset), 2)  # Only rows with '__startPoint__' as True should be included
 
-    def testNpDictNoIndexesNoStartPointNo0lens(self):
+    def testNpDict_NoIndexes_NoStartPoint_No0lens(self):
         self.setUp()
         npDict = NpDict(pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]}))
         with self.assertRaises(AssertionError) as context:
             VAnnTsDataset(npDict, backcastLen=1, forecastLen=1)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
-    def testNpArrayWithIndexesNo0lens(self):
+    def testNpArrayWithIndexes_No0lens(self):
         self.setUp()
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         indexes = [0, 2]  # Include only rows at index 0 and 2
         dataset = VAnnTsDataset(npArray, backcastLen=1, forecastLen=1, indexes=indexes)
         self.assertEqual(len(dataset), 2)  # Only specified indexes should be included
-
-class VAnnTsDatasetNoNanOrNoneDataAssertionTests(BaseTestClass):
+#%%         VAnnTsDataset_NoNanOrNoneDataAssertionTests
+class VAnnTsDataset_NoNanOrNoneDataAssertionTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, np.nan, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
 
-    def testDfWithStartPoint(self):
+    def testDf_WithStartPoint(self):
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(self.df, backcastLen=1, forecastLen=1, useNpDictForDfs=False)
         self.assertEqual(str(context.exception), "The DataFrame contains NaN values.")
 
-    def testNpDictWithStartPoint(self):
+    def testNpDict_WithStartPoint(self):
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(NpDict(self.df), backcastLen=1, forecastLen=1)
         self.assertEqual(str(context.exception), "The NpDict contains NaN values.")
 
-    def testNpArrayWithStartPoint(self):
+    def testNpArray_WithStartPoint(self):
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, np.nan]])
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
         self.assertEqual(str(context.exception), "The NumPy array contains NaN values.")
+#%%         VAnnTsDataset_NSeries_assignData
+class VAnnTsDataset_NSeries_assignData(BaseTestClass):
+    def setUp(self):
+        self.df = pd.DataFrame({
+            'A': 26*['A1'],
+            'B': 7*['B1']+19*['B2'],
+            tsStartPointColName: 3*[True]+4*[False]+15*[True]+4*[False],
+            'y1': list(range(30, 56)),
+            'y2': list(range(130, 156))},index=range(100, 126))
+        self.dataset=VAnnTsDataset(self.df,backcastLen=2, forecastLen=3, mainGroups=['A','B'], useNpDictForDfs=False)
+        self.expectedGroup1 = pd.DataFrame({'A': ['A1', 'A1', 'A1', 'A1', 'A1', 'A1', 'A1'],
+                                            'B': ['B1', 'B1', 'B1', 'B1', 'B1', 'B1', 'B1'],
+                                            '__startPoint__': [ True,  True,  True, False, False, False, False],
+                                            'y1': [30, 31, 32, 33, 34, 35, 36], 'y2': [130, 131, 132, 133, 134, 135, 136]}, index=list(range(100,107)))
+        self.expectedGroup2 = pd.DataFrame({'A': 19*['A1'], 'B': 19*['B2'],
+                                            '__startPoint__':15*[True]+4*[False], 'y1': list(range(37,56)),
+                                            'y2': list(range(137,156))}, index=list(range(107,126)))
 
-class VAnnTsDatasetGetItemTests(BaseTestClass):
+    def test(self):
+        self.assertTrue(list(self.dataset.data.keys())==[('A1', 'B1'), ('A1', 'B2')])
+        self.assertTrue(self.expectedGroup1.equals(self.dataset.data[('A1', 'B1')]))
+        self.assertTrue(self.expectedGroup2.equals(self.dataset.data[('A1', 'B2')]))
+#%%         VAnnTsDataset_NSeries_GetItemTests
+#kkk implement later
+#%%         VAnnTsDataset_NoNSeries_GetItemTests
+class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, 7, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
         self.npDict = NpDict(self.df)
