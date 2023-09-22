@@ -107,12 +107,15 @@ def tensorEqualWithDtype(tensor1, tensor2):
         return True
     return False
 #%% dfs
-def equalDfs(df1, df2, floatPrecision=0.0001):
+def equalDfs(df1, df2, checkIndex=True, floatPrecision=0.0001):
     #kkk needs tests
-    #kkk its not index sensetive
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
         return False
+
+    if checkIndex:    
+        if list(df1.index) != list(df2.index):
+                return False
 
     # Iterate through columns and compare them individually
     for col in df1.columns:
