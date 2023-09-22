@@ -1,10 +1,11 @@
+#%% imports
 import os
 import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
 from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast
-from utils.vAnnGeneralUtils import mpf as mpf
+from utils.vAnnGeneralUtils import morePreciseFloat as mpf
 import warnings
 #%%
 splitDefaultCondition=f'{tsStartPointColName} == True'
@@ -108,7 +109,8 @@ def splitTrainValTest_NSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
     for groupName in groupNames:
         testDf = pd.concat([testDf, groupedDfs[groupName][2]])
 
-    return trainDf, valDf, testDf
+    dropInd= lambda df: df.reset_index(drop=True)
+    return dropInd(trainDf), dropInd(valDf), dropInd(testDf)
 
 def calculateNSeriesMinDifference(df, mainGroups, valueCol, resultCol):
     minValues = df.groupby(mainGroups)[valueCol].transform('min')

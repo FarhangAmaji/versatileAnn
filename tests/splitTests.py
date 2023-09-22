@@ -1,8 +1,8 @@
 #%% 
 from tests.baseTest import BaseTestClass
 import unittest
-from dataPrep.utils import splitTsTrainValTest_DfNNpDict
-from utils.vAnnGeneralUtils import equalDfs
+from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_NSeries
+from utils.vAnnGeneralUtils import equalDfs, listRangesToList
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
@@ -161,6 +161,147 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         testCheckIndexes2=set(testCheckIndexes[:])
         getInd2s(testCheckIndexes2, testCheckIndexes)
         testDfCheck = getDf(testCheckIndexes2, testCheckIndexes)
+        self.assertTrue(equalDfs(testDf,testDfCheck))
+#%%     splitTrainValTest_NSeries
+class TestSplitTrainValTest_NSeries(BaseTestClass):
+    def setUp(self):
+        np.random.seed(seed=30)
+        self.df = pd.DataFrame({
+            'A': 66*['A1'],
+            'B': 27*['B1']+39*['B2'],
+            tsStartPointColName: 21*[True]+6*[False]+33*[True]+6*[False],
+            'y1': list(range(30, 96)),},index=range(100, 166))
+
+    def testNoStartPointCol_0seqLen_noShuffle(self):
+        df = self.df.drop(tsStartPointColName, axis=1)
+        trainDf, valDf, testDf=splitTrainValTest_NSeries(df, ["A","B"], trainRatio=.6, valRatio=.2, seqLen=0, shuffle=False)
+        
+        trainDfCheck = pd.DataFrame({
+            'A': 39*['A1'],
+            'B': 16*['B1']+23*['B2'],
+            tsStartPointColName: 39*[True],
+            'y1': listRangesToList([range(30, 46), range(57, 80)])},index=range(0, 39))
+
+        valDfCheck= pd.DataFrame({
+            'A': 13*['A1'],
+            'B': 5*['B1']+8*['B2'],
+            tsStartPointColName: 13*[True],
+            'y1': listRangesToList([range(46, 51), range(80, 88)])},index=range(0, 13))
+
+        testDfCheck = pd.DataFrame({
+            'A': 14*['A1'],
+            'B': 6*['B1']+8*['B2'],
+            tsStartPointColName: 14*[True],
+            'y1': listRangesToList([range(51, 57), range(88, 96)])},index=range(0, 14))
+
+        self.assertTrue(equalDfs(trainDf,trainDfCheck))
+        self.assertTrue(equalDfs(valDf,valDfCheck))
+        self.assertTrue(equalDfs(testDf,testDfCheck))
+
+    def testWithStartPointCol_withSeqLen_noShuffle(self):
+        trainDf, valDf, testDf=splitTrainValTest_NSeries(self.df, ["A","B"], trainRatio=.6, valRatio=.2, seqLen=7, shuffle=False)
+        
+        trainDfCheck = pd.DataFrame({
+            'A': 43*['A1'],
+            'B': 18*['B1']+25*['B2'],
+            tsStartPointColName: 12*[True]+6*[False]+19*[True]+6*[False],
+            'y1': listRangesToList([range(30, 48), range(57, 82)])},index=range(0, 43))
+
+        valDfCheck= pd.DataFrame({
+            'A': 23*['A1'],
+            'B': 10*['B1']+13*['B2'],
+            tsStartPointColName: [ True,  True,  True,  True, False, False, False, False, False,
+                   False,  True,  True,  True,  True,  True,  True,  True, False,
+                   False, False, False, False, False],
+            'y1': listRangesToList([range(42, 52), range(76, 89)])},index=range(0, 23))
+
+        testDfCheck = pd.DataFrame({
+            'A': 24*['A1'],
+            'B': 11*['B1']+13*['B2'],
+            tsStartPointColName: [ True,  True,  True,  True,  True, False, False, False, False,
+                   False, False,  True,  True,  True,  True,  True,  True,  True,
+                   False, False, False, False, False, False],
+            'y1': listRangesToList([range(46, 57), range(83, 96)])},index=range(0, 24))
+
+        self.assertTrue(equalDfs(trainDf,trainDfCheck))
+        self.assertTrue(equalDfs(valDf,valDfCheck))
+        self.assertTrue(equalDfs(testDf,testDfCheck))
+
+    def testWithDifferentSeqLen_noShuffle(self):
+        # having a condition doesnt make sense in general use cases, with seqlen, but it may does in some cases
+        df = self.df.drop(tsStartPointColName, axis=1)
+        trainDf, valDf, testDf=splitTrainValTest_NSeries(df, ["A","B"], trainRatio=.6, valRatio=.2,
+                                                         trainSeqLen=8, valSeqLen=4, testSeqLen=3, shuffle=False)
+        
+        trainDfCheck = pd.DataFrame({
+            'A': 51*['A1'],
+            'B': 22*['B1']+29*['B2'],
+            tsStartPointColName: [ True,  True,  True,  True,  True,  True,  True,  True,  True,
+                    True,  True,  True,  True,  True,  True, False, False, False,
+                   False, False, False, False,  True,  True,  True,  True,  True,
+                    True,  True,  True,  True,  True,  True,  True,  True,  True,
+                    True,  True,  True,  True,  True,  True,  True,  True, False,
+                   False, False, False, False, False, False],
+            'y1': listRangesToList([range(30, 52), range(57, 86)])},index=range(0, 51))
+
+        valDfCheck= pd.DataFrame({
+            'A': 18*['A1'],
+            'B': 8*['B1']+10*['B2'],
+            tsStartPointColName: [ True,  True,  True,  True,  True, False, False, False,  True,
+                    True,  True,  True,  True,  True,  True, False, False, False],
+            'y1': listRangesToList([range(45, 53), range(79, 89)])},index=range(0, 18))
+
+        testDfCheck = pd.DataFrame({
+            'A': 17*['A1'],
+            'B': 7*['B1']+10*['B2'],
+            tsStartPointColName: [ True,  True,  True,  True,  True, False, False,  True,  True,
+                    True,  True,  True,  True,  True,  True, False, False],
+            'y1': listRangesToList([range(50, 57), range(86, 96)])},index=range(0, 17))
+
+        self.assertTrue(equalDfs(trainDf,trainDfCheck))
+        self.assertTrue(equalDfs(valDf,valDfCheck))
+        self.assertTrue(equalDfs(testDf,testDfCheck))
+
+    def testWithStartPointCol_withSeqLen_Shuffle(self):
+        trainDf, valDf, testDf=splitTrainValTest_NSeries(self.df, ["A","B"], trainRatio=.6, valRatio=.2, seqLen=7, shuffle=True)
+        
+        trainDfCheck = pd.DataFrame({
+            'A': 61*['A1'],
+            'B': 24*['B1']+37*['B2'],
+            tsStartPointColName: [ True,  True, False,  True,  True, False,  True, False,  True,
+                    True,  True, False, False, False,  True,  True,  True,  True,
+                   False, False, False, False, False, False,  True,  True, False,
+                    True, False,  True,  True,  True,  True, False, False, False,
+                   False, False, False,  True, False,  True,  True,  True,  True,
+                   False,  True,  True,  True, False,  True, False,  True,  True,
+                    True, False, False, False, False, False, False],
+            'y1': listRangesToList([range(30, 54), range(59, 96)])},index=range(0, 61))
+
+        valDfCheck= pd.DataFrame({
+            'A': 58*['A1'],
+            'B': 23*['B1']+35*['B2'],
+            tsStartPointColName: [ True, False, False, False, False,  True, False, False, False,
+                    True, False, False, False, False, False, False,  True, False,
+                   False, False, False, False, False,  True, False, False,  True,
+                   False, False, False, False, False, False,  True, False, False,
+                   False,  True, False, False,  True, False, False, False, False,
+                    True, False, False, False, False, False,  True, False, False,
+                   False, False, False, False],
+            'y1': listRangesToList([range(32, 48), range(49, 56), range(58, 93)])},index=range(0, 58))
+
+        testDfCheck = pd.DataFrame({
+            'A': 52*['A1'],
+            'B': 22*['B1']+30*['B2'],
+            tsStartPointColName: [ True, False, False, False, False, False, False,  True,  True,
+                   False, False, False, False,  True, False,  True, False, False,
+                   False, False, False, False,  True, False, False, False, False,
+                   False,  True, False, False, False, False, False,  True,  True,
+                    True, False,  True, False, False, False, False, False, False,
+                    True, False, False, False, False, False, False],
+            'y1': listRangesToList([range(35, 80), range(84, 91)])},index=range(0, 52))
+
+        self.assertTrue(equalDfs(trainDf,trainDfCheck))
+        self.assertTrue(equalDfs(valDf,valDfCheck))
         self.assertTrue(equalDfs(testDf,testDfCheck))
 #%% run test
 if __name__ == '__main__':

@@ -157,6 +157,43 @@ def isIterable(obj):
         return True
     except TypeError:
         return False
+
+def listToRanges(inputList):
+    if not inputList:
+        return []
+
+    ranges = []
+    start = inputList[0]
+    end = inputList[0]
+
+    for num in inputList[1:]:
+        if num == end + 1:
+            end = num
+        else:
+            if start == end:
+                ranges.append(range(start, start + 1))
+            else:
+                ranges.append(range(start, end + 1))
+            start = end = num
+
+    if start == end:
+        ranges.append(range(start, start + 1))
+    else:
+        ranges.append(range(start, end + 1))
+
+    return ranges
+
+def listRangesToList(rangeList):
+    if not rangeList:
+        return []
+
+    assert all(isinstance(rg, range) for rg in rangeList), 'Not all items are ranges'
+    
+    res = []
+    for rg in rangeList:
+        res.extend(range(rg.start, rg.stop))
+    
+    return res
 #%% floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
