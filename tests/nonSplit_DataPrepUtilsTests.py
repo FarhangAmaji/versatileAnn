@@ -2,7 +2,9 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
-from dataPrep.utils import subtractFromIndexes, simpleSplit
+import pandas as pd
+from dataPrep.utils import subtractFromIndexes, simpleSplit, splitToNSeries, combineNSeries
+from utils.vAnnGeneralUtils import equalDfs
 #%% subtractFromIndexesTests
 class subtractFromIndexesTests(BaseTestClass):
     def setUp(self):
@@ -77,6 +79,45 @@ class subtractFromIndexesTests(BaseTestClass):
             valSeqLen = 37
             testSeqLen = 16
             self.assertLastInds(trainRatio,valRatio, trainSeqLen, valSeqLen, testSeqLen)
+#%% SplitNCombineNSeries
+class TestSplitNCombineNSeries(unittest.TestCase):
+    def setUp(self):
+        self.df = pd.DataFrame({
+            'dew': [20,31,18,37,26],
+            'Temperature_A': [20, 21, 22, 23, 24],
+            'Temperature_B': [30, 31, 32, 33, 34],
+            'Pressure_A': [1000, 1001, 1002, 1003, 1004],
+            'Pressure_B': [900, 901, 902, 903, 904]})
+
+        self.splittedDf = pd.DataFrame({
+            'dew':[20, 31, 18, 37, 26, 20, 31, 18, 37, 26,
+                   20, 31, 18, 37, 26, 20, 31, 18, 37, 26],
+            'Temperature':[20, 21, 22, 23, 24, 30, 31, 32, 33, 34, 
+                           20, 21, 22, 23, 24, 30, 31, 32, 33, 34],
+            'TemperatureType':['Temperature_A', 'Temperature_A', 'Temperature_A', 'Temperature_A', 'Temperature_A',
+                               'Temperature_B', 'Temperature_B', 'Temperature_B', 'Temperature_B', 'Temperature_B',
+                               'Temperature_A', 'Temperature_A', 'Temperature_A', 'Temperature_A', 'Temperature_A',
+                               'Temperature_B', 'Temperature_B', 'Temperature_B', 'Temperature_B', 'Temperature_B'],
+            'Pressure':[1000, 1001, 1002, 1003, 1004, 1000, 1001, 1002, 1003, 1004,
+                        900, 901,  902,  903,  904,  900,  901,  902,  903,  904],
+            'PressureType':['Pressure_A', 'Pressure_A', 'Pressure_A', 'Pressure_A', 'Pressure_A',
+                            'Pressure_A', 'Pressure_A', 'Pressure_A', 'Pressure_A', 'Pressure_A',
+                            'Pressure_B', 'Pressure_B', 'Pressure_B', 'Pressure_B', 'Pressure_B',
+                            'Pressure_B', 'Pressure_B', 'Pressure_B', 'Pressure_B', 'Pressure_B']})
+
+    def testSplit(self):
+        splitData = splitToNSeries(self.df, ['Temperature_A', 'Temperature_B'], 'Temperature')
+        splitData = splitToNSeries(splitData, ['Pressure_A', 'Pressure_B'], 'Pressure')
+
+        self.assertTrue(equalDfs(splitData, self.splittedDf))
+        return splitData
+
+    def testCombine(self):
+        splitData = self.testSplit()
+        comb1=combineNSeries(splitData, 'Temperature')
+        comb2=combineNSeries(comb1, 'Pressure')
+        
+        self.assertTrue(equalDfs(comb2, self.df))
 #%% run test
 if __name__ == '__main__':
     unittest.main()
