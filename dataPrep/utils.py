@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, morePreciseFloat
 import warnings
 #%%
 splitDefaultCondition=f'{tsStartPointColName} == True'
@@ -82,7 +82,7 @@ def combineNSeries(df, newColName, seriesTypes=None):
 def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], tailIndexesAsPossible=False):
-    "#ccc this makes sure that tailIndexes are also from this NSeries"
+    "#ccc this ensures that tailIndexes are also from this group of NSeries"
     grouped = df.groupby(mainGroups)
 
     groupedDfs = {}
@@ -148,22 +148,39 @@ def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAnte
     return indexes
 
 def ratiosCheck(trainRatio, valRatio):
-    trainRatio, valRatio=round(trainRatio,6), round(valRatio,6)
-    testRatio=round(1-trainRatio-valRatio,6)
-    assert round(sum([trainRatio, valRatio, testRatio]),6)==1, 'sum of train, val and test ratios must be 1'
+    trainRatio, valRatio=morePreciseFloat(trainRatio), morePreciseFloat(valRatio)
+    testRatio=morePreciseFloat(1-trainRatio-valRatio)
+    assert morePreciseFloat(sum([trainRatio, valRatio, testRatio]))==1, 'sum of train, val and test ratios must be 1'
     return trainRatio, valRatio, testRatio
 
-def simpleSplit(obj, trainRatio, valRatio):
+def simpleSplit(data, trainRatio, valRatio):
     trainRatio, valRatio, testRatio=ratiosCheck(trainRatio, valRatio)
-    train=obj[:int(trainRatio*len(obj))]
-    val=obj[int(trainRatio*len(obj)):int((trainRatio+valRatio)*len(obj))]
-    test=obj[int((trainRatio+valRatio)*len(obj)):]
+    trainEnd=int(morePreciseFloat(trainRatio) * len(data))
+    valEnd=int(morePreciseFloat(trainRatio + valRatio) * len(data))
+    train=data[:trainEnd]
+    val=data[trainEnd:valEnd]
+    test=data[valEnd:]
     return train, val, test
 
 def nontsStartPointsFalse(df):
     nonStartPointCondition=df[tsStartPointColName]!=True
     df.loc[nonStartPointCondition, tsStartPointColName]=False
     return df
+
+def subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen, valSeqLen, testSeqLen, isAnyConditionApplied):
+    "#ccc this is to prevent that each set(train/val/test)+its seqLen exceeds from last Index of indexes"
+    #kkk this implementation may have some utilized points
+    #ccc the problem of utilizing all points and keeping the order so train uses first items 
+    #... and val and test have next items is impossible for some case due to respondant seqLens
+    #... but without keeping the order, there may be some more complex algos to utilize all of the points and keep the set indexes together
+    if not isAnyConditionApplied:
+        maxLen=len(indexes)
+        for ratio, sl in zip([trainRatio, trainRatio + valRatio, 1],
+                              [trainSeqLen, valSeqLen           , testSeqLen]):
+          maxLen = min((len(indexes)+1-sl)/ratio, maxLen)
+        indexes = indexes[:int(maxLen)]
+
+    return indexes
 
 def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
@@ -192,28 +209,22 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
         df = df.df
         npDictUsed=True
     filteredDf = df.copy()
-
-    isCondtionsApplied=False
-    doQueryNTurnIsCondtionsApplied= lambda df,con,ica:(df.query(con),True)
+    
+    isAnyConditionApplied=False
+    doQueryNTurnisAnyConditionApplied= lambda df,con,ica:(df.query(con),True)
     for condition in conditions:
         if condition==splitDefaultCondition:
             try:
-                filteredDf, isCondtionsApplied = doQueryNTurnIsCondtionsApplied(filteredDf, condition, isCondtionsApplied)
+                filteredDf, isAnyConditionApplied = doQueryNTurnisAnyConditionApplied(filteredDf, condition, isAnyConditionApplied)
             except:
                 pass
         else:
-            filteredDf, isCondtionsApplied = doQueryNTurnIsCondtionsApplied(filteredDf, condition, isCondtionsApplied)
+            filteredDf, isAnyConditionApplied = doQueryNTurnisAnyConditionApplied(filteredDf, condition, isAnyConditionApplied)
     
-    indexes=np.array(filteredDf.index)
-    if isCondtionsApplied==False:
-        lenToSubtract=0
-        for endIdx,sl in zip([int(trainRatio*len(indexes)), int((trainRatio+valRatio)*len(indexes)), len(indexes)],
-                             [trainSeqLen,                  valSeqLen,                               testSeqLen]):
-            lenToSubtract=max(endIdx-len(indexes)+sl-1,lenToSubtract)
+    indexes=np.array(filteredDf.sort_index().index)
+    indexes = subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen,
+                                  valSeqLen, testSeqLen, isAnyConditionApplied)
 
-        if lenToSubtract>0:
-            indexes=indexes[:-lenToSubtract]
-    
     if shuffle:
         #kkk add compatibility to seed everything
         np.random.shuffle(indexes)
@@ -233,6 +244,7 @@ def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
             sequenceTailData=df.loc[sequenceTailIndexes]
         except:
             if tailIndexesAsPossible:
+                "#ccc having tailIndexesAsPossible makes it possible for datasets to fetch data with inEqual length"
                 sequenceTailIndexes=[sti for sti in sequenceTailIndexes if sti in dfIndexes]
                 sequenceTailData=df.loc[sequenceTailIndexes]    
             else:

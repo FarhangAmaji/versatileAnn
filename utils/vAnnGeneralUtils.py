@@ -157,3 +157,6 @@ def isIterable(obj):
         return True
     except TypeError:
         return False
+#%% floats
+def morePreciseFloat(num, precisionOrder=6):
+    return round(num,precisionOrder)
