@@ -3,7 +3,8 @@ import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, morePreciseFloat
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast
+from utils.vAnnGeneralUtils import mpf as mpf
 import warnings
 #%%
 splitDefaultCondition=f'{tsStartPointColName} == True'
@@ -79,7 +80,7 @@ def combineNSeries(df, newColName, seriesTypes=None):
         combinedData = pd.concat([combinedData, seriesData[colsNotPresentIn]], axis=1)
     return combinedData
 
-def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
+def splitTrainValTest_NSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], tailIndexesAsPossible=False):
     "#ccc this ensures that tailIndexes are also from this group of NSeries"
@@ -90,7 +91,7 @@ def splitTrainValTestNSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
     
     for groupName, groupDf in grouped:
         groupNames+=[groupName]
-        groupedDfs[groupName] = splitTsTrainValTestDfNNpDict(groupDf, trainRatio=trainRatio, valRatio=valRatio,
+        groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf, trainRatio=trainRatio, valRatio=valRatio,
                              seqLen=seqLen, trainSeqLen=trainSeqLen, valSeqLen=valSeqLen, testSeqLen=testSeqLen,
                               shuffle=shuffle, conditions=conditions, tailIndexesAsPossible=tailIndexesAsPossible,
                               giveStartPointsIndexes=False)
@@ -148,15 +149,15 @@ def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0, seqLenWithAnte
     return indexes
 
 def ratiosCheck(trainRatio, valRatio):
-    trainRatio, valRatio=morePreciseFloat(trainRatio), morePreciseFloat(valRatio)
-    testRatio=morePreciseFloat(1-trainRatio-valRatio)
-    assert morePreciseFloat(sum([trainRatio, valRatio, testRatio]))==1, 'sum of train, val and test ratios must be 1'
+    trainRatio, valRatio=mpf(trainRatio), mpf(valRatio)
+    testRatio=mpf(1-trainRatio-valRatio)
+    assert mpf(sum([trainRatio, valRatio, testRatio]))==1, 'sum of train, val and test ratios must be 1'
     return trainRatio, valRatio, testRatio
 
 def simpleSplit(data, trainRatio, valRatio):
     trainRatio, valRatio, testRatio=ratiosCheck(trainRatio, valRatio)
-    trainEnd=int(morePreciseFloat(trainRatio) * len(data))
-    valEnd=int(morePreciseFloat(trainRatio + valRatio) * len(data))
+    trainEnd=int(mpf(mpf(trainRatio) * len(data)))
+    valEnd=int(mpf(mpf(trainRatio + valRatio) * len(data)))
     train=data[:trainEnd]
     val=data[trainEnd:valEnd]
     test=data[valEnd:]
@@ -178,16 +179,15 @@ def subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen, valSeqLen, t
         for ratio, sl in zip([trainRatio, trainRatio + valRatio, 1],
                               [trainSeqLen, valSeqLen           , testSeqLen]):
           maxLen = min((len(indexes)+1-sl)/ratio, maxLen)
-        indexes = indexes[:int(maxLen)]
+        indexes = indexes[:int(mpf(maxLen))]
 
     return indexes
 
-def splitTsTrainValTestDfNNpDict(df, trainRatio, valRatio, seqLen=0,
+def splitTsTrainValTest_DfNNpDict(df, trainRatio, valRatio, seqLen=0,
                       trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                       shuffle=True, conditions=[splitDefaultCondition], tailIndexesAsPossible=False, giveStartPointsIndexes=False):
     #kkk needs tests
     #kkk do it also for other datatypes
-    #kkk splitTsTrainValTestDfNNpDict doesnt involve last point(in 'SplitTests.testWithSeqLen' here 109)
     """
     - for seq lens pass (backcastLen+ forecastLen)
     - note this func expects conditions which indicate the first point(older in time|backer in sequence), beginning of backcast point;

@@ -1,13 +1,14 @@
 #%% 
 from tests.baseTest import BaseTestClass
 import unittest
-from dataPrep.utils import splitTsTrainValTestDfNNpDict
+from dataPrep.utils import splitTsTrainValTest_DfNNpDict
 from utils.vAnnGeneralUtils import equalDfs
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
 #%% SplitTests
-class SplitTests(BaseTestClass):
+#%%     splitTsTrainValTest_DfNNpDict
+class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
     def setUp(self):
         np.random.seed(seed=30)
         self.backcastLen=3
@@ -21,16 +22,16 @@ class SplitTests(BaseTestClass):
 
     def testSeqLen0_NoShuffle(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.df, trainRatio=.7, valRatio=.2, seqLen=0, shuffle=False)
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.df, trainRatio=.7, valRatio=.2, seqLen=0, shuffle=False)
 
         trainDfCheck = pd.DataFrame({'y1': [i for i in range(10, 80)],
                                      'y2': [i for i in range(110, 180)]})
 
-        valDfCheck = pd.DataFrame({'y1': [i for i in range(80, 99)],
-                                   'y2': [i for i in range(180, 199)]})
+        valDfCheck = pd.DataFrame({'y1': [i for i in range(80, 100)],
+                                   'y2': [i for i in range(180, 200)]})
 
-        testDfCheck = pd.DataFrame({'y1': [i for i in range(99, 110)],
-                                    'y2': [i for i in range(199, 210)]})
+        testDfCheck = pd.DataFrame({'y1': [i for i in range(100, 110)],
+                                    'y2': [i for i in range(200, 210)]})
         trainDfCheck[tsStartPointColName]=True
         valDfCheck[tsStartPointColName]=True
         testDfCheck[tsStartPointColName]=True
@@ -40,7 +41,7 @@ class SplitTests(BaseTestClass):
 
     def testNoVal(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.df, trainRatio=.7, valRatio=0, seqLen=0, shuffle=False)
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.df, trainRatio=.7, valRatio=0, seqLen=0, shuffle=False)
 
         trainDfCheck = pd.DataFrame({'y1': [i for i in range(10, 80)],
                                      'y2': [i for i in range(110, 180)]})
@@ -58,7 +59,7 @@ class SplitTests(BaseTestClass):
 
     def testTsStartPointColNameCondition(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2, seqLen=0, shuffle=False)
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2, seqLen=0, shuffle=False)
 
         trainDfCheck = pd.DataFrame({'y1': [i for i in range(41, 86)],
                                      'y2': [i for i in range(141, 186)],
@@ -80,7 +81,7 @@ class SplitTests(BaseTestClass):
 
     def testWithSeqLen(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
                                                             seqLen=self.backcastLen+self.forecastLen, shuffle=False)
 
         trainDfCheck = pd.DataFrame({'y1': [i for i in range(41, 90)],
@@ -104,7 +105,7 @@ class SplitTests(BaseTestClass):
 
     def testOtherCondition(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
                                                 seqLen=self.backcastLen+self.forecastLen, shuffle=False,
                                                 conditions=['condCol>125','condCol<200'])
 
@@ -128,7 +129,7 @@ class SplitTests(BaseTestClass):
 
     def testShuffle_WithSeqLen_WithOtherCondition(self):
         self.setUp()
-        trainDf, valDf, testDf=splitTsTrainValTestDfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
+        trainDf, valDf, testDf=splitTsTrainValTest_DfNNpDict(self.dfWithCond, trainRatio=.7, valRatio=.2,
                                             seqLen=self.backcastLen+self.forecastLen, shuffle=True,conditions=['condCol>125','condCol<200'])
 
 
