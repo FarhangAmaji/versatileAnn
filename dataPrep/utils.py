@@ -4,7 +4,7 @@ import torch
 import pandas as pd
 import numpy as np
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol
 from utils.vAnnGeneralUtils import morePreciseFloat as mpf
 import warnings
 #%%
@@ -34,7 +34,7 @@ def getDatasetFiles(fileName: str, dateTimeCols=[],sortCols=[]):
         dataset=knownDatasetsDateTimeCols[fileName]
         convertDatetimeNSortCols(df, dataset['dateTimeCols'],dataset['sortCols'])
     else:
-        convertDateTimeCols(df, dateTimeCols, sortCols)
+        convertDatetimeNSortCols(df, dateTimeCols, sortCols)
     return df
 #%% multi series(NSeries) data
 def addCorrespondentRow(df, correspondentRowsDf, targets, summedColName, targetMapping={}):
@@ -165,10 +165,15 @@ def simpleSplit(data, trainRatio, valRatio):
     test=data[valEnd:]
     return train, val, test
 
-def nontsStartPointsFalse(df):
-    nonStartPointCondition=df[tsStartPointColName]!=True
+def regularizeTsStartPoints(df):
+    #kkk needs tests
+    regularizeBoolCol(df, tsStartPointColName)
+    nonTsStartPointsFalse(df)
+
+def nonTsStartPointsFalse(df):
+    "to make sure all non-True values are turned to False"
+    nonStartPointCondition =  df[tsStartPointColName]!=True
     df.loc[nonStartPointCondition, tsStartPointColName]=False
-    return df
 
 def subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen, valSeqLen, testSeqLen, isAnyConditionApplied):
     "#ccc this is to prevent that each set(train/val/test)+its seqLen exceeds from last Index of indexes"
@@ -258,6 +263,14 @@ def splitTsTrainValTest_DfNNpDict(df, trainRatio, valRatio, seqLen=0,
     trainDf, valDf, testDf=sets
     if npDictUsed:
         trainDf, valDf, testDf=NpDict(trainDf), NpDict(valDf), NpDict(testDf)
+    warningMade=False
+    for df_, ratio in zip([trainDf, valDf, testDf],[trainRatio, valRatio, testRatio]):
+        if mpf(ratio)!=0 and len(df_)==0:
+            warningMade=True
+    if warningMade:
+        warnings.warn("the backcastLen and forecastLen seem to be high. some of the sets(train|val|test) are empty")
+        #kkk make warnings type of vAnnWarning
+        #kkk maybe print warnings in colored background
     return trainDf, valDf, testDf
 #%% padding
 #%%      df & series
@@ -279,6 +292,7 @@ def rightPadSeries(series, padLen, pad=0):
 
 def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):
     #kkk do similar for left, and reduce all to another base func
+    #kkk could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     'also works with series'
     if isinstance(dfOrSeries, pd.DataFrame):
         tempDict={}
@@ -311,6 +325,7 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
 #%%      np array
 def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
     #kkk do similar for left, and reduce all to another base func
+    #kkk could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     if padLen <= 0:
         return arr
     currentLength = len(arr)
@@ -336,6 +351,7 @@ def rightPadNpArray(arr, padLen, pad=0):
 #%%      tensor
 def rightPadTensorBaseFunc(tensor, padLen, pad=0):
     #kkk do similar for left, and reduce all to another base func
+    #kkk could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     if padLen <= 0:
         return tensor
     currentLength = tensor.size(0)
