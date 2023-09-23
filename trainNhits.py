@@ -42,7 +42,7 @@ nHitsModel=nHits(blocks, backcastLen=110, forecastLen=22, externalKwargs=externa
 len(list(nHitsModel.parameters()))
 #%% preprocessTrainValTestData
 trainDataProcessed, valDataProcessed, testDataProcessed, scalers = nHitsModel.preprocessTrainValTestData(dfPath=r'.\data\datasets\EPF_FR_BE.csv', \
-    trainRatio=.7, valRatio=.15, ysCols=['yFR', 'yBE'], externalKwargs=externalKwargs, staticDfPath=r'.\data\datasets\EPF_FR_BE_static.csv')
+    trainRatio=.7, valRatio=.15, ysCols=['priceFr', 'priceBe'], externalKwargs=externalKwargs, staticDfPath=r'.\data\datasets\EPF_FR_BE_static.csv')
 #%%
 workerNum=8
 

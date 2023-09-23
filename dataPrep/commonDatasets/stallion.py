@@ -9,12 +9,12 @@ it has also these features:
     discounted price:'priceRegular', 'priceActual', 'discount', 'discountInPercent'
     population info:'avgPopulation2017', 'avgYearlyHouseholdIncome2017'
     specialDays:'easterDay',  'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
-                'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup','footballGoldCup',
+                'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup', 'footballGoldCup',
                 'beerCapital', 'musicFest'
 """
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from dataPrep.utils import getDatasetFiles, splitTrainValTestNSeries
+from dataPrep.utils import getDatasetFiles, splitTrainValTest_NSeries
 from dataPrep.normalizers import NormalizerStack, SingleColsLblEncoder, MainGroupSingleColsStdNormalizer, SingleColsStdNormalizer
 from models.temporalFusionTransformers_components import getEmbeddingSize
 #kkk replace this from a particular model, to general embedding files
@@ -26,7 +26,6 @@ from dataPrep.dataloader import VAnnTsDataloader
 from utils.globalVars import tsStartPointColName
 #%%
 #kkk explain timeVarying|static;real|categorical;known|unknown
-
 timeIdx='timeIdx'
 mainGroups=['agency', 'sku']
 target=['volume']
@@ -131,10 +130,10 @@ def getStallionTftProcessed(maxEncoderLength=24, maxPredictionLength=6, minEncod
     
     df[timeIdx]=normalizer.transformCol(df, timeIdx)
 
-    trainDf1, valDf1, testDf1=splitTrainValTestNSeries(df, mainGroups, trainRatio=.7, valRatio=.2,
+    trainDf1, valDf1, testDf1=splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7, valRatio=.2,
                        seqLen=maxEncoderLength+maxPredictionLength, shuffle=True, conditions=['fullLenConditions==True'])
 
-    trainDf2, valDf2, testDf2=splitTrainValTestNSeries(df, mainGroups, trainRatio=.7, valRatio=.2,
+    trainDf2, valDf2, testDf2=splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7, valRatio=.2,
                            seqLen=maxEncoderLength+maxPredictionLength, shuffle=True,
                            conditions=['notFullLenButMoreThanMinEncoderNPredictLenConditions==True'],tailIndexesAsPossible=True)
 

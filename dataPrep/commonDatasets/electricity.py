@@ -7,7 +7,7 @@ this data has ['date', 'consumerId', 'hourOfDay', 'dayOfWeek', 'powerUsage','day
 there are many date cols and consumerId and powerUsage cols
 this dataset has different consumer data which are treated as separate data sequences(NSeries)
 """
-from dataPrep.utils import getDatasetFiles, calculateNSeriesMinDifference, excludeValuesFromEnd_NSeries, splitTrainValTestNSeries
+from dataPrep.utils import getDatasetFiles, calculateNSeriesMinDifference, excludeValuesFromEnd_NSeries, splitTrainValTest_NSeries
 from dataPrep.normalizers import NormalizerStack, SingleColsStdNormalizer, SingleColsLblEncoder
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import VAnnTsDataloader
@@ -31,7 +31,7 @@ def getElectricityProcessed(backcastLen=192, forecastLen=1):
     normalizer=NormalizerStack(SingleColsStdNormalizer(['powerUsage','daysFromStart', 'hoursFromStart', 'dayOfMonth']),
                     SingleColsLblEncoder(mainGroups))#ccc if the mainGroup had more than 1 element, we could have used MultiColLblEncoder or MainGroupSingleColsLblEncoder
     normalizer.fitNTransform(df)
-    trainDf, valDf, testDf=splitTrainValTestNSeries(df, mainGroups, trainRatio=.7, valRatio=.2, seqLen=backcastLen+forecastLen, shuffle=True)
+    trainDf, valDf, testDf=splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7, valRatio=.2, seqLen=backcastLen+forecastLen, shuffle=True)
     return trainDf, valDf, testDf, normalizer
 #%% 
 class ElectricityDeepArDataset(VAnnTsDataset):

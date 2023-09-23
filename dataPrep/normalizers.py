@@ -3,13 +3,13 @@ import numpy as np
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from utils.vAnnGeneralUtils import NpDict, checkAllItemsInList1ExistInList2
+from utils.vAnnGeneralUtils import NpDict, areAllItemsInList1_ExistInList2
 #%% normalizers: base normalizers
 class StdScaler:
     def __init__(self, name=None):
         self.name = name
         self.scaler = StandardScaler()
-        
+
     @property
     def isFitted(self):
         return hasattr(self.scaler, 'mean_') and self.scaler.mean_ is not None
@@ -61,7 +61,7 @@ class LblEncoder:
             print(f'LblEncoder {self.name} is already fitted')
     
     def doesDataSeemToBeAlreadyTransformed(self, data):
-        return checkAllItemsInList1ExistInList2(np.unique(data), list(range(len(self.encoder.classes_))))
+        return areAllItemsInList1_ExistInList2(np.unique(data), list(range(len(self.encoder.classes_))))
         
     def transform(self, dataToFit):
         dataToFit= dataToFit.values.reshape(-1)
@@ -77,7 +77,7 @@ class LblEncoder:
             return dataToFit
 
     def doesdataToInverseTransformedSeemToBeAlreadyDone(self, data):
-        return checkAllItemsInList1ExistInList2(np.unique(data), list(self.encoder.classes_))
+        return areAllItemsInList1_ExistInList2(np.unique(data), list(self.encoder.classes_))
 
     def inverseTransform(self, dataToInverseTransformed):
         dataToInverseTransformed =dataToInverseTransformed.values.reshape(-1)
@@ -258,7 +258,7 @@ class SingleColsStdNormalizer(BaseSingleColsNormalizer):
         return self.scalers[col].transform(df[col])
 
     def __repr__(self):
-        return f"SingleColsStdNormalizer+{'_'.join(self.colNames)}"
+        return f"SingleColsStdNormalizer:{'_'.join(self.colNames)}"
 
 class SingleColsLblEncoder(BaseSingleColsNormalizer):
     def __init__(self, colNames:list):
@@ -293,7 +293,7 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
         return {col:enc.encoder.classes_ for col,enc in self.encoders.items()}
 
     def __repr__(self):
-        return f"SingleColsLblEncoder+{'_'.join(self.colNames)}"
+        return f"SingleColsLblEncoder:{'_'.join(self.colNames)}"
 #%% normalizers: BaseMultiColNormalizers
 class BaseMultiColNormalizer(BaseNormalizerChecks):
     def __init__(self):
@@ -379,7 +379,7 @@ class MultiColStdNormalizer(BaseMultiColNormalizer):
         return 'std:'+'_'.join(self.colNames)
 
     def __repr__(self):
-        return f"MultiColStdNormalizer+{'_'.join(self.colNames)}"
+        return f"MultiColStdNormalizer:{'_'.join(self.colNames)}"
 
 class MultiColLblEncoder(BaseMultiColNormalizer):
     def __init__(self, colNames):
@@ -399,7 +399,7 @@ class MultiColLblEncoder(BaseMultiColNormalizer):
         return 'lbl:'+'_'.join(self.colNames)
 
     def __repr__(self):
-        return f"MultiColLblEncoder+{'_'.join(self.colNames)}"
+        return f"MultiColLblEncoder:{'_'.join(self.colNames)}"
 #%% normalizers: MainGroupNormalizers
 class Combo:
     def __init__(self, defDict, mainGroupColNames):
@@ -558,7 +558,7 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
 #kkk (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its colNames or groupNames, undo and redo again
 #kkk add test for this
     def __repr__(self):
-        return f"MainGroupSingleColsStdNormalizer+{'_'.join(list(map(str, self.uniqueCombos)))}+{'_'.join(self.colNames)}"
+        return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
 class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
@@ -567,4 +567,4 @@ class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
     #kkk maybe add getClasses()
 
     def __repr__(self):
-        return f"MainGroupSingleColsLblEncoder+{'_'.join(list(map(str, self.uniqueCombos)))}+{'_'.join(self.colNames)}"
+        return f"MainGroupSingleColsLblEncoder:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"

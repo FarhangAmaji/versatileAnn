@@ -1,4 +1,4 @@
-dateTime,yFR,yBE,genForecast,systemLoad,weekDay
+dateTime,priceFr,priceBe,genForecast,systemLoad,weekDay
 1/1/2015 0:00,53.48,53.48,76905,74812,3
 1/1/2015 1:00,51.93,51.93,75492,71469,3
 1/1/2015 2:00,48.76,48.76,74394,69642,3
