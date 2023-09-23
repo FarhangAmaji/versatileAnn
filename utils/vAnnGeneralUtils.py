@@ -134,6 +134,10 @@ def equalDfs(df1, df2, checkIndex=True, floatPrecision=0.0001):
 
     # If all numeric columns are close, return True
     return True
+
+def regularizeBoolCol(df, colName):
+    assert areAllItemsInList1_ExistInList2(df[colName].unique(),[0.,1.,True,False]), "{colName} col doesnt seem to have boolean values"
+    df[colName] = df[colName].astype(bool)
 #%% np array
 def npArrayBroadCast(arr, shape):
     shape=tuple(shape)
@@ -144,7 +148,7 @@ def npArrayBroadCast(arr, shape):
     res= np.repeat(arr, repeatCount).reshape(shape)
     return res
 #%% lists
-def checkAllItemsInList1ExistInList2(list1, list2):
+def areAllItemsInList1_ExistInList2(list1, list2):
     setList2 = set(list2)
     for item in list1:
         if item not in setList2:
