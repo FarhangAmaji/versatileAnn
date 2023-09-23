@@ -58,11 +58,22 @@ class NpDict(DotDict):
         keys=list(self.data.keys())
         return keys
 
-    def getDict(self, resetDtype=False):
-        keys=self.cols()
+    def getDict(self, resetDtype=False, print=False):
         if resetDtype:
-            return {col: self[col].tolist() for col in keys}
-        return {col: self[col] for col in keys}
+            return {col: self[col].tolist() for col in self.cols()}
+        if print:
+            printRes="{"
+            for col in self.cols():
+                colRes=list(self[col])
+                if hasThisListAnyRange(colRes):
+                    colRes=listToRanges(colRes)
+                if '*' in similarItemsString(colRes):
+                    colRes=similarItemsString(colRes)
+                printRes+=f"'{col}': {colRes}, "
+            printRes+="}"
+            printRes=printRes.replace("\n", "")
+            return printRes
+        return {col: self[col] for col in self.cols()}
 
     def toDf(self, resetDtype=False):
         return pd.DataFrame(self.getDict(resetDtype),index=self.__index__,columns=self.cols())
@@ -201,6 +212,32 @@ def listRangesToList(rangeList):
         res.extend(range(rg.start, rg.stop))
     
     return res
+
+def hasThisListAnyRange(list):
+    return any([type(item)==range for item in list])
+
+def similarItemsString(inputList):
+    result = []
+    currentItem = inputList[0]
+    count = 1
+
+    for item in inputList[1:]:
+        if item == currentItem:
+            count += 1
+        else:
+            if count == 1:
+                result.append(f"[{currentItem}]")
+            else:
+                result.append(f"{count}*[{currentItem}]")
+            currentItem = item
+            count = 1
+
+    if count == 1:
+        result.append(f"[{currentItem}]")
+    else:
+        result.append(f"{count}*[{currentItem}]")
+
+    return '+'.join(result)
 #%% floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
