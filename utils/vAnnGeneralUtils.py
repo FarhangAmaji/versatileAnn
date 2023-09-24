@@ -58,22 +58,20 @@ class NpDict(DotDict):
         keys=list(self.data.keys())
         return keys
 
-    def getDict(self, resetDtype=False, print=False):
+    def getDict(self, resetDtype=False, print_=False):
         if resetDtype:
             return {col: self[col].tolist() for col in self.cols()}
-        if print:
-            printRes="{"
+        if not print_:
+            return {col: self[col] for col in self.cols()}
+        else:
+            print('{')
             for col in self.cols():
                 colRes=list(self[col])
                 if hasThisListAnyRange(colRes):
                     colRes=listToRanges(colRes)
-                if '*' in similarItemsString(colRes):
-                    colRes=similarItemsString(colRes)
-                printRes+=f"'{col}': {colRes}, "
-            printRes+="}"
-            printRes=printRes.replace("\n", "")
-            return printRes
-        return {col: self[col] for col in self.cols()}
+                colRes=similarItemsString(colRes)
+                print(f"'{col}': {colRes}, ")
+            print('}')
 
     def toDf(self, resetDtype=False):
         return pd.DataFrame(self.getDict(resetDtype),index=self.__index__,columns=self.cols())
