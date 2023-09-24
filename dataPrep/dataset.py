@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-from utils.vAnnGeneralUtils import NpDict, DotDict, floatDtypeChange
+from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange
 from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter, rightPadTensorIfShorter
 import warnings
 import pandas as pd
@@ -134,7 +134,7 @@ class TsRowFetcher:
         if isinstance(input_, pd.DataFrame):
             input_=input_.values
         tensor = torch.tensor(input_)
-        tensor = floatDtypeChange(tensor)
+        tensor = Tensor_floatDtypeChange(tensor)
         return tensor
 
     def getBackForeCastDataGeneral(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
@@ -182,28 +182,34 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk model should check device, backcastLen, forecastLen with this
     #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
     def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
-        super().__init__(backcastLen=backcastLen, forecastLen=forecastLen)
+        Dataset.__init__(self)
+        TsRowFetcher.__init__(self, backcastLen=backcastLen, forecastLen=forecastLen)
+        self.usedDfToNpInds = False
+        if indexes is None:
+            noBackNForeLenCond = backcastLen==0 and forecastLen==0
+            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
+            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
+        
+            assert noBackNForeLenCond or dfDataWith_tsStartPointColNameInCols \
+                or npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
+        
+            if  dfDataWith_tsStartPointColNameInCols:
+                indexes = data[data[tsStartPointColName]==True].index
+                "#ccc note indexes has kept their values"
+                if useNpDictForDfs:
+                    self.usedDfToNpInds = True
+        
+            elif npDictData_tsStartPointColNameInColsCond:
+                indexes=data.__index__[data['__startPoint__']==True]
+                indexes=[i for i in range(indexes)]
+                "#ccc note indexes for NpDict are according to their order"
+        self.indexes = list(indexes)
+
+        #kkk if splitNSeries is used, could add __hasMainGroups__ to the data, gets detected here
+        #... therefore prevents forgetting to assign mainGroups manually
         self.mainGroups = mainGroups
         self.mainGroupsIndexes = {}
         self.assignData(data, mainGroups, useNpDictForDfs)
-
-        if indexes is None:
-            noBackNForeLenCond = backcastLen==0 and forecastLen==0
-            dfDataWith_tsStartPointColNameInColsCond = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
-            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols()
-
-            assert noBackNForeLenCond or dfDataWith_tsStartPointColNameInColsCond or npDictData_tsStartPointColNameInColsCond,\
-                VAnnTsDataset.noIndexesAssertionMsg
-
-            if dfDataWith_tsStartPointColNameInColsCond:
-                indexes=data[data[tsStartPointColName]==True].index
-                "#ccc note indexes has kept their values"
-
-            elif npDictData_tsStartPointColNameInColsCond:
-                indexes=data.__index__[data['__startPoint__']==True]
-                indexes=[list(data.__index__).index(i) for i in indexes]
-                "#ccc note indexes for NpDict are according to their order"
-        self.indexes = indexes
 
         self.shapeWarning()
         self.noNanOrNoneDataAssertion()
@@ -212,36 +218,40 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def assignData(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
+            assert isinstance(data, pd.DataFrame) or isinstance(data, NpDict), \
+                'only pd.DataFrame or NpDict can have mainGroups defined'
+
             self.data={}
             if isinstance(data, NpDict):
-                self.doDataNMainGroupIndexes(data.df, mainGroups, convToNpDict=True)
+                self.doMainGroup_dataIndexes(data.df, mainGroups, convGroupData_ToNpDict=True)
             elif isinstance(data, pd.DataFrame):
                 if useNpDictForDfs:
-                    self.doDataNMainGroupIndexes(data, mainGroups, convToNpDict=True)
+                    self.doMainGroup_dataIndexes(data, mainGroups, convGroupData_ToNpDict=True)
+                    self.usedDfToNpInds = True
                 else:
-                    self.doDataNMainGroupIndexes(data, mainGroups)
+                    self.doMainGroup_dataIndexes(data, mainGroups)
             else:
                 assert False,'only pd.DataFrame and NpDicts can have mainGroups defined'
         else:
             if useNpDictForDfs and isinstance(data,pd.DataFrame):
                 self.data = NpDict(data)
+                self.usedDfToNpInds = True
             else:
                 self.data = data
 
-    def doDataNMainGroupIndexes(self, df, mainGroups, convToNpDict=False):
+    def doMainGroup_dataIndexes(self, df, mainGroups, convGroupData_ToNpDict=False):
         for groupName, groupDf in df.groupby(mainGroups):
-            if convToNpDict:
+            if convGroupData_ToNpDict:
                 self.data[groupName]=NpDict(groupDf)
             else:
                 self.data[groupName]=groupDf
-            self.mainGroupsIndexes[groupName]={'indexes':list(groupDf.index)}
+            self.mainGroupsIndexes[groupName]=[list(groupDf.index)]
 
     def findIdxInMainGroupsIndexes(self, idx):
         assert self.mainGroups,'dataset doesnt have mainGroups'
         for groupName in self.mainGroupsIndexes.keys():
-            if idx in self.mainGroupsIndexes[groupName]['indexes']:
-                relIdx=self.mainGroupsIndexes[groupName]['indexes'].index(idx)
-                return groupName, relIdx
+            if idx in self.mainGroupsIndexes[groupName]:
+                return groupName
         raise IndexError(f'{idx} is not in any of groups')
 
     def noNanOrNoneDataAssertion(self):
@@ -257,14 +267,20 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
                             canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
-        #kkk should go to dataset def and not here
+
         if self.mainGroups:
-            groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
+            groupName, relIdx = self.findIdxInMainGroupsIndexes(idx)
             dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
-            if isinstance(self.data[groupName], NpDict):
+
+            if self.usedDfToNpInds:
+                relIdx=self.mainGroupsIndexes[groupName].index(idx)
                 idx=relIdx
         else:
             dataToSendTo_getBackForeCastDataGeneral=self.data
+            if self.usedDfToNpInds:
+                relIdx=self.indexes.index(idx)
+                idx=relIdx
+
         return self.getBackForeCastDataGeneral(dataToSendTo_getBackForeCastDataGeneral,
                            idx=idx, mode=mode, colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
                            makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
