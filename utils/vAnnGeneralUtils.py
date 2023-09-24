@@ -221,23 +221,36 @@ def similarItemsString(inputList):
     currentItem = inputList[0]
     count = 1
 
+    def formatItem(item, count):
+        itemStr = f"'{item}'" if isinstance(item, str) else str(item)
+        return f"{count}*[{itemStr}]" if count > 1 else itemStr
+
     for item in inputList[1:]:
         if item == currentItem:
             count += 1
         else:
-            if count == 1:
-                result.append(f"[{currentItem}]")
-            else:
-                result.append(f"{count}*[{currentItem}]")
+            result.append(formatItem(currentItem, count))
             currentItem = item
             count = 1
 
-    if count == 1:
-        result.append(f"[{currentItem}]")
-    else:
-        result.append(f"{count}*[{currentItem}]")
+    result.append(formatItem(currentItem, count))
 
-    return '+'.join(result)
+    result2 = []
+    currRes2 = []
+    currResFormat= lambda currRes2:'[' + ', '.join(currRes2) + ']'
+
+    for item2 in result:
+        if '*' not in item2:
+            currRes2.append(item2)
+        else:
+            if currRes2:
+                result2.append(currResFormat(currRes2))
+                currRes2 = []
+            result2.append(item2)
+    if currRes2:
+        result2.append(currResFormat(currRes2))
+
+    return '+'.join(result2)
 #%% floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
