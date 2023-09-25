@@ -5,6 +5,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from utils.vAnnGeneralUtils import NpDict, areAllItemsInList1_ExistInList2
 #%% normalizers: base normalizers
+#kkk split to NSeries could have been some baseNormalizer and combine its reverse
 class StdScaler:
     def __init__(self, name=None):
         self.name = name

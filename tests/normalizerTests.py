@@ -14,9 +14,9 @@ class stdNormalizerTests(BaseTestClass):
     def __init__(self, *args, **kwargs):
         super(stdNormalizerTests, self).__init__(*args, **kwargs)
         self.expectedPrint={}
-        self.expectedPrint['testFitAgain']="""SingleColsStdNormalizer+col1_col2 col1 is already fitted
-SingleColsStdNormalizer+col1_col2 col2 is already fitted
-MultiColStdNormalizer+col3_col4 is already fitted
+        self.expectedPrint['testFitAgain']="""SingleColsStdNormalizer:col1_col2 col1 is already fitted
+SingleColsStdNormalizer:col1_col2 col2 is already fitted
+MultiColStdNormalizer:col3_col4 is already fitted
 """
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
@@ -77,9 +77,9 @@ class lblEncoderTest(stdNormalizerTests):
     def __init__(self, *args, **kwargs):
         super(lblEncoderTest, self).__init__(*args, **kwargs)
         self.expectedPrint={}
-        self.expectedPrint['testFitAgain']="""SingleColsLblEncoder+col1_col2 col1 is already fitted
-SingleColsLblEncoder+col1_col2 col2 is already fitted
-MultiColLblEncoder+col3_col4 is already fitted
+        self.expectedPrint['testFitAgain']="""SingleColsLblEncoder:col1_col2 col1 is already fitted
+SingleColsLblEncoder:col1_col2 col2 is already fitted
+MultiColLblEncoder:col3_col4 is already fitted
 """
 
     def transformSetUp(self):
