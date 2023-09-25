@@ -37,44 +37,44 @@ def getDatasetFiles(fileName: str, dateTimeCols=[],sortCols=[]):
         convertDatetimeNSortCols(df, dateTimeCols, sortCols)
     return df
 #%% multi series(NSeries) data
-def addCorrespondentRow(df, correspondentRowsDf, targets, summedColName, targetMapping={}):
+def addCorrespondentRow(df, correspondentRowsDf, targets, aggColName, targetMapping={}):
     if targetMapping=={}:
         targetMapping = {tr:idx for tr,idx in zip(targets, correspondentRowsDf.index)}
 
     for target in targets:
         if target in targetMapping:
             target_index = targetMapping[target]
-            condition = df[summedColName+'Type'] == target
+            condition = df[aggColName+'Type'] == target
             df.loc[condition, correspondentRowsDf.columns] = correspondentRowsDf.iloc[target_index].values
 
-def splitToNSeries(df, pastCols, summedColName):
-    assert summedColName not in df.columns,'splitToNSeries: summedColName must not be in df columns'
+def splitToNSeries(df, pastCols, aggColName):
+    assert aggColName not in df.columns,'splitToNSeries: aggColName must not be in df columns'
     processedData=pd.DataFrame({})
     otherCols= [col for col in df.columns if col not in pastCols]
     for i,pc in enumerate(pastCols):
         thisSeriesDf=df[otherCols+[pc]]
-        thisSeriesDf=thisSeriesDf.rename(columns={pc:summedColName})
-        thisSeriesDf[summedColName+'Type']=pc
+        thisSeriesDf=thisSeriesDf.rename(columns={pc:aggColName})
+        thisSeriesDf[aggColName+'Type']=pc
         processedData = pd.concat([processedData,thisSeriesDf]).reset_index(drop=True)
     return processedData
 
-def combineNSeries(df, summedColName, seriesTypes=None):
-    # Find unique values in the 'summedColName' column to identify different series
+def combineNSeries(df, aggColName, seriesTypes=None):
+    # Find unique values in the 'aggColName' column to identify different series
     if seriesTypes is None:
-        seriesTypes = df[summedColName + 'Type'].unique()
+        seriesTypes = df[aggColName + 'Type'].unique()
     
     combinedData = pd.DataFrame()
     
     for seriesType in seriesTypes:
         # Filter rows for the current series type
-        seriesData = df[df[summedColName + 'Type'] == seriesType].copy()
+        seriesData = df[df[aggColName + 'Type'] == seriesType].copy()
         seriesData=seriesData.reset_index(drop=True)
         
         # Rename the columns to the original column name
-        seriesData.rename(columns={summedColName: seriesType}, inplace=True)
+        seriesData.rename(columns={aggColName: seriesType}, inplace=True)
         
-        # Drop the type and summedColName column
-        seriesData.drop(columns=[summedColName + 'Type'], inplace=True)
+        # Drop the type and aggColName column
+        seriesData.drop(columns=[aggColName + 'Type'], inplace=True)
 
         colsNotPresentIn=[sc for sc in seriesData.columns if sc not in combinedData.columns]
         # Merge the current series into the combined data
