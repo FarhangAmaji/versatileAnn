@@ -29,7 +29,7 @@ class VAnnTsDataset_NoIndexesAssertionTests(BaseTestClass):
         self.setUp()
         self.df=self.df.drop('__startPoint__', axis=1)
         dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
-        self.assertTrue(dataset.indexes is None)
+        self.assertEqual(dataset.indexes, [0, 1, 2, 3])
         self.assertEqual(len(dataset), 4)  # All rows should be included
 
     def testDf_NoIndexes_WithStartPoint_No0lens(self):
@@ -48,7 +48,7 @@ class VAnnTsDataset_NoIndexesAssertionTests(BaseTestClass):
         self.setUp()
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         dataset = VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
-        self.assertTrue(dataset.indexes is None)
+        self.assertEqual(dataset.indexes, [0, 1, 2])
         self.assertEqual(len(dataset), 3)  # All rows should be included
 
     def testNpArray_NoIndexes_No0lens(self):

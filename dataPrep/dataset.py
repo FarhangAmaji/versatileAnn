@@ -189,20 +189,23 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             noBackNForeLenCond = backcastLen==0 and forecastLen==0
             dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
             npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
-        
+
             assert noBackNForeLenCond or dfDataWith_tsStartPointColNameInCols \
                 or npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
-        
+
             if  dfDataWith_tsStartPointColNameInCols:
                 indexes = data[data[tsStartPointColName]==True].index
                 "#ccc note indexes has kept their values"
                 if useNpDictForDfs:
                     self.usedDfToNpInds = True
-        
+
             elif npDictData_tsStartPointColNameInColsCond:
                 indexes=data.__index__[data['__startPoint__']==True]
-                indexes=[i for i in range(indexes)]
+                indexes=[list(data.__index__).index(i) for i in indexes]
                 "#ccc note indexes for NpDict are according to their order"
+        
+        if indexes is None:
+            indexes = [i for i in range(len(data))]
         self.indexes = list(indexes)
 
         #kkk if splitNSeries is used, could add __hasMainGroups__ to the data, gets detected here
@@ -245,7 +248,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                 self.data[groupName]=NpDict(groupDf)
             else:
                 self.data[groupName]=groupDf
-            self.mainGroupsIndexes[groupName]=[list(groupDf.index)]
+            self.mainGroupsIndexes[groupName]=list(groupDf.index)
 
     def findIdxInMainGroupsIndexes(self, idx):
         assert self.mainGroups,'dataset doesnt have mainGroups'
@@ -256,7 +259,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def noNanOrNoneDataAssertion(self):
         noNanOrNoneData(self.data)
-    
+
     def shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape
@@ -269,7 +272,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                             canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
 
         if self.mainGroups:
-            groupName, relIdx = self.findIdxInMainGroupsIndexes(idx)
+            groupName = self.findIdxInMainGroupsIndexes(idx)
             dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
 
             if self.usedDfToNpInds:
@@ -287,14 +290,14 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                            canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
 
     def __len__(self):
-        if self.indexes is None:
-            return len(self.data)
         return len(self.indexes)
 
     def __getitem__(self, idx):
         self.assertIdxInIndexes(idx)
         if self.mainGroups:
             groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
+            if self.usedDfToNpInds:
+                relIdx=self.mainGroupsIndexes[groupName].index(idx)
             if isinstance(self.data[groupName], NpDict):
                 return self.data[groupName][:][relIdx]
             return self.data[groupName].loc[idx]
