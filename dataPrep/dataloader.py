@@ -1,6 +1,6 @@
 import torch
-from torch.utils.data import DataLoader
-from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, floatDtypeChange, isIterable
+from torch.utils.data import DataLoader, Sampler
+from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, Tensor_floatDtypeChange, isIterable
 from torch.utils.data.dataloader import default_collate
 import copy
 #%% batch structure detection
@@ -102,7 +102,7 @@ class TensorStacker:
 
     def stackTensors(self, list_):
         stackTensor=torch.stack(list_).to(self.device)
-        stackTensor = floatDtypeChange(stackTensor)
+        stackTensor = Tensor_floatDtypeChange(stackTensor)
         return stackTensor
 
     def stackListOfErrorPronesToTensor(self, listOfErrorPrones):
@@ -228,21 +228,37 @@ class BatchStructTemplate(TensorStacker):
 
     def __repr__(self):
         return str(self.dictStruct)
+#%% SamplerFor_vAnnTsDataset
+class SamplerFor_vAnnTsDataset(Sampler):
+    "#ccc this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset"
+    def __init__(self, dataset):
+        self.indexes = dataset.indexes
+
+    def __iter__(self):
+        return iter(self.indexes)
+
+    def __len__(self):
+        return len(self.indexes)
 #%% VAnnTsDataloader
 class VAnnTsDataloader(DataLoader):
     #kkk needs tests
     #kkk num_workers>0 problem
     #kkk seed everything
     #kkk can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
-    def __init__(self, dataset, batch_size=64, collate_fn=None, doBatchStructureCheckOnAllData=False, *args, **kwargs):
+    def __init__(self, dataset, batch_size=64, collate_fn=None, sampler=None, doBatchStructureCheckOnAllData=False, *args, **kwargs):
         if 'batchSize' in kwargs.keys():
             batch_size=kwargs['batchSize']
 
         if collate_fn is None:
-            collate_fn=self.commonCollate_fn
-        super().__init__(dataset, batch_size=batch_size, collate_fn=collate_fn, *args, **kwargs)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            collate_fn = self.commonCollate_fn
+        if sampler is None:
+            sampler = SamplerFor_vAnnTsDataset(dataset)
+        super().__init__(dataset=dataset, batch_size=batch_size, collate_fn=collate_fn,
+                         sampler=sampler, shuffle=False,*args, **kwargs)
+        #kkk I cant put the shuffle=True, because dataloader doesnt accept the shuffle True and the sampler together
+        #... but we have to pass the sampler always, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
         #kkk make it compatible to self.device of vAnn
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         if doBatchStructureCheckOnAllData:
             self.doBatchStructureCheckOnAllData()
 
