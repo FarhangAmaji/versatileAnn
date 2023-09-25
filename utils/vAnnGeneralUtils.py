@@ -122,7 +122,7 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
         # Check if the tensors are equal with precision
         equalVals = torch.allclose(tensor1, tensor2, atol=floatPrecision)
     else:
-        equalVals = torch.allclose(tensor1, tensor2, atol=1e-16)
+        equalVals = torch.equal(tensor1, tensor2)
 
     deviceEqual=True
     # If checkDevice is True, also check if tensors are on the same device
@@ -185,7 +185,7 @@ def equalArrays(array1, array2, checkType=True, floatApprox=False, floatPrecisio
         # Check if the arrays are equal with precision
         equalVals = np.allclose(array1, array2, atol=floatPrecision)
     else:
-        equalVals=np.allclose(array1, array2, atol=1e-16)
+        equalVals=np.array_equal(array1, array2)
 
     # Return True if both data type and precision are equal
     return dtypeEqual and equalVals
