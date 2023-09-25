@@ -105,18 +105,32 @@ class NpDict(DotDict):
         tempDf=tempDf.reset_index(drop=True)
         return str(tempDf)
 #%% tensor
-def floatDtypeChange(tensor):
+def Tensor_floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
         tensor = tensor.to(torch.float32)
         #kkk make it compatible to global precision
     return tensor
 
-def tensorEqualWithDtype(tensor1, tensor2):
-    if torch.equal(tensor1, tensor2) and tensor1.dtype == tensor2.dtype:
-        return True
-    return False
+def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-4, checkDevice=True):
+    dtypeEqual = True
+    if checkType:
+        # Check if the data types are equal
+        dtypeEqual = tensor1.dtype==tensor2.dtype
+
+    equalVals = True
+    if floatApprox:
+        # Check if the tensors are equal with precision
+        equalVals = torch.allclose(tensor1, tensor2, atol=floatPrecision)
+    else:
+        equalVals = torch.allclose(tensor1, tensor2, atol=1e-16)
+
+    deviceEqual=True
+    # If checkDevice is True, also check if tensors are on the same device
+    if checkDevice:
+        deviceEqual = tensor1.device == tensor2.device
+    return dtypeEqual and equalVals and deviceEqual
 #%% dfs
-def equalDfs(df1, df2, checkIndex=True, floatPrecision=0.0001):
+def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
     #kkk needs tests
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
@@ -126,23 +140,26 @@ def equalDfs(df1, df2, checkIndex=True, floatPrecision=0.0001):
         if list(df1.index) != list(df2.index):
                 return False
 
-    # Iterate through columns and compare them individually
-    for col in df1.columns:
-        if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
-            # Check if all elements in the numeric column are close
-            if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
-                return False
-        else:
-            if any([pd.api.types.is_numeric_dtype(df1[col]), pd.api.types.is_numeric_dtype(df2[col])]):
-                npd1=NpDict(df1).getDict(True)
-                npd2=NpDict(df2).getDict(True)
-                if any([pd.api.types.is_numeric_dtype(npd1[col]), pd.api.types.is_numeric_dtype(npd2[col])]):
+    if floatApprox:    
+        # Iterate through columns and compare them individually
+        for col in df1.columns:
+            if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
+                # Check if all elements in the numeric column are close
+                if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
                     return False
-            # If the column is non-numeric, skip the check
-            continue
-
-    # If all numeric columns are close, return True
-    return True
+            else:
+                if any([pd.api.types.is_numeric_dtype(df1[col]), pd.api.types.is_numeric_dtype(df2[col])]):
+                    npd1=NpDict(df1).getDict(True)
+                    npd2=NpDict(df2).getDict(True)
+                    if any([pd.api.types.is_numeric_dtype(npd1[col]), pd.api.types.is_numeric_dtype(npd2[col])]):
+                        return False
+                # If the column is non-numeric, skip the check
+                continue
+    
+        # If all numeric columns are close, return True
+        return True
+    else:
+        return df1.equals(df2)
 
 def regularizeBoolCol(df, colName):
     assert areAllItemsInList1_ExistInList2(df[colName].unique(),[0.,1.,True,False]), "{colName} col doesnt seem to have boolean values"
@@ -156,6 +173,22 @@ def npArrayBroadCast(arr, shape):
     repeatCount=np.prod(shape[arrShapeLen:])
     res= np.repeat(arr, repeatCount).reshape(shape)
     return res
+
+def equalArrays(array1, array2, checkType=True, floatApprox=False, floatPrecision=1e-4):
+    dtypeEqual = True
+    if checkType:
+        # Check if the data types are equal
+        dtypeEqual = array1.dtype==array2.dtype
+
+    equalVals = True
+    if floatApprox:    
+        # Check if the arrays are equal with precision
+        equalVals = np.allclose(array1, array2, atol=floatPrecision)
+    else:
+        equalVals=np.allclose(array1, array2, atol=1e-16)
+
+    # Return True if both data type and precision are equal
+    return dtypeEqual and equalVals
 #%% lists
 def areAllItemsInList1_ExistInList2(list1, list2):
     setList2 = set(list2)

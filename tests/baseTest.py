@@ -1,6 +1,7 @@
 import unittest
 import sys
 import io
+from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors
 #%%
 class BaseTestClass(unittest.TestCase):
     def assertPrint(self, testFunc, expectedPrint):
@@ -21,3 +22,12 @@ class BaseTestClass(unittest.TestCase):
         finally:
             # Restore the original stdout even if an exception occurs
             sys.stdout = sys.__stdout__
+
+    def equalDfs(self, df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+        self.assertTrue(equalDfs(df1, df2, checkIndex=checkIndex, floatApprox=floatApprox, floatPrecision=floatPrecision))
+
+    def equalArrays(self, array1, array2, checkType=True, floatApprox=False, floatPrecision=1e-4):
+        self.assertTrue(equalArrays(array1, array2, checkType=checkType, floatApprox=floatApprox, floatPrecision=floatPrecision))
+
+    def equalTensors(self, tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-4, checkDevice=True):
+        self.assertTrue(equalTensors(tensor1, tensor2, checkType=checkType, floatApprox=floatApprox, floatPrecision=floatPrecision, checkDevice=checkDevice))
