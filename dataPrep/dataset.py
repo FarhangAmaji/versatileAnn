@@ -182,9 +182,11 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk model should check device, backcastLen, forecastLen with this
     #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
     def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
+        "#ccc 3 types of indexes(indexes, mainGroupsIndexes, dfToNpIndexes) are used(some of them in cases together) for different cases"
         Dataset.__init__(self)
         TsRowFetcher.__init__(self, backcastLen=backcastLen, forecastLen=forecastLen)
-        self.usedDfToNpInds = False
+        self.didDfToNp = False
+        self.dfToNpIndexes = []
         if indexes is None:
             noBackNForeLenCond = backcastLen==0 and forecastLen==0
             dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
@@ -194,15 +196,20 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                 or npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
 
             if  dfDataWith_tsStartPointColNameInCols:
-                indexes = data[data[tsStartPointColName]==True].index
-                "#ccc note indexes has kept their values"
+                indexes = list(data[data[tsStartPointColName]==True].index)
+                "#ccc note indexes are same as df.index"
                 if useNpDictForDfs:
-                    self.usedDfToNpInds = True
+                    self.didDfToNp = True
+                    self.dfToNpIndexes = list(data.index)
 
-            elif npDictData_tsStartPointColNameInColsCond:
+            elif npDictData_tsStartPointColNameInColsCond and not mainGroups:
                 indexes=data.__index__[data['__startPoint__']==True]
                 indexes=[list(data.__index__).index(i) for i in indexes]
-                "#ccc note indexes for NpDict are according to their order"
+                "#ccc note indexes for NpDict with no mainGroups, are according to their order from beginning of the arrays"
+
+            elif npDictData_tsStartPointColNameInColsCond and mainGroups:
+                "#ccc note with NpDict with mainGroups, we use its df indexes"
+                indexes = list(data.__index__[data['__startPoint__']==True])
         
         if indexes is None:
             indexes = [i for i in range(len(data))]
@@ -212,6 +219,8 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         #... therefore prevents forgetting to assign mainGroups manually
         self.mainGroups = mainGroups
         self.mainGroupsIndexes = {}
+        """#ccc when we have mainGroups, mainGroupsIndexes contain allIndexes
+        and the check of if the point is possible start for start point done by self.indexes and in assertIdxInIndexes"""
         self.assignData(data, mainGroups, useNpDictForDfs)
 
         self.shapeWarning()
@@ -230,7 +239,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             elif isinstance(data, pd.DataFrame):
                 if useNpDictForDfs:
                     self.doMainGroup_dataIndexes(data, mainGroups, convGroupData_ToNpDict=True)
-                    self.usedDfToNpInds = True
+                    self.didDfToNp = True
                 else:
                     self.doMainGroup_dataIndexes(data, mainGroups)
             else:
@@ -238,7 +247,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         else:
             if useNpDictForDfs and isinstance(data,pd.DataFrame):
                 self.data = NpDict(data)
-                self.usedDfToNpInds = True
+                self.didDfToNp = True
             else:
                 self.data = data
 
@@ -275,12 +284,12 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             groupName = self.findIdxInMainGroupsIndexes(idx)
             dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
 
-            if self.usedDfToNpInds:
+            if self.didDfToNp:
                 relIdx=self.mainGroupsIndexes[groupName].index(idx)
                 idx=relIdx
         else:
             dataToSendTo_getBackForeCastDataGeneral=self.data
-            if self.usedDfToNpInds:
+            if self.didDfToNp:
                 relIdx=self.indexes.index(idx)
                 idx=relIdx
 
@@ -295,16 +304,21 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     def __getitem__(self, idx):
         self.assertIdxInIndexes(idx)
         if self.mainGroups:
-            groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
-            if self.usedDfToNpInds:
-                relIdx=self.mainGroupsIndexes[groupName].index(idx)
+            groupName=self.findIdxInMainGroupsIndexes(idx)
             if isinstance(self.data[groupName], NpDict):
+                relIdx=self.mainGroupsIndexes[groupName].index(idx)
                 return self.data[groupName][:][relIdx]
             return self.data[groupName].loc[idx]
+
         else:
             if isinstance(self.data, (pd.DataFrame, pd.Series)):
                 return self.data.loc[idx]
+
             elif isinstance(self.data, NpDict):
+                if self.didDfToNp:
+                    relIdx=self.dfToNpIndexes.index(idx)
+                    return self.data[:][relIdx]
                 return self.data[:][idx]
+
             elif isinstance(self.data, (np.ndarray, torch.Tensor)):
                 return self.data[idx]
