@@ -177,64 +177,102 @@ class TsRowFetcher:
         return res
 #%% VAnnTsDataset
 class VAnnTsDataset(Dataset, TsRowFetcher):
-    noIndexesAssertionMsg="u have to pass indexes unless both backcastLen and forecastLen are 0, or u have passed a pd df or NpDict with __startPoint__ column"
+    noIndexesAssertionMsg = "u have to pass indexes unless both backcastLen and forecastLen are 0," + \
+                            " or u have passed a pd df or NpDict with __startPoint__ column"
     #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
     #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
     def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
         Dataset.__init__(self)
         TsRowFetcher.__init__(self, backcastLen=backcastLen, forecastLen=forecastLen)
-        self.didDfToNp = False
-        self.dfToNpIndexes = []
-        if indexes is None:
-            noBackNForeLenCond = backcastLen==0 and forecastLen==0
-            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
-            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
-
-            assert noBackNForeLenCond or dfDataWith_tsStartPointColNameInCols \
-                or npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
-
-            if  dfDataWith_tsStartPointColNameInCols:
-                indexes = list(data[data[tsStartPointColName]==True].index)
-                "#ccc note indexes are same as df.index"
-                if useNpDictForDfs:
-                    self.didDfToNp = True
-                    self.dfToNpIndexes = list(data.index)
-
-            elif npDictData_tsStartPointColNameInColsCond and not mainGroups:
-                indexes=data.__index__[data['__startPoint__']==True]
-                indexes=[list(data.__index__).index(i) for i in indexes]
-                "#ccc note indexes for NpDict with no mainGroups, are according to their order from beginning of the arrays"
-
-            elif npDictData_tsStartPointColNameInColsCond and mainGroups:
-                "#ccc note with NpDict with mainGroups, we use its df indexes"
-                indexes = list(data.__index__[data['__startPoint__']==True])
+        """#ccc
+        VAnnTsDataset provides datachecking based on allowance. its also works with grouped(Nseries) data,
+        to prevent data scrambling between groups data.
         
-        if indexes is None:
-            indexes = [i for i in range(len(data))]
-        self.indexes = list(indexes)
+        types of data allowed:
+            the data passed is either:
+                1. NpDict(type of object, wrapped arround pd.dfs to act like df and a dictionary of np.arrays)
+                2. pd.df
+                    a. with useNpDictForDfs=False
+                    b. with useNpDictForDfs=True, which gonna be converted to NpDict
+                3. other types if:
+                    a. indexes is passed
+                    b. both of backcastLen and forecastLen are 0
+            note 1, 2.a and 2.b are called "mainTypes"
 
-        self.setIndexes(data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen)
+        allowance:
+            in timeseries data we want to get next rows of data.
+            so (except in rare cases of allowing incomplete sequence lengths, for zeropad if its gonna be incomplete),
+            we need to dont allow some point which can't provide the next complete row.
+            note allowance comes from the fact the backcast and forecast lens should not be allowed as tsStartingPoints.
+            for i.e. if the seq len is 4, with data=[1, 2, 3, 4, 5, 6], only 1,2,3 are allowed.
+            
+            note the allowance is not determined here, and its should be provides either with `indexes` passed 
+            to dataset or with having `__startPoint__` in cols of df or NpDict.
+        """
+        
+        self._setIndexes(data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen)
+
         #kkk if splitNSeries is used, could add __hasMainGroups__ to the data, gets detected here
         #... therefore prevents forgetting to assign mainGroups manually
         self.mainGroups = mainGroups
-        self.mainGroupsIndexes = {}
-        """#ccc when we have mainGroups, mainGroupsIndexes contain allIndexes
-        and the check of if the point is possible start for start point done by self.indexes and in assertIdxInIndexes"""
-        self.assignData(data, mainGroups, useNpDictForDfs)
+        self.mainGroupsGeneralIdxs={}
+        self.mainGroupsRelIdxs = {}
+        self._assignData_NMainGroupsIdxs(data, mainGroups, useNpDictForDfs)
 
-        self.shapeWarning()
-        self.noNanOrNoneDataAssertion()
+        self._shapeWarning()
+        self._noNanOrNoneDataAssertion()
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def setIndexes(self, data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen):
+    def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
+                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
+        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+
+        dataToLook, idx = self._dataNIdxWhileFetching(idx)
+
+        return self.getBackForeCastDataGeneral(dataToLook, idx=idx, mode=mode,
+                           colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
+                           makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
+                           canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+
+    def __len__(self):
+        return len(self.indexes)
+
+    def __getitem__(self, idx):
+        self.assertIdxInIndexes(idx)
+        if isinstance(self.data, NpDict):
+            dataToLook, idx = self._dataNIdxWhileFetching(idx)
+            return dataToLook[idx]
+        elif isinstance(self.data, pd.DataFrame):
+            dataToLook, idx = self._dataNIdxWhileFetching(idx)
+            return dataToLook.loc[idx]
+        elif isinstance(self.data, (np.ndarray, torch.Tensor)):
+                return self.data[idx]
+
+    def _dataNIdxWhileFetching(self, idx):
+        if self.mainGroups:
+            groupName = self._findIdxInmainGroupsRelIdxs(idx)
+            dataToLook=self.data[groupName]
+
+            if isinstance(self.data[groupName], NpDict):
+                relIdx = self.mainGroupsGeneralIdxs[groupName].index(idx)
+                relIdx = self.mainGroupsRelIdxs[groupName][relIdx]
+                idx = relIdx
+        else:
+            dataToLook = self.data
+        return dataToLook, idx
+
+    # Private methods for __init__
+    def _setIndexes(self, data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen):
         """
-        (dev)indexes serves 2 purposes:
-            1. showing only allowed indexes to sampler and dataloader
-                note this requires ability to fetch rows from data. so we either need df.index df.loc or 
+        (dev)indexes serves 3 purposes:
+            1. showing only allowed indexes to sampler and therefore dataloader
+            2. indicator to fetch rows from data: so we either need df.index df.loc or 
                 when the data is NpDict and was originally pd.DataFrame which was converted to NpDict
-            2. abilitiy to disallow getting data through getBackForeCastData and __getitem__
+            3. abilitiy to disallow getting data through getBackForeCastData and __getitem__
 
         note the NpDict is used by default to speed up data fetching process, because the df.loc is so much slow.
         """
@@ -264,97 +302,62 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         self.indexes = indexes
 
-    def assignData(self, data, mainGroups, useNpDictForDfs):
+    def _assignData_NMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
             assert isinstance(data, pd.DataFrame) or isinstance(data, NpDict), \
                 'only pd.DataFrame or NpDict can have mainGroups defined'
 
             self.data={}
             if isinstance(data, NpDict):
-                self.doMainGroup_dataIndexes(data.df, mainGroups, convGroupData_ToNpDict=True)
+                self._makeMainGroupsIndexes(data, mainGroups, npDictData=True, convGroupData_ToNpDict=True)
             elif isinstance(data, pd.DataFrame):
                 if useNpDictForDfs:
-                    self.doMainGroup_dataIndexes(data, mainGroups, convGroupData_ToNpDict=True)
-                    self.didDfToNp = True
+                    self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=True)
                 else:
-                    self.doMainGroup_dataIndexes(data, mainGroups)
+                    self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=False)
             else:
-                assert False,'only pd.DataFrame and NpDicts can have mainGroups defined'
+                assert False, 'only pd.DataFrame and NpDicts can have mainGroups defined'
         else:
             if useNpDictForDfs and isinstance(data,pd.DataFrame):
                 self.data = NpDict(data)
-                self.didDfToNp = True
             else:
                 self.data = data
 
-    def doMainGroup_dataIndexes(self, df, mainGroups, convGroupData_ToNpDict=False):
+    def _makeMainGroupsIndexes(self, data, mainGroups, npDictData=False, convGroupData_ToNpDict=False):
+        """#ccc (dev)
+        if the data passed to init
+            1. is pd.df, mainGroupsGeneralIdxs and mainGroupsRelIdxs are indexes of df.index
+            2. if pd.df with useNpDictForDfs==True, assume we have df.index==[130,131,...,135],
+            first 3 in group 'A' and next 3 in group 'B'.
+            also only [130,132,133,135] have '__startPoint__'==True
+            self.indexes gonna be:[0,2,3,5]
+            mainGroupsGeneralIdxs for Group 'B' gonna be:[3,5]
+            mainGroupsRelIdxs for Group 'B' gonna be:[0,2]
+            to see data at idx==5 is gonna be reached, take look at _dataNIdxWhileFetching
+        """
+        df= data.df if npDictData else data
         for groupName, groupDf in df.groupby(mainGroups):
             if convGroupData_ToNpDict:
-                self.data[groupName]=NpDict(groupDf)
+                self.data[groupName] = NpDict(groupDf)
             else:
-                self.data[groupName]=groupDf
-            self.mainGroupsIndexes[groupName]=list(groupDf.index)
+                self.data[groupName] = groupDf
+            self.mainGroupsGeneralIdxs[groupName] = [list(df.index).index(idx) for idx in groupDf.index]
+            self.mainGroupsGeneralIdxs[groupName] = [idx for idx in self.mainGroupsGeneralIdxs[groupName] if idx in self.indexes]
+            self.mainGroupsRelIdxs[groupName]=[list(groupDf.index).index(idx) for idx in groupDf.index]
 
-    def findIdxInMainGroupsIndexes(self, idx):
+    def _findIdxInmainGroupsRelIdxs(self, idx):
         assert self.mainGroups,'dataset doesnt have mainGroups'
-        for groupName in self.mainGroupsIndexes.keys():
-            if idx in self.mainGroupsIndexes[groupName]:
+        for groupName in self.mainGroupsGeneralIdxs.keys():
+            if idx in self.mainGroupsGeneralIdxs[groupName]:
                 return groupName
         raise IndexError(f'{idx} is not in any of groups')
 
-    def noNanOrNoneDataAssertion(self):
+    def _noNanOrNoneDataAssertion(self):
         noNanOrNoneData(self.data)
 
-    def shapeWarning(self):
+    def _shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape
             if shape[0] < shape[1]:
                 warnings.warn("The data shape suggests that different features may be along shape[1]. "
                               "Consider transposing the data to have features along shape[0].")
-
-
-    def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
-                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
-
-        if self.mainGroups:
-            groupName = self.findIdxInMainGroupsIndexes(idx)
-            dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
-
-            if isinstance(self.data[groupName], NpDict):
-                relIdx=self.mainGroupsIndexes[groupName].index(idx)
-                idx=relIdx
-        else:
-            dataToSendTo_getBackForeCastDataGeneral=self.data
-            if self.didDfToNp:
-                relIdx=self.indexes.index(idx)
-                idx=relIdx
-
-        return self.getBackForeCastDataGeneral(dataToSendTo_getBackForeCastDataGeneral,
-                           idx=idx, mode=mode, colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
-                           makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
-                           canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
-
-    def __len__(self):
-        return len(self.indexes)
-
-    def __getitem__(self, idx):
-        self.assertIdxInIndexes(idx)
-        if self.mainGroups:
-            groupName=self.findIdxInMainGroupsIndexes(idx)
-            if isinstance(self.data[groupName], NpDict):
-                relIdx=self.mainGroupsIndexes[groupName].index(idx)
-                return self.data[groupName][:][relIdx]
-            return self.data[groupName].loc[idx]
-
-        else:
-            if isinstance(self.data, (pd.DataFrame, pd.Series)):
-                return self.data.loc[idx]
-
-            elif isinstance(self.data, NpDict):
-                if self.didDfToNp:
-                    relIdx=self.dfToNpIndexes.index(idx)
-                    return self.data[:][relIdx]
-                return self.data[:][idx]
-
-            elif isinstance(self.data, (np.ndarray, torch.Tensor)):
-                return self.data[idx]
