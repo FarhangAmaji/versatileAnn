@@ -182,7 +182,6 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     #kkk model should check device, backcastLen, forecastLen with this
     #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
     def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
-        "#ccc 3 types of indexes(indexes, mainGroupsIndexes, dfToNpIndexes) are used(some of them in cases together) for different cases"
         Dataset.__init__(self)
         TsRowFetcher.__init__(self, backcastLen=backcastLen, forecastLen=forecastLen)
         self.didDfToNp = False
@@ -215,6 +214,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             indexes = [i for i in range(len(data))]
         self.indexes = list(indexes)
 
+        self.setIndexes(data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen)
         #kkk if splitNSeries is used, could add __hasMainGroups__ to the data, gets detected here
         #... therefore prevents forgetting to assign mainGroups manually
         self.mainGroups = mainGroups
@@ -227,6 +227,42 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         self.noNanOrNoneDataAssertion()
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def setIndexes(self, data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen):
+        """
+        (dev)indexes serves 2 purposes:
+            1. showing only allowed indexes to sampler and dataloader
+                note this requires ability to fetch rows from data. so we either need df.index df.loc or 
+                when the data is NpDict and was originally pd.DataFrame which was converted to NpDict
+            2. abilitiy to disallow getting data through getBackForeCastData and __getitem__
+
+        note the NpDict is used by default to speed up data fetching process, because the df.loc is so much slow.
+        """
+        if indexes is None:
+            noBackNForeLenCond = backcastLen==0 and forecastLen==0
+            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns and useNpDictForDfs
+            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
+
+            assert  noBackNForeLenCond or dfDataWith_tsStartPointColNameInCols or \
+                npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
+                
+            if dfDataWith_tsStartPointColNameInCols and not useNpDictForDfs:
+                indexes = list(data[data[tsStartPointColName]==True].index)
+                "#ccc note indexes are same as df.index"
+            elif noBackNForeLenCond:
+                indexes = [i for i in range(len(data))]
+            else:
+                if isinstance(data, NpDict):
+                    npDict = NpDict(data)
+                if isinstance(data, NpDict):
+                    npDict = data
+
+                indexes = npDict.__index__[npDict['__startPoint__']==True]
+                indexes = [list(npDict.__index__).index(i) for i in indexes]
+                "#ccc note the indexes are relative df.indexes. for i.e. if the df.indexes was [130,131,132,...]"
+                "... and 130 and 132 have __startPoint__==True, indexes would be [0,2,...]"
+
+        self.indexes = indexes
 
     def assignData(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
