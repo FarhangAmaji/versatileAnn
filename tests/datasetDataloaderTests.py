@@ -105,6 +105,7 @@ class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
     def testNpDict_StartPointsInCols(self):
         dataset = VAnnTsDataset(NpDict(self.df), backcastLen=3, forecastLen=2)
         self.assertEqual(dataset.indexes, [0, 2, 3, 5, 7, 9])
+        "#ccc note the indexes are relative from beginning"
         self.assertEqual(dataset.didDfToNp, False)
         self.assertEqual(dataset.mainGroupsIndexes, {})
         self.assertEqual(dataset.dfToNpIndexes, [])
@@ -136,7 +137,7 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
 
     def testNpDict_StartPointsInCols(self):
         dataset = VAnnTsDataset(NpDict(self.df), backcastLen=3, forecastLen=2, mainGroups=['group'])
-        self.assertEqual(dataset.indexes, [10, 12, 13, 19, 21])
+        self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
         #ccc note for NpDict with mainGroups unlike when it has noMainGroup,
         #... self.indexes are df's indexes
         #... (take a loop and dataset.indexes of 'testNpDict_StartPointsInCols' in 'VAnnTsDataset_indexesSetting_noNSeriesTests')

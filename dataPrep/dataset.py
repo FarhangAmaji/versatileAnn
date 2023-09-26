@@ -284,7 +284,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             groupName = self.findIdxInMainGroupsIndexes(idx)
             dataToSendTo_getBackForeCastDataGeneral=self.data[groupName]
 
-            if self.didDfToNp:
+            if isinstance(self.data[groupName], NpDict):
                 relIdx=self.mainGroupsIndexes[groupName].index(idx)
                 idx=relIdx
         else:
