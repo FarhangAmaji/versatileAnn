@@ -321,21 +321,25 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         self.indexes = list(indexes)
 
+    def _assignMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
+        assert self.mainGroups,'no mainGroups to assign idxs'
+        assert isinstance(data, pd.DataFrame) or isinstance(data, NpDict), \
+            'only pd.DataFrame or NpDict can have mainGroups defined'
+
+        self.data={}
+        if isinstance(data, NpDict):
+            self._makeMainGroupsIndexes(data, mainGroups, npDictData=True, convGroupData_ToNpDict=True)
+        elif isinstance(data, pd.DataFrame):
+            if useNpDictForDfs:
+                self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=True)
+            else:
+                self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=False)
+        else:
+            assert False, 'only pd.DataFrame and NpDicts can have mainGroups defined'
+
     def _assignData_NMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
-            assert isinstance(data, pd.DataFrame) or isinstance(data, NpDict), \
-                'only pd.DataFrame or NpDict can have mainGroups defined'
-
-            self.data={}
-            if isinstance(data, NpDict):
-                self._makeMainGroupsIndexes(data, mainGroups, npDictData=True, convGroupData_ToNpDict=True)
-            elif isinstance(data, pd.DataFrame):
-                if useNpDictForDfs:
-                    self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=True)
-                else:
-                    self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=False)
-            else:
-                assert False, 'only pd.DataFrame and NpDicts can have mainGroups defined'
+            self._assignMainGroupsIdxs(data, mainGroups, useNpDictForDfs)
         else:
             if useNpDictForDfs and isinstance(data,pd.DataFrame):
                 self.data = NpDict(data)
@@ -349,20 +353,31 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             2. if pd.df with useNpDictForDfs==True, assume we have df.index==[130,131,...,135],
             first 3 in group 'A' and next 3 in group 'B'.
             also only [130,132,133,135] have '__startPoint__'==True
-            self.indexes gonna be:[0,2,3,5]
-            mainGroupsGeneralIdxs for Group 'B' gonna be:[3,5]
-            mainGroupsRelIdxs for Group 'B' gonna be:[0,2]
-            to see data at idx==5 is gonna be reached, take look at _dataNIdxWhileFetching
+            for "npDict" and "df with useNpDictForDfs":
+                self.indexes gonna be:[0,2,3,5]
+                mainGroupsGeneralIdxs for Group 'B' gonna be:[3,5]
+                mainGroupsRelIdxs for Group 'B' gonna be:[0,2]
+                to see how the data at idx==5 is gonna be reached, take look at _IdxNdataToLook_WhileFetching
+            for "df with no useNpDictForDfs":
+                self.indexes gonna be:[130, 132, 133, 135]
+                mainGroupsGeneralIdxs for Group 'B' gonna be:[133, 135]
+                mainGroupsRelIdxs for Group 'B' gonna be:[]
         """
         df= data.df if npDictData else data
         for groupName, groupDf in df.groupby(mainGroups):
-            if convGroupData_ToNpDict:
+            if convGroupData_ToNpDict:# this accounts for npDict|df with useNpDictForDfs
+                "#ccc note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df"
                 self.data[groupName] = NpDict(groupDf)
-            else:
+                generalIdxs = [list(df.index).index(idx) for idx in groupDf.index]
+                self.mainGroupsGeneralIdxs[groupName] = [idx for idx in generalIdxs if idx in self.indexes]
+                self.mainGroupsRelIdxs[groupName] = [generalIdxs.index(idx) for idx in generalIdxs \
+                                                     if idx in self.mainGroupsGeneralIdxs[groupName]]
+            else:# this accounts for df with useNpDictForDfs=False
+                "#ccc note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df"
                 self.data[groupName] = groupDf
-            self.mainGroupsGeneralIdxs[groupName] = [list(df.index).index(idx) for idx in groupDf.index]
-            self.mainGroupsGeneralIdxs[groupName] = [idx for idx in self.mainGroupsGeneralIdxs[groupName] if idx in self.indexes]
-            self.mainGroupsRelIdxs[groupName]=[list(groupDf.index).index(idx) for idx in groupDf.index]
+                self.mainGroupsGeneralIdxs[groupName] = [idx for idx in groupDf.index if idx in self.indexes]
+                self.mainGroupsRelIdxs[groupName] = []
+
 
     def _findIdxInmainGroupsRelIdxs(self, idx):
         assert self.mainGroups,'dataset doesnt have mainGroups'
