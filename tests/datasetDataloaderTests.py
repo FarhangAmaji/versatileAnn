@@ -135,39 +135,44 @@ class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
         self.assertMainGroupsIdxEmpty(dataset)
 #%%         VAnnTsDataset_indexesSetting_NSeriesTests
 class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
+    # this is related to _setIndexes and _assignData_NMainGroupsIdxs
     '#ccc test assumes, noIndexes are passed to dataset init and there is some value for backcast and forecast lens'
     def setUp(self):
+        self.kwargs = {'backcastLen':3, 'forecastLen':2, 'mainGroups':['group']}
+        g1startPoints = [True, False, True, True, False, False, False, False]
+        g2startPoints = [False, True, False, True, False, False, False, False]
         self.df = pd.DataFrame({'A': list(range(40,56)),
-                                '__startPoint__': [True, False, True, True, False, False, False, False] \
-                                                + [False, True, False, True, False, False, False, False],
+                                '__startPoint__':  g1startPoints + g2startPoints,
                                 'group':8*['g1']+8*['g2']},
-                                index=list(range(10, 26)))
-        self.mGIndexes={('g1',): [10, 11, 12, 13, 14, 15, 16, 17], ('g2',): [18, 19, 20, 21, 22, 23, 24, 25]}
+                                index=list(range(110, 126)))
 
-    def testDf_StartPointsInCols_useNpDictForDfs(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=3, forecastLen=2, mainGroups=['group'], useNpDictForDfs=True)
-        self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        self.assertEqual(dataset.didDfToNp, True)
-        self.assertEqual(dataset.mainGroupsIndexes, self.mGIndexes)
-        self.assertEqual(dataset.dfToNpIndexes, list(self.df.index))
+        TruesIndexFromBeginning = lambda inpList: [i for i, val in enumerate(inpList) if val == True]
+        self.TruesIndexFromBeginning = TruesIndexFromBeginning(self.df['__startPoint__'])
+        self.mgGeneralIndexes={('g1',): [0, 2, 3],
+                               ('g2',): [9, 11]}
+        self.mgRelIndexes={('g1',): TruesIndexFromBeginning(g1startPoints),
+                           ('g2',): TruesIndexFromBeginning(g2startPoints)}
 
-    def testDf_StartPointsInCols_noUseNpDictForDfs(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=3, forecastLen=2, mainGroups=['group'], useNpDictForDfs=False)
+    def assertionsFor_Df_useNpDictForDfs_AndNpDict(self, dataset):
+        self.assertEqual(dataset.indexes, self.TruesIndexFromBeginning)
+        self.assertEqual(dataset.mainGroupsGeneralIdxs, self.mgGeneralIndexes)
+        self.assertEqual(dataset.mainGroupsRelIdxs, self.mgRelIndexes)
+
+    def testDf_useNpDictForDfs_StartPointsInCols(self):
+        "#ccc this is gonna be similar to testNpDict_StartPointsInCols"
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
+
+    def testDf_noUseNpDictForDfs_StartPointsInCols(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        self.assertEqual(dataset.didDfToNp, False)
-        self.assertEqual(dataset.mainGroupsIndexes, self.mGIndexes)
-        #ccc the check of if the point is possible start for start point done by self.indexes and in assertIdxInIndexes
-        self.assertEqual(dataset.dfToNpIndexes, [])
+        self.assertEqual(dataset.mainGroupsGeneralIdxs, {('g1',): [110, 112, 113],
+                                                         ('g2',): [119, 121]})
+        self.assertEqual(dataset.mainGroupsRelIdxs, {('g1',): [], ('g2',): []})
 
     def testNpDict_StartPointsInCols(self):
-        dataset = VAnnTsDataset(NpDict(self.df), backcastLen=3, forecastLen=2, mainGroups=['group'])
-        self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        #ccc note for NpDict with mainGroups unlike when it has noMainGroup,
-        #... self.indexes are df's indexes
-        #... (take a loop and dataset.indexes of 'testNpDict_StartPointsInCols' in 'VAnnTsDataset_indexesSetting_noNSeriesTests')
-        self.assertEqual(dataset.didDfToNp, False)
-        self.assertEqual(dataset.mainGroupsIndexes, self.mGIndexes)
-        self.assertEqual(dataset.dfToNpIndexes, [])
+        dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
 #%%         VAnnTsDataset_NoNanOrNoneDataAssertionTests
 class VAnnTsDataset_NoNanOrNoneDataAssertionTests(BaseTestClass):
     def setUp(self):
@@ -196,15 +201,15 @@ class VAnnTsDataset_NSeries_assignData(BaseTestClass):
             'B': 7*['B1']+19*['B2'],
             tsStartPointColName: 3*[True]+4*[False]+15*[True]+4*[False],
             'y1': list(range(30, 56)),
-            'y2': list(range(130, 156))},index=range(100, 126))
+            'y2': list(range(130, 156))},index=range(200, 226))
         self.dataset=VAnnTsDataset(self.df,backcastLen=2, forecastLen=3, mainGroups=['A','B'], useNpDictForDfs=False)
         self.expectedGroup1 = pd.DataFrame({'A': ['A1', 'A1', 'A1', 'A1', 'A1', 'A1', 'A1'],
                                             'B': ['B1', 'B1', 'B1', 'B1', 'B1', 'B1', 'B1'],
                                             '__startPoint__': [ True,  True,  True, False, False, False, False],
-                                            'y1': [30, 31, 32, 33, 34, 35, 36], 'y2': [130, 131, 132, 133, 134, 135, 136]}, index=list(range(100,107)))
+                                            'y1': [30, 31, 32, 33, 34, 35, 36], 'y2': [130, 131, 132, 133, 134, 135, 136]}, index=list(range(200,207)))
         self.expectedGroup2 = pd.DataFrame({'A': 19*['A1'], 'B': 19*['B2'],
                                             '__startPoint__':15*[True]+4*[False], 'y1': list(range(37,56)),
-                                            'y2': list(range(137,156))}, index=list(range(107,126)))
+                                            'y2': list(range(137,156))}, index=list(range(207,226)))
 
     def test(self):
         self.assertTrue(list(self.dataset.data.keys())==[('A1', 'B1'), ('A1', 'B2')])
