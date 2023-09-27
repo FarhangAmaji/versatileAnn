@@ -1,7 +1,7 @@
 import unittest
 import sys
 import io
-from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors
+from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors, equalNpDicts
 #%%
 class BaseTestClass(unittest.TestCase):
     def assertPrint(self, testFunc, expectedPrint):
@@ -31,3 +31,6 @@ class BaseTestClass(unittest.TestCase):
 
     def equalTensors(self, tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-4, checkDevice=True):
         self.assertTrue(equalTensors(tensor1, tensor2, checkType=checkType, floatApprox=floatApprox, floatPrecision=floatPrecision, checkDevice=checkDevice))
+        
+    def equalNpDicts(self, npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+        self.assertTrue(equalNpDicts(npd1, npd2, checkIndex=checkIndex, floatApprox=floatApprox, floatPrecision=floatPrecision))
