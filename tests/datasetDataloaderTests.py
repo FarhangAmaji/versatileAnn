@@ -418,42 +418,6 @@ class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
-#%%         VAnnTsDataset_NoNSeries_GetItemTests_oldVersion
-#ccc keeping the oldVersion, it has no harm, some double checks, but should know, its errors may should rechecked with new logic
-#ccc only first 2 test are not logically duplicated elsewhere
-class VAnnTsDataset_NoNSeries_GetItemTests_oldVersion(BaseTestClass):
-    def setUp(self):
-        self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, 7, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
-        self.npDict = NpDict(self.df)
-        self.npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-
-    def testGetItemDfInStartPoints(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
-        idx = 9  # Index is in indexes
-        expected = self.df.loc[idx]
-        result = dataset[idx]
-        self.assertTrue(result.equals(expected))
-
-    def testGetItemDfNotInStartPoints(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=0, forecastLen=0, useNpDictForDfs=False)
-        idx = 8  # Index is not in indexes
-        with self.assertRaises(AssertionError) as context:
-            dataset[idx]
-        self.assertEqual(str(context.exception), f"{idx} is not in indexes")
-
-    def testGetItemNpDictInStartPoints(self):
-        dataset = VAnnTsDataset(self.npDict, backcastLen=0, forecastLen=0)
-        idx = 2  # Index is in indexes
-        expected = np.array([3, 7, 1])
-        result = dataset[idx]
-        np.testing.assert_array_equal(result, expected)
-
-    def testGetItemNpDictNotInStartPoints(self):
-        dataset = VAnnTsDataset(self.npDict, backcastLen=0, forecastLen=0)
-        idx = 0  # Index is not in indexes
-        with self.assertRaises(AssertionError) as context:
-            dataset[idx]
-        self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 #%% dataloader tests
 #%%     batch data tests
 class batchStructTemplateTests(BaseTestClass):
