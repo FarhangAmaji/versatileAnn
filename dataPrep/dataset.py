@@ -236,7 +236,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         return self.getBackForeCastData_general(dataToLook, idx=idx, mode=mode,
                            colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
-                           makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
+                           makeTensor=makeTensor,canBeOutOfStartIndex=False,# note _IdxNdataToLook_WhileFetching works only idx is in indexes
                            canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
 
     def __len__(self):
@@ -244,16 +244,29 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def __getitem__(self, idx):
         self.assertIdxInIndexes(idx)
+        if self.mainGroups:
+            dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
+            if isinstance(dataToLook, NpDict):
+                return dataToLook[:][idx]
+            elif isinstance(dataToLook, pd.DataFrame):
+                return dataToLook.loc[idx]
+            else:
+                assert False, '__getitem__: internal logic error'
+
         if isinstance(self.data, NpDict):
-            dataToLook, idx = self._dataNIdxWhileFetching(idx)
-            return dataToLook[idx]
+            dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
+            return dataToLook[:][idx]
         elif isinstance(self.data, pd.DataFrame):
-            dataToLook, idx = self._dataNIdxWhileFetching(idx)
+            dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
             return dataToLook.loc[idx]
         elif isinstance(self.data, (np.ndarray, torch.Tensor)):
-                return self.data[idx]
+            return self.data[idx]
+        else:
+            assert False,'only datasets with pd.DataFrame, NpDict, np.array and torch.Tensor data can use __getitem__'
 
-    def _dataNIdxWhileFetching(self, idx):
+    #---- Private methods
+    def _IdxNdataToLook_WhileFetching(self, idx):
+        self.assertIdxInIndexes(idx)
         if self.mainGroups:
             groupName = self._findIdxInmainGroupsRelIdxs(idx)
             dataToLook=self.data[groupName]
