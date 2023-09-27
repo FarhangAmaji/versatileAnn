@@ -26,7 +26,7 @@ class TsRowFetcher:
         if not self.indexes is None:
             assert idx in self.indexes,f'{idx} is not in indexes'
 
-    def assertIdxInIndexesDependingOnAllowance(self, allowance, idx):
+    def assertIdxInIndexes_dependingOnAllowance(self, allowance, idx):
         if not allowance:
             self.assertIdxInIndexes(idx)
 
@@ -43,7 +43,7 @@ class TsRowFetcher:
         if sliceLen==len_:
             return False
 
-    def assertCanHaveShorterLengthDependingOnAllowance(self, allowance, len_, slice_, isItDfLen=False):
+    def assertCanHaveShorterLength_dependingOnAllowance(self, allowance, len_, slice_, isItDfLen=False):
         if not allowance:
             assert not self.hasShorterLen(len_, slice_, isItDfLen=isItDfLen),TsRowFetcher.errMsgs['shorterLen']
 
@@ -62,7 +62,7 @@ class TsRowFetcher:
                 else:
                     assert False,'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
             else:
-                self.assertCanHaveShorterLengthDependingOnAllowance(shorterLenAllowance, dataLen, slice_, isItDfLen=isItDfLen)
+                self.assertCanHaveShorterLength_dependingOnAllowance(shorterLenAllowance, dataLen, slice_, isItDfLen=isItDfLen)
                 return resData
         else:
             return resData
@@ -73,10 +73,10 @@ class TsRowFetcher:
         return data
 
     def getDfRows(self, df, idx, lowerBoundGap, upperBoundGap, cols, shiftForward=0,
-                  canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+                  canBeOutOfStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         #kkk does this idx match with getItem of dataset
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
         #kkk does it work with series
         assert '___all___' not in df.columns,'df shouldnt have a column named "___all___", use other manuall methods of obtaining cols'
         #kkk this is not the case and for addressing a col named '___all___', users should have provide it with ['___all___']
@@ -90,9 +90,9 @@ class TsRowFetcher:
         return res
 
     def getTensorRows(self, tensor, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
-                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+                      canBeOutOfStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointTensor']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
@@ -103,10 +103,10 @@ class TsRowFetcher:
         return self.singleFeatureShapeCorrection(res)
 
     def getNpDictRows(self, npDict, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
-                      canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+                      canBeOutOfStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         #kkk may get reduced with using getNpArrayRows
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpDict']
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
         if colIndexes=='___all___':
@@ -117,9 +117,9 @@ class TsRowFetcher:
         return self.singleFeatureShapeCorrection(res)
 
     def getNpArrayRows(self, npArray, idx, lowerBoundGap, upperBoundGap, colIndexes, shiftForward=0,
-                       canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+                       canBeOutOfStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
         assert idx + shiftForward >=0, TsRowFetcher.errMsgs['non-negStartingPointNpArray']
         "#ccc for np arrays [-1]results a value so we have to make assertion; no matter it wont give [-1:1] values, but then again even in this case it doesnt assert"
         slice_=slice(idx + lowerBoundGap + shiftForward,idx + upperBoundGap + shiftForward)
@@ -137,28 +137,28 @@ class TsRowFetcher:
         tensor = Tensor_floatDtypeChange(tensor)
         return tensor
 
-    def getBackForeCastDataGeneral(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
-                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+    def getBackForeCastData_general(self, data, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
+                            canBeOutOfStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
         #kkk may add query taking ability to df part; plus to modes, like the sequence can have upto 10 len or till have reached 'zValueCol <20'; maybe not needed and the query is better used at other places in data prepration or split
         #kkk if query is added, these modes have to be more flexible
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list),"u should either pass '___all___' for all feature cols or a list of their columns or indexes"
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
         "#ccc idx+shiftForward also should be in data indexes"
 
         def getCastByMode(typeFunc):
             if mode==self.modes.backcast:
-                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes, shiftForward, canBeOutStartIndex=True,
-                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)#ccc canBeOutStartIndex=True is in order not to check it again
+                return typeFunc(data, idx, 0, self.backcastLen, colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
+                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)#ccc canBeOutOfStartIndex=True is in order not to check it again
             elif mode==self.modes.forecast:
                 return typeFunc(data, idx, self.backcastLen, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward,
-                                canBeOutStartIndex=True, canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+                                canBeOutOfStartIndex=True, canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
             elif mode==self.modes.fullcast:
                 return typeFunc(data, idx, 0, self.backcastLen+self.forecastLen, colsOrIndexes, shiftForward,
-                                canBeOutStartIndex=True, canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+                                canBeOutOfStartIndex=True, canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
             elif mode==self.modes.singlePoint:
-                return typeFunc(data, idx, 0, 1, colsOrIndexes, shiftForward, canBeOutStartIndex=True,
+                return typeFunc(data, idx, 0, 1, colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
                                 canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
 
         if isinstance(data, NpDict):
@@ -225,15 +225,16 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___', shiftForward=0, makeTensor=True,
-                            canBeOutStartIndex=False, canHaveShorterLength=False, rightPadIfShorter=False):
+    def getBackForeCastData(self, idx, mode='backcast', colsOrIndexes='___all___',
+                            shiftForward=0, makeTensor=True,
+                            canHaveShorterLength=False, rightPadIfShorter=False):
 
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx)
-        self.assertIdxInIndexesDependingOnAllowance(canBeOutStartIndex, idx+shiftForward)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
+        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
 
-        dataToLook, idx = self._dataNIdxWhileFetching(idx)
+        dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        return self.getBackForeCastDataGeneral(dataToLook, idx=idx, mode=mode,
+        return self.getBackForeCastData_general(dataToLook, idx=idx, mode=mode,
                            colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
                            makeTensor=makeTensor,canBeOutStartIndex=canBeOutStartIndex,
                            canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
@@ -265,7 +266,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             dataToLook = self.data
         return dataToLook, idx
 
-    # Private methods for __init__
+    #---- Private methods for __init__
     def _setIndexes(self, data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen):
         """
         (dev)indexes serves 3 purposes:
