@@ -292,19 +292,22 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         """
         if indexes is None:
             noBackNForeLenCond = backcastLen==0 and forecastLen==0
-            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns and useNpDictForDfs
+            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
             npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
+            dfTs = dfDataWith_tsStartPointColNameInCols
+            ndTs = npDictData_tsStartPointColNameInColsCond
 
-            assert  noBackNForeLenCond or dfDataWith_tsStartPointColNameInCols or \
-                npDictData_tsStartPointColNameInColsCond, VAnnTsDataset.noIndexesAssertionMsg
-                
-            if dfDataWith_tsStartPointColNameInCols and not useNpDictForDfs:
+            assert  noBackNForeLenCond or dfTs or ndTs, VAnnTsDataset.noIndexesAssertionMsg
+
+
+            if noBackNForeLenCond and not (dfTs or ndTs):
+                indexes = [i for i in range(len(data))]
+
+            elif dfTs and not useNpDictForDfs:
                 indexes = list(data[data[tsStartPointColName]==True].index)
                 "#ccc note indexes are same as df.index"
-            elif noBackNForeLenCond:
-                indexes = [i for i in range(len(data))]
-            else:
-                if isinstance(data, NpDict):
+            elif (dfTs and useNpDictForDfs) or ndTs:
+                if isinstance(data, pd.DataFrame):
                     npDict = NpDict(data)
                 if isinstance(data, NpDict):
                     npDict = data
@@ -313,8 +316,10 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                 indexes = [list(npDict.__index__).index(i) for i in indexes]
                 "#ccc note the indexes are relative df.indexes. for i.e. if the df.indexes was [130,131,132,...]"
                 "... and 130 and 132 have __startPoint__==True, indexes would be [0,2,...]"
+            else:
+                assert False, '_setIndexes: internal logic error'
 
-        self.indexes = indexes
+        self.indexes = list(indexes)
 
     def _assignData_NMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
