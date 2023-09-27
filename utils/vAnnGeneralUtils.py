@@ -49,21 +49,24 @@ class NpDict(DotDict):
     #kkk maybe also works with pd series(probably not needed)
     #kkk add setItem
     def __init__(self, df):
-        if not isinstance(df, pd.DataFrame):
-            raise ValueError('only pandas DataFrames are accepted')
+        if not (isinstance(df, pd.DataFrame) or isinstance(df, dict)):
+            raise ValueError('only pandas DataFrames, or dictionaries are accepted')
+        if isinstance(df, dict):
+            df = pd.DataFrame(df)
         super().__init__({col: df[col].values for col in df.columns})
         self.__index__ = df.index
+        self.shape = df.shape
 
     def cols(self):
         keys=list(self.data.keys())
         return keys
 
-    def getDict(self, resetDtype=False, print_=False):
+    def getDict(self, resetDtype=False):
         if resetDtype:
             return {col: self[col].tolist() for col in self.cols()}
-        if not print_:
-            return {col: self[col] for col in self.cols()}
-        else:
+        return {col: self[col] for col in self.cols()}
+
+    def printDict(self):
             print('{')
             for col in self.cols():
                 colRes=list(self[col])
@@ -104,6 +107,17 @@ class NpDict(DotDict):
         tempDf=self.toDf()
         tempDf=tempDf.reset_index(drop=True)
         return str(tempDf)
+
+def equalNpDicts(npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+    if npd1.shape != npd2.shape:
+        return False
+
+    if checkIndex:
+        if list(npd1.__index__) != list(npd2.__index__):
+            return False
+
+    return equalDfs(npd1.df, npd2.df,  checkIndex=False, 
+                    floatApprox=floatApprox, floatPrecision=floatPrecision)
 #%% tensor
 def Tensor_floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
@@ -136,9 +150,9 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
     if df1.shape != df2.shape:
         return False
 
-    if checkIndex:    
+    if checkIndex:
         if list(df1.index) != list(df2.index):
-                return False
+            return False
 
     if floatApprox:    
         # Iterate through columns and compare them individually
