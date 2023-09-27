@@ -215,6 +215,72 @@ class VAnnTsDataset_NSeries_assignData(BaseTestClass):
         self.assertTrue(list(self.dataset.data.keys())==[('A1', 'B1'), ('A1', 'B2')])
         self.assertTrue(self.expectedGroup1.equals(self.dataset.data[('A1', 'B1')]))
         self.assertTrue(self.expectedGroup2.equals(self.dataset.data[('A1', 'B2')]))
+#%%         VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests
+class VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests(BaseTestClass):
+    def setUp(self):
+        self.kwargs = {'backcastLen':3, 'forecastLen':2}
+        self.df = pd.DataFrame({'A': list(range(10)),
+                                '__startPoint__': [True, False, True, True, False, True, False, True, False, True]},
+                               index=list(range(110, 120)))
+
+    def assertionsFor_Df_useNpDictForDfs_AndNpDict(self, dataset):
+        idx = 5
+        dataToLook, newIdx = dataset._IdxNdataToLook_WhileFetching(idx)
+        self.equalNpDicts(dataToLook, NpDict(self.df))
+        self.assertEqual(newIdx, 5)
+
+    def testDf_useNpDictForDfs(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
+
+    def testDf_noUseNpDictForDfs(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
+        idx = 112
+        dataToLook, newIdx = dataset._IdxNdataToLook_WhileFetching(idx)
+        self.equalDfs(dataToLook, self.df)
+        self.assertEqual(newIdx, idx)
+
+    def testNpDict(self):
+        dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
+#%%         VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests
+class VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests(BaseTestClass):
+    def setUp(self):
+        g1startPoints = [True, False, True, True, False, False, False, False]
+        g2startPoints = [False, True, False, True, False, False, False, False]
+        self.df = pd.DataFrame({'A': list(range(40,56)),
+                                '__startPoint__':  g1startPoints + g2startPoints,
+                                'group':8*['g1']+8*['g2']},
+                                index=list(range(110, 126)))
+        self.kwargs = {'backcastLen':3, 'forecastLen':2, 'mainGroups':['group']}
+        #kkk in tests only important args should be shown, use this kwargs method elsewhere
+
+    def assertionsFor_Df_useNpDictForDfs_AndNpDict(self, dataset):
+        idx = 11
+        dataToLook, newIdx = dataset._IdxNdataToLook_WhileFetching(idx)
+        expectedDataToLook_dict = {'A': [48, 49, 50, 51, 52, 53, 54, 55], 
+                                     '__startPoint__': [False, True, False, True]+4*[False], 
+                                     'group': 8*['g2'],}
+        self.assertEqual(dataToLook.getDict(resetDtype=True), expectedDataToLook_dict)
+        self.assertEqual(newIdx, 3)
+
+    def testDf_useNpDictForDfs(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
+
+    def testDf_noUseNpDictForDfs(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
+        idx = 121
+        dataToLook, newIdx = dataset._IdxNdataToLook_WhileFetching(idx)
+        expectedDataToLook= pd.DataFrame({'A': [48, 49, 50, 51, 52, 53, 54, 55], 
+                                     '__startPoint__': [False, True, False, True]+4*[False], 
+                                     'group': 8*['g2'],},index=list(range(118, 126)))
+        self.equalDfs(dataToLook, expectedDataToLook)
+        self.assertEqual(newIdx, 121)
+
+    def testNpDict(self):
+        dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
+        self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
 #%%         VAnnTsDataset_NoNSeries_GetItemTests
 class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
     def setUp(self):
