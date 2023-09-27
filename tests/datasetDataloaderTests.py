@@ -104,33 +104,35 @@ class VAnnTsDataset_setIndexesTests(BaseTestClass):
         self.assertEqual(len(dataset), 2)  # Only rows with '__startPoint__' as True should be included
 #%%         VAnnTsDataset_indexesSetting_noNSeriesTests
 class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
+    # this is related to _setIndexes and _assignData_NMainGroupsIdxs
     '#ccc test assumes, noIndexes are passed to dataset init and there is some value for backcast and forecast lens'
     def setUp(self):
+        self.kwargs = {'backcastLen':3, 'forecastLen':2}
         self.df = pd.DataFrame({'A': list(range(10)),
                                 '__startPoint__': [True, False, True, True, False, True, False, True, False, True]},
-                               index=list(range(10, 20)))
+                               index=list(range(110, 120)))
+        self.TruesIndexFromBeginning = [i for i, val in enumerate(self.df['__startPoint__']) if val == True]
 
-    def testDf_StartPointsInCols_useNpDictForDfs(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=3, forecastLen=2, useNpDictForDfs=True)
-        self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        self.assertEqual(dataset.didDfToNp, True)
-        self.assertEqual(dataset.mainGroupsIndexes, {})
-        self.assertEqual(dataset.dfToNpIndexes, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    def assertMainGroupsIdxEmpty(self, dataset):
+        self.assertEqual(dataset.mainGroupsGeneralIdxs, {})
+        self.assertEqual(dataset.mainGroupsRelIdxs, {})
 
-    def testDf_StartPointsInCols_noUseNpDictForDfs(self):
-        dataset = VAnnTsDataset(self.df, backcastLen=3, forecastLen=2, useNpDictForDfs=False)
+    def testDf_useNpDictForDfs_StartPointsInCols(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
+        self.assertEqual(dataset.indexes, self.TruesIndexFromBeginning)
+        "#ccc note the indexes are relative from beginning"
+        self.assertMainGroupsIdxEmpty(dataset)
+
+    def testDf_noUseNpDictForDfs_StartPointsInCols(self):
+        dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        self.assertEqual(dataset.didDfToNp, False)
-        self.assertEqual(dataset.mainGroupsIndexes, {})
-        self.assertEqual(dataset.dfToNpIndexes, [])
+        self.assertMainGroupsIdxEmpty(dataset)
 
     def testNpDict_StartPointsInCols(self):
-        dataset = VAnnTsDataset(NpDict(self.df), backcastLen=3, forecastLen=2)
-        self.assertEqual(dataset.indexes, [0, 2, 3, 5, 7, 9])
+        dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
+        self.assertEqual(dataset.indexes, self.TruesIndexFromBeginning)
         "#ccc note the indexes are relative from beginning"
-        self.assertEqual(dataset.didDfToNp, False)
-        self.assertEqual(dataset.mainGroupsIndexes, {})
-        self.assertEqual(dataset.dfToNpIndexes, [])
+        self.assertMainGroupsIdxEmpty(dataset)
 #%%         VAnnTsDataset_indexesSetting_NSeriesTests
 class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
     '#ccc test assumes, noIndexes are passed to dataset init and there is some value for backcast and forecast lens'
