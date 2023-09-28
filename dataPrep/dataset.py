@@ -261,46 +261,50 @@ class TsRowFetcher:
 class VAnnTsDataset(Dataset, TsRowFetcher):
     noIndexesAssertionMsg = "u have to pass indexes unless both backcastLen and forecastLen are 0," + \
                             " or u have passed a pd df or NpDict with __startPoint__ column"
-    #kkk needs tests
     #kkk model should check device, backcastLen, forecastLen with this
-    #kkk may take trainIndexes, valIndexes, testIndexes; this way we would have only 1 dataset and less memory occupied
-    def __init__(self, data, backcastLen, forecastLen, mainGroups=[], indexes=None, useNpDictForDfs=True, **kwargs):
+    #kkk may take trainIndexes, valIndexes, testIndexes;
+    #... this way we would have only 1 dataset and less memory occupied
+
+    """#ccc
+    VAnnTsDataset provides datachecking based on allowance. its also works with grouped(Nseries) data,
+    to prevent data scrambling between groups data.
+    
+    types of data allowed:
+        the data passed is either:
+            1. NpDict(type of object, wrapped arround pd.dfs to act like df and a dictionary of np.arrays)
+            2. pd.df
+                a. with useNpDictForDfs=False
+                b. with useNpDictForDfs=True, which gonna be converted to NpDict
+            3. other types if:
+                a. indexes is passed
+                b. both of backcastLen and forecastLen are 0
+        note 1, 2.a and 2.b are called "mainTypes"
+    
+    allowance:
+        in timeseries data we want to get next rows of data.
+        so (except in rare cases of allowing incomplete sequence lengths, for zeropad if its gonna be incomplete),
+        we need to dont allow some point which can't provide the next complete row.
+        note allowance comes from the fact the backcast and forecast lens should not be allowed as tsStartingPoints.
+        for i.e. if the seq len is 4, with data=[1, 2, 3, 4, 5, 6], only 1,2,3 are allowed.
+        
+        note the allowance is not determined here, and its should be provides either with `indexes` passed 
+        to dataset or with having `__startPoint__` in cols of df or NpDict.
+    """
+
+    def __init__(self, data, backcastLen, forecastLen,
+                 mainGroups=[], indexes=None,
+                 useNpDictForDfs=True, **kwargs):
         Dataset.__init__(self)
         TsRowFetcher.__init__(self, backcastLen=backcastLen, forecastLen=forecastLen)
-        """#ccc
-        VAnnTsDataset provides datachecking based on allowance. its also works with grouped(Nseries) data,
-        to prevent data scrambling between groups data.
-        
-        types of data allowed:
-            the data passed is either:
-                1. NpDict(type of object, wrapped arround pd.dfs to act like df and a dictionary of np.arrays)
-                2. pd.df
-                    a. with useNpDictForDfs=False
-                    b. with useNpDictForDfs=True, which gonna be converted to NpDict
-                3. other types if:
-                    a. indexes is passed
-                    b. both of backcastLen and forecastLen are 0
-            note 1, 2.a and 2.b are called "mainTypes"
-
-        allowance:
-            in timeseries data we want to get next rows of data.
-            so (except in rare cases of allowing incomplete sequence lengths, for zeropad if its gonna be incomplete),
-            we need to dont allow some point which can't provide the next complete row.
-            note allowance comes from the fact the backcast and forecast lens should not be allowed as tsStartingPoints.
-            for i.e. if the seq len is 4, with data=[1, 2, 3, 4, 5, 6], only 1,2,3 are allowed.
-            
-            note the allowance is not determined here, and its should be provides either with `indexes` passed 
-            to dataset or with having `__startPoint__` in cols of df or NpDict.
-        """
         
         self._setIndexes(data, indexes, mainGroups, useNpDictForDfs, backcastLen, forecastLen)
 
-        #kkk if splitNSeries is used, could add __hasMainGroups__ to the data, gets detected here
-        #... therefore prevents forgetting to assign mainGroups manually
         self.mainGroups = mainGroups
         self.mainGroupsGeneralIdxs={}
         self.mainGroupsRelIdxs = {}
         self._assignData_NMainGroupsIdxs(data, mainGroups, useNpDictForDfs)
+        #kkk if splitNSeries is used, could add __hasMainGroups__ to the data,
+        #... gets detected here. therefore prevents forgetting to assign mainGroups manually
 
         self._shapeWarning()
         self._noNanOrNoneDataAssertion()
@@ -311,8 +315,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
                             shiftForward=0, makeTensor=True,
                             canHaveShorterLength=False, rightPadIfShorter=False):
 
-        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx)
-        self.assertIdxInIndexes_dependingOnAllowance(canBeOutOfStartIndex, idx+shiftForward)
+        self._assertIdx_NShift(False, idx, shiftForward)
 
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
@@ -325,22 +328,26 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         return len(self.indexes)
 
     def __getitem__(self, idx):
-        self.assertIdxInIndexes(idx)
+        self._assertIdxInIndexes(idx)
         if self.mainGroups:
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
             if isinstance(dataToLook, NpDict):
                 return dataToLook[:][idx]
+
             elif isinstance(dataToLook, pd.DataFrame):
                 return dataToLook.loc[idx]
             else:
                 assert False, '__getitem__: internal logic error'
 
+        # no mainGroups
         if isinstance(self.data, NpDict):
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
             return dataToLook[:][idx]
+
         elif isinstance(self.data, pd.DataFrame):
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
             return dataToLook.loc[idx]
+
         elif isinstance(self.data, (np.ndarray, torch.Tensor)):
             return self.data[idx]
         else:
@@ -348,7 +355,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     #---- Private methods
     def _IdxNdataToLook_WhileFetching(self, idx):
-        self.assertIdxInIndexes(idx)
+        self._assertIdxInIndexes(idx)
         if self.mainGroups:
             groupName = self._findIdxInmainGroupsRelIdxs(idx)
             dataToLook=self.data[groupName]
@@ -374,21 +381,23 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         """
         if indexes is None:
             noBackNForeLenCond = backcastLen==0 and forecastLen==0
-            dfDataWith_tsStartPointColNameInCols = isinstance(data,pd.DataFrame) and tsStartPointColName  in data.columns
-            npDictData_tsStartPointColNameInColsCond = isinstance(data, NpDict) and tsStartPointColName  in data.cols() 
-            dfTs = dfDataWith_tsStartPointColNameInCols
-            ndTs = npDictData_tsStartPointColNameInColsCond
+            dfDataWith_tsStartPointColNameInCols_cond = isinstance(data,pd.DataFrame) and \
+                                                        tsStartPointColName  in data.columns
+            npDictData_tsStartPointColNameInCols_cond = isinstance(data, NpDict) and \
+                                                        tsStartPointColName  in data.cols() 
+            dfWithSP = dfDataWith_tsStartPointColNameInCols_cond
+            ndWithSP = npDictData_tsStartPointColNameInCols_cond
 
-            assert  noBackNForeLenCond or dfTs or ndTs, VAnnTsDataset.noIndexesAssertionMsg
+            assert  noBackNForeLenCond or dfWithSP or ndWithSP, VAnnTsDataset.noIndexesAssertionMsg
 
 
-            if noBackNForeLenCond and not (dfTs or ndTs):
+            if noBackNForeLenCond and not (dfWithSP or ndWithSP):
                 indexes = [i for i in range(len(data))]
 
-            elif dfTs and not useNpDictForDfs:
+            elif dfWithSP and not useNpDictForDfs:
                 indexes = list(data[data[tsStartPointColName]==True].index)
                 "#ccc note indexes are same as df.index"
-            elif (dfTs and useNpDictForDfs) or ndTs:
+            elif (dfWithSP and useNpDictForDfs) or ndWithSP:
                 if isinstance(data, pd.DataFrame):
                     npDict = NpDict(data)
                 if isinstance(data, NpDict):
@@ -410,12 +419,15 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         self.data={}
         if isinstance(data, NpDict):
-            self._makeMainGroupsIndexes(data, mainGroups, npDictData=True, convGroupData_ToNpDict=True)
+            self._makeMainGroupsIndexes(data, mainGroups,
+                                        npDictData=True, convGroupData_ToNpDict=True)
         elif isinstance(data, pd.DataFrame):
             if useNpDictForDfs:
-                self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=True)
+                self._makeMainGroupsIndexes(data, mainGroups,
+                                            npDictData=False, convGroupData_ToNpDict=True)
             else:
-                self._makeMainGroupsIndexes(data, mainGroups, npDictData=False, convGroupData_ToNpDict=False)
+                self._makeMainGroupsIndexes(data, mainGroups,
+                                            npDictData=False, convGroupData_ToNpDict=False)
         else:
             assert False, 'only pd.DataFrame and NpDicts can have mainGroups defined'
 
@@ -428,7 +440,8 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             else:
                 self.data = data
 
-    def _makeMainGroupsIndexes(self, data, mainGroups, npDictData=False, convGroupData_ToNpDict=False):
+    def _makeMainGroupsIndexes(self, data, mainGroups,
+                               npDictData=False, convGroupData_ToNpDict=False):
         """#ccc (dev)
         if the data passed to init
             1. is pd.df, mainGroupsGeneralIdxs and mainGroupsRelIdxs are indexes of df.index
@@ -450,14 +463,23 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
             if convGroupData_ToNpDict:# this accounts for npDict|df with useNpDictForDfs
                 "#ccc note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df"
                 self.data[groupName] = NpDict(groupDf)
-                generalIdxs = [list(df.index).index(idx) for idx in groupDf.index]
-                self.mainGroupsGeneralIdxs[groupName] = [idx for idx in generalIdxs if idx in self.indexes]
-                self.mainGroupsRelIdxs[groupName] = [generalIdxs.index(idx) for idx in generalIdxs \
-                                                     if idx in self.mainGroupsGeneralIdxs[groupName]]
+                generalIdxs = [list(df.index).index(idx) \
+                               for idx in groupDf.index]
+
+                self.mainGroupsGeneralIdxs[groupName] = \
+                        [idx for idx in generalIdxs if idx in self.indexes]
+
+                self.mainGroupsRelIdxs[groupName] = \
+                        [generalIdxs.index(idx) for idx in generalIdxs \
+                         if idx in self.mainGroupsGeneralIdxs[groupName]]
+
             else:# this accounts for df with useNpDictForDfs=False
                 "#ccc note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df"
                 self.data[groupName] = groupDf
-                self.mainGroupsGeneralIdxs[groupName] = [idx for idx in groupDf.index if idx in self.indexes]
+                self.mainGroupsGeneralIdxs[groupName] = \
+                        [idx for idx in groupDf.index \
+                         if idx in self.indexes]
+
                 self.mainGroupsRelIdxs[groupName] = []
 
 
