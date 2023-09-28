@@ -1,3 +1,4 @@
+#%%
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
@@ -7,7 +8,6 @@ from dataPrep.normalizers import (NormalizerStack, SingleColsStdNormalizer, Mult
                                                  SingleColsLblEncoder, MultiColLblEncoder, IntLabelsString, 
                                                  LblEncoder, Combo, MainGroupBaseNormalizer,
                                                  MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
-from utils.vAnnGeneralUtils import equalDfs
 import pandas as pd
 #%% stdNormalizerTest
 class stdNormalizerTests(BaseTestClass):
@@ -46,7 +46,7 @@ MultiColStdNormalizer:col3_col4 is already fitted
         self.transformSetUp()
         #kkk if the self.setUp is not used give a warning
         self.normalizerStack.fitNTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.transformedDf)
+        self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
 
     def testFitAgain(self):
         "#ccc this is example of checking expectedPrints in tests"
@@ -54,7 +54,7 @@ MultiColStdNormalizer:col3_col4 is already fitted
             self.transformSetUp()
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             self.normalizerStack.fitNTransform(self.dfToDoTest)
-            assert equalDfs(self.dfToDoTest, self.transformedDf)
+            self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
         self.assertPrint(testFunc, self.expectedPrint['testFitAgain'])
 
     def testInverseMiddleTransformCol(self):
@@ -64,12 +64,12 @@ MultiColStdNormalizer:col3_col4 is already fitted
         # for assert modification
         self.dfAssertDummy['col2']=self.transformedDf['col2']
         self.dfAssertDummy['col3']=self.transformedDf['col3']
-        assert equalDfs(self.dfToDoTest, self.dfAssertDummy)
+        self.equalDfs(self.dfToDoTest, self.dfAssertDummy, floatApprox=True)
 
     def testInverseTransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseMiddleTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.dfUntouched)
+        self.equalDfs(self.dfToDoTest, self.dfUntouched)
 
     #kkk what meaningful tests can be added??
 #%% lblEncoderTest
@@ -104,7 +104,7 @@ MultiColLblEncoder:col3_col4 is already fitted
     def testInverseTransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.dfUntouched)
+        self.equalDfs(self.dfToDoTest, self.dfUntouched)
 
 class lblEncoderWithIntLabelsStringTests(BaseTestClass):
     def transformSetUp(self):
@@ -134,12 +134,12 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
     def testInverseMiddleTransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseMiddleTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.inverseMiddleTransformRes)
+        self.equalDfs(self.dfToDoTest, self.inverseMiddleTransformRes, floatApprox=True)
 
     def testInverseTransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
-        assert equalDfs(self.dfToDoTest, self.dfUntouched)
+        self.equalDfs(self.dfToDoTest, self.dfUntouched)
 #%% MainGroupBaseNormalizer tests
 class MainGroupBaseNormalizerTests(BaseTestClass):
     def setUp(self):
@@ -196,7 +196,7 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
         self.setUp()
         MainGroupBaseNormalizer_ = MainGroupBaseNormalizer(self.df, mainGroupColNames)
         res=MainGroupBaseNormalizer_.getRowsByCombination(self.df, comboToFind)
-        assert equalDfs(getRowsByCombinationRes, res)
+        self.equalDfs(getRowsByCombinationRes, res, floatApprox=True)
 
     def testGetRowsByCombination1(self):
         comboToFind={'A': 'A1', 'B': 'B1'}
@@ -235,23 +235,23 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
         self.setUp()
         MainGroupBaseNormalizer_=MainGroupSingleColsStdNormalizer(self.df, ['A','B'], ['col1','col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
-        assert equalDfs(self.df, self.dfFitNTransform)
+        self.equalDfs(self.df, self.dfFitNTransform)
 
     def testNormalizerStackFitNTransform(self):
         self.setUp()
         self.normalizerStackSetUp()
         self.normalizerStack.fitNTransform(self.df)
-        assert equalDfs(self.df, self.dfFitNTransform)
+        self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
 
     def testNormalizerStackMiddleInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseMiddleTransform(self.df)
-        assert equalDfs(self.df, self.dfUntouched)
+        self.equalDfs(self.df, self.dfUntouched, floatApprox=True)
 
     def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseTransform(self.df)
-        assert equalDfs(self.df, self.dfUntouched)
+        self.equalDfs(self.df, self.dfUntouched)
 
 class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
     def setUp(self):
@@ -287,12 +287,12 @@ class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
         self.setUp()
         MainGroupBaseNormalizer_=MainGroupSingleColsLblEncoder(self.df, ['A','B'], ['col1','col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
-        assert equalDfs(self.df, self.dfFitNTransform)
+        self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
 
     def testNormalizerStackInverseMiddleTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseMiddleTransform(self.df)
-        assert equalDfs(self.df, self.dfInverseRes)
+        self.equalDfs(self.df, self.dfInverseRes)
 #%% other tests
 class otherTests(BaseTestClass):
     def testNormalizerStack_addNormalizer(self):

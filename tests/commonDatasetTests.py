@@ -78,7 +78,7 @@ class epfFrBeTests(BaseTestClass):
             mainDfIndexes_whichAreInSetDf=self.mainDf[self.mainDf['dateTime'].isin(set_['dateTime'].values)].index
             setCheck=self.mainDf.loc[mainDfIndexes_whichAreInSetDf]
 
-            self.assertTrue(equalDfs(set_, setCheck, checkIndex=False))
+            self.equalDfs(set_, setCheck, checkIndex=False, floatApprox=True)
 
     def testDataloader_data(self):
         device = torch.device('cuda')

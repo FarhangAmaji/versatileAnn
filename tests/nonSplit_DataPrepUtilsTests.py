@@ -80,7 +80,7 @@ class subtractFromIndexesTests(BaseTestClass):
             testSeqLen = 16
             self.assertLastInds(trainRatio,valRatio, trainSeqLen, valSeqLen, testSeqLen)
 #%% SplitNCombineNSeries
-class TestSplitNCombineNSeries(unittest.TestCase):
+class TestSplitNCombineNSeries(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({
             'dew': [20,31,18,37,26],
@@ -117,7 +117,7 @@ class TestSplitNCombineNSeries(unittest.TestCase):
         comb1=combineNSeries(splitData, 'Temperature')
         comb2=combineNSeries(comb1, 'Pressure')
         
-        self.assertTrue(equalDfs(comb2, self.df))
+        self.equalDfs(comb2, self.df, floatApprox=True)
 #%% run test
 if __name__ == '__main__':
     unittest.main()

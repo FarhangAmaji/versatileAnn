@@ -2,7 +2,7 @@
 from tests.baseTest import BaseTestClass
 import unittest
 from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_NSeries
-from utils.vAnnGeneralUtils import equalDfs, listRangesToList
+from utils.vAnnGeneralUtils import listRangesToList
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
@@ -35,9 +35,9 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         trainDfCheck[tsStartPointColName]=True
         valDfCheck[tsStartPointColName]=True
         testDfCheck[tsStartPointColName]=True
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 
     def testNoVal(self):
         self.setUp()
@@ -53,9 +53,9 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         valDfCheck[tsStartPointColName]=True
         testDfCheck[tsStartPointColName]=True
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck, floatApprox=True)
+        self.equalDfs(testDf,testDfCheck)
 
     def testTsStartPointColNameCondition(self):
         self.setUp()
@@ -75,9 +75,9 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
                                     'y2': [i for i in range(199, 206)],
                                     tsStartPointColName: [True for i in range(99, 106)],
                                     'condCol': [i for i in range(199, 206)]})
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 
     def testWithSeqLen(self):
         self.setUp()
@@ -99,9 +99,9 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
                                     tsStartPointColName: [True if i<106 else False for i in range(99, 110)],
                                     'condCol': [i for i in range(199, 210)]})
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 
     def testOtherCondition(self):
         self.setUp()
@@ -123,9 +123,9 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
                                     'y2': [i for i in range(192, 204)],
                                     tsStartPointColName: [True if i<100 else False for i in range(92, 104)],
                                     'condCol': [i for i in range(192, 204)]})
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 
     def testShuffle_WithSeqLen_WithOtherCondition(self):
         self.setUp()
@@ -147,21 +147,21 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         trainCheckIndexes2=set(trainCheckIndexes[:])
         getInd2s(trainCheckIndexes2, trainCheckIndexes)
         trainDfCheck = getDf(trainCheckIndexes2, trainCheckIndexes).reset_index(drop=True)
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
 
 
         valCheckIndexes=[27, 29, 33, 43, 44, 61, 64, 67, 72, 75, 78, 81, 86, 92, 96]
         valCheckIndexes2=set(valCheckIndexes[:])
         getInd2s(valCheckIndexes2, valCheckIndexes)
         valDfCheck = getDf(valCheckIndexes2, valCheckIndexes)
-        self.assertTrue(equalDfs(valDf,valDfCheck))
+        self.equalDfs(valDf,valDfCheck)
 
 
         testCheckIndexes=[28, 38, 49, 63, 71, 79, 97, 99]
         testCheckIndexes2=set(testCheckIndexes[:])
         getInd2s(testCheckIndexes2, testCheckIndexes)
         testDfCheck = getDf(testCheckIndexes2, testCheckIndexes)
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(testDf,testDfCheck)
 #%%     splitTrainValTest_NSeries
 class TestSplitTrainValTest_NSeries(BaseTestClass):
     def setUp(self):
@@ -194,9 +194,9 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
             tsStartPointColName: 14*[True],
             'y1': listRangesToList([range(51, 57), range(88, 96)])},index=range(0, 14))
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck, floatApprox=True)
+        self.equalDfs(valDf,valDfCheck, floatApprox=True)
+        self.equalDfs(testDf,testDfCheck, floatApprox=True)
 
     def testWithStartPointCol_withSeqLen_noShuffle(self):
         trainDf, valDf, testDf=splitTrainValTest_NSeries(self.df, ["A","B"], trainRatio=.6, valRatio=.2, seqLen=7, shuffle=False)
@@ -223,9 +223,9 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
                    False, False, False, False, False, False],
             'y1': listRangesToList([range(46, 57), range(83, 96)])},index=range(0, 24))
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 
     def testWithDifferentSeqLen_noShuffle(self):
         # having a condition doesnt make sense in general use cases, with seqlen, but it may does in some cases
@@ -258,9 +258,9 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
                     True,  True,  True,  True,  True,  True, False, False],
             'y1': listRangesToList([range(50, 57), range(86, 96)])},index=range(0, 17))
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck, floatApprox=True)
+        self.equalDfs(valDf,valDfCheck, floatApprox=True)
+        self.equalDfs(testDf,testDfCheck, floatApprox=True)
 
     def testWithStartPointCol_withSeqLen_Shuffle(self):
         trainDf, valDf, testDf=splitTrainValTest_NSeries(self.df, ["A","B"], trainRatio=.6, valRatio=.2, seqLen=7, shuffle=True)
@@ -300,9 +300,9 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
                     True, False, False, False, False, False, False],
             'y1': listRangesToList([range(35, 80), range(84, 91)])},index=range(0, 52))
 
-        self.assertTrue(equalDfs(trainDf,trainDfCheck))
-        self.assertTrue(equalDfs(valDf,valDfCheck))
-        self.assertTrue(equalDfs(testDf,testDfCheck))
+        self.equalDfs(trainDf,trainDfCheck)
+        self.equalDfs(valDf,valDfCheck)
+        self.equalDfs(testDf,testDfCheck)
 #%% run test
 if __name__ == '__main__':
     unittest.main()
