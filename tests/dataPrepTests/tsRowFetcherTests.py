@@ -8,7 +8,7 @@
         so focus of reader of this file, is on more detailed items
 """
 import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from tests.baseTest import BaseTestClass
 import unittest
 import inspect

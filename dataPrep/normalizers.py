@@ -127,6 +127,7 @@ class IntLabelsString:
         return np.vectorize(self.labelToIntMapping.get)(dataToInverseTransformed)
 #%% normalizers: NormalizerStack
 class NormalizerStack:
+    #kkk doesnt have individual tests but all methods are used in other tests
     def __init__(self, *stdNormalizers):
         self._normalizers = {}
         for stdNormalizer in stdNormalizers:

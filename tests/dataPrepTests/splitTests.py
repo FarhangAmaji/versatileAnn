@@ -1,4 +1,6 @@
 #%% 
+import os
+os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from tests.baseTest import BaseTestClass
 import unittest
 from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_NSeries

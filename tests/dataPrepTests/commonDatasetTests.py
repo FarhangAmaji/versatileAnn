@@ -1,6 +1,6 @@
 #%% imports
 import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from tests.baseTest import BaseTestClass
 import unittest
 from dataPrep.commonDatasets.epfFrBe import getEpfFrBeProcessed_loadData, getEpfFrBeProcessed, getEpfFrBeDataloaders
