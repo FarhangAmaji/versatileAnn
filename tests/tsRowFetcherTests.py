@@ -1,23 +1,103 @@
 #%% imports
-'#ccc also test for getBackForeCastData in dataset'
+"""
+#ccc important::: test names are important as they provide kwargs
+            for 'getBackForeCastData_general' through giveKwargsByFuncName_dfSample1
+            and giveKwargsByFuncName_npArraySample1
+
+#ccc note 'autoKwargsByFuncName' provides kwargs passed.
+        so focus of reader of this file, is on more detailed items
+"""
 import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
+import inspect
 import torch
 import pandas as pd
 import numpy as np
 from utils.vAnnGeneralUtils import NpDict
 from utils.globalVars import tsStartPointColName
 from dataPrep.dataset import TsRowFetcher, VAnnTsDataset
-#%% TsRowFetcherTests
-"""
-#kkk update this note
-things have been tested:
-    in TestTsRowFetcherDfTests, TestTsRowFetcherNpArrayTests, TestTsRowFetcherNpDictTests, TestTsRowFetcherTorchTensorTests:
-                getBackForeCastData_general: for 4 types of DataFrame,npArray, NpDict, tensor|for 4 modes| for specifiedCols or 
-                '___all___'|for makeTensor True and False|keeping int dtype
+#%% sample variables
+npArraySample1 = np.array([[1, 16, 32], 
+                            [2, 17, 33],
+                            [3, 18, 34],
+                            [4, 19, 35],
+                            [5, 20, 36],
+                            [6, 21, 37],
+                            [7, 22, 38],
+                            [8, 23, 39]])
 
+dfSample1 = pd.DataFrame({'y1': [1,  2,  3,  4,  5,  6,  7,  8],
+                          'y2': [16, 17, 18, 19, 20, 21, 22, 23],
+                          'y3': [32, 33, 34, 35, 36, 37, 38, 39]},
+                         index=[130, 131, 132, 133, 134, 135, 136, 137])
+#%% create dictionaries with args to pass, by func name
+def createKwargsDictFromName_base(name):
+    dict_ = {}
+    
+    # set modeType
+    if '_BackcastMode' in name:
+        dict_['mode'] = 'backcast'
+    elif '_ForecastMode' in name:
+        dict_['mode'] = 'forecast'
+    elif '_FullcastMode' in name:
+        dict_['mode'] = 'fullcast'
+    elif '_SinglePointMode' in name:
+        dict_['mode'] = 'singlePoint'
+    
+    # set colType
+    if '_AllColIndexes' in name:
+        dict_['colsOrIndexes'] = '___all___'
+
+    # set makeTensorType
+    if '_MakeTensor' in name:
+        dict_['makeTensor'] = True
+    elif '_noMakeTensor' in name:
+        dict_['makeTensor'] = False
+        
+    return dict_
+
+def createKwargsDictFromName_dfSample1(name):
+    dict_ = createKwargsDictFromName_base(name)
+    if '_someCols' in name:
+        dict_['colsOrIndexes'] = ['y1', 'y2']
+    return dict_
+
+def createKwargsDictFromName_npArraySample1(name):
+    dict_ = createKwargsDictFromName_base(name)
+    if '_someCols' in name:
+        dict_['colsOrIndexes'] = [0, 1]
+    return dict_
+
+def giveKwargsByFuncName_base(operationFunc):
+    frame = inspect.currentframe()
+    try:
+        funcName = frame.f_back.f_back.f_code.co_name
+        return operationFunc(funcName)
+    except:
+        return {}
+    finally:
+        del frame
+
+def giveKwargsByFuncName_dfSample1():
+    return giveKwargsByFuncName_base(createKwargsDictFromName_dfSample1)
+
+def giveKwargsByFuncName_npArraySample1():
+    return giveKwargsByFuncName_base(createKwargsDictFromName_npArraySample1)
+#%% common used kwargs
+commonkwargs1 = createKwargsDictFromName_base('_BackcastMode_AllColIndexes_MakeTensor_kwargs')
+commonkwargs2 = createKwargsDictFromName_dfSample1('_BackcastMode_someCols_noMakeTensor_kwargs')
+commonkwargs3 = createKwargsDictFromName_dfSample1('_ForecastMode_someCols_noMakeTensor_kwargs')
+#%% TsRowFetcherTests
+#%%        TsRowFetcherTests_types
+"""#ccc
+in TsRowFetcherTests_types, including (TestTsRowFetcher_DfTests, TestTsRowFetcher_NpArrayTests,
+                                       TestTsRowFetcher_NpDictTests, TestTsRowFetcher_TensorTests)
+
+for each (backcast, forecast, fullcast, singlePoint) modes
+for makeTensor== True or False
+for someCols == ['y1', 'y2'](or [0, 1]) or _AllColIndexes=='___all___'
 """
 #%%        TestTsRowFetcherDfTests
 class TestTsRowFetcherDfTests(BaseTestClass):
