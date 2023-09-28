@@ -317,7 +317,7 @@ def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):
     else:
         raise ValueError("Input must be either a DataFrame or a Series")
 
-def rightPadDfIfShorter(dfOrSeries, maxLen, pad=0):
+def rightPadIfShorter_df(dfOrSeries, maxLen, pad=0):
     return rightPadDfBaseFunc(rightPadSeriesIfShorter, dfOrSeries, maxLen, pad=pad)
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
@@ -337,7 +337,7 @@ def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
         arr = np.concatenate((arr, padding))
     return arr
 
-def rightPadNpArrayIfShorter(arr, maxLen, pad=0):
+def rightPadIfShorter_npArray(arr, maxLen, pad=0):
     if maxLen <= 0:
         return arr
     currentLength = len(arr)
@@ -360,7 +360,7 @@ def rightPadTensorBaseFunc(tensor, padLen, pad=0):
         tensor = torch.cat((tensor, padding), dim=0)
     return tensor
 
-def rightPadTensorIfShorter(tensor, maxLen, pad=0):
+def rightPadIfShorter_tensor(tensor, maxLen, pad=0):
     if maxLen <= 0:
         return tensor
     currentLength = tensor.size(0)

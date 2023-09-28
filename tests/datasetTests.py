@@ -4,7 +4,12 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.baseTest import BaseTestClass
 import unittest
 #%%
-"#ccc some of the tests related to dataset and TsRowFetcher are TsRowFetcherTests"
+"#ccc no tests for getBackForeCastData because it only uses _IdxNdataToLook_WhileFetching and assertIdxInIndexes_dependingOnAllowance,"
+"... also getBackForeCastData_general which has it own tests on tsRowFetcherTests"
+
+"#ccc note the test for getBackForeCastData_general may not contain the type of df with useNpDictForDfs,"
+"... as the indexes and dataToLook matches the npDict type results"
+
 from dataPrep.dataset import VAnnTsDataset
 from utils.vAnnGeneralUtils import NpDict
 from utils.globalVars import tsStartPointColName
@@ -352,7 +357,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         idx = 1
         expected = np.array([4, 5, 6])
         result = dataset[idx]
-        np.testing.assert_array_equal(result, expected)
+        self.equalArrays(result, expected)
 
     def testGetItem_NpArray_NotInIndexes(self):
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])

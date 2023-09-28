@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange
+from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange, varPasser
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, rightPadIfShorter_tensor
 import warnings
 import pandas as pd
@@ -169,6 +169,8 @@ class TsRowFetcher:
                                 0, 1,
                                 colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
                                 canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+            else:
+                assert False, "getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' modes"
 
 
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
@@ -318,11 +320,12 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         self._assertIdx_NShift(False, idx, shiftForward)
 
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
-
-        return self.getBackForeCastData_general(dataToLook, idx=idx, mode=mode,
-                           colsOrIndexes=colsOrIndexes, shiftForward=shiftForward,
-                           makeTensor=makeTensor,canBeOutOfStartIndex=False,# note _IdxNdataToLook_WhileFetching works only idx is in indexes
-                           canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
+        
+        kwargs = varPasser(locals(),exclude=['dataToLook', 'canBeOutOfStartIndex'])
+        
+        return self.getBackForeCastData_general(dataToLook,
+                                                canBeOutOfStartIndex=False,# note _IdxNdataToLook_WhileFetching works only idx is in indexes
+                                                **kwargs)
 
     def __len__(self):
         return len(self.indexes)

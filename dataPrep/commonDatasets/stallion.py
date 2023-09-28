@@ -18,7 +18,7 @@ from dataPrep.utils import getDatasetFiles, splitTrainValTest_NSeries
 from dataPrep.normalizers import NormalizerStack, SingleColsLblEncoder, MainGroupSingleColsStdNormalizer, SingleColsStdNormalizer
 from models.temporalFusionTransformers_components import getEmbeddingSize
 #kkk replace this from a particular model, to general embedding files
-from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter
+from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
 import pandas as pd
 import numpy as np
 from dataPrep.dataset import VAnnTsDataset
@@ -172,12 +172,12 @@ class StallionTftDataset(VAnnTsDataset):
         fullcastLen=self.backcastLen+self.forecastLen
         inputs['allReals']['relativeTimeIdx']=pd.Series([i for i in range(-encoderLength, decoderLength)])
         inputs['allReals']['relativeTimeIdx']/= self.maxEncoderLength
-        inputs['allReals']['relativeTimeIdx']=rightPadDfIfShorter(inputs['allReals']['relativeTimeIdx'], fullcastLen)
+        inputs['allReals']['relativeTimeIdx']=rightPadIfShorter_df(inputs['allReals']['relativeTimeIdx'], fullcastLen)
 
         inputs['allReals']['encoderLength']=pd.Series([(encoderLength - .5*self.maxEncoderLength)
                                                        for i in range(encoderLength+decoderLength)])
         inputs['allReals']['encoderLength']/=self.maxEncoderLength*2
-        inputs['allReals']['encoderLength']=rightPadDfIfShorter(inputs['allReals']['encoderLength'], fullcastLen)
+        inputs['allReals']['encoderLength']=rightPadIfShorter_df(inputs['allReals']['encoderLength'], fullcastLen)
         
 
         inputs['categorical']={}
@@ -195,7 +195,7 @@ class StallionTftDataset(VAnnTsDataset):
         outputs={}
         groupName, relIdx=self.findIdxInMainGroupsIndexes(idx)
         outputs['volume']=self.data[groupName]['volume'][relIdx+encoderLength:relIdx+encoderLength+decoderLength]
-        outputs['volume']=rightPadNpArrayIfShorter(outputs['volume'], fullcastLen)
+        outputs['volume']=rightPadIfShorter_npArray(outputs['volume'], fullcastLen)
 
         return inputs, outputs
 #%% dataloader
