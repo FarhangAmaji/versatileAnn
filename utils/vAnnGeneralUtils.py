@@ -1,3 +1,4 @@
+import inspect
 import torch
 import pandas as pd
 import numpy as np
@@ -299,3 +300,23 @@ def similarItemsString(inputList):
 #%% floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
+#%% misc
+def varPasser(locals_, localArgNames=[], exclude=[]):
+    assert isinstance(locals_, dict), 'locals_ is supposed to be locals() of caller func or a dictionary'
+    dict_ = {}
+    if localArgNames:
+        for lan in localArgNames:
+            if lan not in exclude:# this is usually not needed; but for the case we have some dictionary and we want to remove some keys
+                dict_[lan] = locals_[lan]
+    else:
+        for lan in locals_.keys():
+            if lan not in exclude:# this may be needed much more comparing to prev
+                dict_[lan] = locals_[lan]
+    return dict_
+
+def getCurrentFuncName():
+    frame = inspect.currentframe()
+    try:
+        return frame.f_back.f_code.co_name
+    finally:
+        del frame
