@@ -31,7 +31,7 @@ class TsRowFetcher:
         return data
 
     def getDfRows(self, df, idx, lowerBoundGap,
-                  upperBoundGap, cols, shiftForward=0,
+                  upperBoundGap, colsOrIndexes, shiftForward=0,
                   canBeOutOfStartIndex=False, canHaveShorterLength=False,
                   rightPadIfShorter=False):
 
@@ -47,10 +47,10 @@ class TsRowFetcher:
         slice_=slice(idx + lowerBoundGap + shiftForward,
                      idx + upperBoundGap-1 + shiftForward)
 
-        if cols=='___all___':
+        if colsOrIndexes=='___all___':
             res = df.loc[slice_]
         else:
-            res = df.loc[slice_,cols]
+            res = df.loc[slice_,colsOrIndexes]
 
         res= self._rightPadShorterIfAllowed(canHaveShorterLength, rightPadIfShorter,
                                             res, slice_, isItDfLen=True)
@@ -58,7 +58,7 @@ class TsRowFetcher:
 
     def getTensorRows(self, tensor, idx,
                       lowerBoundGap, upperBoundGap,
-                      colIndexes, shiftForward=0,
+                      colsOrIndexes, shiftForward=0,
                       canBeOutOfStartIndex=False, canHaveShorterLength=False,
                       rightPadIfShorter=False):
 
@@ -69,17 +69,17 @@ class TsRowFetcher:
         slice_=slice(idx + lowerBoundGap + shiftForward,
                      idx + upperBoundGap + shiftForward)
 
-        if colIndexes=='___all___':
+        if colsOrIndexes=='___all___':
             res = tensor[slice_,:]
         else:
-            res = tensor[slice_, colIndexes]
+            res = tensor[slice_, colsOrIndexes]
 
         res= self._rightPadShorterIfAllowed(canHaveShorterLength, rightPadIfShorter,res, slice_)
         return self.singleFeatureShapeCorrection(res)
 
     def getNpDictRows(self, npDict, idx, 
                       lowerBoundGap, upperBoundGap,
-                      colIndexes, shiftForward=0,
+                      colsOrIndexes, shiftForward=0,
                       canBeOutOfStartIndex=False, canHaveShorterLength=False,
                       rightPadIfShorter=False):
 
@@ -92,17 +92,17 @@ class TsRowFetcher:
         slice_=slice(idx + lowerBoundGap + shiftForward,
                      idx + upperBoundGap + shiftForward)
 
-        if colIndexes=='___all___':
+        if colsOrIndexes=='___all___':
             res =  npDict[:][slice_]
         else:
-            res =  npDict[colIndexes][slice_]
+            res =  npDict[colsOrIndexes][slice_]
 
         res= self._rightPadShorterIfAllowed(canHaveShorterLength, rightPadIfShorter,res, slice_)
         return self.singleFeatureShapeCorrection(res)
 
     def getNpArrayRows(self, npArray, idx,
                        lowerBoundGap, upperBoundGap,
-                       colIndexes, shiftForward=0,
+                       colsOrIndexes, shiftForward=0,
                        canBeOutOfStartIndex=False, canHaveShorterLength=False,
                        rightPadIfShorter=False):
 
@@ -120,10 +120,10 @@ class TsRowFetcher:
         slice_=slice(idx + lowerBoundGap + shiftForward,
                      idx + upperBoundGap + shiftForward)
 
-        if colIndexes=='___all___':
+        if colsOrIndexes=='___all___':
             res =  npArray[slice_,:]
         else:
-            res =  npArray[slice_,colIndexes]
+            res =  npArray[slice_, colsOrIndexes]
 
         res= self._rightPadShorterIfAllowed(canHaveShorterLength, rightPadIfShorter,res, slice_)
         return self.singleFeatureShapeCorrection(res)
@@ -145,59 +145,66 @@ class TsRowFetcher:
         #... maybe not needed and the query is better used at other places in data prepration or split
         #kkk if query is added, these modes have to be more flexible
 
-        def getCastByMode(typeFunc):
-            if mode==self.modes.backcast: # backcast mode
-                return typeFunc(data, idx,
-                                0, self.backcastLen,
-                                colsOrIndexes, shiftForward, canBeOutOfStartIndex=True, #ccc canBeOutOfStartIndex=True is in order not to check it again
-                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
-
-            elif mode==self.modes.forecast: # forecast mode
-                return typeFunc(data, idx,
-                                self.backcastLen, self.backcastLen+self.forecastLen,
-                                colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
-                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
-
-            elif mode==self.modes.fullcast: # fullcast mode
-                return typeFunc(data, idx,
-                                0, self.backcastLen+self.forecastLen,
-                                colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
-                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
-
-            elif mode==self.modes.singlePoint: # singlePoint mode
-                return typeFunc(data, idx,
-                                0, 1,
-                                colsOrIndexes, shiftForward, canBeOutOfStartIndex=True,
-                                canHaveShorterLength=canHaveShorterLength, rightPadIfShorter=rightPadIfShorter)
-            else:
-                assert False, "getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' modes"
-
-
         assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
         assert colsOrIndexes=='___all___' or isinstance(colsOrIndexes, list), \
                 "u should either pass '___all___' for all feature cols or a list of their columns or indexes"
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
         "#ccc idx+shiftForward also should be in data indexes"
-
-        # send to getCastByMode depending on datatype
-        if isinstance(data, NpDict): # NpDict
-            res = getCastByMode(self.getNpDictRows)
-
-        elif isinstance(data, pd.DataFrame): # pd.df
-            res = getCastByMode(self.getDfRows)
-
-        elif isinstance(data, np.ndarray): # np.array
-            res = getCastByMode(self.getNpArrayRows)
-
-        elif isinstance(data, torch.Tensor): # tensor
-            res = getCastByMode(self.getTensorRows)
-        else:
-            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
+        kwargs = varPasser(locals(),exclude=['canBeOutOfStartIndex', 'makeTensor'])
+        res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
 
         if makeTensor:
             res = self.makeTensor(res)
         return res
+
+    def _getBackForeCastData_general_byDataType_NCastMode(self, data, idx,
+                                                         mode, colsOrIndexes,
+                                                         shiftForward, canHaveShorterLength,
+                                                         rightPadIfShorter):
+        kwargs = varPasser(locals(), exclude=[])
+        # send to _getCastByMode depending on datatype
+        if isinstance(data, NpDict): # NpDict
+            res = self._getCastByMode(self.getNpDictRows, **kwargs)
+        
+        elif isinstance(data, pd.DataFrame): # pd.df
+            res = self._getCastByMode(self.getDfRows, **kwargs)
+        
+        elif isinstance(data, np.ndarray): # np.array
+            res = self._getCastByMode(self.getNpArrayRows, **kwargs)
+        
+        elif isinstance(data, torch.Tensor): # tensor
+            res = self._getCastByMode(self.getTensorRows, **kwargs)
+        else:
+            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
+        return res
+
+    def _getCastByMode(self, dataTypeFunc, data, idx,
+                       mode, colsOrIndexes,
+                       shiftForward, canHaveShorterLength,
+                       rightPadIfShorter):
+        canBeOutOfStartIndex = True #ccc canBeOutOfStartIndex=True is in order not to check it again
+        kwargs = varPasser(locals(), exclude=['data', 'dataTypeFunc', 'mode'])
+        if mode==self.modes.backcast: # backcast mode
+            return dataTypeFunc(data, 
+                                lowerBoundGap=0,
+                                upperBoundGap=self.backcastLen, **kwargs)
+    
+        elif mode==self.modes.forecast: # forecast mode
+            return dataTypeFunc(data,
+                                lowerBoundGap=self.backcastLen,
+                                upperBoundGap=self.backcastLen+self.forecastLen, **kwargs)
+    
+        elif mode==self.modes.fullcast: # fullcast mode
+            return dataTypeFunc(data,
+                                lowerBoundGap=0,
+                                upperBoundGap=self.backcastLen+self.forecastLen, **kwargs)
+    
+        elif mode==self.modes.singlePoint: # singlePoint mode
+            return dataTypeFunc(data,
+                            lowerBoundGap=0, upperBoundGap=1, **kwargs)
+        else:
+            assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' modes"
 
     def _assertIdxInIndexes(self, idx):
         if not self.indexes is None:

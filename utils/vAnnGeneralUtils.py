@@ -310,6 +310,8 @@ def varPasser(locals_, localArgNames=[], exclude=[]):
                 dict_[lan] = locals_[lan]
     else:
         for lan in locals_.keys():
+            if lan == 'self':
+                continue
             if lan not in exclude:# this may be needed much more comparing to prev
                 dict_[lan] = locals_[lan]
     return dict_
