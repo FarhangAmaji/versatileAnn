@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange
-from dataPrep.utils import rightPadDfIfShorter, rightPadNpArrayIfShorter, rightPadTensorIfShorter
+from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, rightPadIfShorter_tensor
 import warnings
 import pandas as pd
 import numpy as np
@@ -10,62 +10,20 @@ from utils.globalVars import tsStartPointColName
 #%% TsRowFetcher
 class TsRowFetcher:
     errMsgs={}
-    #kkk change it to dotdict
     errMsgs['shorterLen']="this output is shorter than requested"
-    errMsgs['non-negStartingPointDf']='the starting point is not in df'
-    errMsgs['non-negStartingPointTensor']='the starting point for tensor should be non-negative'
-    errMsgs['non-negStartingPointNpDict']='the starting point for NpDict should be non-negative'
-    errMsgs['non-negStartingPointNpArray']='the starting point for NpArray should be non-negative'
+    for it in ['Df', 'Tensor', 'NpDict', 'NpArray']:
+        errMsgs[f'non-negStartingPoint{it}'] = f'the starting point for {it} should be non-negative'
+
+    errMsgs = DotDict(errMsgs)
+
     def __init__(self, backcastLen, forecastLen):
         self.modes=DotDict({key: key for key in ['backcast', 'forecast', 'fullcast','singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
         self.indexes = None
-
-    def assertIdxInIndexes(self, idx):
-        if not self.indexes is None:
-            assert idx in self.indexes,f'{idx} is not in indexes'
-
-    def assertIdxInIndexes_dependingOnAllowance(self, allowance, idx):
-        if not allowance:
-            self.assertIdxInIndexes(idx)
-
-    def hasShorterLen(self, len_, slice_, isItDfLen=False):
-        normalSliceLen=slice_.stop-slice_.start
-        if isItDfLen:
-            sliceLen=normalSliceLen+1
-        else:
-            sliceLen=normalSliceLen
-        assert sliceLen>=len_,"Length is greater than expected"
-        #kkk sliceLen<len_ may not happen, unless internal bug
-        if sliceLen>len_:
-            return True
-        if sliceLen==len_:
-            return False
-
-    def assertCanHaveShorterLength_dependingOnAllowance(self, allowance, len_, slice_, isItDfLen=False):
-        if not allowance:
-            assert not self.hasShorterLen(len_, slice_, isItDfLen=isItDfLen),TsRowFetcher.errMsgs['shorterLen']
-
-    def rightPadShorterIfAllowed(self, shorterLenAllowance, rightPadAllowance, resData, slice_, pad=0, isItDfLen=False):
-        dataLen=len(resData)
-        shorterLen=self.hasShorterLen(dataLen, slice_, isItDfLen=isItDfLen)
-        sliceLen=slice_.stop-slice_.start
-        if shorterLen:
-            if rightPadAllowance:
-                if isinstance(resData, (pd.DataFrame,pd.Series)):
-                    return rightPadDfIfShorter(resData, sliceLen+1, pad=pad)
-                elif isinstance(resData, np.ndarray):
-                    return rightPadNpArrayIfShorter(resData, sliceLen, pad=pad)
-                elif isinstance(resData, torch.Tensor):
-                    return rightPadTensorIfShorter(resData, sliceLen, pad=pad)
-                else:
-                    assert False,'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
-            else:
-                self.assertCanHaveShorterLength_dependingOnAllowance(shorterLenAllowance, dataLen, slice_, isItDfLen=isItDfLen)
-                return resData
-        else:
-            return resData
+        
+        # make some names shorter
+        self._assertIdx_NShift = self._assertIdx_NShiftInIndexes_dependingOnAllowance
 
     def singleFeatureShapeCorrection(self, data):
         if len(data.shape)>=2 and data.shape[-1]==1:
@@ -175,6 +133,67 @@ class TsRowFetcher:
         if makeTensor:
             res = self.makeTensor(res)
         return res
+
+    def _assertIdxInIndexes(self, idx):
+        if not self.indexes is None:
+            assert idx in self.indexes,f'{idx} is not in indexes'
+
+    def _assertIdxInIndexes_dependingOnAllowance(self, allowance, idx):
+        if not allowance:
+            self._assertIdxInIndexes(idx)
+
+    def _assertIdx_NShiftInIndexes_dependingOnAllowance(self, allowance, idx, shiftForward):
+        self._assertIdxInIndexes_dependingOnAllowance(allowance, idx)
+        self._assertIdxInIndexes_dependingOnAllowance(allowance, idx+shiftForward)
+
+    def _hasShorterLen(self, len_, slice_, isItDfLen=False):
+        normalSliceLen=slice_.stop-slice_.start
+
+        if isItDfLen:
+            sliceLen=normalSliceLen+1
+        else:
+            sliceLen=normalSliceLen
+
+        assert sliceLen>=len_,"_hasShorterLen: internal logic error, Length is greater than expected"
+
+
+        if sliceLen>len_:
+            return True
+        if sliceLen==len_:
+            return False
+
+    def _assertCanHaveShorterLength_dependingOnAllowance(self, allowance, len_, slice_, isItDfLen=False):
+        if not allowance:
+            assert not self._hasShorterLen(len_, slice_, isItDfLen=isItDfLen), \
+                                            TsRowFetcher.errMsgs['shorterLen']
+
+    def _rightPadShorterIfAllowed(self, shorterLenAllowance,
+                                  rightPadAllowance, resData,
+                                  slice_, pad=0, isItDfLen=False):
+
+        dataLen=len(resData)
+        shorterLen = self._hasShorterLen(dataLen, slice_, isItDfLen=isItDfLen)
+
+        sliceLen=slice_.stop-slice_.start
+        if shorterLen:
+            if rightPadAllowance:
+
+                if isinstance(resData, (pd.DataFrame,pd.Series)):
+                    return rightPadIfShorter_df(resData, sliceLen+1, pad=pad)
+
+                elif isinstance(resData, np.ndarray):
+                    return rightPadIfShorter_npArray(resData, sliceLen, pad=pad)
+
+                elif isinstance(resData, torch.Tensor):
+                    return rightPadIfShorter_tensor(resData, sliceLen, pad=pad)
+                else:
+                    assert False,'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
+            else:
+                self._assertCanHaveShorterLength_dependingOnAllowance(shorterLenAllowance, dataLen,
+                                                                      slice_, isItDfLen=isItDfLen)
+                return resData
+        else:
+            return resData
 #%% VAnnTsDataset
 class VAnnTsDataset(Dataset, TsRowFetcher):
     noIndexesAssertionMsg = "u have to pass indexes unless both backcastLen and forecastLen are 0," + \
