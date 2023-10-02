@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 #%% DotDict NpDict
 class DotDict:
+    #kkk add .get and setdefault
     def __init__(self, data):
         self.data = data
 
@@ -68,14 +69,14 @@ class NpDict(DotDict):
         return {col: self[col] for col in self.cols()}
 
     def printDict(self):
-            print('{')
-            for col in self.cols():
-                colRes=list(self[col])
-                if hasThisListAnyRange(colRes):
-                    colRes=listToRanges(colRes)
-                colRes=similarItemsString(colRes)
-                print(f"'{col}': {colRes}, ")
-            print('}')
+        print('{')
+        for col in self.cols():
+            colRes=list(self[col])
+            if hasThisListAnyRange(colRes):
+                colRes=listToRanges(colRes)
+            colRes=similarItemsString(colRes)
+            print(f"'{col}': {colRes}, ")
+        print('}')
 
     def toDf(self, resetDtype=False):
         return pd.DataFrame(self.getDict(resetDtype),index=self.__index__,columns=self.cols())
@@ -259,8 +260,8 @@ def listRangesToList(rangeList):
     
     return res
 
-def hasThisListAnyRange(list):
-    return any([type(item)==range for item in list])
+def hasThisListAnyRange(list_):
+    return any([type(item)==range for item in list_])
 
 def similarItemsString(inputList):
     result = []
@@ -301,7 +302,9 @@ def similarItemsString(inputList):
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
 #%% misc
+#kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
 def varPasser(locals_, localArgNames=[], exclude=[]):
+    #kkk add var renamer
     assert isinstance(locals_, dict), 'locals_ is supposed to be locals() of caller func or a dictionary'
     dict_ = {}
     if localArgNames:
