@@ -9,3 +9,6 @@ transformer_from_scratch.py
 codeemprium.py
 versetaileAnn private notes.md
 .git/info/exclude
+.coverage
+htmlcov
+coverage_html
