@@ -3,29 +3,139 @@
 the formatting is done with a formatter in `vscode` with following `settings.json`
 
 ```
-#kkk this one should be added
+"[python]": {
+  "python.formatting.autopep8Args": [
+    "--max-line-length=79",
+    "--indent-size=4",
+    "--indent-after-paren=1",
+    "--aggressive",
+    "--max-args=3"
+  ]
+}
 ```
 
 ## comment convention
 
-#kkk I should define `todo types` depending on `priorites`(like importanlevel1 or style or comment )
+---
+
+todos
+
+- bugs
+  - bugCriticalUnknown FF0000
+  - bugKnown1 FF0000
+  - bugKnown2 FF8C00
+  - bugPotentialCheck1 FF5000
+  - bugPotentialCheck2 FFDC00
+- features to be added
+  - mustHave
+    - mustHave1 00FF00
+    - mustHave2 32FF32
+    - mustHave3 64FF64
+  - goodToHave
+    - goodToHave1 3232FF
+    - goodToHave2 6464FF
+    - goodToHave3 9696FF
+  - styles
+    - style1 00FF00
+    - style2 9696FF
+- questions
+  - qqq
+- comments
+  - devComments
+    - cccDevStruct FFFF00
+    - cccDevAlgo FFFF00
+  - userComments
+    - cccAlgo FF00FF
+    - cccUsage FF00FF
+
+---
 
 the comments use `better comments` extention with these added style to `settings.json`
 
 ```
-###### rn are not defined
 "better-comments.styles": [
-    {
-        "text": "CustomStyle1",
-        "color": "#FF5733",
-        "icon": "rocket"
-    },
-    {
-        "text": "CustomStyle2",
-        "color": "#33FF57",
-        "icon": "flame"
-    }
-]
+    /*    # bugs */
+        {
+            "text": "bugCriticalUnknown",
+            "color": "#FF0000"
+        },
+        {
+            "text": "bugKnown1",
+            "color": "#FF0000"
+        },
+        {
+            "text": "bugKnown2",
+            "color": "#FF8C00"
+        },
+        {
+            "text": "bugPotentialCheck1",
+            "color": "#FF5000"
+        },
+        {
+            "text": "bugPotentialCheck2",
+            "color": "#FFDC00"
+        },
+    /*    # features to be added */
+    /*    # - mustHave */
+        {
+            "text": "mustHave1",
+            "color": "#00FF00"
+        },
+        {
+            "text": "mustHave2",
+            "color": "#32FF32"
+        },
+        {
+            "text": "mustHave3",
+            "color": "#64FF64"
+        },
+    /*    # - goodToHave */
+        {
+            "text": "goodToHave1",
+            "color": "#3232FF"
+        },
+        {
+            "text": "goodToHave2",
+            "color": "#6464FF"
+        },
+        {
+            "text": "goodToHave3",
+            "color": "#9696FF"
+        },
+    /*    # - styles */
+        {
+            "text": "style1",
+            "color": "#00FF00"
+        },
+        {
+            "text": "style2",
+            "color": "#9696FF"
+        },
+    /*    # comments */
+    /*	# - devComments */
+        {
+            "text": "cccDevStruct",
+            "color": "#FFFF00"
+        },
+        {
+            "text": "cccDevAlgo",
+            "color": "#FFFF00"
+        },
+    /*	# - userComments */
+        {
+            "text": "cccAlgo",
+            "color": "#FF00FF"
+        },
+        {
+            "text": "cccUsage",
+            "color": "#FF00FF"
+        },
+    /*	# questions */
+        {
+            "text": "style2",
+            "color": "#9696FF"
+        }
+    ],
 ```
 
 ## formatting convention
