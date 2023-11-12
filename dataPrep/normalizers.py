@@ -1,7 +1,11 @@
+from abc import ABC, abstractmethod
+from typing import Union
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
+from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, areAllItemsInList1_ExistInList2
 
 
@@ -25,8 +29,9 @@ class baseEncoder(ABC):
         ...
 
     @abstractmethod
-    def inverseTransform(self, dataToInverseTransformed):
+    def inverseTransform(self, dataToBeInverseTransformed):
         ...
+
 
 class StdScaler(baseEncoder):
     def __init__(self, name=None):
@@ -37,13 +42,15 @@ class StdScaler(baseEncoder):
     def isFitted(self):
         return hasattr(self.scaler, 'mean_') and self.scaler.mean_ is not None
 
-    def fit(self, dataToFit, colShape=1):
+    @argValidator
+    def fit(self, dataToFit: Union[pd.DataFrame, pd.Series], colShape=1):
         if not self.isFitted:
             self.scaler.fit(dataToFit.values.reshape(-1, colShape))
         else:
             print(f'StdScaler {self.name} is already fitted')
 
-    def transform(self, dataToFit, colShape=1):
+    @argValidator
+    def transform(self, dataToFit: Union[pd.DataFrame, pd.Series], colShape=1):
         dataToFit = dataToFit.values.reshape(-1, colShape)
         if self.isFitted:
             return self.scaler.transform(dataToFit)
@@ -53,16 +60,19 @@ class StdScaler(baseEncoder):
             # addTest2 this is not in the tests
             return dataToFit
 
-    def inverseTransform(self, dataToInverseTransformed, colShape=1):
-        dataToInverseTransformed = dataToInverseTransformed.values.reshape(-1,
-                                                                           colShape)
+    @argValidator
+    def inverseTransform(self, dataToBeInverseTransformed: Union[
+        pd.DataFrame, pd.Series], colShape=1):
+        dataToBeInverseTransformed = dataToBeInverseTransformed.values.reshape(
+            -1,
+            colShape)
         if self.isFitted:
-            return self.scaler.inverse_transform(dataToInverseTransformed)
+            return self.scaler.inverse_transform(dataToBeInverseTransformed)
         else:
             print(
                 f'StdScaler {self.name} is not fitted; cannot inverse transform.')
             # addTest2 this is not in the tests
-            return dataToInverseTransformed
+            return dataToBeInverseTransformed
 
 
 class LblEncoder(baseEncoder):
@@ -78,9 +88,8 @@ class LblEncoder(baseEncoder):
         return hasattr(self.encoder,
                        'classes_') and self.encoder.classes_ is not None
 
-    def fit(self, dataToFit):
-        assert isinstance(dataToFit, (pd.Series,
-                                      pd.DataFrame)), "LblEncoder dataToFit is not a pandas Series or DataFrame"
+    @argValidator
+    def fit(self, dataToFit: Union[pd.DataFrame, pd.Series]):
         if not self.isFitted:
             # Check if there are integer labels
             if any(isinstance(label, int) for label in dataToFit):
@@ -90,14 +99,15 @@ class LblEncoder(baseEncoder):
         else:
             print(f'LblEncoder {self.name} is already fitted')
 
-    def doesDataSeemToBeAlreadyTransformed(self, data):
+    def _doesDataSeemToBe_AlreadyTransformed(self, data):
         return areAllItemsInList1_ExistInList2(np.unique(data), list(
             range(len(self.encoder.classes_))))
 
-    def transform(self, dataToFit):
+    @argValidator
+    def transform(self, dataToFit: Union[pd.DataFrame, pd.Series]):
         dataToFit = dataToFit.values.reshape(-1)
         if self.isFitted:
-            if self.doesDataSeemToBeAlreadyTransformed(dataToFit):
+            if self._doesDataSeemToBe_AlreadyTransformed(dataToFit):
                 print(
                     f'LblEncoder {self.name} skipping transform: data already seems transformed.')
                 return dataToFit
@@ -109,25 +119,29 @@ class LblEncoder(baseEncoder):
             # addTest2 this is not in the tests
             return dataToFit
 
-    def doesdataToInverseTransformedSeemToBeAlreadyDone(self, data):
+    def _doesdataToBeInverseTransformed_SeemToBeAlreadyDone(self, data):
         return areAllItemsInList1_ExistInList2(np.unique(data),
                                                list(self.encoder.classes_))
 
-    def inverseTransform(self, dataToInverseTransformed):
-        dataToInverseTransformed = dataToInverseTransformed.values.reshape(-1)
+    @argValidator
+    def inverseTransform(self, dataToBeInverseTransformed: Union[
+        pd.DataFrame, pd.Series]):
+        dataToBeInverseTransformed = dataToBeInverseTransformed.values.reshape(
+            -1)
         if self.isFitted:
-            if self.doesdataToInverseTransformedSeemToBeAlreadyDone(
-                    dataToInverseTransformed):
+            if self._doesdataToBeInverseTransformed_SeemToBeAlreadyDone(
+                    dataToBeInverseTransformed):
                 print(
                     f'LabelEncoder {self.name} skipping inverse transform: data already seems inverse transformed.')
-                return dataToInverseTransformed
+                return dataToBeInverseTransformed
             else:
-                return self.encoder.inverse_transform(dataToInverseTransformed)
+                return self.encoder.inverse_transform(
+                    dataToBeInverseTransformed)
         else:
             print(
                 f'LblEncoder {self.name} is not fitted; cannot inverse transform.')
             # addTest2 this is not in the tests
-            return dataToInverseTransformed
+            return dataToBeInverseTransformed
 
 
 class IntLabelsString:
@@ -135,9 +149,8 @@ class IntLabelsString:
         self.name = name
         self.isFitted = False
 
-    def fit(self, inputData):
-        assert isinstance(inputData, (pd.Series,
-                                      pd.DataFrame)), 'IntLabelsString only accepts pd.Series, pd.DataFrame'
+    @argValidator
+    def fit(self, inputData: Union[pd.DataFrame, pd.Series]):
         # goodToHave1 add NpDict
         if self.isFitted:
             print(f'skipping fit:{self.name} intLabelsString is already fitted')
@@ -156,9 +169,8 @@ class IntLabelsString:
         self.fit(inputData)
         return self.transform(inputData)
 
-    def transform(self, dataToTransformed):
-        assert isinstance(dataToTransformed, (pd.Series,
-                                              pd.DataFrame)), 'IntLabelsString only accepts pd.Series, pd.DataFrame'
+    @argValidator
+    def transform(self, dataToTransformed: Union[pd.DataFrame, pd.Series]):
         if isinstance(dataToTransformed, pd.Series):
             output = dataToTransformed.map(self.intToLabelMapping)
         elif isinstance(dataToTransformed, pd.DataFrame):
@@ -166,9 +178,10 @@ class IntLabelsString:
                 lambda x: self.intToLabelMapping.get(x, x))
         return output
 
-    def inverseTransform(self, dataToInverseTransformed):
+    @argValidator
+    def inverseTransform(self, dataToBeInverseTransformed: np.ndarray):
         return np.vectorize(self.labelToIntMapping.get)(
-            dataToInverseTransformed)
+            dataToBeInverseTransformed)
 
 
 # ---- normalizers: NormalizerStack
@@ -232,18 +245,58 @@ class NormalizerStack:
         return str(self.uniqueNormalizers)
 
 
-# ---- normalizers: baseNormalizerChecks
-class BaseNormalizerChecks:
+# ---- normalizers: BaseNormalizer
+class BaseNormalizer(ABC):
     def assertColNameInDf(self, df, col):
         assert col in df.columns, f'{col} is not in df columns'
 
+    # @abstractmethod
+    def fitCol(self):
+        ...
+
+    @abstractmethod
+    def fit(self):
+        ...
+
+    # @abstractmethod
+    def transformCol(self):
+        ...
+
+    @abstractmethod
+    def transform(self):
+        ...
+
+    # @abstractmethod
+    def fitNTransformCol(self):
+        ...
+
+    @abstractmethod
+    def fitNTransform(self):
+        ...
+
+    # @abstractmethod
+    def inverseMiddleTransformCol(self):
+        ...
+
+    # @abstractmethod
+    def inverseMiddleTransform(self):
+        ...
+
+    # @abstractmethod
+    def inverseTransformCol(self):
+        ...
+
+    # @abstractmethod
+    def inverseTransform(self):
+        ...
+
 
 # ---- normalizers: SingleColsNormalizers
-class BaseSingleColsNormalizer(BaseNormalizerChecks):
+class BaseSingleColsNormalizer(BaseNormalizer):
     # cccUsage
     # for instances of SingleColsLblEncoder if they have/need IntLabelsStrings, we wont use 3 transforms.
     # for i.e. in if we have 5->'colA0'->0, BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0
-
+    # goodToHave2 transformCol, inverseMiddleTransformCol, inverseMiddleTransform, inverseTransform
     # goodToHave1 maybe comment needs a more detailed explanation
     def __init__(self):
         self.isFitted = {col: False for col in self.colNames}
@@ -290,20 +343,20 @@ class BaseSingleColsNormalizer(BaseNormalizerChecks):
     def inverseMiddleTransformCol(self, df, col):
         if not self.isColFitted(col, printNotFitted=True):
             return df[col]
-        dataToInverseTransformed = df[col]
-        return self.scalers[col].inverseTransform(dataToInverseTransformed)
+        dataToBeInverseTransformed = df[col]
+        return self.scalers[col].inverseTransform(dataToBeInverseTransformed)
 
-    def inverseTransformCol(self, dataToInverseTransformed, col):
+    def inverseTransformCol(self, dataToBeInverseTransformed, col):
         if not self.isColFitted(col, printNotFitted=True):
-            return dataToInverseTransformed
-        dataToInverseTransformed = self.inverseMiddleTransformCol(
-            dataToInverseTransformed, col)
+            return dataToBeInverseTransformed
+        dataToBeInverseTransformed = self.inverseMiddleTransformCol(
+            dataToBeInverseTransformed, col)
         if hasattr(self, 'intLabelsStrings'):
             # addTest2 does this part have tests
             if col in self.intLabelsStrings.keys():
-                dataToInverseTransformed = self.intLabelsStrings[
-                    col].inverseTransform(dataToInverseTransformed)
-        return dataToInverseTransformed
+                dataToBeInverseTransformed = self.intLabelsStrings[
+                    col].inverseTransform(dataToBeInverseTransformed)
+        return dataToBeInverseTransformed
 
 
 class SingleColsStdNormalizer(BaseSingleColsNormalizer):
@@ -359,7 +412,8 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
 
 
 # ---- normalizers: BaseMultiColNormalizers
-class BaseMultiColNormalizer(BaseNormalizerChecks):
+class BaseMultiColNormalizer(BaseNormalizer):
+    # goodToHave2 fitcol, fitNTransformCol,  inverseMiddleTransform, inverseTransform
     def __init__(self):
         self.isFitted = False
 
@@ -421,14 +475,14 @@ class BaseMultiColNormalizer(BaseNormalizerChecks):
     def inverseMiddleTransformCol(self, df, col):
         if not self.isFittedFunc(printNotFitted=True):
             return df[col]
-        dataToInverseTransformed = df[col]
-        return self.scaler.inverseTransform(dataToInverseTransformed)
+        dataToBeInverseTransformed = df[col]
+        return self.scaler.inverseTransform(dataToBeInverseTransformed)
 
-    def inverseTransformCol(self, dataToInverseTransformed, col):
-        assert col in dataToInverseTransformed.columns, 'inverseTransformCol "{self}" "{col}" col is not in df columns'
+    def inverseTransformCol(self, dataToBeInverseTransformed, col):
+        assert col in dataToBeInverseTransformed.columns, 'inverseTransformCol "{self}" "{col}" col is not in df columns'
         if not self.isFittedFunc(printNotFitted=True):
-            return dataToInverseTransformed[col]
-        res = self.inverseMiddleTransformCol(dataToInverseTransformed, col)
+            return dataToBeInverseTransformed[col]
+        res = self.inverseMiddleTransformCol(dataToBeInverseTransformed, col)
         if isinstance(self, MultiColLblEncoder) and self.intLabelsString:
             res = self.intLabelsString.inverseTransform(res)
             # bugPotentialCheck2 does the singlecol has done intlabel invTrans after its main transform
@@ -552,7 +606,8 @@ class MainGroupBaseNormalizer:
 
 # ---- MainGroupSingleColsNormalizer
 class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer,
-                                    BaseNormalizerChecks):
+                                    BaseNormalizer):
+    # goodToHave2 fitNTransformCol, inverseMiddleTransform, inverseTransform
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
         super().__init__(df, mainGroupColNames)
         self.colNames = colNames
