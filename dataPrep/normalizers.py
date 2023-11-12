@@ -7,7 +7,26 @@ from utils.vAnnGeneralUtils import NpDict, areAllItemsInList1_ExistInList2
 
 # ---- normalizers: base normalizers
 # goodToHave2 split to NSeries could have been some baseNormalizer and combine its reverse
+class baseEncoder(ABC):
+    @abstractmethod
+    def __init__(self, name=None):
+        ...
 
+    @abstractmethod
+    def isFitted(self):
+        ...
+
+    @abstractmethod
+    def fit(self, dataToFit):
+        ...
+
+    @abstractmethod
+    def transform(self, dataToFit):
+        ...
+
+    @abstractmethod
+    def inverseTransform(self, dataToInverseTransformed):
+        ...
 
 class StdScaler(baseEncoder):
     def __init__(self, name=None):
