@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 # models\univariateTransformers.py
 import sys
 import os
@@ -7,7 +7,7 @@ sys.path.append(parentFolder)
 from versatileAnn import ann
 import torch
 from torch import nn
-#%% define model
+# ---- define model
 """
 originial github: https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/more_advanced/transformer_from_scratch/transformer_from_scratch.py
 some parts of code been corrected also has been modified and to suit multivariateTransformers
@@ -256,6 +256,6 @@ class univariateTransformer(ann):
         outputs=torch.cat([outputs,torch.zeros(1,outputLen).to(self.device)],dim=1)
         encInps=self.encoder(src)
         return self.decoder(outputs,encInps)
-#%%
+# ----
 
-#%%
+# ----

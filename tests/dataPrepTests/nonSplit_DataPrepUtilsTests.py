@@ -1,11 +1,10 @@
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from tests.baseTest import BaseTestClass
 import unittest
 import pandas as pd
 from dataPrep.utils import subtractFromIndexes, simpleSplit, splitToNSeries, combineNSeries
 from utils.vAnnGeneralUtils import equalDfs
-#%% subtractFromIndexesTests
+# ---- subtractFromIndexesTests
 class subtractFromIndexesTests(BaseTestClass):
     def setUp(self):
         self.indexes=[i for i in range(100)]
@@ -79,7 +78,7 @@ class subtractFromIndexesTests(BaseTestClass):
             valSeqLen = 37
             testSeqLen = 16
             self.assertLastInds(trainRatio,valRatio, trainSeqLen, valSeqLen, testSeqLen)
-#%% SplitNCombineNSeries
+# ---- SplitNCombineNSeries
 class TestSplitNCombineNSeries(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({
@@ -118,6 +117,6 @@ class TestSplitNCombineNSeries(BaseTestClass):
         comb2=combineNSeries(comb1, 'Pressure')
         
         self.equalDfs(comb2, self.df, floatApprox=True)
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

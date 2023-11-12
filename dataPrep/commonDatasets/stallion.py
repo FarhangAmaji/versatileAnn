@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 """
 https://www.kaggle.com/datasets/utathya/future-volume-prediction
 this dataset is usually treated as multiple series(NSeries) with mainGroups of `agency` and `sku`(stock keeping units (SKU))
@@ -12,8 +12,7 @@ it has also these features:
                 'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup', 'footballGoldCup',
                 'beerCapital', 'musicFest'
 """
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from dataPrep.utils import getDatasetFiles, splitTrainValTest_NSeries
 from dataPrep.normalizers import NormalizerStack, SingleColsLblEncoder, MainGroupSingleColsStdNormalizer, SingleColsStdNormalizer
 from models.temporalFusionTransformers_components import getEmbeddingSize
@@ -24,7 +23,7 @@ import numpy as np
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import VAnnTsDataloader
 from utils.globalVars import tsStartPointColName
-#%%
+# ----
 #kkk explain timeVarying|static;real|categorical;known|unknown
 timeIdx='timeIdx'
 mainGroups=['agency', 'sku']
@@ -155,7 +154,7 @@ def getStallionTftProcessed(maxEncoderLength=24, maxPredictionLength=6, minEncod
                    'timeVaryingRealsEncoder':timeVaryingRealsEncoder, 'timeVaryingCategoricalsDecoder':timeVaryingCategoricalsDecoder,
                    'timeVaryingRealsDecoder':timeVaryingRealsDecoder, 'allReals':allReals}
     return trainDf, valDf, testDf, normalizer, datasetKwargs
-#%% 
+# ---- 
 class StallionTftDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         encoderLength=self.data.loc[idx,'encoderLength']
@@ -198,7 +197,7 @@ class StallionTftDataset(VAnnTsDataset):
         outputs['volume']=rightPadIfShorter_npArray(outputs['volume'], fullcastLen)
 
         return inputs, outputs
-#%% dataloader
+# ---- dataloader
 def getStallionTftDataloaders(maxEncoderLength=24, maxPredictionLength=6, minEncoderLength=12, minPredictionLength=1, mainGroups=['agency', 'sku'], batchSize=64, dataInfo=dataInfo):
     trainDf, valDf, testDf, normalizer, datasetKwargs=getStallionTftProcessed(maxEncoderLength=maxEncoderLength,
                       maxPredictionLength=maxPredictionLength, minEncoderLength=minEncoderLength, minPredictionLength=minPredictionLength, dataInfo=dataInfo)

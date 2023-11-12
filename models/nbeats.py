@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 # models\nbeats.py
 import sys
 import os
@@ -7,7 +7,7 @@ sys.path.append(parentFolder)
 from versatileAnn import ann
 from models.nbeats_blocks import stack
 import torch
-#%% define model
+# ---- define model
 class nBeats(ann):
     def __init__(self, stacks, backcastLength=10, forecastLength=5):
         """#ccc the thetas are output size of backcast and forecast linear layers

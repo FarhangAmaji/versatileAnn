@@ -1,9 +1,9 @@
-#%% imports
+# ---- imports
 # models\nbeats.py
 import torch
 import torch.nn as nn
 import numpy as np
-#%%
+# ----
 class IdentityBasis(nn.Module):
     def __init__(self, forecastLen, backcastLen, interpolationMode):
         super().__init__()
@@ -35,7 +35,7 @@ class IdentityBasis(nn.Module):
 
         forecast = forecast.permute(0, 2, 1)# shape: N * 1 * forecastLen -> N * forecastLen * 1
         return backcast, forecast
-#%%
+# ----
 ACTIVATIONS = ["ReLU", "Softplus", "Tanh", "SELU", "LeakyReLU", "PReLU", "Sigmoid"]
 
 POOLING = ["MaxPool1d", "AvgPool1d"]
@@ -120,9 +120,9 @@ class nHitsBlock(nn.Module):
         theta = self.layers(targetY)
         backcast, forecast = self.basis(theta)
         return backcast, forecast
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 

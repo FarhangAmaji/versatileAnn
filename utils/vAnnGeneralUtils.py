@@ -2,7 +2,7 @@ import inspect
 import torch
 import pandas as pd
 import numpy as np
-#%% DotDict NpDict
+# ---- DotDict NpDict
 class DotDict:
     #kkk add .get and setdefault
     def __init__(self, data):
@@ -120,7 +120,7 @@ def equalNpDicts(npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=
 
     return equalDfs(npd1.df, npd2.df,  checkIndex=False, 
                     floatApprox=floatApprox, floatPrecision=floatPrecision)
-#%% tensor
+# ---- tensor
 def Tensor_floatDtypeChange(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
         tensor = tensor.to(torch.float32)
@@ -145,7 +145,7 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
     if checkDevice:
         deviceEqual = tensor1.device == tensor2.device
     return dtypeEqual and equalVals and deviceEqual
-#%% dfs
+# ---- dfs
 def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
     #kkk needs tests
     # Check if both DataFrames have the same shape
@@ -180,7 +180,7 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
 def regularizeBoolCol(df, colName):
     assert areAllItemsInList1_ExistInList2(df[colName].unique(),[0.,1.,True,False]), "{colName} col doesnt seem to have boolean values"
     df[colName] = df[colName].astype(bool)
-#%% np array
+# ---- np array
 def npArrayBroadCast(arr, shape):
     shape=tuple(shape)
     arrShape=arr.shape
@@ -205,7 +205,7 @@ def equalArrays(array1, array2, checkType=True, floatApprox=False, floatPrecisio
 
     # Return True if both data type and precision are equal
     return dtypeEqual and equalVals
-#%% lists
+# ---- lists
 def areAllItemsInList1_ExistInList2(list1, list2):
     setList2 = set(list2)
     for item in list1:
@@ -298,10 +298,10 @@ def similarItemsString(inputList):
         result2.append(currResFormat(currRes2))
 
     return '+'.join(result2)
-#%% floats
+# ---- floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num,precisionOrder)
-#%% misc
+# ---- misc
 #kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
 def varPasser(locals_, localArgNames=[], exclude=[]):
     #kkk add var renamer

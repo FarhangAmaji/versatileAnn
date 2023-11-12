@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from versatileAnn import ann
 from models.temporalFusionTransformers_components import addNorm, gatedLinearUnit, gateAddNorm, gatedResidualNetwork, variableSelectionNetwork, interpretableMultiHeadAttention, multiEmbedding
-#%%
+# ----
 class temporalFusionTransformerModel(ann):
     def __init__(
         self,

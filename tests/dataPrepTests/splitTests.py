@@ -1,6 +1,5 @@
-#%% 
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# ---- 
+
 from tests.baseTest import BaseTestClass
 import unittest
 from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_NSeries
@@ -8,8 +7,8 @@ from utils.vAnnGeneralUtils import listRangesToList
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
-#%% SplitTests
-#%%     splitTsTrainValTest_DfNNpDict
+# ---- SplitTests
+# ----     splitTsTrainValTest_DfNNpDict
 class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
     def setUp(self):
         np.random.seed(seed=30)
@@ -164,7 +163,7 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         getInd2s(testCheckIndexes2, testCheckIndexes)
         testDfCheck = getDf(testCheckIndexes2, testCheckIndexes)
         self.equalDfs(testDf,testDfCheck)
-#%%     splitTrainValTest_NSeries
+# ----     splitTrainValTest_NSeries
 class TestSplitTrainValTest_NSeries(BaseTestClass):
     def setUp(self):
         np.random.seed(seed=30)
@@ -305,6 +304,6 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
         self.equalDfs(trainDf,trainDfCheck)
         self.equalDfs(valDf,valDfCheck)
         self.equalDfs(testDf,testDfCheck)
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

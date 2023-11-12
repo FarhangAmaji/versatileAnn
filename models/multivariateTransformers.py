@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 # models\multivariateTransformers.py
 import sys
 import os
@@ -7,7 +7,7 @@ sys.path.append(parentFolder)
 from versatileAnn import ann
 import torch
 from torch import nn
-#%% define model
+# ---- define model
 #kkk rename the classes
 class TransformerInfo:
     def __init__(self, embedSize=32, heads=8, forwardExpansion=4, encoderLayersNum=6, decoderLayersNum=6, dropoutRate=.6, inpLen=10, outputLen=10, inputDim=1, outputDim=1):
@@ -264,6 +264,6 @@ class multivariateTransformer(ann):
         outputs=torch.zeros(N,outputLen,self.transformerInfo.outputDim).to(self.device)
         return self.decoder(outputs,encInps)
 
-#%%
+# ----
 
-#%%
+# ----

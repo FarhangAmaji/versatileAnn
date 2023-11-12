@@ -1,12 +1,10 @@
-#%% imports
+# ---- imports
 # trainMultivariateTransformers.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
+
 from models.multivariateTransformers import multivariateTransformer, TransformerInfo
 import torch
 import torch.optim as optim
-#%% redefine batchDatapreparation
+# ---- redefine batchDatapreparation
 class ModifiedMultivariateTransformer(multivariateTransformer):
     def __init__(self, transformerInfo):
         super(ModifiedMultivariateTransformer, self).__init__(transformerInfo)
@@ -21,7 +19,7 @@ class ModifiedMultivariateTransformer(multivariateTransformer):
         batchOutputs = torch.stack(outputsSlices).to(self.device)
         outPutMask=None
         return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
-#%%
+# ----
 # Set random seed for reproducibility
 torch.manual_seed(42)
 
@@ -35,7 +33,7 @@ model = ModifiedMultivariateTransformer(transformerInfo)
 # trg = torch.rand(2,outputLen-1).to(transformerInfo.device)
 # appendedTrg = torch.cat((x[:, -1].unsqueeze(1), trg), dim=1)
 # out = model(x, appendedTrg)
-#%%
+# ----
 workerNum=8
 
 allSeqLen=1000
@@ -51,11 +49,11 @@ testOutputs=outputs[int(trainTowholeRatio*len(outputs)):]
 criterion = torch.nn.MSELoss()
 
 model.trainModel(trainInputs, trainOutputs, testInputs, testOutputs, criterion, numEpochs=200, savePath=r'data\bestModels\a1', workerNum=workerNum)
-#%% model feedforward for unknown results
+# ---- model feedforward for unknown results
 inputOfUnknown=torch.rand(1,inpLen, transformerInfo.inputDim)
 output=model.forwardForUnknown(inputOfUnknown, outputLen)
 outputStraight=model.forwardForUnknownStraight(inputOfUnknown, outputLen)
-#%%
+# ----
 z1=torch.tensor([[0.3152, 0.5333, 0.3562, 0.5580, 0.6787],
         [0.8185, 0.6405, 0.5854, 0.6332, 0.1547],
         [0.9564, 0.5171, 0.7604, 0.2390, 0.2469],
@@ -87,16 +85,16 @@ model.forwardForUnknown(z1, outputLen)
 
 encInps=model.encoder(z1)
 model.decoder(torch.zeros_like(z2),encInps)
-#%%
-#%%
-#%%
+# ----
+# ----
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
 

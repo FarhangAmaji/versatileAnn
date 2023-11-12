@@ -1,15 +1,13 @@
-#%% imports
-# trainnHits.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
-# from models.nhits_blocks import nHitsBlock
-from models.deepAr import deepArModel#kkk change name nhitsMyTry
+# ---- imports
+# trainDeepAr.py
+# bugPotentialCheck1 check this file and correct kkks
+
+from models.deepAr import deepArModel
 import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-#%%
+# ----
 '#ccc how to set optimizer manually'
 # nHitsModel.lr=0.001
 # nHitsModel.learningRate=0.001
@@ -25,7 +23,7 @@ import torch.optim as optim
 # nHitsModel.saveOnDiskPeriod=1
 # nHitsModel.lossMode='accuracy'
 # nHitsModel.variationalAutoEncoderMode=True
-#%% load UCI electricity dataset
+# ---- load UCI electricity dataset
 data = pd.read_csv(r'.\data\datasets\electricity.csv')
 """
 #ccc this data has ['date', 'consumerId', 'hourOfDay', 'dayOfWeek', 'powerUsage','daysFromStart', 
@@ -44,7 +42,7 @@ min_hours = data.groupby('consumerId')['hoursFromStart'].transform('min')
 
 # Create a new column 'sequenceIdx' with the desired calculation
 data['sequenceIdx'] = data['hoursFromStart'] - min_hours
-#%% 
+# ---- 
 backcastLen=192
 forecastLen=0#ccc this is not gonna used
 
@@ -56,7 +54,7 @@ data.loc[data['sequenceIdx'] <= uniqueConsumerMaxDataLen - backcastLen, 'possibl
 
 # Set 'possibleStartPoint' to 0 when it's not 1
 data.loc[data['possibleStartPoint'] != 1, 'possibleStartPoint'] = 0
-#%% 
+# ---- 
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 allReals=['hourOfDay', 'dayOfWeek', 'powerUsage','daysFromStart', 'hoursFromStart', 'daysFromStartOfDf', 'month']
 realScalers={}
@@ -70,7 +68,7 @@ for c1 in allCategoricals:
     categoricalEncoders[c1] = LabelEncoder().fit(data[c1].to_numpy().reshape(-1))
     data[c1] = categoricalEncoders[c1].transform(data[c1])
 z=data[:20000]#kkk
-#%% split train val test
+# ---- split train val test
 trainRatio=.7
 valRatio=.2
 indexes=np.array(data[data['possibleStartPoint']==1].index)
@@ -99,19 +97,19 @@ testIndexes2=addSequentIndexes(testIndexes, backcastLen)
 train=data.loc[trainIndexes2]
 val=data.loc[valIndexes2]
 test=data.loc[testIndexes2]
-#%% 
+# ---- 
 embedderInputSize=len(data['consumerId'].unique())
 covariatesNum=len(allReals)
 model=deepArModel(192, 0, embedderInputSize = embedderInputSize, covariatesNum = covariatesNum, embeddingDim = 20,
                   hiddenSize= 16, lstmLayers= 3, dropoutRate= 0.1)
-#%% 
+# ---- 
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
 runcell('load UCI electricity dataset', 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
 runcell(4, 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
 runcell(5, 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
 runcell('split train val test', 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
 runcell(7, 'F:/projects/public github projects/private repos/versatileAnnModule/trainDeepAr.py')
-#%% 
+# ---- 
 class gaussianLogLikehoodLoss(torch.nn.Module):
     def __call__(self, mu, sigma, labels):
         '''
@@ -129,19 +127,20 @@ class gaussianLogLikehoodLoss(torch.nn.Module):
         return -torch.mean(likelihood)
 criterion=gaussianLogLikehoodLoss()
 workerNum=0
-externalKwargs={'trainIndexes': trainIndexes, 'valIndexes': valIndexes, 'testIndexes':testIndexes, 'allReals':allReals, 'criterion':criterion}#kkk criterion
+externalKwargs={'trainIndexes': trainIndexes, 'valIndexes': valIndexes, 'testIndexes':testIndexes,
+                'allReals':allReals, 'criterion':criterion}#kkk criterion
 model.trainModel(train, None, val, None, criterion, numEpochs=30, savePath=r'data\bestModels\tft1', workerNum=workerNum, externalKwargs=externalKwargs)
-#%% 
+# ---- 
 
-#%% 
+# ---- 
 
-#%% 
+# ---- 
 
-#%% 
+# ---- 
 
 
 
-#%% 
+# ---- 
 
-#%% 
+# ---- 
 

@@ -4,6 +4,8 @@
 # bugKnown2
 # bugPotentialCheck1
 # bugPotentialCheck2
+# addTest1
+# addTest2
 
 # features to be added
 # mustHave1

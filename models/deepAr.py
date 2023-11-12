@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 """
 original code is from https://github.com/zhykoties/TimeSeries
 adaptations were applied in order to make it compatible to our framework
@@ -13,7 +13,7 @@ import numpy as np
 from versatileAnn import ann
 import torch
 import torch.nn as nn
-#%%
+# ----
 class deepArModel(ann):
     def __init__(
         self,
@@ -132,11 +132,11 @@ class deepArModel(ann):
             sampleMu = torch.median(samples, dim=0)[0]
             sampleSigma = samples.std(dim=0)
             return samples, sampleMu, sampleSigma
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 

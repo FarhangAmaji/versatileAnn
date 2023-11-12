@@ -1,15 +1,13 @@
-#%% imports
+# ---- imports
 # trainTemporalFusionTransformers.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
+
 import pandas as pd
 import numpy as np
 from models.temporalFusionTransformers import temporalFusionTransformerModel
 from models.temporalFusionTransformers_components import preprocessTemporalFusionTransformerTrainValTestData
 from metrics.loss import quantileLoss
 import torch.optim as optim
-#%%
+# ----
 '#ccc how to set optimizer manually'
 # nHitsModel.lr=0.001
 # nHitsModel.learningRate=0.001
@@ -25,7 +23,7 @@ import torch.optim as optim
 # nHitsModel.saveOnDiskPeriod=1
 # nHitsModel.lossMode='accuracy'
 # nHitsModel.variationalAutoEncoderMode=True
-#%%
+# ----
 data= pd.read_csv(r'F:\projects\public github projects\private repos\versatileAnnModule\data\datasets\stallion.csv')
 # data = pd.read_csv(r'.\data\datasets\stallion.csv')
 data['date']=pd.to_datetime(data['date'])
@@ -51,7 +49,7 @@ minPredictionLength = 1
 maxPredictionLength = 10
 maxEncoderLength = 16
 minEncoderLength = maxEncoderLength // 2
-#%%
+# ----
 mainGroups=["agency", "sku"]
 categoricalVariableGroups={"specialDays": specialDays}
 
@@ -63,7 +61,7 @@ timeVaryingknownCategoricals=["specialDays", "month"]
 timeVaryingknownReals=["timeIdx", "priceRegular", "discountInPercent"]
 timeVaryingUnknownCategoricals=[]
 timeVaryingUnknownReals=["volume","logVolume","industryVolume","sodaVolume","avgMaxTemp","avgVolumeByAgency","avgVolumeBySku"]
-#%% 
+# ---- 
 data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncoders, embeddingSizes, targetsCenterNStd, timeVaryingCategoricalsEncoder, \
     timeVaryingRealsEncoder, timeVaryingCategoricalsDecoder, timeVaryingRealsDecoder, allReals, realScalers = preprocessTemporalFusionTransformerTrainValTestData(
     data=data,
@@ -84,7 +82,7 @@ data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncode
     timeVaryingUnknownCategoricals=timeVaryingUnknownCategoricals,
     timeVaryingUnknownReals=timeVaryingUnknownReals
 )
-#%%
+# ----
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from models.temporalFusionTransformers_components import getEmbeddingSize
 allCategoricalVariableGroups = {vg1: vg for vg in categoricalVariableGroups.keys() for vg1 in categoricalVariableGroups[vg]}
@@ -115,7 +113,7 @@ for ce in allCategoricalsNonGrouped:
         data[ce] = categoricalEncoders[ce].transform(data[ce])
     elif ce in allCategoricalVariableGroups.keys():
         data[ce]=categoricalEncoders[allCategoricalVariableGroups[ce]].transform(data[ce])
-#%% scaling
+# ---- scaling
 eps = np.finfo(np.float16).eps
 targetsCenterNStd=pd.DataFrame()
 for tg in targets:
@@ -131,14 +129,14 @@ for tg in targets:
         scale=targetsCenterNStd.loc[indexCombination,f'{tg}Scale']
         data.loc[i,tg]=(data.loc[i,tg]-center)/scale
         data.loc[i,f'{tg}Center'], data.loc[i,f'{tg}Scale']=center, scale
-#%%
+# ----
 "time Varying Encoder= time Varying known + time Varying unkown"
 "time Varying Decoder= time Varying known"
 timeVaryingCategoricalsEncoder=list(set(timeVaryingknownCategoricals+timeVaryingUnknownCategoricals))
 timeVaryingRealsEncoder=list(set(timeVaryingknownReals+timeVaryingUnknownReals))
 timeVaryingCategoricalsDecoder=timeVaryingknownCategoricals[:]
 timeVaryingRealsDecoder=timeVaryingknownReals[:]
-#%% split train and val
+# ---- split train and val
 #kkk split with respect to mainGroups
 #kkk at least maxPredictionLength in val
 #kkk 
@@ -166,7 +164,7 @@ trainData=addSequenceEncoderNDecoderLength(trainData,minEncoderLength,maxEncoder
 "valData for each mainGroup combinations has 12 prediction and max"
 valData=data[aveEachMainGroupCombinations*(1-valPredictionRatio)-maxEncoderLength-1<data[timeIdx]].reset_index(drop=True)
 valData=addSequenceEncoderNDecoderLength(valData,minEncoderLength,maxEncoderLength,minPredictionLength,maxPredictionLength)
-#%%
+# ----
 allReals=list(set(staticReals+timeVaryingknownReals+timeVaryingUnknownReals))
 realScalers={}
 for ar in allReals:
@@ -174,7 +172,7 @@ for ar in allReals:
         continue
     realScalers[ar]=StandardScaler().fit(data[ar].to_numpy().reshape(-1,1))
     data[ar]=realScalers[ar].transform(data[ar].to_numpy().reshape(-1,1))
-#%%
+# ----
 quantiles=[.02,.05,.25,.5,.75,.95,.98]
 model=temporalFusionTransformerModel(hiddenSize= 8, outputSize = len(quantiles), lstmLayers = 1, maxEncoderLength = 10,
 targetsNum=len(targets), attentionHeadSize = 4, dropoutRate = 0.1,
@@ -189,7 +187,7 @@ allCategoricalsNonGrouped = allCategoricalsNonGrouped,
 embeddingSizes = embeddingSizes,
 backcastLen=maxEncoderLength,
 forecastLen=maxPredictionLength)#kkk may pass with col names with externalKwargs
-#%% 
+# ---- 
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
 runcell(3, 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
 runcell(4, 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
@@ -198,7 +196,7 @@ runcell(6, 'F:/projects/public github projects/private repos/versatileAnnModule/
 runcell('split train and val', 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
 runcell(8, 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
 runcell(9, 'F:/projects/public github projects/private repos/versatileAnnModule/trainTemporalFusionTransformers.py')
-#%%
+# ----
 workerNum=8
 #kkk am I correctly doing timeseries which only is from one combination of 'agency' and 'sku': I must not to do trainData=trainData[trainData['sequenceLength']>=minEncoderLength+minPredictionLength] and valData=valData[valData['sequenceLength']>=minEncoderLength+minPredictionLength]; then change where batchIndexes are defined to do it properly
 #kkk main code for relativeTimeIdx in getItem had seqLen and forwad had 30 len but seemed to be 0rightpadded encoder and 0rightpadded decoder
@@ -220,11 +218,11 @@ externalKwargs={#kkk I just need allReals allCategoricalsNonGrouped targets maxE
     'minEncoderLength':minEncoderLength, 'minPredictionLength':minPredictionLength,
     }
 model.trainModel(trainData, None, valData, None, criterion, numEpochs=30, savePath=r'data\bestModels\tft1', workerNum=workerNum, externalKwargs=externalKwargs)
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 

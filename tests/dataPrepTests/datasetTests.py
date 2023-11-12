@@ -1,9 +1,8 @@
-#%%
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# ----
+
 from tests.baseTest import BaseTestClass
 import unittest
-#%%
+# ----
 "#ccc no tests for getBackForeCastData because it only uses _IdxNdataToLook_WhileFetching and assertIdxInIndexes_dependingOnAllowance,"
 "... also getBackForeCastData_general which has it own tests on tsRowFetcherTests"
 
@@ -15,8 +14,8 @@ from utils.vAnnGeneralUtils import NpDict
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
-#%% dataset tests
-#%%         VAnnTsDataset_setIndexesTests
+# ---- dataset tests
+# ----         VAnnTsDataset_setIndexesTests
 #ccc this test also does some of check related to VAnnTsDataset_indexesSettingTests; no problem
 #kkk its seems to be enough tests, be more tests are always appriciated
 class VAnnTsDataset_setIndexesTests(BaseTestClass):
@@ -104,7 +103,7 @@ class VAnnTsDataset_setIndexesTests(BaseTestClass):
         dataset = VAnnTsDataset(npDict, backcastLen=1, forecastLen=1)
         self.assertTrue(list(dataset.indexes) == [1, 2])
         self.assertEqual(len(dataset), 2)  # Only rows with '__startPoint__' as True should be included
-#%%         VAnnTsDataset_indexesSetting_noNSeriesTests
+# ----         VAnnTsDataset_indexesSetting_noNSeriesTests
 class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
     # this is related to _setIndexes and _assignData_NMainGroupsIdxs
     '#ccc test assumes, noIndexes are passed to dataset init and there is some value for backcast and forecast lens'
@@ -135,7 +134,7 @@ class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
         self.assertEqual(dataset.indexes, self.TruesIndexFromBeginning)
         "#ccc note the indexes are relative from beginning"
         self.assertMainGroupsIdxEmpty(dataset)
-#%%         VAnnTsDataset_indexesSetting_NSeriesTests
+# ----         VAnnTsDataset_indexesSetting_NSeriesTests
 class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
     # this is related to _setIndexes and _assignData_NMainGroupsIdxs
     '#ccc test assumes, noIndexes are passed to dataset init and there is some value for backcast and forecast lens'
@@ -175,7 +174,7 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
     def testNpDict_StartPointsInCols(self):
         dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
         self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
-#%%         VAnnTsDataset_NoNanOrNoneDataAssertionTests
+# ----         VAnnTsDataset_NoNanOrNoneDataAssertionTests
 class VAnnTsDataset_NoNanOrNoneDataAssertionTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [5, 6, np.nan, 8], '__startPoint__': [False, True, True, False]}, index=[8,9,10,11])
@@ -195,7 +194,7 @@ class VAnnTsDataset_NoNanOrNoneDataAssertionTests(BaseTestClass):
         with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npArray, backcastLen=0, forecastLen=0)
         self.assertEqual(str(context.exception), "The NumPy array contains NaN values.")
-#%%         VAnnTsDataset_NSeries_assignData
+# ----         VAnnTsDataset_NSeries_assignData
 class VAnnTsDataset_NSeries_assignData(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({
@@ -217,7 +216,7 @@ class VAnnTsDataset_NSeries_assignData(BaseTestClass):
         self.assertTrue(list(self.dataset.data.keys())==[('A1', 'B1'), ('A1', 'B2')])
         self.assertTrue(self.expectedGroup1.equals(self.dataset.data[('A1', 'B1')]))
         self.assertTrue(self.expectedGroup2.equals(self.dataset.data[('A1', 'B2')]))
-#%%         VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests
+# ----         VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests
 class VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests(BaseTestClass):
     def setUp(self):
         self.kwargs = {'backcastLen':3, 'forecastLen':2}
@@ -245,7 +244,7 @@ class VAnnTsDataset_IdxNdataToLook_WhileFetching_NoSeriesTests(BaseTestClass):
     def testNpDict(self):
         dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
         self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
-#%%         VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests
+# ----         VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests
 class VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests(BaseTestClass):
     def setUp(self):
         g1startPoints = [True, False, True, True, False, False, False, False]
@@ -283,7 +282,7 @@ class VAnnTsDataset_IdxNdataToLook_WhileFetching_seriesTests(BaseTestClass):
     def testNpDict(self):
         dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
         self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
-#%%         VAnnTsDataset_NoNSeries_GetItemTests
+# ----         VAnnTsDataset_NoNSeries_GetItemTests
 class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
     def setUp(self):
         self.kwargs = {'backcastLen':3, 'forecastLen':2}
@@ -366,7 +365,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
-#%%         VAnnTsDataset_NSeries_GetItemTests
+# ----         VAnnTsDataset_NSeries_GetItemTests
 class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
     def setUp(self):
         self.kwargs = {'backcastLen':3, 'forecastLen':2, 'mainGroups':['group']}
@@ -420,6 +419,6 @@ class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

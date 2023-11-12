@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 """
 this is data preparation steps of electricity of 369 consumers
 data also can be found at https://archive.ics.uci.edu/dataset/321/electricityloaddiagrams20112014
@@ -12,11 +12,11 @@ from dataPrep.normalizers import NormalizerStack, SingleColsStdNormalizer, Singl
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import VAnnTsDataloader
 from utils.globalVars import tsStartPointColName
-#%%
+# ----
 embedderInputSize=369# 369 different consumerIds
 allReals=['hourOfDay', 'dayOfWeek', 'powerUsage','daysFromStart', 'hoursFromStart', 'daysFromStartOfDf', 'month']
 covariatesNum=len(allReals)
-#%%
+# ----
 timeIdx='hoursFromStart'
 mainGroups=['consumerId']
 target=['powerUsage']
@@ -33,7 +33,7 @@ def getElectricityProcessed(backcastLen=192, forecastLen=1):
     normalizer.fitNTransform(df)
     trainDf, valDf, testDf=splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7, valRatio=.2, seqLen=backcastLen+forecastLen, shuffle=True)
     return trainDf, valDf, testDf, normalizer
-#%% 
+# ---- 
 class ElectricityDeepArDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs={}
@@ -43,7 +43,7 @@ class ElectricityDeepArDataset(VAnnTsDataset):
 
         outputs=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.target, shiftForward=1)
         return inputs, outputs
-#%% dataloader
+# ---- dataloader
 def getElectricityDataloaders(backcastLen=192, forecastLen=1, batchSize=64):
     trainDf, valDf, testDf, normalizer=getElectricityProcessed(backcastLen=backcastLen, forecastLen=forecastLen)
 

@@ -1,13 +1,11 @@
-#%% imports
+# ---- imports
 # trainNbeats.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
+
 from models.nbeats_blocks import stack, stackWithSharedWeights, SeasonalityBlock, TrendBlock, GenericBlock
 from models.nbeats import nBeats
 import torch
 import torch.optim as optim
-#%% redefine batchDatapreparation
+# ---- redefine batchDatapreparation
 class ModifiedNBeats(nBeats):
     def __init__(self, stacks, backcastLength, forecastLength):
         super(ModifiedNBeats, self).__init__(stacks, backcastLength, forecastLength)
@@ -23,7 +21,7 @@ class ModifiedNBeats(nBeats):
         batchOutputs = torch.stack(outputsSlices).to(self.device)
         outPutMask=None
         return batchInputs, batchOutputs, appliedBatchSize, outPutMask, identifier
-#%% define model
+# ---- define model
 # Set random seed for reproducibility
 torch.manual_seed(42)
 stacks=[
@@ -42,7 +40,7 @@ stacks=[
     ]
 nBeatsModel=ModifiedNBeats(stacks, backcastLength=10, forecastLength=5)
 len(list(nBeatsModel.parameters()))
-#%%
+# ----
 '#ccc how to set optimizer manually'
 # nBeatsModel.lr=0.001
 # nBeatsModel.learningRate=0.001
@@ -58,7 +56,7 @@ len(list(nBeatsModel.parameters()))
 # nBeatsModel.saveOnDiskPeriod=1
 # nBeatsModel.lossMode='accuracy'
 # nBeatsModel.variationalAutoEncoderMode=True
-#%% 
+# ---- 
 workerNum=0
 
 inputData=torch.rand(10000)
@@ -74,18 +72,18 @@ criterion = torch.nn.MSELoss()
 
 # nBeatsModel.trainModel(trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
 nBeatsModel.trainModel(trainInputs, trainOutputs, None, None, criterion, numEpochs=30, savePath=r'data\bestModels\a1', workerNum=workerNum)
-#%%
-#%%
-#%%
-#%%
-#%%
+# ----
+# ----
+# ----
+# ----
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
 

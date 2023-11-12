@@ -1,13 +1,11 @@
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
+
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-#%%
+# ----
 #kkk change camelCases
 #kkk add comments
 #kkk add comments for multiEmbedding
@@ -441,7 +439,7 @@ class interpretableMultiHeadAttention(nn.Module):#kkk how its interpretable
         outputs = self.dropout(outputs)
 
         return outputs, attn
-#%%
+# ----
 def preprocessTemporalFusionTransformerTrainValTestData(data, trainRatio, valRatio, minPredictionLength, maxPredictionLength, maxEncoderLength, minEncoderLength,
                             mainGroups, categoricalVariableGroups, timeIdx, targets, staticCategoricals,
                             staticReals, timeVaryingknownCategoricals, timeVaryingknownReals, timeVaryingUnknownCategoricals,

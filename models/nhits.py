@@ -1,4 +1,4 @@
-#%% thing to check
+# ---- thing to check
 '''
 pass the blocks again like nbeats; here we have no stack because we only have 1 type of blocks
 make common args of block in postInit(basis,h,input_size,futureInputSize,historyInputSize,staticInputSize)
@@ -11,7 +11,7 @@ prep data for train:
     at least for train (probably for predict also) we know that the futureExogenous len is input+h and for historyExogenous len is input;#jjj where this is applied in orig code
 prep data for predict
 '''
-#%% imports
+# ---- imports
 """
 original code is from https://github.com/Nixtla/neuralforecast/blob/main/neuralforecast/models/nhits.py
 adaptations were applied in order to make it compatible to our framework
@@ -27,7 +27,7 @@ from versatileAnn import ann
 import torch
 import torch.nn as nn
 #kkk add own comments
-# %% ../../nbs/models.nhits.ipynb 10
+# ---- ../../nbs/models.nhits.ipynb 10
 class nHits(ann):
     """NHITS:
 
@@ -181,13 +181,13 @@ class nHits(ann):
             residuals = (residuals - backcast) * mask
             forecast = forecast + blockForecast
         return forecast.squeeze(-1)
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 

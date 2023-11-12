@@ -1,6 +1,5 @@
-#%% imports
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# ---- imports
+
 from tests.baseTest import BaseTestClass
 import unittest
 from dataPrep.commonDatasets.epfFrBe import getEpfFrBeProcessed_loadData, getEpfFrBeProcessed, getEpfFrBeDataloaders
@@ -8,7 +7,7 @@ from dataPrep.utils import combineNSeries
 from utils.vAnnGeneralUtils import equalDfs
 import pandas as pd
 import torch
-#%% epfFrBeTests
+# ---- epfFrBeTests
 class epfFrBeTests(BaseTestClass):
     def setup(self):
         self.devTestMode=True
@@ -23,8 +22,8 @@ class epfFrBeTests(BaseTestClass):
                        trainRatio=.6, valRatio=.2, rightPadTrain=True, aggColName=self.aggColName, devTestMode=True)
 
     def testGetEpfFrBeProcessed(self):
-        #kkk could have had test for innerSteps also
-        #ccc hard written values is chosen because other ways had to just follow the same procedure done int the getEpfFrBeProcessed
+        #addTest2 could have had test for innerSteps also
+        #cccDevStruct hard written values is chosen because other ways had to just follow the same procedure done int the getEpfFrBeProcessed
         self.processedSetup()
         trainDfCheck=pd.DataFrame({'genForecast': [0.3186052798375584, 0.844584345427674, 1.0116957943796043, 1.4090496841097493, 1.0809035661677773, 0.1633097919226333, -0.24315926775034438, -0.4396418198514017, -0.06760784662912478, 1.3229619679829974, 1.712888682204168, 1.00865740439866, 0.09106363015351601, -0.23944567999585706, 0.3705955084003811, -0.1763146881695723, -0.8545508516936688, -1.4872111655036027]+3*[0.0]+[0.3186052798375584, 0.844584345427674, 1.0116957943796043, 1.4090496841097493, 1.0809035661677773, 0.1633097919226333, -0.24315926775034438, -0.4396418198514017, -0.06760784662912478, 1.3229619679829974, 1.712888682204168, 1.00865740439866, 0.09106363015351601, -0.23944567999585706, 0.3705955084003811, -0.1763146881695723, -0.8545508516936688, -1.4872111655036027]+3*[0.0], 
                                     'systemLoad': [-0.2683097548411284, 0.4512716844203051, 0.6859123151938649, 1.0382521213608356, 1.4835389158213155, 0.3421600025105335, -0.34812292957142427, -0.5208830925952294, -0.25896454134422664, 1.2377850581865752, 1.775008547589548, 1.0372418280098192, 0.27194461461489344, -0.3569629963928178, 0.8018434772229972, 0.5939756202513721, -0.4365235977853596, -0.5107801590850652]+3*[0.0]+[-0.2683097548411284, 0.4512716844203051, 0.6859123151938649, 1.0382521213608356, 1.4835389158213155, 0.3421600025105335, -0.34812292957142427, -0.5208830925952294, -0.25896454134422664, 1.2377850581865752, 1.775008547589548, 1.0372418280098192, 0.27194461461489344, -0.3569629963928178, 0.8018434772229972, 0.5939756202513721, -0.4365235977853596, -0.5107801590850652]+3*[0.0], 
@@ -70,7 +69,7 @@ class epfFrBeTests(BaseTestClass):
             set_=combineNSeries(set1, self.aggColName)
             set_=set_.drop(columns=['__startPoint__', 'market0', 'market1', 'mask'])
 
-            #ccc in real use case the zero pad rows are not inverse transformed so for purpose of checking if invTransfrom work we can delete them
+            #cccDevStruct in real use case the zero pad rows are not inverse transformed so for purpose of checking if invTransfrom work we can delete them
             setIndsWith0dateCond= set_[set_['dateTime']==0].index
             set_ = set_.drop(setIndsWith0dateCond)
             self.normalizer.inverseTransform(set_)
@@ -90,7 +89,8 @@ class epfFrBeTests(BaseTestClass):
 
 
         # train
-        trainDataloader_inputs, trainDataloader_outputs = next(iter(epfFrBe_TrainDataloader))# ccc these 2 are just here in order if they make error, get detected
+        trainDataloader_inputs, trainDataloader_outputs = next(iter(epfFrBe_TrainDataloader))
+        # cccDevStruct these 2 are just here in order if they make error, get detected
         valDataloader_inputs, valDataloader_outputs =next(iter(epfFrBe_ValDataloader))
 
 
@@ -114,6 +114,6 @@ class epfFrBeTests(BaseTestClass):
         expectedOutputs['outputMask']=[[True, True, True, True],[True, True, True, True]]
         for key, value in testDataloader_outputs.items():
             self.assertTrue(torch.equal(value, torch.tensor(expectedOutputs[key]).to(device)))
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

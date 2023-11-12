@@ -1,17 +1,16 @@
-#%%
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# ----
+
 from tests.baseTest import BaseTestClass
 import unittest
-#%%
+# ----
 from dataPrep.dataloader import BatchStructTemplate, appendValue_ToNestedDictPath
 from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjInit
 from utils.vAnnGeneralUtils import DotDict, NpDict
 import torch
 import pandas as pd
 import numpy as np
-#%% dataloader tests
-#%%     batch data tests
+# ---- dataloader tests
+# ----     batch data tests
 class batchStructTemplateTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2],
@@ -27,7 +26,7 @@ class batchStructTemplateTests(BaseTestClass):
         """#ccc seems to be a not secure way
         but because we have only batchStructTemplate and BatchStructTemplate_Non_BatchStructTemplate_Objects types with defined __repr__s
         so seems to be ok"""
-#%%     appendValue_ToNestedDictPathTests
+# ----     appendValue_ToNestedDictPathTests
 class appendValue_ToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
     def setUp(self):
         self.item1 = {'a': {'a1': {'b1': []},
@@ -70,7 +69,7 @@ class appendValue_ToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
         with self.assertRaises(AssertionError) as context:
             self.avtl(self.item1, ['a', 'a1','b2','b3'], 4)
         self.assertEqual(str(context.exception), "b2 is not in ['a', 'a1']")
-#%%     fillBatchStructWithDataTests
+# ----     fillBatchStructWithDataTests
 class fillBatchStructWithDataTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2,2.4],
@@ -223,6 +222,6 @@ class fillBatchStructWithDataTests(BaseTestClass):
         dictToFill=BatchStructTemplate(self.inputs)
         dictToFill.fillWithData(self.inputs)
         self.assertEqual(str(dictToFill.getBatchStructTensors()), str(self.inputsRes))
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

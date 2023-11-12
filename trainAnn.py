@@ -1,13 +1,10 @@
-#%% imports
+# ---- imports
 # trainAnn.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
 from versatileAnn import ann
 from versatileAnn.layers import linLReluNormDropout, linLSigmoidNormDropout
 import torch
 import torch.optim as optim
-#%% define model
+# ---- define model
 import torch.nn as nn
 class A:
     def __init__(self):
@@ -70,9 +67,9 @@ class myAnn(ann):
         x = self.layer1(x)
         x = self.layer3(x)
         return x, mean, logvar
-#%% make model instance
+# ---- make model instance
 z1=myAnn(40,1)
-#%%
+# ----
 '#ccc how to set optimizer manually'
 # z1.lr=0.001
 # z1.learningRate=0.001
@@ -88,7 +85,7 @@ z1=myAnn(40,1)
 # z1.saveOnDiskPeriod=1
 # z1.lossMode='accuracy'
 # z1.variationalAutoEncoderMode=True
-#%% regression test
+# ---- regression test
 z1.dropoutEnsembleMode=True
 z1.variationalAutoEncoderMode=True
 workerNum=0
@@ -113,32 +110,32 @@ evalLoss = z1.evaluateModel(testInputs, testOutputs, criterion, workerNum=worker
 print("Evaluation Loss:", evalLoss)
 print('time:',time.time()-t0)
 '#ccc access to tensorboard with "tensorboard --logdir=data" from terminal'
-#%% 
+# ---- 
 runcell=runcell
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('define model', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 runcell('make model instance', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
-#%%
+# ----
 runcell('regression test', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
-#%%
-#%% reload model
+# ----
+# ---- reload model
 runcell('imports', 'F:/projects/public github projects/private repos/versatileAnnModule/trainAnn.py')
 bestModel=ann.loadModel(r'data\bestModels\a1_InM9')
 # bestModel.evaluateModel(testInputs, testOutputs, criterion)
-#%% 
+# ---- 
 
-#%%
-#%%
-#%%
-#%%
-#%%
+# ----
+# ----
+# ----
+# ----
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
 

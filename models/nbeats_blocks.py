@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 # models\nbeats_blocks.py
 import sys
 import os
@@ -7,7 +7,7 @@ sys.path.append(parentFolder)
 import torch
 from torch import nn
 import numpy as np
-#%% define model
+# ---- define model
 #kkk correct comments
 class Block(nn.Module):
     def __init__(self, units, thetasDim, shareThetas=False, harmonicsNum=None):

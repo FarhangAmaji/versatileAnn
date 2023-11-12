@@ -1,8 +1,6 @@
-#%% imports
+# ---- imports
 # trainnHits.py
-import os
-baseFolder = os.path.dirname(os.path.abspath(__file__))
-os.chdir(baseFolder)
+
 from models.nhits_blocks import nHitsBlock
 from models.nhits import nHits#kkk change name nhitsMyTry
 import torch
@@ -11,7 +9,7 @@ import torch.optim as optim
 #kkk append future data
 #kkk predict should have at least backcastLen
 #kkk recheck the val and test steps
-#%%
+# ----
 '#ccc how to set optimizer manually'
 # nHitsModel.lr=0.001
 # nHitsModel.learningRate=0.001
@@ -27,7 +25,7 @@ import torch.optim as optim
 # nHitsModel.saveOnDiskPeriod=1
 # nHitsModel.lossMode='accuracy'
 # nHitsModel.variationalAutoEncoderMode=True
-#%% define model
+# ---- define model
 '''
 #ccc the values of nFreqDownsample and nPoolKernelSize in later blocks are usually decreased
 '''
@@ -40,18 +38,18 @@ blocks=[nHitsBlock(nFreqDownsample=4, mlpUnits=3 * [[512, 512]], nPoolKernelSize
 externalKwargs={'batchDatapreparation':{'futureExogenousCols':['genForecast', 'weekDay'], 'historyExogenousCols':['systemLoad'], 'staticExogenousCols':['market0', 'market1']}}
 nHitsModel=nHits(blocks, backcastLen=110, forecastLen=22, externalKwargs=externalKwargs)#kkk in create it shouldnt be in 'batchDatapreparation' externalKwargs
 len(list(nHitsModel.parameters()))
-#%% preprocessTrainValTestData
+# ---- preprocessTrainValTestData
 trainDataProcessed, valDataProcessed, testDataProcessed, scalers = nHitsModel.preprocessTrainValTestData(dfPath=r'.\data\datasets\EPF_FR_BE.csv', \
     trainRatio=.7, valRatio=.15, ysCols=['priceFr', 'priceBe'], externalKwargs=externalKwargs, staticDfPath=r'.\data\datasets\EPF_FR_BE_static.csv')
-#%%
+# ----
 workerNum=8
 
 criterion = torch.nn.MSELoss()
 
 nHitsModel.trainModel(trainDataProcessed, None, valDataProcessed, None, criterion, numEpochs=30, savePath=r'data\bestModels\nHits1', workerNum=workerNum, externalKwargs=externalKwargs)#kkk rename savePath for all train examples
-#%% test
+# ---- test
 nHitsModel.evaluateModel(testDataProcessed, None, criterion,stepNum=0, evalMode='test', workerNum=workerNum, externalKwargs=externalKwargs)
-#%% predict
+# ---- predict
 """#ccc note for prediction the data doesn't have the ysCols, also often doesnt have historyExogenousCols.
 but the model needs at least backcastLen of of data with all existing ExogenousCols defined in the trained model.
 for i.e. if we have the trained model with 'futureExogenousCols' and 'historyExogenousCols'(without 'staticExogenousCols') the model we pass to
@@ -59,16 +57,16 @@ predict should have the at least backcastLen of those cols.
 for the 'futureExogenousCols' we also need data for forecastLen but no need for 'historyExogenousCols'
 """
 #kkk add datapredict with r'.\data\datasets\EPF_FR_BE_futr.csv'' later
-#%%
-#%%
-#%%
+# ----
+# ----
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
-#%%
+# ----
 
 

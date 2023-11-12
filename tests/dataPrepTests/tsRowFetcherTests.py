@@ -1,4 +1,4 @@
-#%% imports
+# ---- imports
 """
 #ccc important::: test names are important as they provide kwargs
             for 'getBackForeCastData_general' through giveKwargsByFuncName_dfSample1
@@ -7,8 +7,7 @@
 #ccc note 'autoKwargsByFuncName' provides kwargs passed.
         so focus of reader of this file, is on more detailed items
 """
-import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from tests.baseTest import BaseTestClass
 import unittest
 import inspect
@@ -18,7 +17,7 @@ import numpy as np
 from utils.vAnnGeneralUtils import NpDict
 from utils.globalVars import tsStartPointColName
 from dataPrep.dataset import TsRowFetcher, VAnnTsDataset
-#%% sample variables
+# ---- sample variables
 npArraySample1 = np.array([[1, 16, 32], 
                             [2, 17, 33],
                             [3, 18, 34],
@@ -32,7 +31,7 @@ dfSample1 = pd.DataFrame({'y1': [1,  2,  3,  4,  5,  6,  7,  8],
                           'y2': [16, 17, 18, 19, 20, 21, 22, 23],
                           'y3': [32, 33, 34, 35, 36, 37, 38, 39]},
                          index=[130, 131, 132, 133, 134, 135, 136, 137])
-#%% create dictionaries with args to pass, by func name
+# ---- create dictionaries with args to pass, by func name
 def createKwargsDictFromName_base(name):
     dict_ = {}
     
@@ -85,12 +84,12 @@ def giveKwargsByFuncName_dfSample1():
 
 def giveKwargsByFuncName_npArraySample1():
     return giveKwargsByFuncName_base(createKwargsDictFromName_npArraySample1)
-#%% common used kwargs
+# ---- common used kwargs
 commonkwargs1 = createKwargsDictFromName_base('_BackcastMode_AllColIndexes_MakeTensor_kwargs')
 commonkwargs2 = createKwargsDictFromName_dfSample1('_BackcastMode_someCols_noMakeTensor_kwargs')
 commonkwargs3 = createKwargsDictFromName_dfSample1('_ForecastMode_someCols_noMakeTensor_kwargs')
-#%% TsRowFetcherTests
-#%%        TsRowFetcherTests_types
+# ---- TsRowFetcherTests
+# ----        TsRowFetcherTests_types
 """#ccc
 in TsRowFetcherTests_types, including (TestTsRowFetcher_DfTests, TestTsRowFetcher_NpArrayTests,
                                        TestTsRowFetcher_NpDictTests, TestTsRowFetcher_TensorTests)
@@ -99,7 +98,7 @@ for each (backcast, forecast, fullcast, singlePoint) modes
 for makeTensor== True or False
 for someCols == ['y1', 'y2'](or [0, 1]) or _AllColIndexes=='___all___'
 """
-#%%        type: TestTsRowFetcher_DfTests
+# ----        type: TestTsRowFetcher_DfTests
 class TestTsRowFetcher_DfTests(BaseTestClass):
     #ccc note uses giveKwargsByFuncName_dfSample1 for autoKwargsByFuncName
     def setUp(self):
@@ -196,7 +195,7 @@ class TestTsRowFetcher_DfTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
         self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int64))
-#%%        type: TestTsRowFetcher_NpArrayTests
+# ----        type: TestTsRowFetcher_NpArrayTests
 class TestTsRowFetcher_NpArrayTests(BaseTestClass):
     #ccc note uses giveKwargsByFuncName_npArraySample1 for autoKwargsByFuncName
     def setUp(self):
@@ -292,7 +291,7 @@ class TestTsRowFetcher_NpArrayTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
         self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int32))
-#%%        type: TestTsRowFetcher_NpDictTests
+# ----        type: TestTsRowFetcher_NpDictTests
 class TestTsRowFetcher_NpDictTests(BaseTestClass):
     #ccc note uses giveKwargsByFuncName_dfSample1 for autoKwargsByFuncName
     def setUp(self):
@@ -389,7 +388,7 @@ class TestTsRowFetcher_NpDictTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
         self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int64))
-#%%        type: TestTsRowFetcher_TensorTests
+# ----        type: TestTsRowFetcher_TensorTests
 class TestTsRowFetcher_TensorTests(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=3, forecastLen=2)
@@ -485,7 +484,7 @@ class TestTsRowFetcher_TensorTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
         self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int64))
-#%%        TestTsRowFetcher_ChangeFloatDtypeTests
+# ----        TestTsRowFetcher_ChangeFloatDtypeTests
 '#ccc in the tests above we have tested that if type is int, it would keep it int'
 #kkk not sure does adding commonkwargs1, increases or decreases readability and more important focus on main details
 class TestTsRowFetcher_ChangeFloatDtypeTests(BaseTestClass):
@@ -507,7 +506,7 @@ class TestTsRowFetcher_ChangeFloatDtypeTests(BaseTestClass):
                                        [7.0, 8.0, 9.0],
                                        [10.0, 11.0, 12.0]], dtype=torch.float32)
         self.assertTrue(torch.equal(result, expectedResult))
-#%%        TestTsRowFetcher_ShorterLen
+# ----        TestTsRowFetcher_ShorterLen
 class TestTsRowFetcher_ShorterLen(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
@@ -545,7 +544,7 @@ class TestTsRowFetcher_ShorterLen(BaseTestClass):
                                                     colsOrIndexes=['y1'], makeTensor=False,
                                                     canHaveShorterLength=True)
         self.equalArrays(res, np.array([2, 3, 4, 5, 6, 7, 8]), checkType=False)
-#%%        TestTsRowFetcher_RightPad
+# ----        TestTsRowFetcher_RightPad
 class TestTsRowFetcher_RightPad(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=8, forecastLen=2)
@@ -590,7 +589,7 @@ class TestTsRowFetcher_RightPad(BaseTestClass):
                                                     makeTensor=True,rightPadIfShorter=True)
         expectedResult = torch.tensor([[ 1, 32],[ 2, 33],[ 3, 34],[ 4, 35],[ 5, 36],[ 6, 37],[ 7, 38],[ 8, 39]], dtype=torch.int64)
         self.assertTrue(torch.equal(res, expectedResult))
-#%%        TestTsRowFetcher_OutOfDataError
+# ----        TestTsRowFetcher_OutOfDataError
 '#ccc this is different than, out of dataset indexes. this validate is out of this data(df, npArray,...) indexes or not'
 class TestTsRowFetcher_OutOfDataError(BaseTestClass):
     def setUp(self):
@@ -618,7 +617,7 @@ class TestTsRowFetcher_OutOfDataError(BaseTestClass):
             self.fetcher.getBackForeCastData_general(torch.tensor(self.df.values), -1, mode='backcast',
                                                      colsOrIndexes=[0,2], makeTensor=False)
         self.assertTrue(TsRowFetcher.errMsgs['non-negStartingPointTensor'],str(context.exception))
-#%%        TestTsRowFetcher_SingleFeatureShapeCorrectionTests
+# ----        TestTsRowFetcher_SingleFeatureShapeCorrectionTests
 class TestTsRowFetcher_SingleFeatureShapeCorrectionTests(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=3, forecastLen=2)
@@ -631,7 +630,7 @@ class TestTsRowFetcher_SingleFeatureShapeCorrectionTests(BaseTestClass):
 
         result = self.fetcher.singleFeatureShapeCorrection(inputData)
         self.assertEqual(result.shape, torch.Size([3, 3, 3]))
-#%%        TestTsRowFetcher_Shift
+# ----        TestTsRowFetcher_Shift
 class TestTsRowFetcher_Shift(BaseTestClass):
     def setUp(self):
         self.fetcher = TsRowFetcher(backcastLen=2, forecastLen=3)
@@ -650,7 +649,7 @@ class TestTsRowFetcher_Shift(BaseTestClass):
                                                      shiftForward=-2, rightPadIfShorter=False)
         expectedResult = pd.DataFrame({'y1': [5,6,7], 'y2': [20,21,22]},index=range(134, 137))
         self.assertTrue(res.equals(expectedResult))
-#%%     TestDataset_noNSeries_InDatasetIndexes
+# ----     TestDataset_noNSeries_InDatasetIndexes
 class TestDataset_noNSeries_InDatasetIndexes(BaseTestClass):
     def setUp(self):
         self.df = dfSample1.copy()
@@ -668,6 +667,6 @@ class TestDataset_noNSeries_InDatasetIndexes(BaseTestClass):
             self.dataset.getBackForeCastData(137, **commonkwargs3,
                                              shiftForward=-2, rightPadIfShorter=False)
         self.assertTrue("135 is not in indexes",str(context.exception))
-#%% run test
+# ---- run test
 if __name__ == '__main__':
     unittest.main()

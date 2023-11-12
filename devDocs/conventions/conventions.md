@@ -1,5 +1,7 @@
 ## formatting convention
 
+#mustHave1 the formatting config of `pycharm` must be added to conventions
+
 the formatting is done with a formatter in `vscode` with following `settings.json`
 
 ```
@@ -20,12 +22,17 @@ the formatting is done with a formatter in `vscode` with following `settings.jso
 
 todos
 
+- not corrected todo tag
+  - kkk FF0000
+
 - bugs
   - bugCriticalUnknown FF0000
   - bugKnown1 FF0000
   - bugKnown2 FF8C00
   - bugPotentialCheck1 FF5000
-  - bugPotentialCheck2 FFDC00
+  - bugPotentialCheck2 FF8C00
+  - addTest1 FF0000
+  - addTest2 FF8C00
 - features to be added
   - mustHave
     - mustHave1 00FF00
@@ -74,6 +81,15 @@ the comments use `better comments` extention with these added style to `settings
         {
             "text": "bugPotentialCheck2",
             "color": "#FFDC00"
+        },
+        {
+            "text": "addTest1",
+            "color": "#FF0000"
+        },
+        ,
+        {
+            "text": "addTest2",
+            "color": "#FF8C00"
         },
     /*    # features to be added */
     /*    # - mustHave */
