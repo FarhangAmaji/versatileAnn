@@ -1,41 +1,30 @@
 # ----
 
+
 import unittest
 
 import pandas as pd
 import pydantic
 
-# ----
 from dataPrep.normalizers import (NormalizerStack, StdScaler,
                                   SingleColsStdNormalizer,
                                   MultiColStdNormalizer,
                                   SingleColsLblEncoder, MultiColLblEncoder,
                                   LblEncoder, MainGroupBaseNormalizer,
                                   MainGroupSingleColsStdNormalizer,
-                                  MainGroupSingleColsLblEncoder)
+                                  MainGroupSingleColsLblEncoder, IntLabelsString)
 from tests.baseTest import BaseTestClass
 
-
-# ---- baseEncoderTests
-class baseEncoderTests(BaseTestClass):
-
-    def testNonDfOrSeriesFail(self):
-        StdScaler_ = StdScaler()
-        with self.assertRaises(
-                pydantic.error_wrappers.ValidationError) as context:
-            StdScaler_.fit([5, 3, 7])
-        self.assertEqual(str(context.exception),
-                         '2 validation errors for Fit\ndataToFit\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndataToFit\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)')
 
 # ---- stdNormalizerTest
 class stdNormalizerTests(BaseTestClass):
     def __init__(self, *args, **kwargs):
         super(stdNormalizerTests, self).__init__(*args, **kwargs)
         self.expectedPrint = {}
-        self.expectedPrint['testFitAgain'] = """SingleColsStdNormalizer:col1_col2 col1 is already fitted
-SingleColsStdNormalizer:col1_col2 col2 is already fitted
-MultiColStdNormalizer:col3_col4 is already fitted
-"""
+        self.expectedPrint[
+            'testFitAgain'] = "SingleColsStdNormalizer:col1_col2 col1 is already fitted\n" \
+                              "SingleColsStdNormalizer:col1_col2 col2 is already fitted\n" \
+                              "MultiColStdNormalizer:col3_col4 is already fitted\n"
 
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
@@ -97,12 +86,10 @@ MultiColStdNormalizer:col3_col4 is already fitted
 
     def testInverseMiddleTransformCol(self):
         self.inverseTransformSetUp()
-        self.dfToDoTest[
-            'col1'] = self.normalizerStack.inverseMiddleTransformCol(
-            self.dfToDoTest, 'col1')  # SingleColsStdNormalizer
-        self.dfToDoTest[
-            'col4'] = self.normalizerStack.inverseMiddleTransformCol(
-            self.dfToDoTest, 'col4')  # MultiColStdNormalizer
+        self.dfToDoTest['col1'] = self.normalizerStack.inverseMiddleTransformCol(self.dfToDoTest,
+                                                                                 'col1')  # SingleColsStdNormalizer
+        self.dfToDoTest['col4'] = self.normalizerStack.inverseMiddleTransformCol(self.dfToDoTest,
+                                                                                 'col4')  # MultiColStdNormalizer
         # for assert modification
         self.dfAssertDummy['col2'] = self.transformedDf['col2']
         self.dfAssertDummy['col3'] = self.transformedDf['col3']
@@ -116,15 +103,25 @@ MultiColStdNormalizer:col3_col4 is already fitted
     # addTest2 what meaningful tests can be added??
 
 
-# ---- lblEncoderTest
+# ---- lblEncoderTests
 class lblEncoderTest(stdNormalizerTests):
     def __init__(self, *args, **kwargs):
         super(lblEncoderTest, self).__init__(*args, **kwargs)
         self.expectedPrint = {}
-        self.expectedPrint['testFitAgain'] = """SingleColsLblEncoder:col1_col2 col1 is already fitted
-SingleColsLblEncoder:col1_col2 col2 is already fitted
-MultiColLblEncoder:col3_col4 is already fitted
-"""
+        self.expectedPrint[
+            'testFitAgain'] = "SingleColsLblEncoder:col1_col2 col1 is already fitted\n" \
+                              "SingleColsLblEncoder:col1_col2 col2 is already fitted\n" \
+                              "MultiColLblEncoder:col3_col4 is already fitted\n"
+
+        self.expectedPrint[
+            'testTransformAgain'] = 'LblEncoder applied on lblcol1\n' \
+                                    'LblEncoder applied on lblcol2\n' \
+                                    'LblEncoder applied on lbl:col3_col4\n' \
+                                    'LblEncoder applied on lbl:col3_col4\n'
+        self.expectedPrint['testInverseTransformAgain'] = 'LblEncoder applied on lblcol1\n' \
+                                                          'LblEncoder applied on lblcol2\n' \
+                                                          'LblEncoder applied on lbl:col3_col4\n' \
+                                                          'LblEncoder applied on lbl:col3_col4\n'
 
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
@@ -133,6 +130,7 @@ MultiColLblEncoder:col3_col4 is already fitted
             'col3': ['nkcdf', 'mdeo', 'nkcdf', 'cd', 'a'],
             'col4': ['z11', 'sc22', 'oem2', 'medk3', 'df']},
             index=range(100, 105))
+
         self.dfToDoTest = self.dfUntouched.copy()
         self.dfAssertDummy = self.dfUntouched.copy()
 
@@ -144,13 +142,32 @@ MultiColLblEncoder:col3_col4 is already fitted
                                            'col3': [5, 3, 5, 1, 0],
                                            'col4': [8, 7, 6, 4, 2]},
                                           index=range(100, 105))
-        # self.transformedDfUntouched = self.transformedDf.copy()
-        # self.floatPrecision= 0.001
+
+    # self.transformedDfUntouched = self.transformedDf.copy()
+    # self.floatPrecision= 0.001
+
+    def testTransformAgain(self):
+        def testFunc():
+            self.transformSetUp()
+            self.normalizerStack.fitNTransform(self.dfToDoTest)
+            self.normalizerStack.transformCol(self.dfToDoTest, 'col2')
+            self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
+
+        self.assertPrint(testFunc, self.expectedPrint['testTransformAgain'])
 
     def testInverseTransform(self):
         self.inverseTransformSetUp()
         self.normalizerStack.inverseTransform(self.dfToDoTest)
         self.equalDfs(self.dfToDoTest, self.dfUntouched)
+
+    def testInverseTransformAgain(self):
+        def testFunc():
+            self.inverseTransformSetUp()
+            self.normalizerStack.inverseTransform(self.dfToDoTest)
+            self.normalizerStack.inverseTransform(self.dfToDoTest)
+            self.equalDfs(self.dfToDoTest, self.dfUntouched)
+
+        self.assertPrint(testFunc, self.expectedPrint['testInverseTransformAgain'])
 
 
 class lblEncoderWithIntLabelsStringTests(BaseTestClass):
@@ -165,36 +182,31 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
                                            'col2': [0, 3, 0, 1, 0, 2],
                                            'col3': [2, 1, 0, 3, 4, 0]},
                                           index=range(100, 106))
-        self.inverseMiddleTransformRes = pd.DataFrame({'col1': ['col1:3',
-                                                                'col1:3',
-                                                                'col1:0',
-                                                                'col1:0',
-                                                                'col1:1',
-                                                                'col1:2'],
-                                                       'col2': [
-                                                           'lbl:col2_col3:0',
-                                                           'lbl:col2_col3:3',
-                                                           'lbl:col2_col3:0',
-                                                           'lbl:col2_col3:1',
-                                                           'lbl:col2_col3:0',
-                                                           'lbl:col2_col3:2'],
-                                                       'col3': [
-                                                           'lbl:col2_col3:2',
-                                                           'lbl:col2_col3:1',
-                                                           'lbl:col2_col3:0',
-                                                           'lbl:col2_col3:3',
-                                                           'lbl:col2_col3:4',
-                                                           'lbl:col2_col3:0']},
-                                                      index=range(100, 106))
+        self.inverseMiddleTransformRes = pd.DataFrame(
+            {'col1': ['col1:3', 'col1:3', 'col1:0', 'col1:0', 'col1:1', 'col1:2'],
+             'col2': ['lbl:col2_col3:0', 'lbl:col2_col3:3', 'lbl:col2_col3:0', 'lbl:col2_col3:1',
+                      'lbl:col2_col3:0', 'lbl:col2_col3:2'],
+             'col3': ['lbl:col2_col3:2', 'lbl:col2_col3:1', 'lbl:col2_col3:0', 'lbl:col2_col3:3',
+                      'lbl:col2_col3:4', 'lbl:col2_col3:0']},
+            index=range(100, 106))
         self.normalizerStack = NormalizerStack(
             SingleColsLblEncoder(['col1']),
             MultiColLblEncoder(['col2', 'col3']))
 
     def inverseTransformSetUp(self):
-        stdNormalizerTests.inverseTransformSetUp(self)
+        self.transformSetUp()
+        self.normalizerStack.fitNTransform(self.dfToDoTest)
 
     def testFitNTransform(self):
         stdNormalizerTests.testFitNTransform(self)
+
+    def testNotAllInts_raiseValueError_withNormalizer(self):
+        df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 4]},
+                          index=range(100, 106))
+        normalizerStack = NormalizerStack(SingleColsLblEncoder(['col1']))
+        with self.assertRaises(ValueError) as context:
+            normalizerStack.fitNTransform(df)
+        self.assertEqual(str(context.exception), LblEncoder.floatDetectedErrorMsg)
 
     def testInverseMiddleTransform(self):
         self.inverseTransformSetUp()
@@ -400,13 +412,37 @@ class otherTests(BaseTestClass):
         self.normalizerStack.addNormalizer(SingleColsLblEncoder(['col4']))
         # kkk print or assert sth
 
-    def testLblEncoderRaiseValueError(self):
+    def testNonDfOrSeries_pydanticAssertion(self):
+        StdScaler_ = StdScaler()
+        with self.assertRaises(pydantic.error_wrappers.ValidationError) as context:
+            StdScaler_.fit([5, 3, 7])
+        self.assertEqual(str(context.exception),
+                         '2 validation errors for Fit\ndataToFit\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndataToFit\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)')
+
+    def testLblEncoderIntRaiseValueError(self):
         lblEnc = LblEncoder()
         with self.assertRaises(ValueError) as context:
             df = pd.DataFrame({'col1': [3, 3, 0, 0, 1, 2]})
             lblEnc.fit(df['col1'])
         self.assertEqual(str(context.exception),
-                         LblEncoder.LblEncoderValueErrorMsg)
+                         LblEncoder.intDetectedErrorMsg)
+
+    def testNotAllInts_raiseValueError_intLabelsString(self):
+        df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 4]},
+                          index=range(100, 106))
+        intLabelsString = IntLabelsString('col1')
+        with self.assertRaises(ValueError) as context:
+            intLabelsString.fit(df)
+        self.assertEqual(str(context.exception),
+                         "IntLabelsString col1 All values should be integers.")
+
+    def testLblEncoderFloatRaiseValueError(self):
+        lblEnc = LblEncoder()
+        with self.assertRaises(ValueError) as context:
+            df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 2]})
+            lblEnc.fit(df['col1'])
+        self.assertEqual(str(context.exception),
+                         LblEncoder.floatDetectedErrorMsg)
 
 
 # ---- run test

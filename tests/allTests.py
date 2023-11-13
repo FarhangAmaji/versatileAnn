@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 # Automatically discover and load test cases
 testLoader = unittest.TestLoader()
