@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from dataPrep.normalizers_baseEncoders import LblEncoder, StdScaler, IntLabelsString
+from dataPrep.normalizers_baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from utils.vAnnGeneralUtils import NpDict
 
 
@@ -181,7 +181,7 @@ class BaseSingleColsNormalizer(BaseNormalizer):
 
 class SingleColsStdNormalizer(BaseSingleColsNormalizer):
     def __init__(self, colNames: list):
-        self.scalers = {col: StdScaler(f'std{col}') for col in colNames}
+        self.scalers = {col: _StdScaler(f'std{col}') for col in colNames}
         super().__init__()
 
     def transformCol(self, df, col):
@@ -197,7 +197,7 @@ class SingleColsStdNormalizer(BaseSingleColsNormalizer):
 class SingleColsLblEncoder(BaseSingleColsNormalizer):
     def __init__(self, colNames: list):
         self.intLabelsStrings = {}
-        self.encoders = {col: LblEncoder(f'lbl{col}') for col in colNames}
+        self.encoders = {col: _LblEncoder(f'lbl{col}') for col in colNames}
         super().__init__()
 
     @property
@@ -208,8 +208,8 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
         try:
             super().fitCol(df, col)
         except ValueError as e:
-            if str(e) == LblEncoder.intDetectedErrorMsg:
-                self.intLabelsStrings[col] = IntLabelsString(col)
+            if str(e) == _LblEncoder.intDetectedErrorMsg:
+                self.intLabelsStrings[col] = _IntLabelsString(col)
                 self.intLabelsStrings[col].fit(df[col])
                 intLabelsStringsTransformed = self.intLabelsStrings[
                     col].transform(df[col])
@@ -279,7 +279,7 @@ class BaseMultiColNormalizer(BaseNormalizer):
         # goodToHave3 is copying needed
         if isinstance(self, MultiColLblEncoder) and self.areTheseIntCols(df):
             # goodToHave1 oop
-            self.intLabelsString = IntLabelsString(self.shortRep())
+            self.intLabelsString = _IntLabelsString(self.shortRep())
             self.intLabelsString.fit(dfColsCopy)
             dfColsCopy = self.intLabelsString.transform(dfColsCopy)
         self.scaler.fit(dfColsCopy)
@@ -315,7 +315,7 @@ class MultiColStdNormalizer(BaseMultiColNormalizer):
     def __init__(self, colNames):
         super().__init__()
         self.colNames = colNames
-        self.scaler = StdScaler(self.shortRep())
+        self.scaler = _StdScaler(self.shortRep())
 
     def shortRep(self):
         return 'std:' + '_'.join(self.colNames)
@@ -329,7 +329,7 @@ class MultiColLblEncoder(BaseMultiColNormalizer):
         super().__init__()
         self.intLabelsString = None
         self.colNames = colNames
-        self.encoder = LblEncoder(self.shortRep())
+        self.encoder = _LblEncoder(self.shortRep())
 
     @property
     def scaler(self):

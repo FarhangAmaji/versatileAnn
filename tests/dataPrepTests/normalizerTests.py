@@ -6,13 +6,10 @@ import unittest
 import pandas as pd
 import pydantic
 
-from dataPrep.normalizers import (NormalizerStack, StdScaler,
-                                  SingleColsStdNormalizer,
-                                  MultiColStdNormalizer,
-                                  SingleColsLblEncoder, MultiColLblEncoder,
-                                  LblEncoder, MainGroupBaseNormalizer,
-                                  MainGroupSingleColsStdNormalizer,
-                                  MainGroupSingleColsLblEncoder, IntLabelsString)
+from dataPrep.normalizers import (NormalizerStack, SingleColsStdNormalizer, MultiColStdNormalizer,
+                                  SingleColsLblEncoder, MultiColLblEncoder, MainGroupBaseNormalizer,
+                                  MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
+from dataPrep.normalizers_baseEncoders import _StdScaler, _LblEncoder, _IntLabelsString
 from tests.baseTest import BaseTestClass
 
 
@@ -113,15 +110,20 @@ class lblEncoderTest(stdNormalizerTests):
                               "SingleColsLblEncoder:col1_col2 col2 is already fitted\n" \
                               "MultiColLblEncoder:col3_col4 is already fitted\n"
 
+        self.expectedPrint['testTransformAgain'] = 'LblEncoder applied transform on lblcol1\n' \
+                                                   'LblEncoder applied transform on lblcol2\n' \
+                                                   'LblEncoder applied transform on lbl:col3_col4\n' \
+                                                   'LblEncoder applied transform on lbl:col3_col4\n'
+
         self.expectedPrint[
-            'testTransformAgain'] = 'LblEncoder applied on lblcol1\n' \
-                                    'LblEncoder applied on lblcol2\n' \
-                                    'LblEncoder applied on lbl:col3_col4\n' \
-                                    'LblEncoder applied on lbl:col3_col4\n'
-        self.expectedPrint['testInverseTransformAgain'] = 'LblEncoder applied on lblcol1\n' \
-                                                          'LblEncoder applied on lblcol2\n' \
-                                                          'LblEncoder applied on lbl:col3_col4\n' \
-                                                          'LblEncoder applied on lbl:col3_col4\n'
+            'testInverseTransformAgain'] = 'LblEncoder applied transform on lblcol1\n' \
+                                           'LblEncoder applied transform on lblcol2\n' \
+                                           'LblEncoder applied transform on lbl:col3_col4\n' \
+                                           'LblEncoder applied transform on lbl:col3_col4\n' \
+                                           'LblEncoder applied inverseTransform on lbl:col3_col4\n' \
+                                           'LblEncoder applied inverseTransform on lbl:col3_col4\n' \
+                                           'LblEncoder applied inverseTransform on lblcol2\n' \
+                                           'LblEncoder applied inverseTransform on lblcol1\n'
 
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
@@ -206,7 +208,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
         normalizerStack = NormalizerStack(SingleColsLblEncoder(['col1']))
         with self.assertRaises(ValueError) as context:
             normalizerStack.fitNTransform(df)
-        self.assertEqual(str(context.exception), LblEncoder.floatDetectedErrorMsg)
+        self.assertEqual(str(context.exception), _LblEncoder.floatDetectedErrorMsg)
 
     def testInverseMiddleTransform(self):
         self.inverseTransformSetUp()
@@ -413,36 +415,36 @@ class otherTests(BaseTestClass):
         # kkk print or assert sth
 
     def testNonDfOrSeries_pydanticAssertion(self):
-        StdScaler_ = StdScaler()
+        StdScaler_ = _StdScaler()
         with self.assertRaises(pydantic.error_wrappers.ValidationError) as context:
             StdScaler_.fit([5, 3, 7])
         self.assertEqual(str(context.exception),
-                         '2 validation errors for Fit\ndataToFit\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndataToFit\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)')
+                         '2 validation errors for Fit\ndata\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndata\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)')
 
     def testLblEncoderIntRaiseValueError(self):
-        lblEnc = LblEncoder()
+        lblEnc = _LblEncoder()
         with self.assertRaises(ValueError) as context:
             df = pd.DataFrame({'col1': [3, 3, 0, 0, 1, 2]})
             lblEnc.fit(df['col1'])
         self.assertEqual(str(context.exception),
-                         LblEncoder.intDetectedErrorMsg)
+                         _LblEncoder.intDetectedErrorMsg)
 
     def testNotAllInts_raiseValueError_intLabelsString(self):
         df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 4]},
                           index=range(100, 106))
-        intLabelsString = IntLabelsString('col1')
+        intLabelsString = _IntLabelsString('col1')
         with self.assertRaises(ValueError) as context:
             intLabelsString.fit(df)
         self.assertEqual(str(context.exception),
-                         "IntLabelsString col1 All values should be integers.")
+                         "_IntLabelsString col1 All values should be integers.")
 
     def testLblEncoderFloatRaiseValueError(self):
-        lblEnc = LblEncoder()
+        lblEnc = _LblEncoder()
         with self.assertRaises(ValueError) as context:
             df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 2]})
             lblEnc.fit(df['col1'])
         self.assertEqual(str(context.exception),
-                         LblEncoder.floatDetectedErrorMsg)
+                         _LblEncoder.floatDetectedErrorMsg)
 
 
 # ---- run test

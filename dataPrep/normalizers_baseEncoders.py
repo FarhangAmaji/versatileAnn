@@ -12,8 +12,10 @@ from utils.warnings import Warn
 forceMsgAdvice = " you may use 'force' option to force it."
 
 
-# goodToHave2 split to NSeries could have been some baseNormalizer and combine its reverse
-class BaseEncoder(ABC):
+# goodToHave2
+#  split to NSeries could have been some _BaseEncoder and combine its reverse
+#  note the normalizerstack should apply it first and inverse it last
+class _BaseEncoder(ABC):
     @abstractmethod
     def __init__(self, name=None):
         ...
@@ -22,58 +24,60 @@ class BaseEncoder(ABC):
         ...
 
     @abstractmethod
-    def fit(self, dataToFit):
+    def fit(self, data):
         ...
 
     @abstractmethod
-    def transform(self, dataToFit):
+    def transform(self, data):
         ...
 
     @abstractmethod
-    def inverseTransform(self, dataToBeInverseTransformed):
+    def inverseTransform(self, data):
         ...
 
 
-class StdScaler(BaseEncoder):
+class _StdScaler(_BaseEncoder):
     def __init__(self, name=None):
         self.name = name
         self.scaler = StandardScaler()
 
     @property
     def _isFitted(self):
+        # goodToHave3 name why these conditions are used
         return hasattr(self.scaler, 'mean_') and self.scaler.mean_ is not None
 
     @argValidator
-    def fit(self, dataToFit: Union[pd.DataFrame, pd.Series], colShape=1):
+    def fit(self, data: Union[pd.DataFrame, pd.Series]):
+        # goodToHave2 add NpDict; to all these funcs in this file
         if not self._isFitted:
-            self.scaler.fit(dataToFit.values.reshape(-1, colShape))
+            self.scaler.fit(data.values.reshape(-1, 1))
         else:
             Warn.warn(f'StdScaler {self.name} is already fitted')
-
-    @argValidator
-    def transform(self, dataToFit: Union[pd.DataFrame, pd.Series], colShape=1):
-        dataToFit_ = dataToFit.values.reshape(-1, colShape)
-        if self._isFitted:
-            return self.scaler.transform(dataToFit_)
-        else:
-            Warn.warn(f'StdScaler {self.name} skipping transform: is not fitted; fit it first')
             # addTest2 this is not in the tests; same for other already fitted cases
-            return dataToFit_
+
+    def _baseTransform(self, data: Union[pd.DataFrame, pd.Series], transformTypeName,
+                       transformFunc, colShape=1):
+        data_ = data.values.reshape(-1, colShape)
+        if self._isFitted:
+            return transformFunc(data_)
+        else:
+            Warn.warn(
+                f'StdScaler {self.name} skipping {transformTypeName}: is not fitted; fit it first')
+            return data_
 
     @argValidator
-    def inverseTransform(self, dataToBeInverseTransformed: Union[
-        pd.DataFrame, pd.Series], colShape=1):
-        dataToBeInverseTransformed_ = dataToBeInverseTransformed.values.reshape(-1, colShape)
-        if self._isFitted:
-            return self.scaler.inverse_transform(dataToBeInverseTransformed_)
-        else:
-            Warn.warn(f'StdScaler {self.name} is not fitted; cannot inverse transform.')
-            return dataToBeInverseTransformed_
+    def transform(self, data: Union[pd.DataFrame, pd.Series], colShape=1):
+        return self._baseTransform(data, 'transform', self.scaler.transform, colShape)
+
+    @argValidator
+    def inverseTransform(self, data: Union[pd.DataFrame, pd.Series], colShape=1):
+        return self._baseTransform(data, 'inverseTransform',
+                                   self.scaler.inverse_transform, colShape)
 
 
-class LblEncoder(BaseEncoder):
+class _LblEncoder(_BaseEncoder):
     # mustHave2 it cant handle None or np.nan or other common missing values
-    intDetectedErrorMsg = "Integer labels detected. Use IntLabelsString to convert them to string labels."
+    intDetectedErrorMsg = "Integer labels detected. Use _IntLabelsString to convert them to string labels."
     floatDetectedErrorMsg = "Float labels detected. for using float data as categories everything should be done manually by urself; also dont forget to do inverse transform."
 
     def __init__(self, name=None):
@@ -85,103 +89,97 @@ class LblEncoder(BaseEncoder):
 
     @property
     def _isFitted(self):
+        # goodToHave3 name why these conditions are used
         return hasattr(self.encoder, 'classes_') and \
             self.encoder.classes_ is not None
 
     @argValidator
-    def fit(self, dataToFit: Union[pd.DataFrame, pd.Series]):
+    def fit(self, data: Union[pd.DataFrame, pd.Series]):
         if not self._isFitted:
             # cccAlgo
             #  'sklearn.LabelEncoder' fits both int, float alongside with strings.
             #  in order not to accidentally retransfrom already transformed data,
-            #  in this project if there are ints which are meant to be categories, there is a need to utilize IntLabelsString before.
+            #  in this project if there are ints which are meant to be categories, there is a need to utilize _IntLabelsString before.
             #  for float data as categories everything needs to be handled manually before and after operations.
-            if any(isinstance(label, float) for label in dataToFit):
-                raise ValueError(LblEncoder.floatDetectedErrorMsg)
-            elif any(isinstance(label, int) for label in dataToFit):
-                raise ValueError(LblEncoder.intDetectedErrorMsg)
-            self.encoder.fit(dataToFit.values.reshape(-1))
+            if any(isinstance(label, float) for label in data):
+                raise ValueError(_LblEncoder.floatDetectedErrorMsg)
+            elif any(isinstance(label, int) for label in data):
+                raise ValueError(_LblEncoder.intDetectedErrorMsg)
+            self.encoder.fit(data.values.reshape(-1))
         else:
             print(f'LblEncoder {self.name} is already fitted')
 
     def _doesDataSeemToBe_AlreadyTransformed(self, data):
+        # bugPotentialCheck2 is it possible if the data is str and numeric together makes problem with 'list(range(len(self.encoder.classes_)))'
         return areItemsOfList1_InList2(np.unique(data), list(range(len(self.encoder.classes_))))
-
-    @argValidator
-    def transform(self, dataToFit: Union[pd.DataFrame, pd.Series],
-                  force=False):
-        # cccUsage
-        #  Warning: the transform/inverseTransform/inverseMiddleTransform in general can be applied multiple times; so if the data may differ as wanted.
-        #  in LblEncoder has been tried to reduce this risk, but again there may be no guarantee
-        dataToFit_ = dataToFit.values.reshape(-1)
-        if self._isFitted:
-            if (not force) and self._doesDataSeemToBe_AlreadyTransformed(dataToFit_):
-                Warn.warn(
-                    f"LblEncoder {self.name} skipping transform: data already seems transformed." + forceMsgAdvice)
-                return dataToFit_
-            else:
-                print(f'LblEncoder applied on {self.name}')
-                return self.encoder.transform(dataToFit_)
-        else:
-            Warn.warn(f'LblEncoder {self.name} skipping transform: is not fitted; fit it first')
-            return dataToFit_
 
     def _doesdataToBeInverseTransformed_SeemToBeAlreadyDone(self, data):
         return areItemsOfList1_InList2(np.unique(data), list(self.encoder.classes_))
 
-    @argValidator
-    def inverseTransform(self, dataToBeInverseTransformed: Union[
-        pd.DataFrame, pd.Series], force=False):
-        dataToBeInverseTransformed_ = dataToBeInverseTransformed.values.reshape(-1)
+    def _baseTransform(self, data: Union[pd.DataFrame, pd.Series], transformTypeName,
+                       transformFunc, TransformedAlreadyCheckFunc, force=False):
+        # cccUsage
+        #  Warning: the transform/inverseTransform/inverseMiddleTransform in general can be applied multiple times; so if the data may differ as wanted.
+        #  in _LblEncoder has been tried to reduce this risk, but again there may be no guarantee
+        data_ = data.values.reshape(-1)
         if self._isFitted:
-            if (not force) and self._doesdataToBeInverseTransformed_SeemToBeAlreadyDone(
-                    dataToBeInverseTransformed_):
+            if (not force) and TransformedAlreadyCheckFunc(data_):
                 Warn.warn(
-                    f'LblEncoder {self.name} skipping inverse transform: data already seems inverse transformed.' + forceMsgAdvice)
-                return dataToBeInverseTransformed_
+                    f"LblEncoder {self.name} skipping {transformTypeName}: data already seems transformed." + forceMsgAdvice)
+                return data_
             else:
-                return self.encoder.inverse_transform(
-                    dataToBeInverseTransformed_)
+                print(f'LblEncoder applied {transformTypeName} on {self.name}')
+                return transformFunc(data_)
         else:
-            Warn.warn(f'LblEncoder {self.name} is not fitted; cannot inverse transform.')
-            return dataToBeInverseTransformed_
+            Warn.warn(
+                f'LblEncoder {self.name} skipping {transformTypeName}: is not fitted; fit it first')
+            return data_
+
+    @argValidator
+    def transform(self, data: Union[pd.DataFrame, pd.Series], force=False):
+        return self._baseTransform(data, 'transform', self.encoder.transform,
+                                   self._doesDataSeemToBe_AlreadyTransformed, force)
+
+    @argValidator
+    def inverseTransform(self, data: Union[pd.DataFrame, pd.Series], force=False):
+        return self._baseTransform(data, 'inverseTransform', self.encoder.inverse_transform,
+                                   self._doesdataToBeInverseTransformed_SeemToBeAlreadyDone, force)
 
 
-class IntLabelsString(BaseEncoder):
+class _IntLabelsString(_BaseEncoder):
+    # cccAlgo same explanations of fit in _LblEncoder
     def __init__(self, name):
         self.name = name
         self.isFitted = False
 
     @argValidator
-    def fit(self, inputData: Union[pd.DataFrame, pd.Series]):
-        # goodToHave1 add NpDict
+    def fit(self, data: Union[pd.DataFrame, pd.Series]):
         if self.isFitted:
             Warn.warn(f'skipping fit:{self.name} intLabelsString is already fitted')
-            return inputData
-        array = inputData.values.reshape(-1)
+            return
+        array = data.values.reshape(-1)
         uniqueVals = np.unique(array)
         if not np.all(np.equal(uniqueVals, uniqueVals.astype(int))):
-            raise ValueError(f"IntLabelsString {self.name} All values should be integers.")
+            raise ValueError(f"_IntLabelsString {self.name} All values should be integers.")
         self.intToLabelMapping = {intVal: f'{self.name}:{label}' for
                                   label, intVal in enumerate(uniqueVals)}
         self.labelToIntMapping = {value: key for key, value in
                                   self.intToLabelMapping.items()}
         self.isFitted = True
 
-    def fitNTransform(self, inputData):
-        self.fit(inputData)
-        return self.transform(inputData)
+    def fitNTransform(self, data):
+        self.fit(data)
+        return self.transform(data)
 
     @argValidator
-    def transform(self, dataToTransformed: Union[pd.DataFrame, pd.Series]):
-        if isinstance(dataToTransformed, pd.Series):
-            output = dataToTransformed.map(self.intToLabelMapping)
-        elif isinstance(dataToTransformed, pd.DataFrame):
-            output = dataToTransformed.applymap(
+    def transform(self, data: Union[pd.DataFrame, pd.Series]):
+        if isinstance(data, pd.Series):
+            output = data.map(self.intToLabelMapping)
+        elif isinstance(data, pd.DataFrame):
+            output = data.applymap(
                 lambda x: self.intToLabelMapping.get(x, x))
         return output
 
     @argValidator
-    def inverseTransform(self, dataToBeInverseTransformed: np.ndarray):
-        return np.vectorize(self.labelToIntMapping.get)(
-            dataToBeInverseTransformed)
+    def inverseTransform(self, data: np.ndarray):
+        return np.vectorize(self.labelToIntMapping.get)(data)
