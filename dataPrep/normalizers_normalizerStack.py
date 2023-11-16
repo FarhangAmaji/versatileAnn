@@ -1,4 +1,4 @@
-from dataPrep.normalizers import MainGroupSingleColsNormalizer
+from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsNormalizer
 from dataPrep.normalizers_multiColNormalizer import BaseMultiColNormalizer
 from dataPrep.normalizers_singleColsNormalizer import BaseSingleColsNormalizer
 

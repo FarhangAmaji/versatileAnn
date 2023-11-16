@@ -7,7 +7,7 @@ the formatting is done with a formatter in `vscode` with following `settings.jso
 ```
 "[python]": {
   "python.formatting.autopep8Args": [
-    "--max-line-length=79",
+    "--max-line-length=100",
     "--indent-size=4",
     "--indent-after-paren=1",
     "--aggressive",

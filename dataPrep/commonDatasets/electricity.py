@@ -8,7 +8,7 @@ there are many date cols and consumerId and powerUsage cols
 this dataset has different consumer data which are treated as separate data sequences(NSeries)
 """
 from dataPrep.utils import getDatasetFiles, calculateNSeriesMinDifference, excludeValuesFromEnd_NSeries, splitTrainValTest_NSeries
-from dataPrep.normalizers import NormalizerStack, SingleColsStdNormalizer, SingleColsLblEncoder
+from dataPrep.normalizers_mainGroupNormalizers import NormalizerStack, SingleColsStdNormalizer, SingleColsLblEncoder
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.dataloader import VAnnTsDataloader
 from utils.globalVars import tsStartPointColName

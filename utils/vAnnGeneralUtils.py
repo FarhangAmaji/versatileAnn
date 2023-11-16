@@ -178,7 +178,7 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
         return df1.equals(df2)
 
 def regularizeBoolCol(df, colName):
-    assert areAllItemsInList1_ExistInList2(df[colName].unique(),[0.,1.,True,False]), "{colName} col doesnt seem to have boolean values"
+    assert areItemsOfList1_InList2(df[colName].unique(), [0., 1., True, False]), "{colName} col doesnt seem to have boolean values"
     df[colName] = df[colName].astype(bool)
 # ---- np array
 def npArrayBroadCast(arr, shape):
@@ -206,7 +206,7 @@ def equalArrays(array1, array2, checkType=True, floatApprox=False, floatPrecisio
     # Return True if both data type and precision are equal
     return dtypeEqual and equalVals
 # ---- lists
-def areAllItemsInList1_ExistInList2(list1, list2):
+def areItemsOfList1_InList2(list1, list2):
     setList2 = set(list2)
     for item in list1:
         if item not in setList2:
