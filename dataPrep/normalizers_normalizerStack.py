@@ -1,5 +1,6 @@
-from dataPrep.normalizers import BaseSingleColsNormalizer, MainGroupSingleColsNormalizer, \
+from dataPrep.normalizers import MainGroupSingleColsNormalizer, \
     BaseMultiColNormalizer
+from dataPrep.normalizers_singleColsNormalizer import BaseSingleColsNormalizer
 
 
 class NormalizerStack:

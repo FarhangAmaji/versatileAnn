@@ -6,9 +6,11 @@ import unittest
 import pandas as pd
 import pydantic
 
-from dataPrep.normalizers import (SingleColsStdNormalizer, MultiColStdNormalizer,
-                                  SingleColsLblEncoder, MultiColLblEncoder, MainGroupBaseNormalizer,
+from dataPrep.normalizers import (MultiColStdNormalizer, MultiColLblEncoder,
+                                  MainGroupBaseNormalizer,
                                   MainGroupSingleColsStdNormalizer, MainGroupSingleColsLblEncoder)
+from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
+    SingleColsLblEncoder
 from dataPrep.normalizers_baseEncoders import _StdScaler, _LblEncoder, _IntLabelsString
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from tests.baseTest import BaseTestClass
