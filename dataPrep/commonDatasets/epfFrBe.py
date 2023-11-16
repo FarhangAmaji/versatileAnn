@@ -5,7 +5,7 @@ the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE
 """
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.normalizers import MultiColStdNormalizer
+from dataPrep.normalizers_multiColNormalizer import MultiColStdNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.utils import getDatasetFiles, splitTsTrainValTest_DfNNpDict, addCorrespondentRow, \
