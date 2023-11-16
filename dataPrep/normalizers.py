@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
-
 from dataPrep.normalizers_baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
+from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from utils.vAnnGeneralUtils import NpDict
 
 
@@ -65,54 +64,8 @@ class NormalizerStack:
         return str(self.uniqueNormalizers)
 
 
-# ---- normalizers: BaseNormalizer
-class BaseNormalizer(ABC):
-    def assertColNameInDf(self, df, col):
-        assert col in df.columns, f'{col} is not in df columns'
-
-    # @abstractmethod
-    def fitCol(self):
-        ...
-
-    @abstractmethod
-    def fit(self):
-        ...
-
-    # @abstractmethod
-    def transformCol(self):
-        ...
-
-    @abstractmethod
-    def transform(self):
-        ...
-
-    # @abstractmethod
-    def fitNTransformCol(self):
-        ...
-
-    @abstractmethod
-    def fitNTransform(self):
-        ...
-
-    # @abstractmethod
-    def inverseMiddleTransformCol(self):
-        ...
-
-    # @abstractmethod
-    def inverseMiddleTransform(self):
-        ...
-
-    # @abstractmethod
-    def inverseTransformCol(self):
-        ...
-
-    # @abstractmethod
-    def inverseTransform(self):
-        ...
-
-
 # ---- normalizers: SingleColsNormalizers
-class BaseSingleColsNormalizer(BaseNormalizer):
+class BaseSingleColsNormalizer(_BaseNormalizer):
     # cccUsage
     #  for instances of SingleColsLblEncoder if they have/need IntLabelsStrings, we wont use 3 transforms.
     #  for i.e. in if we have 5->'colA0'->0, BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0
@@ -234,7 +187,7 @@ class SingleColsLblEncoder(BaseSingleColsNormalizer):
 
 
 # ---- normalizers: BaseMultiColNormalizers
-class BaseMultiColNormalizer(BaseNormalizer):
+class BaseMultiColNormalizer(_BaseNormalizer):
     # goodToHave2 fitcol, fitNTransformCol,  inverseMiddleTransform, inverseTransform
     def __init__(self):
         self.isFitted = False
@@ -428,7 +381,7 @@ class MainGroupBaseNormalizer:
 
 # ---- MainGroupSingleColsNormalizer
 class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer,
-                                    BaseNormalizer):
+                                    _BaseNormalizer):
     # goodToHave2 fitNTransformCol, inverseMiddleTransform, inverseTransform
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
         super().__init__(df, mainGroupColNames)
