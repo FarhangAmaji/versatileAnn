@@ -5,14 +5,14 @@ import unittest
 
 import pandas as pd
 
-from dataPrep.normalizers_mainGroupNormalizers import (MainGroupBaseNormalizer,
+from dataPrep.normalizers_mainGroupNormalizers import (_MainGroupBaseNormalizer,
                                                        MainGroupSingleColsStdNormalizer,
                                                        MainGroupSingleColsLblEncoder)
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from tests.baseTest import BaseTestClass
 
 
-# ---- MainGroupBaseNormalizer tests
+# ---- _MainGroupBaseNormalizer tests
 class MainGroupBaseNormalizerTests(BaseTestClass):
     def setUp(self):
         self.df = pd.DataFrame({
@@ -39,8 +39,8 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
     def UniqueCombosBaseTest(self, mainGroupColNames,
                              uniqueCombosAssertComboDefs):
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupBaseNormalizer(self.df,
-                                                           mainGroupColNames)
+        MainGroupBaseNormalizer_ = _MainGroupBaseNormalizer(self.df, mainGroupColNames,
+                                                            internalCall=True)
         uniqueCombos = MainGroupBaseNormalizer_.uniqueCombos
 
         testSuccessRes = True
@@ -78,8 +78,8 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
     def GetRowsByCombinationBaseTest(self, comboToFind, mainGroupColNames,
                                      getRowsByCombinationRes):
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupBaseNormalizer(self.df,
-                                                           mainGroupColNames)
+        MainGroupBaseNormalizer_ = _MainGroupBaseNormalizer(self.df, mainGroupColNames,
+                                                            internalCall=True)
         res = MainGroupBaseNormalizer_.getRowsByCombination(self.df,
                                                             comboToFind)
         self.equalDfs(getRowsByCombinationRes, res, floatApprox=True)

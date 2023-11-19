@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import pandas as pd
+
 from utils.typeCheck import argValidator
 
 
@@ -32,7 +34,7 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def transformCol(self):
+    def transformCol(self) -> pd.Series:
         ...
 
     @abstractmethod
@@ -49,7 +51,7 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def inverseTransformCol(self, df, col):
+    def inverseTransformCol(self, df, col) -> pd.Series:
         ...
 
     # @abstractmethod

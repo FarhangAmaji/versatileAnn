@@ -10,7 +10,7 @@ from dataPrep.normalizers_baseEncoders import _StdScaler, _LblEncoder, _IntLabel
 from dataPrep.normalizers_multiColNormalizer import MultiColStdNormalizer, MultiColLblEncoder
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
-    SingleColsLblEncoder
+    SingleColsLblEncoder, _BaseSingleColsNormalizer
 from tests.baseTest import BaseTestClass
 
 
@@ -114,7 +114,6 @@ class LblEncoderTest(stdNormalizerTests):
                                            'LblEncoder applied inverseTransform on lbl:col2\n' \
                                            'LblEncoder applied inverseTransform on lbl:col3_col4\n' \
                                            'LblEncoder applied inverseTransform on lbl:col3_col4\n'
-
 
     def transformSetUp(self):
         self.dfUntouched = pd.DataFrame({
@@ -241,6 +240,12 @@ class otherTests(BaseTestClass):
             lblEnc.fit(df['col1'])
         self.assertEqual(str(context.exception),
                          _LblEncoder.floatDetectedErrorMsg)
+
+    def testNotInstanceOf_BaseSingleColsNormalizer(self):
+        with self.assertRaises(RuntimeError) as context:
+            _BaseSingleColsNormalizer()
+        self.assertEqual(str(context.exception),
+                         'Instances of _BaseSingleColsNormalizer are not allowed')
 
 
 # ---- run test

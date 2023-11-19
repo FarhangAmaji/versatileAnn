@@ -12,3 +12,6 @@ versetaileAnn private notes.md
 .coverage
 htmlcov
 coverage_html
+.idea/codeStyles/codeStyleConfig.xml
+.idea/vcs.xml
+devDocs/tempCodeTry/tempCode.py

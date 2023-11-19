@@ -1,7 +1,7 @@
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
-from utils.vAnnGeneralUtils import NpDict
+from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances
 
 
 # ---- normalizers: MainGroupNormalizers
@@ -28,8 +28,10 @@ class Combo:
         return str(self.defDict)
 
 
-class MainGroupBaseNormalizer:
-    def __init__(self, df, mainGroupColNames):
+class _MainGroupBaseNormalizer:
+    def __init__(self, df, mainGroupColNames, internalCall=False):
+        if not internalCall:
+            _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
         self.mainGroupColNames = mainGroupColNames
         self.uniqueCombos = self._getUniqueCombinations(df)
 
@@ -85,11 +87,13 @@ class MainGroupBaseNormalizer:
         return tempDf
 
 
-# ---- MainGroupSingleColsNormalizer
-class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer,
-                                    _BaseNormalizer):
+# ---- _MainGroupSingleColsNormalizer
+class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
+                                     _BaseNormalizer):
     # goodToHave2 fitNTransformCol, inverseMiddleTransform, inverseTransform
+    # goodToHave3 should not be able to have an instance
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
+        _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
         super().__init__(df, mainGroupColNames)
         self.colNames = colNames
         self.container = {}
@@ -148,7 +152,7 @@ class MainGroupSingleColsNormalizer(MainGroupBaseNormalizer,
         return self.inverseTransformColBase(df, col, 'inverseTransformCol')
 
 
-class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
+class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames: list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
                          colNames)
@@ -158,8 +162,7 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
             for combo in self.uniqueCombos:
                 dfToFit = self.getRowsByCombination(df, combo)
                 inds = dfToFit.index
-                scaler = self.container[col][combo.shortRepr_()].scalers[
-                    col].scaler
+                scaler = self.container[col][combo.shortRepr_()].scalers[col].scaler
                 comboMean = scaler.mean_[0]
                 comboStd = scaler.scale_[0]
                 df.loc[inds, f'{col}Mean'] = comboMean
@@ -171,13 +174,13 @@ class MainGroupSingleColsStdNormalizer(MainGroupSingleColsNormalizer):
     # ... of SingleColsLblEncoder, values of mainGroups are changed
     # ... kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
     # mustHave2 for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
-    # mustHave2 (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its colNames or groupNames, undo and redo again
+    # mustHave2 (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
     # addTest1 add test for this
     def __repr__(self):
         return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
 
-class MainGroupSingleColsLblEncoder(MainGroupSingleColsNormalizer):
+class MainGroupSingleColsLblEncoder(_MainGroupSingleColsNormalizer):
     "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
 
     def __init__(self, df, mainGroupColNames, colNames: list):

@@ -1,15 +1,18 @@
 from dataPrep.normalizers_baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 
 
-class BaseMultiColNormalizer(_BaseNormalizer):
+class _BaseMultiColNormalizer(_BaseNormalizer):
     # goodToHave2 fitcol, fitNTransformCol,  inverseMiddleTransform, inverseTransform
+    # goodToHave3 should not be able to have an instance
     def __init__(self):
+        _allowOnlyCreationOf_ChildrenInstances(self, _BaseMultiColNormalizer)
         self.isFitted = False
 
     def assertColNames(self, df):
         for col in self.colNames:
-            self.assertColNameInDf(df, col)
+            self._assertColNameInDf(df, col)
 
     def areTheseIntCols(self, df):
         return df[self.colNames].apply(
@@ -25,7 +28,7 @@ class BaseMultiColNormalizer(_BaseNormalizer):
         return False
 
     def transformCol(self, df, col):
-        self.assertColNameInDf(df, col)
+        self._assertColNameInDf(df, col)
         if not self.isFittedFunc(printNotFitted=True):
             return df[col]
         res = df[col]
@@ -60,7 +63,7 @@ class BaseMultiColNormalizer(_BaseNormalizer):
         self.transform(df)
 
     # goodToHave2 could have add many fit, transform, assert and their other combinations for single col
-    # goodToHave2 could have added inverseMiddleTransform and inverseTransform which does inverse on self.colNames in df
+    # goodToHave2 could have added inverseMiddleTransform and inverseTransform which does inverse on self._colNames in df
 
     def inverseMiddleTransformCol(self, df, col):
         if not self.isFittedFunc(printNotFitted=True):
@@ -79,7 +82,7 @@ class BaseMultiColNormalizer(_BaseNormalizer):
         return res
 
 
-class MultiColStdNormalizer(BaseMultiColNormalizer):
+class MultiColStdNormalizer(_BaseMultiColNormalizer):
     def __init__(self, colNames):
         super().__init__()
         self.colNames = colNames
@@ -92,7 +95,7 @@ class MultiColStdNormalizer(BaseMultiColNormalizer):
         return f"MultiColStdNormalizer:{'_'.join(self.colNames)}"
 
 
-class MultiColLblEncoder(BaseMultiColNormalizer):
+class MultiColLblEncoder(_BaseMultiColNormalizer):
     def __init__(self, colNames):
         super().__init__()
         self.intLabelsString = None

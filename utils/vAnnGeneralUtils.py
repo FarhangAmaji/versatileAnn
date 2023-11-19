@@ -319,6 +319,10 @@ def varPasser(locals_, localArgNames=[], exclude=[]):
                 dict_[lan] = locals_[lan]
     return dict_
 
+def _allowOnlyCreationOf_ChildrenInstances(self, cls):
+    if type(self) == cls:
+        raise RuntimeError(f"Instances of {cls.__name__} are not allowed")
+
 def getCurrentFuncName():
     frame = inspect.currentframe()
     try:

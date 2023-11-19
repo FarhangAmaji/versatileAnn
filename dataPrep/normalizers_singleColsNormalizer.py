@@ -3,13 +3,15 @@ import pandas as pd
 from dataPrep.normalizers_baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BaseSingleColsNormalizer(_BaseNormalizer):
     # goodToHave2 transformCol, inverseMiddleTransformCol, inverseMiddleTransform, inverseTransform
     # goodToHave1 maybe comment needs a more detailed explanation
-    # goodToHave3 should not be able to have an instance
     def __init__(self):
+        _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColsNormalizer)
+
         super().__init__()
         self.encoders = {}
 
@@ -59,7 +61,6 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
     def fitNTransform(self, df: pd.DataFrame):
         for col in self.colNames:
             self.fitNTransformCol(df, col)
-
 
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
