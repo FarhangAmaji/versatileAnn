@@ -99,8 +99,8 @@ class _LblEncoder(_BaseEncoder):
             # cccAlgo
             #  'sklearn.LabelEncoder' fits both int, float alongside with strings.
             #  in order not to accidentally retransfrom already transformed data,
-            #  in this project if there are ints which are meant to be categories, there is a need to utilize _IntLabelsString before.
-            #  for float data as categories everything needs to be handled manually before and after operations.
+            #  in this project if there are `int`s which are meant to be `categories`, there is a need to utilize _IntLabelsString before.
+            #  for `float` data as categories everything needs to be handled `manually` before and after operations.
             if any(isinstance(label, float) for label in data):
                 raise ValueError(_LblEncoder.floatDetectedErrorMsg)
             elif any(isinstance(label, int) for label in data):
@@ -119,7 +119,7 @@ class _LblEncoder(_BaseEncoder):
     def _baseTransform(self, data: Union[pd.DataFrame, pd.Series], transformTypeName,
                        transformFunc, TransformedAlreadyCheckFunc, force=False):
         # cccUsage
-        #  Warning: the transform/inverseTransform/inverseMiddleTransform in general can be applied multiple times; so if the data may differ as wanted.
+        #  Warning: the transform/inverseTransform in general can be applied multiple times; so if the data may differ as wanted.
         #  in _LblEncoder has been tried to reduce this risk, but again there may be no guarantee
         data_ = data.values.reshape(-1)
         if self._isFitted:
@@ -178,6 +178,9 @@ class _IntLabelsString(_BaseEncoder):
         elif isinstance(data, pd.DataFrame):
             output = data.applymap(
                 lambda x: self.intToLabelMapping.get(x, x))
+        else:
+            output = None
+            assert False, 'argValidator has not worked'
         return output
 
     @argValidator
