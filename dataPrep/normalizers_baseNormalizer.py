@@ -49,14 +49,6 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def inverseMiddleTransformCol(self, df, col):
-        ...
-
-    # @abstractmethod
-    def inverseMiddleTransform(self):
-        ...
-
-    # @abstractmethod
     def inverseTransformCol(self, df, col):
         ...
 

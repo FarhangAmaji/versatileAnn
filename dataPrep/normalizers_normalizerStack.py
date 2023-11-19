@@ -44,38 +44,25 @@ class NormalizerStack:
         #  so the order of applying transform and invTransforming of them is ok
         # bugPotentialCheck2
         #  if duplicate cols is applied `self._normalizers[col]` is gonna be a list of different normalizers
-        if col not in self._normalizers.keys():
+        if col not in self.normalizers.keys():
             raise ValueError(f'{col} is not in normalizers cols')
-        func = getattr(self._normalizers[col], funcName)
+        func = getattr(self.normalizers[col], funcName)
         return func(df, col)
 
     @argValidator
     def transformCol(self, df: pd.DataFrame, col: str):
         return self._baseTransformCol('transformCol', df, col)
 
-    @argValidator
-    def inverseMiddleTransformCol(self, df: pd.DataFrame, col):
-        return self._baseTransformCol('inverseMiddleTransformCol', df, col)
 
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
         return self._baseTransformCol('inverseTransformCol', df, col)
 
-    @argValidator
-    def inverseMiddleTransform(self, df: pd.DataFrame):
-        # cccAlgo
-        #  u may normally use inverseTransform. but inverseMiddleTransform is also available.
-        #  note the inverseMiddleTransformCol is sth only for LblEncoder normalizers(in case of having ints as categories)
-        #  but if is applied on the std normalizers they return normal inverseTransform
-        # mustHave1 when inverseMiddleTransform is applied on the std normalizers it should give error; note to change ccc above
-        # bugPotentialCheck2
-        #  in the past this loop was applied reversed; but later I found no meaningful difference; have this mind later if a bug occurred.
-        #  same for inverseTransform
-        for col in list(self.normalizers.keys()):
-            df[col] = self.inverseMiddleTransformCol(df, col)
 
     @argValidator
     def inverseTransform(self, df: pd.DataFrame):
+        # bugPotentialCheck2
+        #  in the past this loop was applied reversed; but later I found no meaningful difference; have this mind later if a bug occurred.
         for col in list(self.normalizers.keys()):
             df[col] = self.inverseTransformCol(df, col)
 

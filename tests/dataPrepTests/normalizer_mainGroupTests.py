@@ -137,11 +137,6 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
         self.normalizerStack.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
 
-    def testNormalizerStackMiddleInverseTransform(self):
-        self.testNormalizerStackFitNTransform()
-        self.normalizerStack.inverseMiddleTransform(self.df)
-        self.equalDfs(self.df, self.dfUntouched, floatApprox=True)
-
     def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseTransform(self.df)
@@ -188,11 +183,6 @@ class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
                                                                   'col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
-
-    def testNormalizerStackInverseMiddleTransform(self):
-        self.testNormalizerStackFitNTransform()
-        self.normalizerStack.inverseMiddleTransform(self.df)
-        self.equalDfs(self.df, self.dfInverseRes)
 
 
 # ---- run test

@@ -60,23 +60,14 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
         for col in self.colNames:
             self.fitNTransformCol(df, col)
 
-    @argValidator
-    def inverseMiddleTransformCol(self, df: pd.DataFrame, col):
-        self._assertColNameInDf(df, col)
-        if not self._isColFitted(col, printNotFitted=True):
-            return df[col]
-        dataToBeInverseTransformed = df[col]
-        # mustHave1
-        #  this one should do only the 'inverseMiddleTransformCol'
-        #  and should raise error when the inverseMiddleTransformCol cannot be applied
-        return self.encoders[col].inverseTransform(dataToBeInverseTransformed)
 
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
         if not self._isColFitted(col, printNotFitted=True):
             return df
-        # mustHave1 may mess up
-        data_ = self.inverseMiddleTransformCol(df, col)
+        dataToBeInverseTransformed = df[col]
+        data_ = self.encoders[col].inverseTransform(dataToBeInverseTransformed)
         if hasattr(self, 'intLabelsStrings'):
             # addTest2 does this part have tests
             if col in self.intLabelsStrings.keys():
@@ -106,7 +97,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
     def __init__(self, colNames: list):
         super().__init__()
         self.intLabelsStrings = {}
-        self.encoders = {col: _LblEncoder(f'lbl{col}') for col in colNames}
+        self.encoders = {col: _LblEncoder(f'lbl:{col}') for col in colNames}
         self._init_isFitted()
 
     @argValidator
