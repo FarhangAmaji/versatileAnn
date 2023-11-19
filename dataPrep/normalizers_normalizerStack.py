@@ -1,22 +1,23 @@
-from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsNormalizer
-from dataPrep.normalizers_multiColNormalizer import BaseMultiColNormalizer
-from dataPrep.normalizers_singleColsNormalizer import BaseSingleColsNormalizer
+import pandas as pd
+
+from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
+from utils.typeCheck import argValidator
 
 
 class NormalizerStack:
+    # cccUsage this is a Class to utilize all normalizers uniformly
     # addTest2 doesnt have individual tests but all methods are used in other tests
-    def __init__(self, *stdNormalizers):
+    @argValidator
+    def __init__(self, *normalizers: _BaseNormalizer):
         self._normalizers = {}
-        for stdNormalizer in stdNormalizers:
-            self.addNormalizer(stdNormalizer)
+        for normalizer in normalizers:
+            self.addNormalizer(normalizer)
 
-    def addNormalizer(self, newNormalizer):
-        assert isinstance(newNormalizer, (
-            BaseSingleColsNormalizer, BaseMultiColNormalizer,
-            MainGroupSingleColsNormalizer))
+    @argValidator
+    def addNormalizer(self, newNormalizer: _BaseNormalizer):
         for col in newNormalizer.colNames:
             if col not in self._normalizers.keys():
-                # mustHave2 add ability to have a col which exists in 2 normalizers(either colNames or mainGroup)
+                # mustHave2 add ability to have a col which exists in 2 normalizers(either _colNames or mainGroup)
                 self._normalizers.update({col: newNormalizer})
             else:
                 print(f'{col} is already in normalizers')
@@ -32,32 +33,51 @@ class NormalizerStack:
          nrm not in uniqueNormalizers]
         return uniqueNormalizers
 
-    def fitNTransform(self, df):
+    @argValidator
+    def fitNTransform(self, df: pd.DataFrame):
         for nrm in self.uniqueNormalizers:
             nrm.fitNTransform(df)
 
-    def transformCol(self, df, col):
-        # mustHave2 later when ability to have a key in 2,... uniqueNormalizers is added; pay attention
-        # ... so the order of applying and occausionally temp invTransforming them is ok
-        # addTest1 needs tests
-        return self._normalizers[col].transformCol(df, col)
+    def _baseTransformCol(self, funcName, df: pd.DataFrame, col: str):
+        # mustHave2 # bugPotentialCheck2 addTest1 needs tests
+        #  later when ability to have a key in 2,... uniqueNormalizers is added; pay attention
+        #  so the order of applying transform and invTransforming of them is ok
+        # bugPotentialCheck2
+        #  if duplicate cols is applied `self._normalizers[col]` is gonna be a list of different normalizers
+        if col not in self._normalizers.keys():
+            raise ValueError(f'{col} is not in normalizers cols')
+        func = getattr(self._normalizers[col], funcName)
+        return func(df, col)
 
-    def inverseMiddleTransform(self, df):
-        for col in list(self.normalizers.keys())[::-1]:
+    @argValidator
+    def transformCol(self, df: pd.DataFrame, col: str):
+        return self._baseTransformCol('transformCol', df, col)
+
+    @argValidator
+    def inverseMiddleTransformCol(self, df: pd.DataFrame, col):
+        return self._baseTransformCol('inverseMiddleTransformCol', df, col)
+
+    @argValidator
+    def inverseTransformCol(self, df: pd.DataFrame, col):
+        return self._baseTransformCol('inverseTransformCol', df, col)
+
+    @argValidator
+    def inverseMiddleTransform(self, df: pd.DataFrame):
+        # cccAlgo
+        #  u may normally use inverseTransform. but inverseMiddleTransform is also available.
+        #  note the inverseMiddleTransformCol is sth only for LblEncoder normalizers(in case of having ints as categories)
+        #  but if is applied on the std normalizers they return normal inverseTransform
+        # mustHave1 when inverseMiddleTransform is applied on the std normalizers it should give error; note to change ccc above
+        # bugPotentialCheck2
+        #  in the past this loop was applied reversed; but later I found no meaningful difference; have this mind later if a bug occurred.
+        #  same for inverseTransform
+        for col in list(self.normalizers.keys()):
             df[col] = self.inverseMiddleTransformCol(df, col)
 
-    def inverseMiddleTransformCol(self, df, col):
-        # mustHave2 same as transformCol; for having a key in multiple uniqueNormalizers
-        assert col in self._normalizers.keys(), f'{col} is not in normalizers cols'
-        return self._normalizers[col].inverseMiddleTransformCol(df, col)
-
-    def inverseTransform(self, df):
-        for col in list(self.normalizers.keys())[::-1]:
+    @argValidator
+    def inverseTransform(self, df: pd.DataFrame):
+        for col in list(self.normalizers.keys()):
             df[col] = self.inverseTransformCol(df, col)
-
-    def inverseTransformCol(self, df, col):
-        # mustHave2 same as transformCol; for having a key in multiple uniqueNormalizers
-        return self._normalizers[col].inverseTransformCol(df, col)
 
     def __repr__(self):
         return str(self.uniqueNormalizers)

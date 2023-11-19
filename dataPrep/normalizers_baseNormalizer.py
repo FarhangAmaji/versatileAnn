@@ -1,8 +1,26 @@
 from abc import ABC, abstractmethod
 
+from utils.typeCheck import argValidator
+
 
 class _BaseNormalizer(ABC):
-    def assertColNameInDf(self, df, col):
+    # cccDevStruct
+    #  note the command pattern cant be applied here as the users do transforms on each col when they want.
+    #  so there is nothing which can be tracked centralized
+    def __init__(self):
+        self.__colNames = []
+
+    @property
+    def colNames(self):
+        return self.__colNames
+
+    @colNames.setter
+    @argValidator
+    def colNames(self, value):
+        self.__colNames = value
+
+    @staticmethod
+    def _assertColNameInDf(df, col):
         assert col in df.columns, f'{col} is not in df columns'
 
     # @abstractmethod
@@ -22,7 +40,8 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def fitNTransformCol(self):
+    def fitNTransformCol(self, df, col):
+        # goodToHave3 add NpDict also
         ...
 
     @abstractmethod
@@ -30,7 +49,7 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def inverseMiddleTransformCol(self):
+    def inverseMiddleTransformCol(self, df, col):
         ...
 
     # @abstractmethod
@@ -38,7 +57,7 @@ class _BaseNormalizer(ABC):
         ...
 
     # @abstractmethod
-    def inverseTransformCol(self):
+    def inverseTransformCol(self, df, col):
         ...
 
     # @abstractmethod

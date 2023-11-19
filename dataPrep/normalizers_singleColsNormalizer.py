@@ -1,21 +1,26 @@
+import pandas as pd
+
 from dataPrep.normalizers_baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
+from utils.typeCheck import argValidator
 
 
-class BaseSingleColsNormalizer(_BaseNormalizer):
-    # cccUsage
-    #  for instances of SingleColsLblEncoder if they have/need IntLabelsStrings, we wont use 3 transforms.
-    #  for i.e. in if we have 5->'colA0'->0, BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0
+class _BaseSingleColsNormalizer(_BaseNormalizer):
     # goodToHave2 transformCol, inverseMiddleTransformCol, inverseMiddleTransform, inverseTransform
     # goodToHave1 maybe comment needs a more detailed explanation
+    # goodToHave3 should not be able to have an instance
     def __init__(self):
+        super().__init__()
+        self.encoders = {}
+
+    def _init_isFitted(self):
         self.isFitted = {col: False for col in self.colNames}
 
     @property
     def colNames(self):
-        return self.scalers.keys()
+        return self.encoders.keys()
 
-    def isColFitted(self, col, printFitted=False, printNotFitted=False):
+    def _isColFitted(self, col, printFitted=False, printNotFitted=False):
         if self.isFitted[col]:
             if printFitted:
                 print(f'{self.__repr__()} {col} is already fitted')
@@ -24,97 +29,115 @@ class BaseSingleColsNormalizer(_BaseNormalizer):
             print(f'{self.__repr__()} {col} is not fitted yet; fit it first')
         return False
 
-    def fitCol(self, df, col):
-        self.assertColNameInDf(df, col)
-        if self.isColFitted(col, printFitted=True):
+    @argValidator
+    def fitCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
+        if self._isColFitted(col, printFitted=True):
             return
-        self.scalers[col].fit(df[col])
+        self.encoders[col].fit(df[col])
         self.isFitted[col] = True
 
-    def fit(self, df):
+    @argValidator
+    def fit(self, df: pd.DataFrame):
         for col in self.colNames:
             self.fitCol(df, col)
 
-    def fitNTransformCol(self, df, col):
-        self.assertColNameInDf(df, col)
-        if self.isColFitted(col, printFitted=True):
+    @argValidator
+    def transform(self, df: pd.DataFrame):
+        for col in self.colNames:
+            df[col] = self.transformCol(df, col)
+
+    @argValidator
+    def fitNTransformCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
+        if self._isColFitted(col, printFitted=True):
             return
         self.fitCol(df, col)
         df[col] = self.transformCol(df, col)
 
-    def transform(self, df):
-        for col in self.colNames:
-            df[col] = self.transformCol(df, col)
-
-    def fitNTransform(self, df):
+    @argValidator
+    def fitNTransform(self, df: pd.DataFrame):
         for col in self.colNames:
             self.fitNTransformCol(df, col)
 
-    def inverseMiddleTransformCol(self, df, col):
-        if not self.isColFitted(col, printNotFitted=True):
+    @argValidator
+    def inverseMiddleTransformCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
+        if not self._isColFitted(col, printNotFitted=True):
             return df[col]
         dataToBeInverseTransformed = df[col]
-        return self.scalers[col].inverseTransform(dataToBeInverseTransformed)
+        # mustHave1
+        #  this one should do only the 'inverseMiddleTransformCol'
+        #  and should raise error when the inverseMiddleTransformCol cannot be applied
+        return self.encoders[col].inverseTransform(dataToBeInverseTransformed)
 
-    def inverseTransformCol(self, dataToBeInverseTransformed, col):
-        if not self.isColFitted(col, printNotFitted=True):
-            return dataToBeInverseTransformed
-        dataToBeInverseTransformed = self.inverseMiddleTransformCol(
-            dataToBeInverseTransformed, col)
+    @argValidator
+    def inverseTransformCol(self, df: pd.DataFrame, col):
+        if not self._isColFitted(col, printNotFitted=True):
+            return df
+        # mustHave1 may mess up
+        data_ = self.inverseMiddleTransformCol(df, col)
         if hasattr(self, 'intLabelsStrings'):
             # addTest2 does this part have tests
             if col in self.intLabelsStrings.keys():
-                dataToBeInverseTransformed = self.intLabelsStrings[
-                    col].inverseTransform(dataToBeInverseTransformed)
-        return dataToBeInverseTransformed
+                data_ = self.intLabelsStrings[col].inverseTransform(data_)
+        return data_
 
 
-class SingleColsStdNormalizer(BaseSingleColsNormalizer):
+class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
     def __init__(self, colNames: list):
-        self.scalers = {col: _StdScaler(f'std{col}') for col in colNames}
         super().__init__()
+        self.encoders = {col: _StdScaler(f'std{col}') for col in colNames}
+        self._init_isFitted()
 
-    def transformCol(self, df, col):
-        self.assertColNameInDf(df, col)
-        if not self.isColFitted(col, printNotFitted=True):
+    @argValidator
+    def transformCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
+        if not self._isColFitted(col, printNotFitted=True):
             return df[col]
-        return self.scalers[col].transform(df[col])
+        return self.encoders[col].transform(df[col])
 
     def __repr__(self):
         return f"SingleColsStdNormalizer:{'_'.join(self.colNames)}"
 
 
-class SingleColsLblEncoder(BaseSingleColsNormalizer):
+class SingleColsLblEncoder(_BaseSingleColsNormalizer):
+    @argValidator
     def __init__(self, colNames: list):
+        super().__init__()
         self.intLabelsStrings = {}
         self.encoders = {col: _LblEncoder(f'lbl{col}') for col in colNames}
-        super().__init__()
+        self._init_isFitted()
 
-    @property
-    def scalers(self):
-        return self.encoders
-
-    def fitCol(self, df, col):
+    @argValidator
+    def fitCol(self, df: pd.DataFrame, col):
+        # cccUsage
+        #  for instances of SingleColsLblEncoder if they have/need IntLabelsStrings, we wont use 3 transforms.
+        #  for i.e. in if we have 5->'colA0'->0, _BaseSingleColsNormalizer transforms only the 'colA0'->0 and not 5->'colA0' or 5->0
+        # cccDevAlgo
+        #  note the code tries to fit _LblEncoder but in the case that some int is supposed to be a categorical
+        #  an error would raised by _LblEncoder after that some _IntLabelsString would be wrapped and applied before fitting;
+        #  so later in the inverseTransform it would need to first do middle inverse
         try:
             super().fitCol(df, col)
         except ValueError as e:
             if str(e) == _LblEncoder.intDetectedErrorMsg:
                 self.intLabelsStrings[col] = _IntLabelsString(col)
                 self.intLabelsStrings[col].fit(df[col])
-                intLabelsStringsTransformed = self.intLabelsStrings[
-                    col].transform(df[col])
-                self.scalers[col].fit(intLabelsStringsTransformed)
+                intLabelsStringsTransformed = self.intLabelsStrings[col].transform(df[col])
+                self.encoders[col].fit(intLabelsStringsTransformed)
                 self.isFitted[col] = True
             else:
                 raise
 
-    def transformCol(self, df, col):
-        self.assertColNameInDf(df, col)
-        if not self.isColFitted(col, printNotFitted=True):
+    @argValidator
+    def transformCol(self, df: pd.DataFrame, col):
+        self._assertColNameInDf(df, col)
+        if not self._isColFitted(col, printNotFitted=True):
             return df[col]
         if col in self.intLabelsStrings.keys():
             df[col] = self.intLabelsStrings[col].transform(df[col])
-        return self.scalers[col].transform(df[col])
+        return self.encoders[col].transform(df[col])
 
     def getClasses(self):
         return {col: enc.encoder.classes_ for col, enc in self.encoders.items()}
