@@ -10,7 +10,7 @@ class _BaseNormalizer(ABC):
     #  note the command pattern cant be applied here as the users do transforms on each col when they want.
     #  so there is nothing which can be tracked centralized
     def __init__(self):
-        self.__colNames = []
+        pass
 
     @property
     def colNames(self):
@@ -23,7 +23,28 @@ class _BaseNormalizer(ABC):
 
     @staticmethod
     def _assertColNameInDf(df, col):
-        assert col in df.columns, f'{col} is not in df columns'
+        if col not in df.columns:
+            raise KeyError(f'{col} is not in df columns')
+
+    def _assertColNamesInDf(self, df):
+        for col in self.colNames:
+            self._assertColNameInDf(df, col)
+
+    def _isFittedPlusPrint_base(self, col=None, printFitted=False, printNotFitted=False):
+        colPrint = ''
+        if col:
+            isFitted = self.isFitted[col]
+            colPrint = f' {col}'
+        else:
+            isFitted = self.isFitted
+
+        if isFitted:
+            if printFitted:
+                print(f'{self.__repr__()}{colPrint} is already fitted')
+            return True
+        if printNotFitted:
+            print(f'{self.__repr__()}{colPrint} is not fitted yet; fit it first')
+        return False
 
     # @abstractmethod
     def fitCol(self):

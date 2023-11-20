@@ -21,19 +21,14 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
     def colNames(self):
         return self.encoders.keys()
 
-    def _isColFitted(self, col, printFitted=False, printNotFitted=False):
-        if self.isFitted[col]:
-            if printFitted:
-                print(f'{self.__repr__()} {col} is already fitted')
-            return True
-        if printNotFitted:
-            print(f'{self.__repr__()} {col} is not fitted yet; fit it first')
-        return False
+    def _isFittedPlusPrint_col(self, col, printFitted=False, printNotFitted=False):
+        return self._isFittedPlusPrint_base(col, printFitted=printFitted,
+                                            printNotFitted=printNotFitted)
 
     @argValidator
     def fitCol(self, df: pd.DataFrame, col):
         self._assertColNameInDf(df, col)
-        if self._isColFitted(col, printFitted=True):
+        if self._isFittedPlusPrint_col(col, printFitted=True):
             return
         self.encoders[col].fit(df[col])
         self.isFitted[col] = True
@@ -41,7 +36,7 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
     @argValidator
     def fitNTransformCol(self, df: pd.DataFrame, col):
         self._assertColNameInDf(df, col)
-        if self._isColFitted(col, printFitted=True):
+        if self._isFittedPlusPrint_col(col, printFitted=True):
             return
         self.fitCol(df, col)
         df[col] = self.transformCol(df, col)
@@ -49,10 +44,10 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
         self._assertColNameInDf(df, col)
-        if not self._isColFitted(col, printNotFitted=True):
+        if not self._isFittedPlusPrint_col(col, printNotFitted=True):
             return df
-        dataToBeInverseTransformed = df[col]
-        data_ = self.encoders[col].inverseTransform(dataToBeInverseTransformed)
+        dfColData = df[col]
+        data_ = self.encoders[col].inverseTransform(dfColData)
         return data_
 
     @argValidator
@@ -85,7 +80,7 @@ class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
     @argValidator
     def transformCol(self, df: pd.DataFrame, col):
         self._assertColNameInDf(df, col)
-        if not self._isColFitted(col, printNotFitted=True):
+        if not self._isFittedPlusPrint_col(col, printNotFitted=True):
             return df[col]
         return self.encoders[col].transform(df[col])
 
@@ -121,14 +116,14 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
     @argValidator
     def transformCol(self, df: pd.DataFrame, col):
         self._assertColNameInDf(df, col)
-        if not self._isColFitted(col, printNotFitted=True):
+        if not self._isFittedPlusPrint_col(col, printNotFitted=True):
             return df[col]
         # cccDevAlgo
         #  intLabelsStrings transforms apply before the encoder transform
         if col in self.intLabelsStrings.keys():
             data_ = self.intLabelsStrings[col].transform(df[col])
         else:
-            data_=df[col]
+            data_ = df[col]
         return self.encoders[col].transform(data_)
 
     @argValidator
