@@ -1,3 +1,5 @@
+import pandas as pd
+
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
@@ -9,10 +11,10 @@ from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstance
 class _Combo:
     def __init__(self, defDict, mainGroupColNames):
         for key in defDict:
-            assert key in mainGroupColNames,f"'{key}' is not a valid column name in mainGroupColNames."
+            assert key in mainGroupColNames, f"'{key}' is not a valid column name in mainGroupColNames."
 
         for col in mainGroupColNames:
-            assert col in defDict,f"'{col}' is missing in combo definition."
+            assert col in defDict, f"'{col}' is missing in combo definition."
 
         self.defDict = defDict
 
@@ -44,14 +46,14 @@ class _MainGroupBaseNormalizer:
         return [combo.defDict for combo in self.uniqueCombos]
 
     @argValidator
-    def findMatchingCombo_dictRepr(self, combo:dict):
-        return self.uniqueCombos.get(str(combo),None)
+    def findMatchingCombo_dictRepr(self, combo: dict):
+        return self.uniqueCombos.get(str(combo), None)
 
     def isComboInUniqueCombos(self, combo):
         if isinstance(combo, _Combo):
             if combo.__repr__() in self.uniqueCombos.keys():
                 return combo
-        isInputComboStr_NRepresentsADict=isinstance(combo, str) and type(eval(combo)) == dict
+        isInputComboStr_NRepresentsADict = isinstance(combo, str) and type(eval(combo)) == dict
         if isinstance(combo, str) and not isInputComboStr_NRepresentsADict:
             if self.findMatchingCombo_shortRepr(combo):
                 return self.findMatchingCombo_shortRepr(combo)
@@ -65,7 +67,7 @@ class _MainGroupBaseNormalizer:
         for groupName, groupDf in df.groupby(self.mainGroupColNames):
             comboDict = dict(zip(self.mainGroupColNames, groupName))
             combo = _Combo(comboDict, self.mainGroupColNames)
-            comboObjs.update({f'{combo.__repr__()}':combo})
+            comboObjs.update({f'{combo.__repr__()}': combo})
 
         return comboObjs
 
@@ -83,8 +85,6 @@ class _MainGroupBaseNormalizer:
 # ---- _MainGroupSingleColsNormalizer
 class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
                                      _BaseNormalizer):
-    # goodToHave2 fitNTransformCol, inverseMiddleTransform, inverseTransform
-    # goodToHave3 should not be able to have an instance
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
         _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
         super().__init__(df, mainGroupColNames)
@@ -95,62 +95,67 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
             for _, combo in self.uniqueCombos.items():
                 self.container[col][combo.shortRepr()] = classType([col])
 
-    def fitCol(self, df, col):
+    @argValidator
+    def fitCol(self, df: pd.DataFrame, col):
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             dfToFit = dfToFit.reset_index(drop=True)
-            # goodToHave3 does it need reset_index
             self.container[col][combo.shortRepr()].fit(dfToFit)
 
-    def fit(self, df):
+    @argValidator
+    def fit(self, df: pd.DataFrame):
         for col in self.colNames:
             self.fitCol(df, col)
 
-    def transformCol(self, df, col):
+    @argValidator
+    def transformCol(self, df: pd.DataFrame, col):
         dfCopy = df.copy()
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             inds = dfToFit.index
             dfToFit = dfToFit.reset_index(drop=True)
-            # goodToHave3 does it need reset_index
             self.container[col][combo.shortRepr()].transform(dfToFit)
             dfToFit.index = inds
             dfCopy.loc[inds, col] = dfToFit
         return dfCopy[col]
 
-    def transform(self, df):
+    @argValidator
+    def transform(self, df: pd.DataFrame):
         for col in self.colNames:
             df[col] = self.transformCol(df, col)
 
-    def fitNTransform(self, df):
+    @argValidator
+    def fitNTransformCol(self, df: pd.DataFrame):
+        self.fitCol(df)
+        self.transformCol(df)
+
+    @ argValidator
+    def fitNTransform(self, df: pd.DataFrame):
         self.fit(df)
         self.transform(df)
 
-    def inverseTransformColBase(self, df, col, funcName):
+    @argValidator
+    def inverseTransformCol(self, df: pd.DataFrame, col):
         dfCopy = df.copy()
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             inds = dfToFit.index
             dfToFit = dfToFit.reset_index(drop=True)
-            func = getattr(self.container[col][combo.shortRepr()], funcName)
-            invRes = func(dfToFit, col)
-            dfCopy.loc[inds, col] = invRes
+            dfCopy.loc[inds, col] = self.container[col][combo.shortRepr()].inverseTransformCol(
+                dfToFit, col)
         return dfCopy[col]
 
-    def inverseMiddleTransformCol(self, df, col):
-        return self.inverseTransformColBase(df, col,
-                                            'inverseMiddleTransformCol')
-
-    def inverseTransformCol(self, df, col):
-        return self.inverseTransformColBase(df, col, 'inverseTransformCol')
-
-
+    @argValidator
+    def inverseTransform(self, df: pd.DataFrame):
+        for col in self.colNames:
+            df[col] = self.inverseTransformCol(df, col)
 class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames: list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
                          colNames)
 
-    def getMeanNStd(self, df):
+    @argValidator
+    def getMeanNStd(self, df: pd.DataFrame):
         for col in self.colNames:
             for _, combo in self.uniqueCombos.items():
                 dfToFit = self.getRowsByCombination(df, combo)
