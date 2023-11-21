@@ -1,4 +1,3 @@
-import warnings
 from typing import Union
 
 import numpy as np
@@ -11,8 +10,9 @@ from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, \
     rightPadIfShorter_tensor
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange, \
+from utils.vAnnGeneralUtils import NpDict, DotDict, tensor_floatDtypeChangeIfNeeded, \
     varPasser
+from utils.warnings import Warn
 
 
 # ---- _TsRowFetcher
@@ -49,7 +49,7 @@ class _TsRowFetcher:
                    canBeOutOfStartIndex=False, canHaveShorterLength=False,
                    rightPadIfShorter=False):
 
-        # note it work with series
+        # note this also works with series
         # qqq does this idx match with getItem of dataset
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
@@ -144,7 +144,7 @@ class _TsRowFetcher:
         if isinstance(input_, pd.DataFrame):
             input_ = input_.values
         tensor = torch.tensor(input_)
-        tensor = Tensor_floatDtypeChange(tensor)
+        tensor = tensor_floatDtypeChangeIfNeeded(tensor)
         return tensor
 
     def getBackForeCastData_general(self, data, idx, mode='backcast',
@@ -152,6 +152,12 @@ class _TsRowFetcher:
                                     outputTensor=True, canBeOutOfStartIndex=False,
                                     canHaveShorterLength=False,
                                     rightPadIfShorter=False):
+        # cccDevAlgo
+        #  obviously in timeseries data we want to get next rows of data.
+        #  for i.e. with data=[1, 2, 3, 4, 5, 6] and with seqLen=4, only 1, 2, 3 can provide data with seqLen with want.
+        #  otherwise data will be shorter than seqLen, so having shorter data is banned by default unless you allow
+        #  to have shorter data, or rightPadding data.
+        #  canBeOutOfStartIndex refers to indexes of VAnnTsDataset
 
         # goodToHave2 may add query taking ability to df part; plus to modes,
         # ... like the sequence can have upto 10 len or till have reached 'zValueCol <20';
@@ -159,9 +165,11 @@ class _TsRowFetcher:
         # goodToHave2 if query is added, these modes have to be more flexible
 
         if mode not in self.modes.keys():
-            raise ValueError(f"{mode} should be either 'backcast', 'forecast','fullcast' or 'singlePoint'")
-        if not(colsOrIndexes == '___all___' or isinstance(colsOrIndexes, list)):
-            raise ValueError("u should either pass '___all___' for all feature cols or a list of their columns or indexes")
+            raise ValueError(
+                f"{mode} should be either 'backcast', 'forecast','fullcast' or 'singlePoint'")
+        if not (colsOrIndexes == '___all___' or isinstance(colsOrIndexes, list)):
+            raise ValueError(
+                "u should either pass '___all___' for all feature cols or a list of their columns or indexes")
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
         # cccDevAlgo idx+shiftForward also should be in data indexes
@@ -174,7 +182,9 @@ class _TsRowFetcher:
 
     @argValidator
     def _getBackForeCastData_general_byDataType_NCastMode(self,
-                  data: Union[pd.DataFrame, np.ndarray, NpDict, torch.Tensor], idx,
+                                                          data: Union[
+                                                              pd.DataFrame, np.ndarray, NpDict, torch.Tensor],
+                                                          idx,
                                                           mode, colsOrIndexes,
                                                           shiftForward,
                                                           canHaveShorterLength,
@@ -254,7 +264,8 @@ class _TsRowFetcher:
 
     @argValidator
     def _rightPadShorterIfAllowed(self, shorterLenAllowance,
-                                  rightPadAllowance, resData: Union[pd.DataFrame, pd.Series, np.ndarray, torch.Tensor],
+                                  rightPadAllowance,
+                                  resData: Union[pd.DataFrame, pd.Series, np.ndarray, torch.Tensor],
                                   slice_, pad=0, isItDfLen=False):
 
         dataLen = len(resData)
@@ -287,19 +298,20 @@ class _TsRowFetcher:
 
 
 # ---- VAnnTsDataset
-class VAnnTsDataset(Dataset, TsRowFetcher):
+class VAnnTsDataset(Dataset, _TsRowFetcher):
     noIndexesAssertionMsg = "u have to pass indexes unless both backcastLen and forecastLen are 0," + \
-                            " or u have passed a pd df or NpDict with __startPoint__ column"
+                            " or u have passed a pd.df or NpDict with __startPoint__ column"
 
     # mustHave2 model should check device, backcastLen, forecastLen with this
-    # goodToHave2 may take trainIndexes, valIndexes, testIndexes;
-    # ... this way we would have only 1 dataset and less memory occupied
+    # goodToHave2
+    #  may take trainIndexes, valIndexes, testIndexes;
+    #  this way we would have only 1 dataset and less memory occupied
 
     # cccDevAlgo
-    # VAnnTsDataset provides datachecking based on allowance. its also works with grouped(Nseries) data,
-    # to prevent data scrambling between groups data.
-    #
-    # types of data allowed:
+    #  VAnnTsDataset provides datachecking with some flexibilities.
+    #  its also works with grouped(Nseries) data, to prevent data scrambling between groups data.
+    #  ____
+    #  types of data allowed:
     #     the data passed is either:
     #         1. NpDict(type of object, wrapped arround pd.dfs to act like df and a dictionary of np.arrays)
     #         2. pd.df
@@ -309,33 +321,30 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
     #             a. indexes is passed
     #             b. both of backcastLen and forecastLen are 0
     #     note 1, 2.a and 2.b are called "mainTypes"
-    #
-    # allowance:
-    #     in timeseries data we want to get next rows of data.
-    #     so (except in rare cases of allowing incomplete sequence lengths, for zeropad if its gonna be incomplete),
-    #     we need to dont allow some point which can't provide the next complete row.
-    #     note allowance comes from the fact the backcast and forecast lens should not be allowed as tsStartingPoints.
-    #     for i.e. if the seq len is 4, with data=[1, 2, 3, 4, 5, 6], only 1,2,3 are allowed.
-    #
-    #     note the allowance is not determined here, and its should be provides either with `indexes` passed
-    #     to dataset or with having `__startPoint__` in cols of df or NpDict.
+    #   ____
+    #   in the process of fetching timeSeries sequences '.indexes' is used to determine
+    #   whether a point should be involved as starting point of the sequence or not.
+    #   this should be provided either with `indexes` passed to dataset
+    #   or with having `__startPoint__` in cols of df or NpDict.
 
-    def __init__(self, data, backcastLen, forecastLen,
-                 mainGroups=[], indexes=None,
+    def __init__(self, data, mainGroups=[], indexes=None,
+                 *, backcastLen, forecastLen,
                  useNpDictForDfs=True, **kwargs):
         Dataset.__init__(self)
-        TsRowFetcher.__init__(self, backcastLen=backcastLen,
-                              forecastLen=forecastLen)
+        _TsRowFetcher.__init__(self, backcastLen=backcastLen,
+                               forecastLen=forecastLen)
 
-        self._setIndexes(data, indexes, mainGroups, useNpDictForDfs,
+        self._setIndexes(data, indexes, useNpDictForDfs,
                          backcastLen, forecastLen)
 
         self.mainGroups = mainGroups
+        # cccDevAlgo these Idxs are explained at _makeMainGroupsIndexes
         self.mainGroupsGeneralIdxs = {}
         self.mainGroupsRelIdxs = {}
         self._assignData_NMainGroupsIdxs(data, mainGroups, useNpDictForDfs)
-        # goodToHave2 if splitNSeries is used, could add __hasMainGroups__ to the data,
-        # ... gets detected here. therefore prevents forgetting to assign mainGroups manually
+        # goodToHave3
+        #  if splitNSeries is used, could add __hasMainGroups__ to the data,
+        #  gets detected here. therefore prevents forgetting to assign mainGroups manually
 
         self._shapeWarning()
         self._noNanOrNoneDataAssertion()
@@ -344,7 +353,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def getBackForeCastData(self, idx, mode='backcast',
                             colsOrIndexes='___all___',
-                            shiftForward=0, makeTensor=True,
+                            shiftForward=0, outputTensor=True,
                             canHaveShorterLength=False,
                             rightPadIfShorter=False):
 
@@ -352,13 +361,11 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(locals(),
-                           exclude=['dataToLook', 'canBeOutOfStartIndex'])
+        kwargs = varPasser(locals(), exclude=['dataToLook', 'canBeOutOfStartIndex'])
 
         return self.getBackForeCastData_general(dataToLook,
-                                                canBeOutOfStartIndex=False,
-                                                # note _IdxNdataToLook_WhileFetching works only idx is in indexes
-                                                **kwargs)
+                                                canBeOutOfStartIndex=False, **kwargs)
+        # note _IdxNdataToLook_WhileFetching works only idx is in indexes
 
     def __len__(self):
         return len(self.indexes)
@@ -387,16 +394,18 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         elif isinstance(self.data, (np.ndarray, torch.Tensor)):
             return self.data[idx]
         else:
-            assert False, 'only datasets with pd.DataFrame, NpDict, np.array and torch.Tensor data can use __getitem__'
+            raise ValueError(
+                'only datasets with pd.DataFrame, NpDict, np.array and torch.Tensor data can use __getitem__')
 
     # ---- Private methods
     def _IdxNdataToLook_WhileFetching(self, idx):
         self._assertIdxInIndexes(idx)
+        # goodToHave3 its was better a cccDevAlgo was written, to know which if parts handles what situations
         if self.mainGroups:
-            groupName = self._findIdxInmainGroupsRelIdxs(idx)
+            groupName = self._findIdxIn_mainGroupsRelIdxs(idx)
             dataToLook = self.data[groupName]
 
-            if isinstance(self.data[groupName], NpDict):
+            if isinstance(dataToLook, NpDict):
                 relIdx = self.mainGroupsGeneralIdxs[groupName].index(idx)
                 relIdx = self.mainGroupsRelIdxs[groupName][relIdx]
                 idx = relIdx
@@ -405,32 +414,33 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         return dataToLook, idx
 
     # ---- Private methods for __init__
-    def _setIndexes(self, data, indexes, mainGroups, useNpDictForDfs,
+    def _setIndexes(self, data, indexes, useNpDictForDfs,
                     backcastLen, forecastLen):
 
         # cccDevAlgo
         #   - indexes serves 3 purposes:
         #   1. showing only allowed indexes to sampler and therefore dataloader
-        #   2. indicator to fetch rows from data: so we either need df.index df.loc
+        #   2. indicator to fetch rows from data: so we either need df.index or df.loc
         #   or when the data is NpDict and was originally pd.DataFrame which was converted to NpDict
-        #   3. abilitiy to disallow getting data through getBackForeCastData and __getitem__
+        #   3. ability to disallow getting data through getBackForeCastData and __getitem__
 
         # cccDevAlgo note the NpDict is used by default to speed up data fetching process, because the df.loc is so much slow.
 
         if indexes is None:
             noBackNForeLenCond = backcastLen == 0 and forecastLen == 0
-            dfDataWith_tsStartPointColNameInCols_cond = isinstance(data,
-                                                                   pd.DataFrame) and \
+            dfDataWith_tsStartPointColNameInCols_cond = isinstance(data, pd.DataFrame) and \
                                                         tsStartPointColName in data.columns
-            npDictData_tsStartPointColNameInCols_cond = isinstance(data,
-                                                                   NpDict) and \
+            npDictData_tsStartPointColNameInCols_cond = isinstance(data, NpDict) and \
                                                         tsStartPointColName in data.cols()
             dfWithSP = dfDataWith_tsStartPointColNameInCols_cond
             ndWithSP = npDictData_tsStartPointColNameInCols_cond
 
-            assert noBackNForeLenCond or dfWithSP or ndWithSP, VAnnTsDataset.noIndexesAssertionMsg
+            if not (noBackNForeLenCond or dfWithSP or ndWithSP):
+                raise ValueError(VAnnTsDataset.noIndexesAssertionMsg)
 
             if noBackNForeLenCond and not (dfWithSP or ndWithSP):
+                # cccDevAlgo
+                #  this is no npArray or tensors which have not provided indexes but dont want TS(backLen=foreLen=0)
                 indexes = [i for i in range(len(data))]
 
             elif dfWithSP and not useNpDictForDfs:
@@ -453,8 +463,8 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
     def _assignMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
         assert self.mainGroups, 'no mainGroups to assign idxs'
-        assert isinstance(data, pd.DataFrame) or isinstance(data, NpDict), \
-            'only pd.DataFrame or NpDict can have mainGroups defined'
+        if not (isinstance(data, pd.DataFrame) or isinstance(data, NpDict)):
+            raise ValueError('only pd.DataFrame or NpDict can have mainGroups defined')
 
         self.data = {}
         if isinstance(data, NpDict):
@@ -494,7 +504,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         #         self.indexes gonna be:[0,2,3,5]
         #         mainGroupsGeneralIdxs for Group 'B' gonna be:[3,5]
         #         mainGroupsRelIdxs for Group 'B' gonna be:[0,2]
-        #         to see how the data at idx==5 is gonna be reached, take look at _IdxNdataToLook_WhileFetching
+        #         to see how the data at idx==5 is gonna be fetched, take look at _IdxNdataToLook_WhileFetching
         #     for "df with no useNpDictForDfs":
         #         self.indexes gonna be:[130, 132, 133, 135]
         #         mainGroupsGeneralIdxs for Group 'B' gonna be:[133, 135]
@@ -502,7 +512,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
         df = data.df if npDictData else data
         for groupName, groupDf in df.groupby(mainGroups):
-            if convGroupData_ToNpDict:  # this accounts for npDict|df with useNpDictForDfs
+            if convGroupData_ToNpDict:  # this accounts for npDict and (df with useNpDictForDfs)
                 # cccUsage note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df
                 self.data[groupName] = NpDict(groupDf)
                 generalIdxs = [list(df.index).index(idx) \
@@ -524,7 +534,7 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
 
                 self.mainGroupsRelIdxs[groupName] = []
 
-    def _findIdxInmainGroupsRelIdxs(self, idx):
+    def _findIdxIn_mainGroupsRelIdxs(self, idx):
         assert self.mainGroups, 'dataset doesnt have mainGroups'
         for groupName in self.mainGroupsGeneralIdxs.keys():
             if idx in self.mainGroupsGeneralIdxs[groupName]:
@@ -538,6 +548,6 @@ class VAnnTsDataset(Dataset, TsRowFetcher):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape
             if shape[0] < shape[1]:
-                warnings.warn(
+                Warn.warn(
                     "The data shape suggests that different features may be along shape[1]. "
                     "Consider transposing the data to have features along shape[0].")

@@ -59,28 +59,28 @@ class VAnnTsDataset_setIndexesTests(BaseTestClass):
     def testDf_useNpDictForDfs_NoIndexesPassed_NoStartPoint_No0lens(self):
         self.setUp()
         npDict = self.df.drop('__startPoint__', axis=1)
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npDict, backcastLen=1, forecastLen=1, useNpDictForDfs=True)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
     def testDf_noUseNpDictForDfs_NoIndexesPassed_NoStartPoint_No0lens(self):
         self.setUp()
         self.df = self.df.drop('__startPoint__', axis=1)
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             VAnnTsDataset(self.df, backcastLen=1, forecastLen=1, useNpDictForDfs=False)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
     def testNpDict_NoIndexesPassed_NoStartPoint_No0lens(self):
         self.setUp()
         npDict = NpDict(self.df.drop('__startPoint__', axis=1))
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npDict, backcastLen=1, forecastLen=1)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
     def testNpArray_NoIndexesPassed_No0lens(self):
         self.setUp()
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             VAnnTsDataset(npArray, backcastLen=1, forecastLen=1)
         self.assertEqual(str(context.exception), VAnnTsDataset.noIndexesAssertionMsg)
 
@@ -345,7 +345,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
 
     def testDataTypeError(self):
         dataset = VAnnTsDataset({'a':10,'b':30}, backcastLen=0, forecastLen=0)
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[0]
         self.assertEqual(str(context.exception), 'only datasets with pd.DataFrame, NpDict, np.array and torch.Tensor data can use __getitem__')
 
