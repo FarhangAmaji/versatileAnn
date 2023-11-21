@@ -1,4 +1,5 @@
 import warnings
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -9,12 +10,13 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, \
     rightPadIfShorter_tensor
 from utils.globalVars import tsStartPointColName
+from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, DotDict, Tensor_floatDtypeChange, \
     varPasser
 
 
-# ---- TsRowFetcher
-class TsRowFetcher:
+# ---- _TsRowFetcher
+class _TsRowFetcher:
     errMsgs = {}
     errMsgs['shorterLen'] = "this output is shorter than requested"
     for it in ['Df', 'Tensor', 'NpDict', 'NpArray']:
@@ -23,7 +25,7 @@ class TsRowFetcher:
 
     errMsgs = DotDict(errMsgs)
 
-    def __init__(self, backcastLen, forecastLen):
+    def __init__(self, *, backcastLen, forecastLen):
         self.modes = DotDict({key: key for key in
                               ['backcast', 'forecast', 'fullcast',
                                'singlePoint']})
@@ -34,24 +36,24 @@ class TsRowFetcher:
         # make some names shorter
         self._assertIdx_NShift = self._assertIdx_NShiftInIndexes_dependingOnAllowance
 
-    def singleFeatureShapeCorrection(self, data):
+    @staticmethod
+    def singleFeatureShapeCorrection(data):
+        # goodToHave3 find other way to shape single feature, therefore it wont have last dim equal to 1
         if len(data.shape) >= 2 and data.shape[-1] == 1:
             return data.squeeze(-1)
         return data
 
-    def getDfRows(self, df, idx, lowerBoundGap,
-                  upperBoundGap, colsOrIndexes, shiftForward=0,
-                  canBeOutOfStartIndex=False, canHaveShorterLength=False,
-                  rightPadIfShorter=False):
+    @argValidator
+    def getRows_df(self, df: Union[pd.DataFrame, pd.Series], idx, *, lowerBoundGap,
+                   upperBoundGap, colsOrIndexes, shiftForward=0,
+                   canBeOutOfStartIndex=False, canHaveShorterLength=False,
+                   rightPadIfShorter=False):
 
-        # addTest1 does it work with series
+        # note it work with series
         # qqq does this idx match with getItem of dataset
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
-
-        assert idx + shiftForward in df.index, \
-            TsRowFetcher.errMsgs['non-negStartingPointDf']
-        # goodToHave3 this is not meaningful
+        assert idx + shiftForward in df.index, _TsRowFetcher.errMsgs['non-negStartingPointDf']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap - 1 + shiftForward)
@@ -66,15 +68,15 @@ class TsRowFetcher:
                                              res, slice_, isItDfLen=True)
         return res
 
-    def getTensorRows(self, tensor, idx,
-                      lowerBoundGap, upperBoundGap,
-                      colsOrIndexes, shiftForward=0,
-                      canBeOutOfStartIndex=False, canHaveShorterLength=False,
-                      rightPadIfShorter=False):
+    @argValidator
+    def getRows_tensor(self, tensor: torch.Tensor, idx,
+                       *, lowerBoundGap, upperBoundGap,
+                       colsOrIndexes, shiftForward=0,
+                       canBeOutOfStartIndex=False, canHaveShorterLength=False,
+                       rightPadIfShorter=False):
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
-        assert idx + shiftForward >= 0, \
-            TsRowFetcher.errMsgs['non-negStartingPointTensor']
+        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointTensor']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap + shiftForward)
@@ -88,17 +90,15 @@ class TsRowFetcher:
                                              rightPadIfShorter, res, slice_)
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpDictRows(self, npDict, idx,
-                      lowerBoundGap, upperBoundGap,
-                      colsOrIndexes, shiftForward=0,
-                      canBeOutOfStartIndex=False, canHaveShorterLength=False,
-                      rightPadIfShorter=False):
+    @argValidator
+    def getRows_npDict(self, npDict: NpDict, idx,
+                       *, lowerBoundGap, upperBoundGap,
+                       colsOrIndexes, shiftForward=0,
+                       canBeOutOfStartIndex=False, canHaveShorterLength=False,
+                       rightPadIfShorter=False):
 
-        # goodToHave2 may get reduced with using getNpArrayRows
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
-
-        assert idx + shiftForward >= 0, \
-            TsRowFetcher.errMsgs['non-negStartingPointNpDict']
+        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpDict']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap + shiftForward)
@@ -112,20 +112,20 @@ class TsRowFetcher:
                                              rightPadIfShorter, res, slice_)
         return self.singleFeatureShapeCorrection(res)
 
-    def getNpArrayRows(self, npArray, idx,
-                       lowerBoundGap, upperBoundGap,
-                       colsOrIndexes, shiftForward=0,
-                       canBeOutOfStartIndex=False, canHaveShorterLength=False,
-                       rightPadIfShorter=False):
+    @argValidator
+    def getRows_npArray(self, npArray: np.ndarray, idx,
+                        *, lowerBoundGap, upperBoundGap,
+                        colsOrIndexes, shiftForward=0,
+                        canBeOutOfStartIndex=False, canHaveShorterLength=False,
+                        rightPadIfShorter=False):
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
-        assert idx + shiftForward >= 0, \
-            TsRowFetcher.errMsgs['non-negStartingPointNpArray']
+        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpArray']
 
         # cccAlgo
-        # for np arrays [-1]results a value so we have to make assertion;
-        # no matter it wont give [-1:1] values,
-        # but then again even in this case it doesnt assert
+        #  for np arrays [-1]results a value so we have to make assertion;
+        #  no matter it wont give [-1:1] values,
+        #  but then again even in this case it doesnt assert
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap + shiftForward)
@@ -139,7 +139,8 @@ class TsRowFetcher:
                                              rightPadIfShorter, res, slice_)
         return self.singleFeatureShapeCorrection(res)
 
-    def makeTensor(self, input_):
+    @staticmethod
+    def convertToTensor(input_):
         if isinstance(input_, pd.DataFrame):
             input_ = input_.values
         tensor = torch.tensor(input_)
@@ -148,7 +149,7 @@ class TsRowFetcher:
 
     def getBackForeCastData_general(self, data, idx, mode='backcast',
                                     colsOrIndexes='___all___', shiftForward=0,
-                                    makeTensor=True, canBeOutOfStartIndex=False,
+                                    outputTensor=True, canBeOutOfStartIndex=False,
                                     canHaveShorterLength=False,
                                     rightPadIfShorter=False):
 
@@ -157,21 +158,23 @@ class TsRowFetcher:
         # ... maybe not needed and the query is better used at other places in data prepration or split
         # goodToHave2 if query is added, these modes have to be more flexible
 
-        assert mode in self.modes.keys(), "mode should be either 'backcast', 'forecast','fullcast' or 'singlePoint'"
-        assert colsOrIndexes == '___all___' or isinstance(colsOrIndexes, list), \
-            "u should either pass '___all___' for all feature cols or a list of their columns or indexes"
+        if mode not in self.modes.keys():
+            raise ValueError(f"{mode} should be either 'backcast', 'forecast','fullcast' or 'singlePoint'")
+        if not(colsOrIndexes == '___all___' or isinstance(colsOrIndexes, list)):
+            raise ValueError("u should either pass '___all___' for all feature cols or a list of their columns or indexes")
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
         # cccDevAlgo idx+shiftForward also should be in data indexes
-        kwargs = varPasser(locals(),
-                           exclude=['canBeOutOfStartIndex', 'makeTensor'])
+        kwargs = varPasser(locals(), exclude=['canBeOutOfStartIndex', 'outputTensor'])
         res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
 
-        if makeTensor:
-            res = self.makeTensor(res)
+        if outputTensor:
+            res = self.convertToTensor(res)
         return res
 
-    def _getBackForeCastData_general_byDataType_NCastMode(self, data, idx,
+    @argValidator
+    def _getBackForeCastData_general_byDataType_NCastMode(self,
+                  data: Union[pd.DataFrame, np.ndarray, NpDict, torch.Tensor], idx,
                                                           mode, colsOrIndexes,
                                                           shiftForward,
                                                           canHaveShorterLength,
@@ -179,16 +182,16 @@ class TsRowFetcher:
         kwargs = varPasser(locals(), exclude=[])
         # send to _getCastByMode depending on datatype
         if isinstance(data, NpDict):  # NpDict
-            res = self._getCastByMode(self.getNpDictRows, **kwargs)
+            res = self._getCastByMode(self.getRows_npDict, **kwargs)
 
         elif isinstance(data, pd.DataFrame):  # pd.df
-            res = self._getCastByMode(self.getDfRows, **kwargs)
+            res = self._getCastByMode(self.getRows_df, **kwargs)
 
         elif isinstance(data, np.ndarray):  # np.array
-            res = self._getCastByMode(self.getNpArrayRows, **kwargs)
+            res = self._getCastByMode(self.getRows_npArray, **kwargs)
 
         elif isinstance(data, torch.Tensor):  # tensor
-            res = self._getCastByMode(self.getTensorRows, **kwargs)
+            res = self._getCastByMode(self.getRows_tensor, **kwargs)
         else:
             assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
         return res
@@ -200,31 +203,27 @@ class TsRowFetcher:
         canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
         kwargs = varPasser(locals(), exclude=['data', 'dataTypeFunc', 'mode'])
         if mode == self.modes.backcast:  # backcast mode
-            return dataTypeFunc(data,
-                                lowerBoundGap=0,
+            return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen, **kwargs)
 
         elif mode == self.modes.forecast:  # forecast mode
-            return dataTypeFunc(data,
-                                lowerBoundGap=self.backcastLen,
-                                upperBoundGap=self.backcastLen + self.forecastLen,
-                                **kwargs)
+            return dataTypeFunc(data, lowerBoundGap=self.backcastLen,
+                                upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
 
         elif mode == self.modes.fullcast:  # fullcast mode
-            return dataTypeFunc(data,
-                                lowerBoundGap=0,
-                                upperBoundGap=self.backcastLen + self.forecastLen,
-                                **kwargs)
+            return dataTypeFunc(data, lowerBoundGap=0,
+                                upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
 
         elif mode == self.modes.singlePoint:  # singlePoint mode
-            return dataTypeFunc(data,
-                                lowerBoundGap=0, upperBoundGap=1, **kwargs)
+            return dataTypeFunc(data, lowerBoundGap=0,
+                                upperBoundGap=1, **kwargs)
         else:
             assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' modes"
 
     def _assertIdxInIndexes(self, idx):
-        if not self.indexes is None:
+        if self.indexes is not None:
             assert idx in self.indexes, f'{idx} is not in indexes'
+            # goodToHave3 this should have been IndexError, but changing it, requires changing some tests
 
     def _assertIdxInIndexes_dependingOnAllowance(self, allowance, idx):
         if not allowance:
@@ -233,8 +232,7 @@ class TsRowFetcher:
     def _assertIdx_NShiftInIndexes_dependingOnAllowance(self, allowance, idx,
                                                         shiftForward):
         self._assertIdxInIndexes_dependingOnAllowance(allowance, idx)
-        self._assertIdxInIndexes_dependingOnAllowance(allowance,
-                                                      idx + shiftForward)
+        self._assertIdxInIndexes_dependingOnAllowance(allowance, idx + shiftForward)
 
     def _hasShorterLen(self, len_, slice_, isItDfLen=False):
         normalSliceLen = slice_.stop - slice_.start
@@ -246,20 +244,17 @@ class TsRowFetcher:
 
         assert sliceLen >= len_, "_hasShorterLen: internal logic error, Length is greater than expected"
 
-        if sliceLen > len_:
-            return True
-        if sliceLen == len_:
-            return False
+        return sliceLen > len_
 
     def _assertCanHaveShorterLength_dependingOnAllowance(self, allowance, len_,
-                                                         slice_,
-                                                         isItDfLen=False):
+                                                         slice_, isItDfLen=False):
         if not allowance:
             assert not self._hasShorterLen(len_, slice_, isItDfLen=isItDfLen), \
-                TsRowFetcher.errMsgs['shorterLen']
+                _TsRowFetcher.errMsgs['shorterLen']
 
+    @argValidator
     def _rightPadShorterIfAllowed(self, shorterLenAllowance,
-                                  rightPadAllowance, resData,
+                                  rightPadAllowance, resData: Union[pd.DataFrame, pd.Series, np.ndarray, torch.Tensor],
                                   slice_, pad=0, isItDfLen=False):
 
         dataLen = len(resData)
@@ -280,6 +275,9 @@ class TsRowFetcher:
                 else:
                     assert False, 'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
             else:
+                # cccDevAlgo
+                #  this part returns result which is shorter than regular(depending on back and forecastLens);
+                #  ofc if its allowed
                 self._assertCanHaveShorterLength_dependingOnAllowance(
                     shorterLenAllowance, dataLen,
                     slice_, isItDfLen=isItDfLen)
