@@ -36,8 +36,8 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
                                                       'col2': [0],
                                                       'col3': [2]}, index=[100])
 
-    def UniqueCombosBaseTest(self, mainGroupColNames,
-                             uniqueCombosAssertComboDefs):
+    def UniqueCombos_BaseTestFunc(self, mainGroupColNames,
+                                  uniqueCombosAssertComboDefs):
         self.setUp()
         MainGroupBaseNormalizer_ = _MainGroupBaseNormalizer(self.df, mainGroupColNames,
                                                             internalCall=True)
@@ -45,11 +45,11 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
 
         testSuccessRes = True
         for com in uniqueCombosAssertComboDefs:
-            if not MainGroupBaseNormalizer_.findMatchingDictReprCombo(com):
+            if not MainGroupBaseNormalizer_.findMatchingCombo_dictRepr(com):
                 testSuccessRes = False
 
         for com in uniqueCombos:
-            if com.defDict not in uniqueCombosAssertComboDefs:
+            if com not in [str(com1) for com1 in uniqueCombosAssertComboDefs]:
                 testSuccessRes = False
 
         self.assertTrue(testSuccessRes)
@@ -61,8 +61,8 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
                                        {'A': 'A3', 'B': 'B4'},
                                        {'A': 'A4', 'B': 'B4'}]
         mainGroupColNames = ["A", "B"]
-        self.UniqueCombosBaseTest(mainGroupColNames,
-                                  uniqueCombosAssertComboDefs)
+        self.UniqueCombos_BaseTestFunc(mainGroupColNames,
+                                       uniqueCombosAssertComboDefs)
 
     def testUniqueCombos2(self):
         mainGroupColNames = ["A", "B", "C"]
@@ -72,11 +72,11 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
                                        {'A': 'A3', 'B': 'B2', 'C': 'C2'},
                                        {'A': 'A3', 'B': 'B4', 'C': 'C4'},
                                        {'A': 'A4', 'B': 'B4', 'C': 'C4'}]
-        self.UniqueCombosBaseTest(mainGroupColNames,
-                                  uniqueCombosAssertComboDefs)
+        self.UniqueCombos_BaseTestFunc(mainGroupColNames,
+                                       uniqueCombosAssertComboDefs)
 
-    def GetRowsByCombinationBaseTest(self, comboToFind, mainGroupColNames,
-                                     getRowsByCombinationRes):
+    def GetRowsByCombination_BaseTestFunc(self, comboToFind, mainGroupColNames,
+                                          getRowsByCombinationRes):
         self.setUp()
         MainGroupBaseNormalizer_ = _MainGroupBaseNormalizer(self.df, mainGroupColNames,
                                                             internalCall=True)
@@ -87,14 +87,14 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
     def testGetRowsByCombination1(self):
         comboToFind = {'A': 'A1', 'B': 'B1'}
         mainGroupColNames = ["A", "B"]
-        self.GetRowsByCombinationBaseTest(comboToFind, mainGroupColNames,
-                                          self.getRowsByCombination1Res)
+        self.GetRowsByCombination_BaseTestFunc(comboToFind, mainGroupColNames,
+                                               self.getRowsByCombination1Res)
 
     def testGetRowsByCombination2(self):
         comboToFind = {'A': 'A1', 'B': 'B1', 'C': 'C1'}
         mainGroupColNames = ["A", "B", "C"]
-        self.GetRowsByCombinationBaseTest(comboToFind, mainGroupColNames,
-                                          self.getRowsByCombination2Res)
+        self.GetRowsByCombination_BaseTestFunc(comboToFind, mainGroupColNames,
+                                               self.getRowsByCombination2Res)
 
 
 # ---- MainGroupSingleColsNormalizerTests

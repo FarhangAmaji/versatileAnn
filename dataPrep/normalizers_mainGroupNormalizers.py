@@ -1,27 +1,22 @@
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
+from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances
 
 
 # ---- normalizers: MainGroupNormalizers
-class Combo:
+class _Combo:
     def __init__(self, defDict, mainGroupColNames):
-        assert isinstance(defDict, dict) and all(key in defDict for key in
-                                                 mainGroupColNames), "defDict format is invalid."
-
         for key in defDict:
-            if key not in mainGroupColNames:
-                raise ValueError(
-                    f"'{key}' is not a valid column name in mainGroupColNames.")
+            assert key in mainGroupColNames,f"'{key}' is not a valid column name in mainGroupColNames."
 
         for col in mainGroupColNames:
-            if col not in defDict:
-                raise ValueError(f"'{col}' is missing in combo definition.")
+            assert col in defDict,f"'{col}' is missing in combo definition."
 
         self.defDict = defDict
 
-    def shortRepr_(self):
+    def shortRepr(self):
         return '_'.join([str(item) for item in self.defDict.values()])
 
     def __repr__(self):
@@ -36,48 +31,46 @@ class _MainGroupBaseNormalizer:
         self.uniqueCombos = self._getUniqueCombinations(df)
 
     def uniqueCombosShortReprs(self):
-        return [combo.shortRepr_() for combo in self.uniqueCombos]
+        return [combo.shortRepr() for combo in self.uniqueCombos]
 
-    def findMatchingShortReprCombo(self, combo):
+    def findMatchingCombo_shortRepr(self, combo):
         for uniqueCombo in self.uniqueCombos:
-            if combo == uniqueCombo.shortRepr_():
+            if combo == uniqueCombo.shortRepr():
                 return uniqueCombo
         return None
 
-    def uniqueCombosDictReprs(self):
+    @property
+    def uniqueCombos_dictReprs(self):
         return [combo.defDict for combo in self.uniqueCombos]
 
-    def findMatchingDictReprCombo(self, combo):
-        for uniqueCombo in self.uniqueCombos:
-            if combo == uniqueCombo.defDict:
-                return uniqueCombo
-        return None
+    @argValidator
+    def findMatchingCombo_dictRepr(self, combo:dict):
+        return self.uniqueCombos.get(str(combo),None)
 
-    def comboInUniqueCombos(self, combo):
-        if isinstance(combo, Combo):
-            if combo in self.uniqueCombos:
+    def isComboInUniqueCombos(self, combo):
+        if isinstance(combo, _Combo):
+            if combo.__repr__() in self.uniqueCombos.keys():
                 return combo
-        elif isinstance(combo, str):
-            if self.findMatchingShortReprCombo(combo):
-                return self.findMatchingShortReprCombo(combo)
-        elif isinstance(combo, dict):
-            if self.findMatchingDictReprCombo(combo):
-                return self.findMatchingDictReprCombo(combo)
-        return
+        isInputComboStr_NRepresentsADict=isinstance(combo, str) and type(eval(combo)) == dict
+        if isinstance(combo, str) and not isInputComboStr_NRepresentsADict:
+            if self.findMatchingCombo_shortRepr(combo):
+                return self.findMatchingCombo_shortRepr(combo)
+        elif isinstance(combo, dict) or isInputComboStr_NRepresentsADict:
+            return self.findMatchingCombo_dictRepr(combo)
+        assert False, f'no {str(combo)} is in uniqueCombos'
 
     def _getUniqueCombinations(self, df):
-        comboObjs = []
+        comboObjs = {}
 
         for groupName, groupDf in df.groupby(self.mainGroupColNames):
             comboDict = dict(zip(self.mainGroupColNames, groupName))
-            combo = Combo(comboDict, self.mainGroupColNames)
-            comboObjs.append(combo)
+            combo = _Combo(comboDict, self.mainGroupColNames)
+            comboObjs.update({f'{combo.__repr__()}':combo})
 
         return comboObjs
 
     def getRowsByCombination(self, df, combo):
-        comboObj = self.comboInUniqueCombos(combo)
-        assert comboObj, "Combo is not in uniqueCombos"
+        comboObj = self.isComboInUniqueCombos(combo)
         tempDf = df[
             (df[self.mainGroupColNames] == comboObj.defDict).all(axis=1)]
 
@@ -99,15 +92,15 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
         self.container = {}
         for col in colNames:
             self.container[col] = {}
-            for combo in self.uniqueCombos:
-                self.container[col][combo.shortRepr_()] = classType([col])
+            for _, combo in self.uniqueCombos.items():
+                self.container[col][combo.shortRepr()] = classType([col])
 
     def fitCol(self, df, col):
-        for combo in self.uniqueCombos:
+        for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             dfToFit = dfToFit.reset_index(drop=True)
             # goodToHave3 does it need reset_index
-            self.container[col][combo.shortRepr_()].fit(dfToFit)
+            self.container[col][combo.shortRepr()].fit(dfToFit)
 
     def fit(self, df):
         for col in self.colNames:
@@ -115,12 +108,12 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     def transformCol(self, df, col):
         dfCopy = df.copy()
-        for combo in self.uniqueCombos:
+        for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             inds = dfToFit.index
             dfToFit = dfToFit.reset_index(drop=True)
             # goodToHave3 does it need reset_index
-            self.container[col][combo.shortRepr_()].transform(dfToFit)
+            self.container[col][combo.shortRepr()].transform(dfToFit)
             dfToFit.index = inds
             dfCopy.loc[inds, col] = dfToFit
         return dfCopy[col]
@@ -135,11 +128,11 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     def inverseTransformColBase(self, df, col, funcName):
         dfCopy = df.copy()
-        for combo in self.uniqueCombos:
+        for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             inds = dfToFit.index
             dfToFit = dfToFit.reset_index(drop=True)
-            func = getattr(self.container[col][combo.shortRepr_()], funcName)
+            func = getattr(self.container[col][combo.shortRepr()], funcName)
             invRes = func(dfToFit, col)
             dfCopy.loc[inds, col] = invRes
         return dfCopy[col]
@@ -159,10 +152,10 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
 
     def getMeanNStd(self, df):
         for col in self.colNames:
-            for combo in self.uniqueCombos:
+            for _, combo in self.uniqueCombos.items():
                 dfToFit = self.getRowsByCombination(df, combo)
                 inds = dfToFit.index
-                scaler = self.container[col][combo.shortRepr_()].scalers[col].scaler
+                scaler = self.container[col][combo.shortRepr()].scalers[col].scaler
                 comboMean = scaler.mean_[0]
                 comboStd = scaler.scale_[0]
                 df.loc[inds, f'{col}Mean'] = comboMean
