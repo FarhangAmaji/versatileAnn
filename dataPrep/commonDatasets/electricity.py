@@ -37,11 +37,11 @@ def getElectricityProcessed(backcastLen=192, forecastLen=1):
 class ElectricityDeepArDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs={}
-        inputs['consumerId']=self.getBackForeCastData(idx, mode=self.modes.singlePoint, colsOrIndexes=self.consumerId)
-        inputs['allReals']=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.allReals)
-        inputs['target']=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.target, shiftForward=0)
+        inputs['consumerId']=self.getBackForeCastData(idx, mode=self.castModes.singlePoint, colsOrIndexes=self.consumerId)
+        inputs['allReals']=self.getBackForeCastData(idx, mode=self.castModes.backcast, colsOrIndexes=self.allReals)
+        inputs['target']=self.getBackForeCastData(idx, mode=self.castModes.backcast, colsOrIndexes=self.target, shiftForward=0)
 
-        outputs=self.getBackForeCastData(idx, mode=self.modes.backcast, colsOrIndexes=self.target, shiftForward=1)
+        outputs=self.getBackForeCastData(idx, mode=self.castModes.backcast, colsOrIndexes=self.target, shiftForward=1)
         return inputs, outputs
 # ---- dataloader
 def getElectricityDataloaders(backcastLen=192, forecastLen=1, batchSize=64):

@@ -105,21 +105,21 @@ def getEpfFrBeProcessed(backcastLen=110, forecastLen=22, trainRatio=.7, valRatio
 class EpfFrBeDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs = {}
-        inputs['target'] = self.getBackForeCastData(idx, mode=self.modes.backcast,
+        inputs['target'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                     colsOrIndexes=self.targets)
-        inputs['mask'] = self.getBackForeCastData(idx, mode=self.modes.backcast,
+        inputs['mask'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                   colsOrIndexes=['mask'])
-        inputs['historyExogenous'] = self.getBackForeCastData(idx, mode=self.modes.backcast,
+        inputs['historyExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                               colsOrIndexes=self.historyExogenousCols)
-        inputs['staticExogenous'] = self.getBackForeCastData(idx, mode=self.modes.singlePoint,
+        inputs['staticExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
                                                              colsOrIndexes=self.staticExogenousCols)
-        inputs['futureExogenous'] = self.getBackForeCastData(idx, mode=self.modes.fullcast,
+        inputs['futureExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.fullcast,
                                                              colsOrIndexes=self.futureExogenousCols)
 
         outputs = {}
-        outputs['output'] = self.getBackForeCastData(idx, mode=self.modes.forecast,
+        outputs['output'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
                                                      colsOrIndexes=self.targets)
-        outputs['outputMask'] = self.getBackForeCastData(idx, mode=self.modes.forecast,
+        outputs['outputMask'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
                                                          colsOrIndexes=['mask'])
         return inputs, outputs
 

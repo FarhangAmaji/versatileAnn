@@ -26,8 +26,8 @@ class _TsRowFetcher:
     errMsgs = DotDict(errMsgs)
 
     def __init__(self, *, backcastLen, forecastLen):
-        self.modes = DotDict({key: key for key in
-                              ['backcast', 'forecast', 'fullcast',
+        self.castModes = DotDict({key: key for key in
+                                  ['backcast', 'forecast', 'fullcast',
                                'singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
@@ -159,12 +159,12 @@ class _TsRowFetcher:
         #  to have shorter data, or rightPadding data.
         #  canBeOutOfStartIndex refers to indexes of VAnnTsDataset
 
-        # goodToHave2 may add query taking ability to df part; plus to modes,
+        # goodToHave2 may add query taking ability to df part; plus to castModes,
         # ... like the sequence can have upto 10 len or till have reached 'zValueCol <20';
         # ... maybe not needed and the query is better used at other places in data prepration or split
-        # goodToHave2 if query is added, these modes have to be more flexible
+        # goodToHave2 if query is added, these castModes have to be more flexible
 
-        if mode not in self.modes.keys():
+        if mode not in self.castModes.keys():
             raise ValueError(
                 f"{mode} should be either 'backcast', 'forecast','fullcast' or 'singlePoint'")
         if not (colsOrIndexes == '___all___' or isinstance(colsOrIndexes, list)):
@@ -212,23 +212,23 @@ class _TsRowFetcher:
                        rightPadIfShorter):
         canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
         kwargs = varPasser(locals(), exclude=['data', 'dataTypeFunc', 'mode'])
-        if mode == self.modes.backcast:  # backcast mode
+        if mode == self.castModes.backcast:  # backcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen, **kwargs)
 
-        elif mode == self.modes.forecast:  # forecast mode
+        elif mode == self.castModes.forecast:  # forecast mode
             return dataTypeFunc(data, lowerBoundGap=self.backcastLen,
                                 upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
 
-        elif mode == self.modes.fullcast:  # fullcast mode
+        elif mode == self.castModes.fullcast:  # fullcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
 
-        elif mode == self.modes.singlePoint:  # singlePoint mode
+        elif mode == self.castModes.singlePoint:  # singlePoint mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=1, **kwargs)
         else:
-            assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' modes"
+            assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' castModes"
 
     def _assertIdxInIndexes(self, idx):
         if self.indexes is not None:

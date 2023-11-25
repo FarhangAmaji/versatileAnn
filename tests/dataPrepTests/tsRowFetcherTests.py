@@ -106,7 +106,7 @@ commonkwargs3 = createKwargsDictFromName_dfSample1('_ForecastMode_someCols_noCon
 in TsRowFetcherTests_types, including (TestTsRowFetcher_DfTests, TestTsRowFetcher_NpArrayTests,
                                        TestTsRowFetcher_NpDictTests, TestTsRowFetcher_TensorTests)
 
-for each (backcast, forecast, fullcast, singlePoint) modes
+for each (backcast, forecast, fullcast, singlePoint) castModes
 for outputTensor== True or False
 for someCols == ['y1', 'y2'](or [0, 1]) or _AllColIndexes=='___all___'
 """

@@ -161,12 +161,12 @@ class StallionTftDataset(VAnnTsDataset):
         decoderLength=self.data.loc[idx,'decoderLength']
 
         inputs={}
-        inputs['encoderLengths']=self.getBackForeCastData(idx, mode=self.modes.singlePoint, colsOrIndexes='encoderLength', rightPadIfShorter=True)
-        inputs['decoderLengths']=self.getBackForeCastData(idx, mode=self.modes.singlePoint, colsOrIndexes='decoderLength', rightPadIfShorter=True)
+        inputs['encoderLengths']=self.getBackForeCastData(idx, mode=self.castModes.singlePoint, colsOrIndexes='encoderLength', rightPadIfShorter=True)
+        inputs['decoderLengths']=self.getBackForeCastData(idx, mode=self.castModes.singlePoint, colsOrIndexes='decoderLength', rightPadIfShorter=True)
         
         inputs['allReals']={}
         for ar in self.allReals:
-            inputs['allReals'][ar]=self.getBackForeCastData(idx, mode=self.modes.fullcast, colsOrIndexes=ar, rightPadIfShorter=True)
+            inputs['allReals'][ar]=self.getBackForeCastData(idx, mode=self.castModes.fullcast, colsOrIndexes=ar, rightPadIfShorter=True)
 
         fullcastLen=self.backcastLen+self.forecastLen
         inputs['allReals']['relativeTimeIdx']=pd.Series([i for i in range(-encoderLength, decoderLength)])
@@ -183,12 +183,12 @@ class StallionTftDataset(VAnnTsDataset):
         inputs['categorical']['singular']={}
         inputs['categorical']['groups']={}
         for sc in self.categoricalSingularVariables:
-            inputs['categorical']['singular'][sc]=self.getBackForeCastData(idx, mode=self.modes.fullcast, colsOrIndexes=sc, rightPadIfShorter=True)
+            inputs['categorical']['singular'][sc]=self.getBackForeCastData(idx, mode=self.castModes.fullcast, colsOrIndexes=sc, rightPadIfShorter=True)
             
         for gc in self.categoricalVariableGroups:
             inputs['categorical']['groups'][gc]={}
             for gc1 in gc.keys():
-                inputs['categorical']['groups'][gc][gc1]=self.getBackForeCastData(idx, mode=self.modes.fullcast, colsOrIndexes=gc1, rightPadIfShorter=True)
+                inputs['categorical']['groups'][gc][gc1]=self.getBackForeCastData(idx, mode=self.castModes.fullcast, colsOrIndexes=gc1, rightPadIfShorter=True)
 
 
         outputs={}
