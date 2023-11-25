@@ -348,7 +348,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
         self._shapeWarning()
         self._noNanOrNoneDataAssertion()
-        for key, value in kwargs.items():
+        for key, value in kwargs.items():# bugPotentialCheck1 this seems to be wrong
             setattr(self, key, value)
 
     def getBackForeCastData(self, idx, mode='backcast',
@@ -371,6 +371,9 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         return len(self.indexes)
 
     def __getitem__(self, idx):
+        # bugPotentialCheck1
+        #  these has problem with dataloader commonCollate_fn:
+        #                   TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object
         self._assertIdxInIndexes(idx)
         if self.mainGroups:
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
@@ -400,7 +403,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     # ---- Private methods
     def _IdxNdataToLook_WhileFetching(self, idx):
         self._assertIdxInIndexes(idx)
-        # goodToHave3 its was better a cccDevAlgo was written, to know which if parts handles what situations
+        # goodToHave3 its was better a cccAlgo was written, to know which if parts handles what situations
         if self.mainGroups:
             groupName = self._findIdxIn_mainGroupsRelIdxs(idx)
             dataToLook = self.data[groupName]

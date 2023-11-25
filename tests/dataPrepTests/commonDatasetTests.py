@@ -89,16 +89,12 @@ class epfFrBeTests(BaseTestClass):
 
 
         # train
-        trainDataloader_inputs, trainDataloader_outputs = next(iter(epfFrBe_TrainDataloader))
         # cccDevStruct these 2 are just here in order if they make error, get detected
-        valDataloader_inputs, valDataloader_outputs =next(iter(epfFrBe_ValDataloader))
-
+        next(iter(epfFrBe_TrainDataloader))
+        next(iter(epfFrBe_ValDataloader))
 
         testDataloader_inputs, testDataloader_outputs =next(iter(epfFrBe_TestDataloader))
-        trainDf, valDf, testDf, normalizer = getEpfFrBeProcessed(backcastLen=self.backcastLen, forecastLen=self.forecastLen,
-                       trainRatio=.7, valRatio=.2, rightPadTrain=True, aggColName=self.aggColName, devTestMode=True)
-        
-        
+
         expectedInputs={}
         expectedInputs['target']=[[-1.5341578722000122, -1.5178334712982178, -1.3154107332229614, -0.9823926687240601, -0.8934245705604553, -0.7971105575561523, -0.7089586853981018], [-0.21514514088630676, -0.5122495293617249, -1.3154107332229614, 0.12358646839857101, 0.3627391457557678, 0.960212767124176, 1.5617674589157104]]
         expectedInputs['mask']=[[True, True, True, True, True, True, True], [True, True, True, True, True, True, True]]

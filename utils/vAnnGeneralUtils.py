@@ -44,7 +44,7 @@ class DotDict:
 
 class NpDict(DotDict):
     """
-    converts cols of df to a dict of np arrays or help reassign
+    converts cols of df to a dict of np arrays or
     also helps reassigning the dtypes of df subsets
     """
     #kkk make sure other functionalities of pd df, except the things defined below are kept
@@ -121,7 +121,7 @@ def equalNpDicts(npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=
     return equalDfs(npd1.df, npd2.df,  checkIndex=False, 
                     floatApprox=floatApprox, floatPrecision=floatPrecision)
 # ---- tensor
-def Tensor_floatDtypeChange(tensor):
+def tensor_floatDtypeChangeIfNeeded(tensor):
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
         tensor = tensor.to(torch.float32)
         #kkk make it compatible to global precision
@@ -322,7 +322,17 @@ def varPasser(locals_, localArgNames=[], exclude=[]):
 def _allowOnlyCreationOf_ChildrenInstances(self, cls):
     if type(self) == cls:
         raise RuntimeError(f"Instances of {cls.__name__} are not allowed")
+def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
+    def func(obj, errMsg=''):
+        if not errMsg:
+            errMsg = f"the object isn't of type {typeX} or a list of it"
 
+        isObjOfTypeX = isinstance(obj, typeX)
+        isAListOfTypeX = (isinstance(obj, list) and
+                          all([isinstance(it, typeX) for it in obj]))
+        if not (isObjOfTypeX or isAListOfTypeX):
+            raise ValueError(errMsg)
+    return func
 def getCurrentFuncName():
     frame = inspect.currentframe()
     try:

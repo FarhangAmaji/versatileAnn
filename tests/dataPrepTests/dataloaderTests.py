@@ -3,15 +3,15 @@
 from tests.baseTest import BaseTestClass
 import unittest
 # ----
-from dataPrep.dataloader import BatchStructTemplate, appendValue_ToNestedDictPath
-from dataPrep.dataloader import BatchStructTemplate_Non_BatchStructTemplate_Objects as bstObjInit
+from dataPrep.dataloader import _NestedDictStruct, appendValue_ToNestedDictPath
+from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from utils.vAnnGeneralUtils import DotDict, NpDict
 import torch
 import pandas as pd
 import numpy as np
 # ---- dataloader tests
 # ----     batch data tests
-class batchStructTemplateTests(BaseTestClass):
+class nestedDictStructTests(BaseTestClass):
     def setUp(self):
         self.item1={'a':{'a1':[2],
                          'a2':{'b1':[2],'b2':{},'b3':4,'b4':True},
@@ -22,9 +22,9 @@ class batchStructTemplateTests(BaseTestClass):
 
     def test(self):
         self.setUp()
-        self.assertEqual(str(BatchStructTemplate(self.item1)),str(self.item1Res))
+        self.assertEqual(str(_NestedDictStruct(self.item1)), str(self.item1Res))
         """#ccc seems to be a not secure way
-        but because we have only batchStructTemplate and BatchStructTemplate_Non_BatchStructTemplate_Objects types with defined __repr__s
+        but because we have only nestedDictStruct and _ObjectToBeTensored types with defined __repr__s
         so seems to be ok"""
 # ----     appendValue_ToNestedDictPathTests
 class appendValue_ToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
@@ -193,35 +193,35 @@ class fillBatchStructWithDataTests(BaseTestClass):
             'dotDict':[DotDict({'s':1})],#kkk didnt work for dotDict
             }
 
-    def testBatchStructTemplate_forADictItem(self):
+    def testNestedDictStruct_forADictItem(self):
         self.setUp()
-        dictToFill=BatchStructTemplate(self.item1)
+        dictToFill=_NestedDictStruct(self.item1)
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
-        self.assertEqual(str(dictToFill.getBatchStructValues()), str(self.dictToFillRes))
+        self.assertEqual(str(dictToFill.getData_single()), str(self.dictToFillRes))
         """#ccc seems to be a not secure way, but because we have verified types
         which are either default python types or torch, np, pd types so seems to be ok"""
 
-    def testBatchStructTemplate_forA_NonDictItem(self):
+    def testNestedDictStruct_forA_NonDictItem(self):
         self.setUp()
-        dictToFill=BatchStructTemplate(self.item3)
+        dictToFill=_NestedDictStruct(self.item3)
         dictToFill.fillWithData(self.item3)
         dictToFill.fillWithData(self.item4)
-        self.assertEqual(dictToFill.getBatchStructValues(), self.nonDictionaryRes)
+        self.assertEqual(dictToFill.getData_single(), self.nonDictionaryRes)
 
     def testGetDictStructTensors(self):
         self.setUp()
         self.tensorSetUp()
-        dictToFill=BatchStructTemplate(self.item1)
+        dictToFill=_NestedDictStruct(self.item1)
         dictToFill.fillWithData(self.item2)
         dictToFill.fillWithData(self.item1)
-        self.assertEqual(str(dictToFill.getBatchStructTensors()), str(self.dictToFillTensorRes))
+        self.assertEqual(str(dictToFill.getDataAsGpuTensors_single()), str(self.dictToFillTensorRes))
 
     def testAllTypesCheck(self):
         self.setUpAllTypesCheck()
-        dictToFill=BatchStructTemplate(self.inputs)
+        dictToFill=_NestedDictStruct(self.inputs)
         dictToFill.fillWithData(self.inputs)
-        self.assertEqual(str(dictToFill.getBatchStructTensors()), str(self.inputsRes))
+        self.assertEqual(str(dictToFill.getDataAsGpuTensors_single()), str(self.inputsRes))
 # ---- run test
 if __name__ == '__main__':
     unittest.main()
