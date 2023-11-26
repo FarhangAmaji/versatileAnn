@@ -96,6 +96,7 @@ class epfFrBeTests(BaseTestClass):
         testDataloader_inputs, testDataloader_outputs =next(iter(epfFrBe_TestDataloader))
 
         expectedInputs={}
+        # bugPotentialCheck2 I doubted is it supposed to have 2 items or its a bug(I don't know anything, just a simple doubt)
         expectedInputs['target']=[[-1.5341578722000122, -1.5178334712982178, -1.3154107332229614, -0.9823926687240601, -0.8934245705604553, -0.7971105575561523, -0.7089586853981018], [-0.21514514088630676, -0.5122495293617249, -1.3154107332229614, 0.12358646839857101, 0.3627391457557678, 0.960212767124176, 1.5617674589157104]]
         expectedInputs['mask']=[[True, True, True, True, True, True, True], [True, True, True, True, True, True, True]]
         expectedInputs['historyExogenous']=[[-1.8059762716293335, -1.9370617866516113, -1.5145065784454346, -1.1386774778366089, -0.6221650242805481, -0.26830974221229553, 0.4512716829776764], [-1.8059762716293335, -1.9370617866516113, -1.5145065784454346, -1.1386774778366089, -0.6221650242805481, -0.26830974221229553, 0.4512716829776764]]
