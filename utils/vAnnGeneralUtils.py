@@ -138,8 +138,18 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
                  checkDevice=True):
     dtypeEqual = True
     if checkType:
-        # Check if the data types are equal
         dtypeEqual = tensor1.dtype == tensor2.dtype
+    if not dtypeEqual:
+        return False
+
+    deviceEqual = tensor1.device == tensor2.device
+    if not checkDevice:
+        if not deviceEqual:#cccDevStruct even though device check is not need but make both tensors to cpu in order not to get different device error in equal line below
+            tensor1 = tensor1.to(torch.device('cpu'))
+            tensor2 = tensor2.to(torch.device('cpu'))
+        deviceEqual = True
+    if not deviceEqual:
+        return False
 
     equalVals = True
     if floatApprox:
@@ -147,12 +157,7 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
         equalVals = torch.allclose(tensor1, tensor2, atol=floatPrecision)
     else:
         equalVals = torch.equal(tensor1, tensor2)
-
-    deviceEqual = True
-    # If checkDevice is True, also check if tensors are on the same device
-    if checkDevice:
-        deviceEqual = tensor1.device == tensor2.device
-    return dtypeEqual and equalVals and deviceEqual
+    return equalVals
 
 
 # ---- dfs
