@@ -388,3 +388,32 @@ def getCurrentFuncName():
         return frame.f_back.f_code.co_name
     finally:
         del frame
+
+
+def shuffleData(inputData_, seed=None):
+    import random
+    import copy
+    if seed is not None:
+        random.seed(seed)
+    inputCopy = copy.deepcopy(inputData_)
+
+    if isinstance(inputCopy, list):  # list
+        shuffledData = random.sample(inputCopy, len(inputCopy))
+    elif isinstance(inputCopy, tuple):
+        # Convert tuple to list, shuffle, and convert back to tuple
+        shuffledData = tuple(random.sample(list(inputCopy), len(inputCopy)))
+    elif isinstance(inputCopy, pd.DataFrame):  # DataFrame
+        shuffledData = inputCopy.sample(frac=1).reset_index(drop=True)
+    elif isinstance(inputCopy, np.ndarray):
+        # Shuffle NumPy array along the first axis (rows)
+        shuffledData = np.random.permutation(inputCopy)
+    elif isinstance(inputCopy, torch.Tensor):
+        # Convert tensor to NumPy array, shuffle, and convert back to tensor
+        npArray = inputCopy.numpy()
+        np.random.shuffle(npArray)
+        shuffledData = torch.from_numpy(npArray)
+    else:
+        # Handle unsupported data type
+        raise ValueError(f"Unsupported data type: {type(inputCopy)}")
+
+    return shuffledData

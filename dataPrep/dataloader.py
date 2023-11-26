@@ -1,6 +1,5 @@
 import copy
-import time
-import types
+import math
 from typing import Union
 
 import torch
@@ -10,7 +9,7 @@ from torch.utils.data.dataloader import default_collate
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, \
-    tensor_floatDtypeChangeIfNeeded, isIterable, validate_IsObjOfTypeX_orAListOfTypeX
+    tensor_floatDtypeChangeIfNeeded, isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
 from utils.warnings import Warn
 
 
@@ -239,7 +238,8 @@ class _NestedDictStruct:
         # goodToHave3 it was good if it was possible to take data only as tensor and not solely gpuTensor
         if isinstance(self.struct, _ObjectToBeTensored):
             if toGpuTensor:
-                toTensorFunc = getattr(self.struct, self.struct.toTensorFunc)# addtest2 because of refactor this part has given error
+                toTensorFunc = getattr(self.struct,
+                                       self.struct.toTensorFunc)  # addtest2 because of refactor this part has given error
                 return self._squeezeDim0sEqual1(toTensorFunc(self.struct.values))
             return self.struct.values
         elif isinstance(self.struct, dict):
@@ -318,15 +318,50 @@ class SamplerFor_vAnnTsDataset(Sampler):
     # cccDevAlgo
     #  this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
 
-    def __init__(self, dataset):
+    @argValidator
+    def __init__(self, dataset: VAnnTsDataset, batchSize=None, shuffle=False, seed=None):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
+        if seed:
+            shuffle=True
+        if shuffle and not batchSize:
+            raise ValueError('batchSize must be passed with shuffle True')
         self.indexes = dataset.indexes
+        self._iterLen = None
+        if batchSize:
+            self._iterLen= math.ceil(len(self.indexes)/batchSize)
+        self.shuffle = shuffle
+        self.seed = seed
+        self._shuffleNumerator = 0
 
     def __iter__(self):
+        if self.shuffle:
+            return self._iterShuffleLogic()
+        else:
+            return iter(self.indexes)
+
+    def _iterShuffleLogic(self):
+        assert self._shuffleNumerator < self._iterLen, 'logical error'
+        if self._shuffleNumerator == 0:
+            self.indexes = shuffleData(self.indexes, self.seed)
+            # cccAlgo
+            #  note indexes by getting shuffled result get changed inplace
+            #  and there is way back even by making shuffle False
+        self._shuffleNumerator += 1
+        if self._shuffleNumerator == self._iterLen:
+            self._shuffleNumerator = 0
         return iter(self.indexes)
 
     def __len__(self):
         return len(self.indexes)
+
+    @property
+    def shuffle(self):
+        return self._shuffle
+
+    @shuffle.setter
+    @argValidator
+    def shuffle(self, value: bool):
+        self._shuffle = value
 
 
 # ---- VAnnTsDataloader
@@ -337,7 +372,7 @@ class VAnnTsDataloader(DataLoader):
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
     @argValidator
     def __init__(self, dataset: VAnnTsDataset, batch_size=64, collate_fn=None, sampler=None,
-                 createBatchStructEverytime=False, *args, **kwargs):
+                 createBatchStructEverytime=False, shuffle=False, randomSeed=None, *args, **kwargs):
         """
         createBatchStructEverytime: on some rare cases the structure of output of nn model may differ.
                 for efficiency the code only creates that structure once, but in this case,
@@ -356,22 +391,27 @@ class VAnnTsDataloader(DataLoader):
             collate_fn = self.commonCollate_fn
 
         if sampler is None:
-            sampler = SamplerFor_vAnnTsDataset(dataset)
+            sampler = SamplerFor_vAnnTsDataset(dataset, shuffle=shuffle, seed=randomSeed, batchSize=batch_size)
         else:
             Warn.warn('make sure you have set, VAnnTsDataset.indexes to .indexes of sampler')
         super().__init__(dataset=dataset, batch_size=batch_size,
                          collate_fn=collate_fn, sampler=sampler,
                          shuffle=False, *args, **kwargs)
-        # goodToHave2
-        #  I cant put the shuffle=True, because dataloader doesnt accept the shuffle True and the sampler together
-        #  but we have to pass the sampler always, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
+
+    @property
+    def shuffle(self):
+        return self.sampler.shuffle
+
+    @shuffle.setter
+    @argValidator
+    def shuffle(self, value: bool):
+        self.sampler.shuffle = value
 
     def bestNumWorkerFinder(self):
         pass
         # mustHave2
         #  implement it later: there is a code in `stash` but because it had sometimes errors while working
         #  with having any num_workers, its not complete; note num_workers for sure is `super unstable` in `windows os`
-
 
     def findBatchStruct(self, batch):
         # cccAlgo
