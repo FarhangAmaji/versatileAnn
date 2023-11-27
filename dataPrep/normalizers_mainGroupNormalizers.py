@@ -129,7 +129,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
         self.fitCol(df)
         self.transformCol(df)
 
-    @ argValidator
+    @argValidator
     def fitNTransform(self, df: pd.DataFrame):
         self.fit(df)
         self.transform(df)
@@ -149,6 +149,8 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
     def inverseTransform(self, df: pd.DataFrame):
         for col in self.colNames:
             df[col] = self.inverseTransformCol(df, col)
+
+
 class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
     def __init__(self, df, mainGroupColNames, colNames: list):
         super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
@@ -166,25 +168,24 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
                 df.loc[inds, f'{col}Mean'] = comboMean
                 df.loc[inds, f'{col}Std'] = comboStd
 
-    # mustHave2 normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
-    # ... normalizer.fitNTransform(df)
-    # ... this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
-    # ... of SingleColsLblEncoder, values of mainGroups are changed
-    # ... kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
-    # mustHave2 for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
-    # mustHave2 (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
-    # addTest1 add test for this
+    # mustHave2
+    #  """normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
+    #  normalizer.fitNTransform(df)"""
+    #  this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
+    #  of SingleColsLblEncoder, values of mainGroups are changed
+    #  kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
+    #  - for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
+    #  - (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
+    #  addTest1 add test for this
     def __repr__(self):
         return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
 
 class MainGroupSingleColsLblEncoder(_MainGroupSingleColsNormalizer):
-    "this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used"
+    # cccAlgo this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used
 
     def __init__(self, df, mainGroupColNames, colNames: list):
         super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
-
-    # goodToHave2 maybe add getClasses()
 
     def __repr__(self):
         return f"MainGroupSingleColsLblEncoder:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"

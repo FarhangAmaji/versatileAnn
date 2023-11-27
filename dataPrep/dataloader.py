@@ -50,7 +50,7 @@ knownTypesToBeTensored = DotDict({
         'tuple': "<class 'tuple'>", 'npArray': "<class 'numpy.ndarray'>",
         'pdSeries': "<class 'pandas.core.series.Series'>",
         'bool': "<class 'bool'>", 'bytearray': "<class 'bytearray'>"}),
-    # cccDevAlgo
+    # cccAlgo
     #  even though npArray, tuple, df, series may contain data which may be `str` and cant be converted to tensor
     #  but still we keep them in the format below, so in the case of having str, the error would be raised by pytorch
 
@@ -109,7 +109,7 @@ class TensorStacker:
 
 
 class _ObjectToBeTensored(TensorStacker):
-    # cccDevAlgo
+    # cccAlgo
     #  this is gonna be used in _NestedDictStruct.
     #  this is gonna wrap non dict objects and contains value, type
     #  and "func which can be used to convert that object to tensor"
@@ -134,7 +134,10 @@ class _ObjectToBeTensored(TensorStacker):
         else:  # includes knownTypesToBeTensored.errorPrones
             if isTensorable(obj):
                 self.toTensorFunc = 'stackListOfErrorPrones'
-                # goodToHave2 if had taken prudencyFactor, this could have been notTensorables or stackListOfDirectTensorables
+                # goodToHave2
+                #  if had taken prudencyFactor(if this option would added later),
+                #  this could have been notTensorables or stackListOfDirectTensorables(it would have
+                #  some if conditions to assign type depending on prudencyFactor)
             else:
                 self.toTensorFunc = 'notTensorables'
 
@@ -368,7 +371,6 @@ class SamplerFor_vAnnTsDataset(Sampler):
 class VAnnTsDataloader(DataLoader):
     # addTest1 needs tests
     # mustHave2 num_workers>0 problem?!!? its not stable in `windows os`
-    # goodToHave2 seed everything
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
     @argValidator
     def __init__(self, dataset: VAnnTsDataset, batch_size=64, collate_fn=None, sampler=None,
@@ -384,7 +386,7 @@ class VAnnTsDataloader(DataLoader):
         if 'batchSize' in kwargs.keys():
             batch_size = kwargs['batchSize']
 
-        # goodToHave1 make it compatible to self.device of vAnn
+        # mustHave3 make it compatible to self.device of vAnn
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.createBatchStructEverytime = createBatchStructEverytime
         if collate_fn is None:
@@ -411,7 +413,7 @@ class VAnnTsDataloader(DataLoader):
     def bestNumWorkerFinder(self):
         pass
         # mustHave2
-        #  implement it later: there is a code in `stash` but because it had sometimes errors while working
+        #  implement it later: there is a code in `devDocs\halfCompleteCode` but because it had sometimes errors while working
         #  with having any num_workers, its not complete; note num_workers for sure is `super unstable` in `windows os`
 
     def findBatchStruct(self, batch):
@@ -429,13 +431,9 @@ class VAnnTsDataloader(DataLoader):
         # cccDevAlgo
         #  for understanding gpu memory efficiency provided here take a look at devDocs\codeClarifier\gpuMemoryEfficiencyDataloader
         # bugPotentialCheck1
-        #  Im not sure how the default_collate is what I want.
-        #  from other hand I have used it in commonCollate_fn which VAnnTsDataloader uses by default
-        #  therefore double check it on commonDatasetExamples
-        # bugPotentialCheck1
         #  dicts can't directly passed to the default_collate
         # bugPotentialCheck1
-        #  TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object
+        #  TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object(note this was caused with dtype being object)
         # cccDevAlgo
         #  (how default_collate works):
         #   example1:

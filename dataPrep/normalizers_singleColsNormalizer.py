@@ -7,7 +7,6 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BaseSingleColsNormalizer(_BaseNormalizer):
-    # goodToHave1 maybe comment needs a more detailed explanation
     def __init__(self):
         _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColsNormalizer)
 
@@ -98,7 +97,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
 
     @argValidator
     def fitCol(self, df: pd.DataFrame, col):
-        # cccDevAlgo
+        # cccAlgo
         #  note the code tries to fit _LblEncoder but in the case that some `int` is supposed to be a `categorical`
         #  an error would raised by _LblEncoder. after that some _IntLabelsString would be wrapped and applied before fitting
         try:
@@ -118,7 +117,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
         self._assertColNameInDf(df, col)
         if not self._isFittedPlusPrint_col(col, printNotFitted=True):
             return df[col]
-        # cccDevAlgo
+        # cccAlgo
         #  intLabelsStrings transforms apply before the encoder transform
         if col in self.intLabelsStrings.keys():
             data_ = self.intLabelsStrings[col].transform(df[col])
@@ -129,7 +128,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
         data_ = super().inverseTransformCol(df, col)
-        # cccDevAlgo
+        # cccAlgo
         #  intLabelsStrings inverseTransform apply after the encoder inverseTransform
         if col in self.intLabelsStrings.keys():
             data_ = self.intLabelsStrings[col].inverseTransform(data_)

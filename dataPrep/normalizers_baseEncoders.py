@@ -76,7 +76,7 @@ class _StdScaler(_BaseEncoder):
 
 
 class _LblEncoder(_BaseEncoder):
-    # mustHave2 it cant handle None or np.nan or other common missing values
+    # goodToHave2 it cant handle None or np.nan or other common missing values
     intDetectedErrorMsg = "Integer labels detected. Use _IntLabelsString to convert them to string labels."
     floatDetectedErrorMsg = "Float labels detected. for using float data as categories everything should be done manually by urself; also dont forget to do inverse transform."
 

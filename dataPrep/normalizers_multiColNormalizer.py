@@ -7,9 +7,9 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BaseMultiColNormalizer(_BaseNormalizer):
-    # goodTohave3
-    #  there many funcs which can use some base func in order to reduce duplicity but this may readability harder
-    #  also between here and singleColsNormalizer
+    # cccDevStruct
+    #  there many similar funcs within this file and also between here and singleColsNormalizer
+    #  which can use some `base func` in order to `reduce duplicity` but this may readability harder, so dont change it
     # cccDevAlgo
     #  fitCol therefore fitNTransformCol doesnt make any sense because its multiCol
     def __init__(self):
@@ -112,7 +112,7 @@ class MultiColLblEncoder(_BaseMultiColNormalizer):
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
         data_ = super().inverseTransformCol(df, col)
-        # cccDevAlgo
+        # cccAlgo
         #  intLabelsStrings inverseTransform apply after the encoder inverseTransform
         if self.intLabelsString:
             data_ = self.intLabelsString.inverseTransform(data_)

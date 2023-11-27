@@ -64,7 +64,7 @@ class _BaseNormalizer(ABC):
 
     # @abstractmethod
     def fitNTransformCol(self, df, col):
-        # goodToHave3 add NpDict also
+        # goodToHave2 add NpDict also
         ...
 
     @abstractmethod
