@@ -174,7 +174,7 @@ class _TsRowFetcher:
 
         self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
         # cccAlgo idx+shiftForward also should be in data indexes
-        kwargs = varPasser(locals(), exclude=['canBeOutOfStartIndex', 'outputTensor'])
+        kwargs = varPasser(exclude=['canBeOutOfStartIndex', 'outputTensor'])
         res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
 
         if outputTensor:
@@ -190,7 +190,7 @@ class _TsRowFetcher:
                                                           shiftForward,
                                                           canHaveShorterLength,
                                                           rightPadIfShorter):
-        kwargs = varPasser(locals(), exclude=[])
+        kwargs = varPasser()
         # send to _getCastByMode depending on datatype
         if isinstance(data, NpDict):  # NpDict
             res = self._getCastByMode(self.getRows_npDict, **kwargs)
@@ -212,7 +212,7 @@ class _TsRowFetcher:
                        shiftForward, canHaveShorterLength,
                        rightPadIfShorter):
         canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
-        kwargs = varPasser(locals(), exclude=['data', 'dataTypeFunc', 'mode'])
+        kwargs = varPasser(exclude=['data', 'dataTypeFunc', 'mode'])
         if mode == self.castModes.backcast:  # backcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen, **kwargs)
@@ -359,7 +359,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(locals(), exclude=['dataToLook', 'canBeOutOfStartIndex'])
+        kwargs = varPasser(exclude=['dataToLook', 'canBeOutOfStartIndex'])
 
         return self.getBackForeCastData_general(dataToLook,
                                                 canBeOutOfStartIndex=False, **kwargs)

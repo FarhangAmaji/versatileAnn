@@ -16,11 +16,15 @@ class NormalizerStack:
     @argValidator
     def addNormalizer(self, newNormalizer: _BaseNormalizer):
         for col in newNormalizer.colNames:
+            # goodToHave1
+            #  add ability to have a col which exists in 2 normalizers
+            #  this means several normalizers in a certain order can be applied to the col data
+            #  - probably in the development the order is essential
+            #  note with current normalizers this doesnt really make sense
             if col not in self._normalizers.keys():
-                # mustHave2 add ability to have a col which exists in 2 normalizers(either _colNames or mainGroup)
                 self._normalizers.update({col: newNormalizer})
             else:
-                print(f'{col} is already in normalizers')
+                raise ValueError(f'{col} is already in normalizers')
 
     @property
     def normalizers(self):

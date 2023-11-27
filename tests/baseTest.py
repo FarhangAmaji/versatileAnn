@@ -24,17 +24,17 @@ class BaseTestClass(unittest.TestCase):
             sys.stdout = sys.__stdout__
 
     def equalDfs(self, df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
-        kwargs = varPasser(locals())
+        kwargs = varPasser()
         self.assertTrue(equalDfs(**kwargs))
 
     def equalArrays(self, array1, array2, checkType=True, floatApprox=False, floatPrecision=1e-4):
-        kwargs = varPasser(locals())
+        kwargs = varPasser()
         self.assertTrue(equalArrays(**kwargs))
 
     def equalTensors(self, tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-4, checkDevice=True):
-        kwargs = varPasser(locals())
+        kwargs = varPasser()
         self.assertTrue(equalTensors(**kwargs))
         
     def equalNpDicts(self, npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
-        kwargs = varPasser(locals())
+        kwargs = varPasser()
         self.assertTrue(equalNpDicts(**kwargs))

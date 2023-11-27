@@ -198,8 +198,8 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
 
 
 def regularizeBoolCol(df, colName):
-    assert areItemsOfList1_InList2(df[colName].unique(), [0., 1., True,
-                                                          False]), "{colName} col doesnt seem to have boolean values"
+    if not areItemsOfList1_InList2(df[colName].unique(), [0., 1., True, False]):
+        raise ValueError(f"{colName} col doesnt seem to have boolean values")
     df[colName] = df[colName].astype(bool)
 
 
@@ -349,10 +349,11 @@ def gpuMemoryUsed():
 
 
 # kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
-def varPasser(locals_, localArgNames=[], exclude=[]):
+def varPasser(*, localArgNames=None, exclude=None):
+    if exclude is None:
+        exclude = []
     # kkk add var renamer
-    assert isinstance(locals_,
-                      dict), 'locals_ is supposed to be locals() of caller func or a dictionary'
+    locals_ = inspect.currentframe().f_back.f_locals
     dict_ = {}
     if localArgNames:
         for lan in localArgNames:

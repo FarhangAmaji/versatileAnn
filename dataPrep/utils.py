@@ -35,7 +35,12 @@ def convertDatetimeNSortCols(df, dateTimeCols, sortCols):
     sortDfByCols(df, sortCols)
 
 
-def getDatasetFiles(fileName: str, dateTimeCols=[], sortCols=[]):
+def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None):
+    if dateTimeCols is None:
+        dateTimeCols = []
+    if sortCols is None:
+        sortCols = []
+
     currentDir = os.path.dirname(os.path.abspath(__file__))
     filePath = os.path.normpath(
         os.path.join(currentDir, datasetsRelativePath, fileName))
@@ -51,8 +56,8 @@ def getDatasetFiles(fileName: str, dateTimeCols=[], sortCols=[]):
 
 # ---- multi series(NSeries) data
 def addCorrespondentRow(df, correspondentRowsDf, targets, aggColName,
-                        targetMapping={}):
-    if targetMapping == {}:
+                        targetMapping=None):
+    if targetMapping is None:
         targetMapping = {tr: idx for tr, idx in
                          zip(targets, correspondentRowsDf.index)}
 
