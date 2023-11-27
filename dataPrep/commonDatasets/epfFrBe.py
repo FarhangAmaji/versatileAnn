@@ -19,14 +19,14 @@ historyExogenousCols = ['systemLoad']
 staticExogenousCols = ['market0', 'market1']
 targets = ['priceFr', 'priceBe']
 datasetInfos = {'futureExogenousCols': futureExogenousCols,
-                 'historyExogenousCols': historyExogenousCols,
-                 'staticExogenousCols': staticExogenousCols, 'targets': ['price']}
+                'historyExogenousCols': historyExogenousCols,
+                'staticExogenousCols': staticExogenousCols, 'targets': ['price']}
 
 
 # ---- getEpfFrBeProcessed_innerSteps
 def getEpfFrBeProcessed_loadData(devTestMode=False, backcastLen=110, forecastLen=22):
     mainDf, staticDf = getDatasetFiles('EPF_FR_BE.csv'), getDatasetFiles('EPF_FR_BE_static.csv')
-    if devTestMode: # goodToHave3 poor implementation
+    if devTestMode:  # goodToHave3 poor implementation
         mainDf = mainDf.loc[20 * (backcastLen + forecastLen):22 * (backcastLen + forecastLen)]
     return mainDf, staticDf
 
@@ -41,9 +41,13 @@ def _getEpfFrBeProcessed_normalizerFit_split(mainDf, backcastLen, forecastLen, t
     # cccUsage here we use MultiColStdNormalizer for targets('priceFr', 'priceBe'), which have same unit(Euro€)
     mainDf['mask'] = True
     normalizer.fitNTransform(mainDf)
-    trainDf, valDf, testDf = splitTsTrainValTest_DfNNpDict(mainDf, trainRatio=trainRatio, valRatio=valRatio,
+    trainDf, valDf, testDf = splitTsTrainValTest_DfNNpDict(mainDf, trainRatio=trainRatio,
+                                                           valRatio=valRatio,
                                                            seqLen=backcastLen + forecastLen,
                                                            shuffle=False)
+    # bugPotentialCheck2
+    #  why shuffle is False;(I think in the past I had a reason to put it==False and dont allow user
+    #  to decide; if found this answer comment it)
     return trainDf, valDf, testDf, normalizer
 
 
@@ -72,8 +76,7 @@ def _getEpfFrBeProcessed_splitNSeries(trainDf, valDf, testDf, staticDf, aggColNa
 def getEpfFrBeProcessed(backcastLen=110, forecastLen=22,
                         trainRatio=.7, valRatio=.2,
                         rightPadTrain=True, aggColName='price', devTestMode=False):
-    mainDf, staticDf = getEpfFrBeProcessed_loadData(devTestMode=devTestMode,
-                                                    backcastLen=backcastLen,
+    mainDf, staticDf = getEpfFrBeProcessed_loadData(devTestMode=devTestMode, backcastLen=backcastLen,
                                                     forecastLen=forecastLen)
     kwargs = varPasser(localArgNames=['mainDf', 'backcastLen', 'forecastLen', 'valRatio'])
     if rightPadTrain:
@@ -82,10 +85,11 @@ def getEpfFrBeProcessed(backcastLen=110, forecastLen=22,
         #  and pass trainRatio=1-(trainRatio+valRatio). so the last indexes of mainDf are dedicated
         #  to trainDf and the paddings are after them
         testDf, valDf, trainDf, normalizer = _getEpfFrBeProcessed_normalizerFit_split(
-                                            trainRatio=1 - (trainRatio + valRatio), **kwargs)
+            trainRatio=1 - (trainRatio + valRatio), **kwargs)
     else:
-        trainDf, valDf, testDf, normalizer = _getEpfFrBeProcessed_normalizerFit_split(trainRatio=trainRatio,
-                                                                                      **kwargs)
+        trainDf, valDf, testDf, normalizer = _getEpfFrBeProcessed_normalizerFit_split(
+            trainRatio=trainRatio,
+            **kwargs)
 
     kwargs = varPasser(localArgNames=['rightPadTrain', 'trainDf', 'backcastLen', 'forecastLen'])
     trainDf = _getEpfFrBeProcessed_rightPadTrain(**kwargs)
@@ -104,11 +108,14 @@ class EpfFrBeDataset(VAnnTsDataset):
         inputs['mask'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                   colsOrIndexes=['mask'])
         inputs['historyExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                              colsOrIndexes=self.additionalInfo['historyExogenousCols'])
+                                                              colsOrIndexes=self.additionalInfo[
+                                                                  'historyExogenousCols'])
         inputs['staticExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                             colsOrIndexes=self.additionalInfo['staticExogenousCols'])
+                                                             colsOrIndexes=self.additionalInfo[
+                                                                 'staticExogenousCols'])
         inputs['futureExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.fullcast,
-                                                             colsOrIndexes=self.additionalInfo['futureExogenousCols'])
+                                                             colsOrIndexes=self.additionalInfo[
+                                                                 'futureExogenousCols'])
 
         outputs = {}
         outputs['output'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
@@ -123,21 +130,17 @@ def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64,
                           trainRatio=.7, valRatio=.2,
                           rightPadTrain=True, aggColName='price', devTestMode=False):
     kwargs = varPasser(localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio',
-                                    'rightPadTrain', 'aggColName', 'devTestMode'])
+                                      'rightPadTrain', 'aggColName', 'devTestMode'])
     trainDf, valDf, testDf, normalizer = getEpfFrBeProcessed(**kwargs)
 
-    epfFrBeTrainDataset = EpfFrBeDataset(trainDf, backcastLen=backcastLen, forecastLen=forecastLen,
-                                         mainGroups=[aggColName + 'Type'], indexes=None,
-                                         additionalInfo=datasetInfos)
-    epfFrBeValDataset = EpfFrBeDataset(valDf, backcastLen=backcastLen, forecastLen=forecastLen,
-                                       mainGroups=[aggColName + 'Type'], indexes=None,
-                                       additionalInfo=datasetInfos)
-    epfFrBeTestDataset = EpfFrBeDataset(testDf, backcastLen=backcastLen, forecastLen=forecastLen,
-                                        mainGroups=[aggColName + 'Type'], indexes=None,
-                                        additionalInfo=datasetInfos)
+    kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen, 'mainGroups': [aggColName + 'Type'],
+              'indexes': None, 'additionalInfo': datasetInfos}
+    epfFrBe_TrainDataset = EpfFrBeDataset(trainDf, **kwargs)
+    epfFrBe_ValDataset = EpfFrBeDataset(valDf, **kwargs)
+    epfFrBe_TestDataset = EpfFrBeDataset(testDf, **kwargs)
     del trainDf, valDf, testDf
 
-    epfFrBe_TrainDataloader = VAnnTsDataloader(epfFrBeTrainDataset, batch_size=batchSize)
-    epfFrBe_ValDataloader = VAnnTsDataloader(epfFrBeValDataset, batch_size=batchSize)
-    epfFrBe_TestDataloader = VAnnTsDataloader(epfFrBeTestDataset, batch_size=batchSize)
+    epfFrBe_TrainDataloader = VAnnTsDataloader(epfFrBe_TrainDataset, batch_size=batchSize)
+    epfFrBe_ValDataloader = VAnnTsDataloader(epfFrBe_ValDataset, batch_size=batchSize)
+    epfFrBe_TestDataloader = VAnnTsDataloader(epfFrBe_TestDataset, batch_size=batchSize)
     return epfFrBe_TrainDataloader, epfFrBe_ValDataloader, epfFrBe_TestDataloader, normalizer
