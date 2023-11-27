@@ -327,11 +327,11 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
     def __init__(self, data, mainGroups=[], indexes=None,
                  *, backcastLen, forecastLen,
-                 useNpDictForDfs=True, **kwargs):
+                 useNpDictForDfs=True, additionalInfo=None, **kwargs):
         Dataset.__init__(self)
         _TsRowFetcher.__init__(self, backcastLen=backcastLen,
                                forecastLen=forecastLen)
-
+        self.additionalInfo = additionalInfo
         self._setIndexes(data, indexes, useNpDictForDfs,
                          backcastLen, forecastLen)
 
@@ -346,8 +346,8 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
         self._shapeWarning()
         self._noNanOrNoneDataAssertion()
-        for key, value in kwargs.items():# bugPotentialCheck1 this seems to be wrong
-            setattr(self, key, value)
+        # for key, value in kwargs.items():# bugPotentialCheck1 this seems to be wrong
+        #     setattr(self, key, value)
 
     def getBackForeCastData(self, idx, mode='backcast',
                             colsOrIndexes='___all___',
