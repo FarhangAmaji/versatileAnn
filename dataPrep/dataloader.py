@@ -322,13 +322,13 @@ class SamplerFor_vAnnTsDataset(Sampler):
     def __init__(self, dataset: VAnnTsDataset, batchSize=None, shuffle=False, seed=None):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
         if seed:
-            shuffle=True
+            shuffle = True
         if shuffle and not batchSize:
             raise ValueError('batchSize must be passed with shuffle True')
         self.indexes = dataset.indexes
         self._iterLen = None
         if batchSize:
-            self._iterLen= math.ceil(len(self.indexes)/batchSize)
+            self._iterLen = math.ceil(len(self.indexes) / batchSize)
         self.shuffle = shuffle
         self.seed = seed
         self._shuffleNumerator = 0
@@ -391,7 +391,8 @@ class VAnnTsDataloader(DataLoader):
             collate_fn = self.commonCollate_fn
 
         if sampler is None:
-            sampler = SamplerFor_vAnnTsDataset(dataset, shuffle=shuffle, seed=randomSeed, batchSize=batch_size)
+            sampler = SamplerFor_vAnnTsDataset(dataset, shuffle=shuffle, seed=randomSeed,
+                                               batchSize=batch_size)
         else:
             Warn.warn('make sure you have set, VAnnTsDataset.indexes to .indexes of sampler')
         super().__init__(dataset=dataset, batch_size=batch_size,
@@ -425,8 +426,8 @@ class VAnnTsDataloader(DataLoader):
             self.batchStruct = _NestedDictStruct(batch)
 
     def commonCollate_fn(self, batch):
-        # mustHave1
-        #  I am not sure that, moving tensors in collate_fn to gpu, is the right place for gpu efficiency
+        # cccDevAlgo
+        #  for understanding gpu memory efficiency provided here take a look at devDocs\codeClarifier\gpuMemoryEfficiencyDataloader
         # bugPotentialCheck1
         #  Im not sure how the default_collate is what I want.
         #  from other hand I have used it in commonCollate_fn which VAnnTsDataloader uses by default

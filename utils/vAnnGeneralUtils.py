@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import pandas as pd
 import torch
@@ -144,7 +146,7 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
 
     deviceEqual = tensor1.device == tensor2.device
     if not checkDevice:
-        if not deviceEqual:#cccDevStruct even though device check is not need but make both tensors to cpu in order not to get different device error in equal line below
+        if not deviceEqual:  # cccDevStruct even though device check is not need but make both tensors to cpu in order not to get different device error in equal line below
             tensor1 = tensor1.to(torch.device('cpu'))
             tensor2 = tensor2.to(torch.device('cpu'))
         deviceEqual = True
@@ -337,6 +339,15 @@ def morePreciseFloat(num, precisionOrder=6):
 
 
 # ---- misc
+def gpuMemoryUsed():
+    device = torch.device("cuda")
+
+    memory_allocated = torch.cuda.memory_allocated(device) / 1024
+    memory_cached = torch.cuda.memory_reserved(device) / 1024
+    print(f'Memory Allocated: {memory_allocated:,.2f} KB')
+    print(f'Memory Cached: {memory_cached:,.2f} KB')
+
+
 # kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
 def varPasser(locals_, localArgNames=[], exclude=[]):
     # kkk add var renamer
