@@ -12,6 +12,7 @@ from dataPrep.utils import getDatasetFiles, splitTsTrainValTest_DfNNpDict, addCo
     rightPadDf, splitToNSeries, regularizeTsStartPoints
 from utils.globalVars import tsStartPointColName
 from utils.vAnnGeneralUtils import regularizeBoolCol, varPasser
+from utils.warnings import Warn
 
 # ----
 futureExogenousCols = ['genForecast', 'weekDay']
@@ -23,16 +24,59 @@ datasetInfos = {'futureExogenousCols': futureExogenousCols,
                 'staticExogenousCols': staticExogenousCols, 'targets': ['price']}
 
 
-# ---- getEpfFrBeProcessed_innerSteps
-def getEpfFrBeProcessed_loadData(devTestMode=False, backcastLen=110, forecastLen=22):
+# ---- getEpfFrBe_processed
+def getEpfFrBe_processed(backcastLen=110, forecastLen=22,
+                         trainRatio=.7, valRatio=.2,
+                         rightPadTrain=True, aggColName='price',
+                         shuffle=False, shuffleSeed=None, devTestMode=False):
+    rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
+
+    mainDf, staticDf = getEpfFrBe_data(backcastLen=backcastLen, forecastLen=forecastLen,
+                                       devTestMode=devTestMode)
+    kwargs = varPasser(localArgNames=['mainDf', 'backcastLen', 'forecastLen', 'valRatio', 'shuffle',
+                                      'shuffleSeed'])
+    if rightPadTrain:
+        # cccAlgo
+        #  note if we have rightPadTrain==True, we want to get this order, 'testDf, valDf, trainDf',
+        #  therefore have to pass trainRatio=1-(trainRatio+valRatio). so the last indexes of mainDf are dedicated
+        #  to trainDf and the paddings are after them.
+        #  note in splitTsTrainValTest_DfNNpDict the first data is usually train, next val and test
+        testDf, valDf, trainDf, normalizer = _normalizerFit_split(
+            trainRatio=1 - (trainRatio + valRatio), **kwargs)
+    else:
+        trainDf, valDf, testDf, normalizer = _normalizerFit_split(
+            trainRatio=trainRatio, **kwargs)
+        # bugPotentialCheck2
+        #  this may be a bug for splitTsTrainValTest_DfNNpDict, with trainRatio=.7 and valRatio=.2
+        #  with 13 points to have as startpoint returns empty testDf
+
+    kwargs = varPasser(localArgNames=['rightPadTrain', 'trainDf', 'backcastLen', 'forecastLen'])
+    trainDf = _rightPadTrain(**kwargs)
+
+    kwargs = varPasser(localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName'])
+    trainDf, valDf, testDf = _splitNSeries_addStaticCorrespondentRows(**kwargs)
+    return trainDf, valDf, testDf, normalizer
+
+
+# ---- getEpfFrBe_processedInnerSteps
+def _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed):
+    if shuffleSeed:
+        shuffle = True
+    if shuffle:
+        rightPadTrain = False
+        Warn.warn('with shuffle on, rightPadTrain is not gonna be applied')
+    return rightPadTrain, shuffle
+
+
+def getEpfFrBe_data(*, backcastLen=110, forecastLen=22, devTestMode=False):
     mainDf, staticDf = getDatasetFiles('EPF_FR_BE.csv'), getDatasetFiles('EPF_FR_BE_static.csv')
     if devTestMode:  # goodToHave3 poor implementation
         mainDf = mainDf.loc[20 * (backcastLen + forecastLen):22 * (backcastLen + forecastLen)]
     return mainDf, staticDf
 
 
-def _getEpfFrBeProcessed_normalizerFit_split(mainDf, backcastLen, forecastLen, trainRatio=.7,
-                                             valRatio=.2):
+def _normalizerFit_split(mainDf, backcastLen, forecastLen, trainRatio=.7,
+                         valRatio=.2, shuffle=False, shuffleSeed=None):
     normalizer = NormalizerStack(
         SingleColsStdNormalizer([*futureExogenousCols, *historyExogenousCols]),
         MultiColStdNormalizer(targets))
@@ -41,17 +85,15 @@ def _getEpfFrBeProcessed_normalizerFit_split(mainDf, backcastLen, forecastLen, t
     # cccUsage here we use MultiColStdNormalizer for targets('priceFr', 'priceBe'), which have same unit(Euro€)
     mainDf['mask'] = True
     normalizer.fitNTransform(mainDf)
-    trainDf, valDf, testDf = splitTsTrainValTest_DfNNpDict(mainDf, trainRatio=trainRatio,
-                                                           valRatio=valRatio,
-                                                           seqLen=backcastLen + forecastLen,
-                                                           shuffle=False)
-    # bugPotentialCheck2
-    #  why shuffle is False;(I think in the past I had a reason to put it==False and dont allow user
-    #  to decide; if found this answer comment it)
+    setDfs = splitTsTrainValTest_DfNNpDict(mainDf, trainRatio=trainRatio,
+                                           valRatio=valRatio,
+                                           seqLen=backcastLen + forecastLen,
+                                           shuffle=shuffle, shuffleSeed=shuffleSeed)
+    trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
     return trainDf, valDf, testDf, normalizer
 
 
-def _getEpfFrBeProcessed_rightPadTrain(rightPadTrain, trainDf, backcastLen, forecastLen):
+def _rightPadTrain(rightPadTrain, trainDf, backcastLen, forecastLen):
     if rightPadTrain:
         trainDf = rightPadDf(trainDf, forecastLen - 1)
         # because rightPadDf adds pad=0, but the mask and tsStartPointColName must have bool data
@@ -61,7 +103,7 @@ def _getEpfFrBeProcessed_rightPadTrain(rightPadTrain, trainDf, backcastLen, fore
     return trainDf
 
 
-def _getEpfFrBeProcessed_splitNSeries(trainDf, valDf, testDf, staticDf, aggColName):
+def _splitNSeries_addStaticCorrespondentRows(trainDf, valDf, testDf, staticDf, aggColName):
     newSets = []
     for set_ in [trainDf, valDf, testDf]:
         set_ = splitToNSeries(set_, targets, aggColName)
@@ -70,33 +112,6 @@ def _getEpfFrBeProcessed_splitNSeries(trainDf, valDf, testDf, staticDf, aggColNa
         newSets += [set_]
     trainDf, valDf, testDf = newSets
     return trainDf, valDf, testDf
-
-
-# ---- getEpfFrBeProcessed
-def getEpfFrBeProcessed(backcastLen=110, forecastLen=22,
-                        trainRatio=.7, valRatio=.2,
-                        rightPadTrain=True, aggColName='price', devTestMode=False):
-    mainDf, staticDf = getEpfFrBeProcessed_loadData(devTestMode=devTestMode, backcastLen=backcastLen,
-                                                    forecastLen=forecastLen)
-    kwargs = varPasser(localArgNames=['mainDf', 'backcastLen', 'forecastLen', 'valRatio'])
-    if rightPadTrain:
-        # cccAlgo
-        #  note if we have rightPadTrain==True, we get this order, 'testDf, valDf, trainDf',
-        #  and pass trainRatio=1-(trainRatio+valRatio). so the last indexes of mainDf are dedicated
-        #  to trainDf and the paddings are after them
-        testDf, valDf, trainDf, normalizer = _getEpfFrBeProcessed_normalizerFit_split(
-            trainRatio=1 - (trainRatio + valRatio), **kwargs)
-    else:
-        trainDf, valDf, testDf, normalizer = _getEpfFrBeProcessed_normalizerFit_split(
-            trainRatio=trainRatio,
-            **kwargs)
-
-    kwargs = varPasser(localArgNames=['rightPadTrain', 'trainDf', 'backcastLen', 'forecastLen'])
-    trainDf = _getEpfFrBeProcessed_rightPadTrain(**kwargs)
-
-    kwargs = varPasser(localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName'])
-    trainDf, valDf, testDf = _getEpfFrBeProcessed_splitNSeries(**kwargs)
-    return trainDf, valDf, testDf, normalizer
 
 
 # ----
@@ -128,19 +143,23 @@ class EpfFrBeDataset(VAnnTsDataset):
 # ---- dataloader
 def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64,
                           trainRatio=.7, valRatio=.2,
-                          rightPadTrain=True, aggColName='price', devTestMode=False):
-    kwargs = varPasser(localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio',
-                                      'rightPadTrain', 'aggColName', 'devTestMode'])
-    trainDf, valDf, testDf, normalizer = getEpfFrBeProcessed(**kwargs)
+                          rightPadTrain=True, aggColName='price',
+                          shuffle=False, shuffleSeed=None, devTestMode=False):
+    rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
+    kwargs = varPasser(
+        localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'rightPadTrain',
+                       'aggColName', 'devTestMode', 'shuffle', 'shuffleSeed'])
+    trainDf, valDf, testDf, normalizer = getEpfFrBe_processed(**kwargs)
 
-    kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen, 'mainGroups': [aggColName + 'Type'],
+    kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen,
+              'mainGroups': [aggColName + 'Type'],
               'indexes': None, 'additionalInfo': datasetInfos}
-    epfFrBe_TrainDataset = EpfFrBeDataset(trainDf, **kwargs)
-    epfFrBe_ValDataset = EpfFrBeDataset(valDf, **kwargs)
-    epfFrBe_TestDataset = EpfFrBeDataset(testDf, **kwargs)
+    trainDataset = EpfFrBeDataset(trainDf, **kwargs)
+    valDataset = EpfFrBeDataset(valDf, **kwargs)
+    testDataset = EpfFrBeDataset(testDf, **kwargs)
     del trainDf, valDf, testDf
 
-    epfFrBe_TrainDataloader = VAnnTsDataloader(epfFrBe_TrainDataset, batch_size=batchSize)
-    epfFrBe_ValDataloader = VAnnTsDataloader(epfFrBe_ValDataset, batch_size=batchSize)
-    epfFrBe_TestDataloader = VAnnTsDataloader(epfFrBe_TestDataset, batch_size=batchSize)
-    return epfFrBe_TrainDataloader, epfFrBe_ValDataloader, epfFrBe_TestDataloader, normalizer
+    trainDataloader = VAnnTsDataloader(trainDataset, batch_size=batchSize)
+    valDataloader = VAnnTsDataloader(valDataset, batch_size=batchSize)
+    testDataloader = VAnnTsDataloader(testDataset, batch_size=batchSize)
+    return trainDataloader, valDataloader, testDataloader, normalizer
