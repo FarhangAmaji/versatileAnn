@@ -5,7 +5,7 @@ from dataPrep.utils_innerFuncs2 import _getSetLens, _getIdxs_possibleSets, _getS
     _getIdxsAssigned_ToGroupDontBelongTo, _assign_IdxsToRegroup_ToSetWithMaxDemand_orRandom, \
     _split_indexesNotInvolved, _assignAsMuchAs_IdxsWith1PossibleSet_loop, _sanityCheck, \
     _sortSetIndexes, _updateSetIndexes_WithMaxDemand_ofAllIdxs, _normalizeDictValues, \
-    _splitLenAssignment, _splitNpDictUsed, _addSequentAndAntecedentIndexes
+    _splitLenAssignment, _splitNpDictUsed, _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import morePreciseFloat
@@ -191,8 +191,8 @@ def _makeSetDfWith_TailDataFrom_indexesNTailIndexes(df, filteredDf, seqLens, set
                                                     tailIndexesAsPossible):
     setDfs[sn] = filteredDf.loc[setIndexes[sn]]
     setDfs[sn][tsStartPointColName] = True
-    sequenceTailIndexes = _addSequentAndAntecedentIndexes(setIndexes[sn],
-                                                          seqLenWithSequents=seqLens[sn])
+    sequenceTailIndexes = _addNextNPrev_tailIndexes(setIndexes[sn],
+                                                    seqLenWithSequents=seqLens[sn])
     sequenceTailIndexes = [item for item in sequenceTailIndexes if item not in setIndexes[sn]]
 
     try:

@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_NSeries, combineNSeries, \
+from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_mainGroup, combineNSeries, \
     splitToNSeries
 from dataPrep.utils_innerFuncs import _split_splitNShuffle_startPointIndexes
 from tests.baseTest import BaseTestClass
@@ -200,7 +200,7 @@ class SplitTsTrainValTest_DfNNpDictTests(BaseTestClass):
         self.equalDfs(testDf, testDfCheck)
 
 
-# ---- splitTrainValTest_NSeries
+# ---- splitTrainValTest_mainGroup
 class TestSplitTrainValTest_NSeries(BaseTestClass):
     def setUp(self):
         np.random.seed(seed=30)
@@ -212,8 +212,8 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
 
     def testNoStartPointCol_0seqLen_noShuffle(self):
         df = self.df.drop(tsStartPointColName, axis=1)
-        setDfs = splitTrainValTest_NSeries(df, ["A", "B"], trainRatio=.6,
-                                           valRatio=.2, seqLen=0, shuffle=False)
+        setDfs = splitTrainValTest_mainGroup(df, ["A", "B"], trainRatio=.6,
+                                             valRatio=.2, seqLen=0, shuffle=False)
         trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
 
         trainDfCheck = pd.DataFrame({
@@ -239,8 +239,8 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
         self.equalDfs(testDf, testDfCheck, floatApprox=True)
 
     def testWithStartPointCol_withSeqLen_noShuffle(self):
-        setDfs = splitTrainValTest_NSeries(self.df, ["A", "B"], trainRatio=.6,
-                                           valRatio=.2, seqLen=7, shuffle=False)
+        setDfs = splitTrainValTest_mainGroup(self.df, ["A", "B"], trainRatio=.6,
+                                             valRatio=.2, seqLen=7, shuffle=False)
         trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
 
         trainDfCheck = pd.DataFrame({
@@ -272,10 +272,10 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
     def testWithDifferentSeqLen_noShuffle(self):
         # having a condition doesnt make sense in general use cases, with seqlen, but it may does in some cases
         df = self.df.drop(tsStartPointColName, axis=1)
-        setDfs = splitTrainValTest_NSeries(df, ["A", "B"], trainRatio=.6,
-                                           valRatio=.2,
-                                           trainSeqLen=8, valSeqLen=4, testSeqLen=3,
-                                           shuffle=False)
+        setDfs = splitTrainValTest_mainGroup(df, ["A", "B"], trainRatio=.6,
+                                             valRatio=.2,
+                                             trainSeqLen=8, valSeqLen=4, testSeqLen=3,
+                                             shuffle=False)
         trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
 
         trainDfCheck = pd.DataFrame({
@@ -307,8 +307,8 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
         self.equalDfs(testDf, testDfCheck, floatApprox=True)
 
     def testWithStartPointCol_withSeqLen_Shuffle(self):
-        setDfs = splitTrainValTest_NSeries(self.df, ["A", "B"], trainRatio=.6,
-                                           valRatio=.2, seqLen=7, shuffle=True)
+        setDfs = splitTrainValTest_mainGroup(self.df, ["A", "B"], trainRatio=.6,
+                                             valRatio=.2, seqLen=7, shuffle=True)
         trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
 
         trainDfCheck = pd.DataFrame({
@@ -669,11 +669,11 @@ class _split_splitNShuffleIndexes_Tests(BaseTestClass):
             'train': [1, 2, 5, 10, 11, 12, 16, 18, 20, 28, 31, 33, 34, 35, 36, 39, 40, 41, 44, 46,
                       47, 49, 50, 55, 56, 57, 58, 59, 60, 64, 65, 66, 67, 69, 72, 73, 75, 76, 77,
                       81, 82, 83, 84, 85, 86, 89, 90, 91, 93, 94, 96, 100, 101, 106, 107, 109, 110,
-                      111, 113, 115, 159, 162],
+                      111, 113, 115],
             'val': [117, 118, 119, 121, 123, 127, 131, 132, 135, 136, 137, 138, 140, 141, 142, 143,
                     146, 147, 149, 151, 152],
-            'test': [158, 163, 167, 168, 170, 172, 177, 178, 180, 182, 186, 187, 189, 191, 193, 195,
-                     199]}
+            'test': [158, 159, 162, 163, 167, 168, 170, 172, 177, 178, 180, 182, 186, 187, 189, 191,
+                     193, 195, 199]}
         self.assertEquals(setsIndexes, expected_setsIndexes)
 
     def testConfig83noShuffle(self):

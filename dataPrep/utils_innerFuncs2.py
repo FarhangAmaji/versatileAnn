@@ -54,7 +54,7 @@ def _assignAsMuchAs_IdxsWith1PossibleSet_loop(idxs_possibleSets, indexes, setsIn
                                                   doesSetHaveDemand)
 
 
-def _addSequentAndAntecedentIndexes(indexes, *, seqLenWithAntecedents=0, seqLenWithSequents=0):
+def _addNextNPrev_tailIndexes(indexes, *, seqLenWithAntecedents=0, seqLenWithSequents=0):
     newIndexes = set()
     # Add sequent indexes
     if seqLenWithSequents > 0:

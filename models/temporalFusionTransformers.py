@@ -233,7 +233,7 @@ class temporalFusionTransformerModel(ann):
         return context[:, None].expand(-1, timesteps, -1)
 
     def forward(self, x):# x is a dictionary for each col used here and their shape is N*timesteps except encoderLengths and decoderLengths
-        #kkk correct the input structure due to the new getStallionTftDataloaders
+        #kkk correct the input structure due to the new getStallion_TftDataloaders
         encoderLengths = x["encoderLengths"]# shape: N
         decoderLengths = x["decoderLengths"]# shape: N
         batchSize= len(encoderLengths)

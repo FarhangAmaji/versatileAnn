@@ -11,7 +11,7 @@ from dataPrep.utils_innerFuncs import _convertDatetimeNSortCols, _exclude_NSerie
     _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, splitDefaultCondition, \
     _extend_dfIndexes
 from dataPrep.utils_innerFuncs import _splitApplyConditions
-from dataPrep.utils_innerFuncs2 import _addSequentAndAntecedentIndexes
+from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser
@@ -103,11 +103,43 @@ def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
     _splitMakeWarning(ratios, setDfs, setNames)
     return setDfs
 
+def splitTrainValTest_mainGroup(df, mainGroups, trainRatio, valRatio, seqLen=0,
+                                trainSeqLen=None, valSeqLen=None, testSeqLen=None,
+                                shuffle=True, conditions=[splitDefaultCondition],
+                                tailIndexes_evenShorter=False):
+    # cccAlgo
+    #  ensures that tailIndexes are also from the same mainGroup,
+    #  and different mainGroups data dont get mixed up
+    # addTest1
+    # mustHave2 shuffle should have seed
+    grouped = df.groupby(mainGroups)
 
-def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0,
-                                   seqLenWithAntecedents=0):
+    groupedDfs = {}
+    groupNames = []
+
+    for groupName, groupDf in grouped:
+        groupNames += [groupName]
+        kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'seqLen', 'trainSeqLen',
+                                          'valSeqLen', 'testSeqLen', 'shuffle', 'conditions',
+                                          'tailIndexes_evenShorter'])
+        groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf, returnIndexes=False,
+                                                              **kwargs)
+    del grouped
+
+    setNames = ['train', 'val', 'test']
+    setDfs = {sn: pd.DataFrame() for sn in setNames}
+    for groupName in groupNames:
+        for sn in ['train', 'val', 'test']:
+            setDfs[sn] = pd.concat([setDfs[sn], groupedDfs[groupName][sn]])
+
+    dropInd = lambda df: df.reset_index(drop=True)
+    setDfs = {sn: dropInd(setDfs[sn]) for sn in setNames}
+    return setDfs
+
+def addNextNPrev_tailIndexes(indexes, seqLenWithSequents=0,
+                             seqLenWithAntecedents=0):
     # cccDevStruct due not to get circular import the code is done this way
-    return _addSequentAndAntecedentIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
+    return _addNextNPrev_tailIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
 
 
 def simpleSplit(data, ratios, setNames):
@@ -155,38 +187,7 @@ def combineNSeries(df, aggColName, seriesTypes=None):
     return combinedData
 
 
-def splitTrainValTest_NSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
-                              trainSeqLen=None, valSeqLen=None, testSeqLen=None,
-                              shuffle=True, conditions=[splitDefaultCondition],
-                              tailIndexesAsPossible=False):
-    # cccAlgo
-    #  ensures that tailIndexes are also from the same NSeries,
-    #  and different NSeries data dont get mixed up
-    # addTest1
-    # mustHave2 shuffle should have seed
-    grouped = df.groupby(mainGroups)
 
-    groupedDfs = {}
-    groupNames = []
-
-    for groupName, groupDf in grouped:
-        groupNames += [groupName]
-        kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'seqLen', 'trainSeqLen',
-                                          'valSeqLen', 'testSeqLen', 'shuffle', 'conditions',
-                                          'tailIndexes_evenShorter'])
-        groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf, returnIndexes=False,
-                                                              **kwargs)
-    del grouped
-
-    setNames = ['train', 'val', 'test']
-    setDfs = {sn: pd.DataFrame() for sn in setNames}
-    for groupName in groupNames:
-        for sn in ['train', 'val', 'test']:
-            setDfs[sn] = pd.concat([setDfs[sn], groupedDfs[groupName][sn]])
-
-    dropInd = lambda df: df.reset_index(drop=True)
-    setDfs = {sn: dropInd(setDfs[sn]) for sn in setNames}
-    return setDfs
 
 
 def calculateNSeriesMinDifference(df, mainGroups, col, resultColName):
