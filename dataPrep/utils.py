@@ -1,74 +1,121 @@
 # ---- imports
 import os
-import warnings
+from typing import Union
 
 import numpy as np
 import pandas as pd
 import torch
 
+from dataPrep.utils_innerFuncs import _convertDatetimeNSortCols, _exclude_NSeriesWarn, \
+    _exclude_singleColWarn, _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
+    _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, splitDefaultCondition, \
+    _extend_dfIndexes
+from dataPrep.utils_innerFuncs import _splitApplyConditions
+from dataPrep.utils_innerFuncs2 import _addSequentAndAntecedentIndexes
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol
-from utils.vAnnGeneralUtils import morePreciseFloat as mpf
+from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser
 
-# ----
-splitDefaultCondition = f'{tsStartPointColName} == True'
 # ---- datasets
 datasetsRelativePath = r'..\data\datasets'
-knownDatasetsDateTimeCols = {
+knownDatasets_dateTimeCols = {
     "EPF_FR_BE.csv": {'dateTimeCols': ["dateTime"], 'sortCols': ['dateTime']},
     "stallion.csv": {'dateTimeCols': ["date"], 'sortCols': ["agency", "sku"]},
     "electricity.csv": {'dateTimeCols': ["date"],
                         'sortCols': ['consumerId', 'hoursFromStart']}}
 
 
-def sortDfByCols(df, sortCols):
-    df = df.sort_values(by=sortCols).reset_index(drop=True)
-
-
-def convertDateTimeCols(df, dateTimeCols):
-    for dc in dateTimeCols:
-        df[dc] = pd.to_datetime(df[dc])
-
-
-def convertDatetimeNSortCols(df, dateTimeCols, sortCols):
-    convertDateTimeCols(df, dateTimeCols)
-    sortDfByCols(df, sortCols)
-
-
 def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None):
-    if dateTimeCols is None:
-        dateTimeCols = []
-    if sortCols is None:
-        sortCols = []
+    # mustHave3 should remove data from this github repo and add them to another github repo,
+    #  so if the data is not available, it should download data from there
+    dateTimeCols = dateTimeCols or []
+    sortCols = sortCols or []
 
     currentDir = os.path.dirname(os.path.abspath(__file__))
-    filePath = os.path.normpath(
-        os.path.join(currentDir, datasetsRelativePath, fileName))
+    filePath = os.path.normpath(os.path.join(currentDir, datasetsRelativePath, fileName))
     df = pd.read_csv(filePath)
-    if fileName in knownDatasetsDateTimeCols.keys():
-        dataset = knownDatasetsDateTimeCols[fileName]
-        convertDatetimeNSortCols(df, dataset['dateTimeCols'],
-                                 dataset['sortCols'])
+    if fileName in knownDatasets_dateTimeCols.keys():
+        dataset = knownDatasets_dateTimeCols[fileName]
+        _convertDatetimeNSortCols(df, dataset['dateTimeCols'], dataset['sortCols'])
     else:
-        convertDatetimeNSortCols(df, dateTimeCols, sortCols)
+        _convertDatetimeNSortCols(df, dateTimeCols, sortCols)
     return df
 
 
+# ---- data split
+
+
+@argValidator
+def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
+                                  trainRatio, valRatio,
+                                  seqLen=0, trainSeqLen=None, valSeqLen=None, testSeqLen=None,
+                                  shuffle=True, shuffleSeed=None,
+                                  conditions=None,
+                                  tailIndexes_evenShorter=False,
+                                  returnIndexes=False):
+    # addTest1
+    # goodToHave2 do it also for other datatypes other than df|NpDict
+    # cccUsage
+    #  - for seq lens pass (backcastLen+ forecastLen)
+    #  - conditions:
+    #       default (not passing with not having '__startPoint__' in df columns):
+    #           there is no need to pass `conditions` and `__startPoint__` in df cols.
+    #           '__startPoint__'s(point older in time|beginning and backer in sequence) are
+    #           calculated, also split is done efficiently with other options
+    #       default (not passing with not having '__startPoint__' in df columns):
+    #           '__startPoint__' are acquired by True values in df columns.
+    #       passing conditions:
+    #           does queries on data and sets.
+    #           it is suitable for `more complex splitting using df queries` or
+    #           `preserving your starting points`.
+    #           note '__startPoint__' is used in other functionalities of this project.
+    #           preserve your starting points: as '__startPoint__' is manipulated, you may keep the
+    #           `starting points` wanna have untouched in other columns and pass query conditions
+    #           indicating `start points` needed for split
+    #  - tailIndexes_evenShorter: allows to have shorter sequences
+    #  - returnIndexes: by default dfs(or NpDicts of them) are returned but indexes may
+    #       returned by this option
+    # cccAlgo
+    #  tails: points which are not startPoints are named as tails here. note tail for a sequence, if
+    #  the starting point is not enough backer in sequence, may has to be shorter.
+    #  set: is one of 'train', 'val' and 'test' sets
+    conditions, df, dfCopy, npDictUsed, ratios, seqLens, setNames, shuffle = _splitDataPrep(
+        conditions, df, seqLen, shuffle, shuffleSeed, testSeqLen, trainRatio, trainSeqLen, valRatio,
+        valSeqLen)
+
+    startPointsDf, isAnyConditionApplied = _splitApplyConditions(conditions, dfCopy)
+    del dfCopy
+
+    # returns start point indexes, for splitted sets
+    setIndexes = _split_splitNShuffle_startPointIndexes(startPointsDf, isAnyConditionApplied,
+                                                        ratios,
+                                                        seqLens, shuffle, shuffleSeed, setNames)
+    if returnIndexes:
+        return setIndexes
+
+    setDfs = {}
+    for sn in setNames:
+        _makeSetDfWith_TailDataFrom_indexesNTailIndexes(df, startPointsDf, seqLens, setDfs,
+                                                        setIndexes,
+                                                        sn, tailIndexes_evenShorter)
+    if npDictUsed:
+        setDfs = {sn: NpDict(setDfs[sn]) for sn in setNames}
+    _splitMakeWarning(ratios, setDfs, setNames)
+    return setDfs
+
+
+def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0,
+                                   seqLenWithAntecedents=0):
+    # cccDevStruct due not to get circular import the code is done this way
+    return _addSequentAndAntecedentIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
+
+
+def simpleSplit(data, ratios, setNames):
+    # cccDevStruct due not to get circular import the code is done this way
+    return _simpleSplit(data, ratios, setNames)
+
+
 # ---- multi series(NSeries) data
-def addCorrespondentRow(df, correspondentRowsDf, targets, aggColName,
-                        targetMapping=None):
-    if targetMapping is None:
-        targetMapping = {tr: idx for tr, idx in
-                         zip(targets, correspondentRowsDf.index)}
-
-    for target in targets:
-        if target in targetMapping:
-            target_index = targetMapping[target]
-            condition = df[aggColName + 'Type'] == target
-            df.loc[condition, correspondentRowsDf.columns] = \
-            correspondentRowsDf.iloc[target_index].values
-
-
 def splitToNSeries(df, pastCols, aggColName):
     assert aggColName not in df.columns, 'splitToNSeries: aggColName must not be in df columns'
     processedData = pd.DataFrame({})
@@ -112,7 +159,11 @@ def splitTrainValTest_NSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
                               trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                               shuffle=True, conditions=[splitDefaultCondition],
                               tailIndexesAsPossible=False):
-    #cccDevAlgo this ensures that tailIndexes are also from this group of NSeries
+    # cccAlgo
+    #  ensures that tailIndexes are also from the same NSeries,
+    #  and different NSeries data dont get mixed up
+    # addTest1
+    # mustHave2 shuffle should have seed
     grouped = df.groupby(mainGroups)
 
     groupedDfs = {}
@@ -120,231 +171,62 @@ def splitTrainValTest_NSeries(df, mainGroups, trainRatio, valRatio, seqLen=0,
 
     for groupName, groupDf in grouped:
         groupNames += [groupName]
-        groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf,
-                                                              trainRatio=trainRatio,
-                                                              valRatio=valRatio,
-                                                              seqLen=seqLen,
-                                                              trainSeqLen=trainSeqLen,
-                                                              valSeqLen=valSeqLen,
-                                                              testSeqLen=testSeqLen,
-                                                              shuffle=shuffle,
-                                                              conditions=conditions,
-                                                              tailIndexesAsPossible=tailIndexesAsPossible,
-                                                              giveStartPointsIndexes=False)
+        kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'seqLen', 'trainSeqLen',
+                                          'valSeqLen', 'testSeqLen', 'shuffle', 'conditions',
+                                          'tailIndexes_evenShorter'])
+        groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf, returnIndexes=False,
+                                                              **kwargs)
     del grouped
 
-    trainDf, valDf, testDf = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-    # these loops could have been in 1 loop but seems this way the memory management is easier
+    setNames = ['train', 'val', 'test']
+    setDfs = {sn: pd.DataFrame() for sn in setNames}
     for groupName in groupNames:
-        trainDf = pd.concat([trainDf, groupedDfs[groupName][0]])
-
-    for groupName in groupNames:
-        valDf = pd.concat([valDf, groupedDfs[groupName][1]])
-
-    for groupName in groupNames:
-        testDf = pd.concat([testDf, groupedDfs[groupName][2]])
+        for sn in ['train', 'val', 'test']:
+            setDfs[sn] = pd.concat([setDfs[sn], groupedDfs[groupName][sn]])
 
     dropInd = lambda df: df.reset_index(drop=True)
-    return dropInd(trainDf), dropInd(valDf), dropInd(testDf)
+    setDfs = {sn: dropInd(setDfs[sn]) for sn in setNames}
+    return setDfs
 
 
-def calculateNSeriesMinDifference(df, mainGroups, valueCol, resultCol):
-    minValues = df.groupby(mainGroups)[valueCol].transform('min')
-    df[resultCol] = df[valueCol] - minValues
+def calculateNSeriesMinDifference(df, mainGroups, col, resultColName):
+    minValues = df.groupby(mainGroups)[col].transform('min')
+    df[resultColName] = df[col] - minValues
 
 
-def excludeValuesFromEnd_NSeries(df, mainGroups, excludeVal, valueCol,
-                                 resultCol):
-    uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
-    uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
-    if (uniqueMainGroupMax - uniqueMainGroupMin).min() <= excludeVal:
-        warnings.warn(
-            f'by excluding values form the end, for some groups there would be no {resultCol} equal to True')
-    df.loc[df[valueCol] <= uniqueMainGroupMax - excludeVal, resultCol] = True
-    df.loc[df[resultCol] != True, resultCol] = False
+def excludeValuesFromEnd_NSeries(df, mainGroups, excludeVal,
+                                 col, resultColName):
+    uniqueMainGroupMax, _ = _exclude_NSeriesWarn(col, df, excludeVal, mainGroups,
+                                                 resultColName, 'end')
+    mask = df[col] <= uniqueMainGroupMax - excludeVal
+    df[resultColName] = np.where(mask, True, False)
 
 
-def excludeValuesFromBeginning_NSeries(df, mainGroups, excludeVal, valueCol,
-                                       resultCol):
-    uniqueMainGroupMax = df.groupby(mainGroups)[valueCol].transform('max')
-    uniqueMainGroupMin = df.groupby(mainGroups)[valueCol].transform('min')
-    if (uniqueMainGroupMax - uniqueMainGroupMin).min() <= excludeVal:
-        warnings.warn(
-            f'by excluding values form the beginning, for some groups there would be no {resultCol} equal to True')
-    df.loc[df[valueCol] >= uniqueMainGroupMin + excludeVal, resultCol] = True
-    df.loc[df[resultCol] != True, resultCol] = False
+def excludeValuesFromBeginning_NSeries(df, mainGroups, excludeVal,
+                                       col, resultColName):
+    _, uniqueMainGroupMin = _exclude_NSeriesWarn(col, df, excludeVal, mainGroups,
+                                                 resultColName, 'beginning')
+    mask = df[col] >= uniqueMainGroupMin + excludeVal
+    df[resultColName] = np.where(mask, True, False)
 
 
-# ---- data split
-def addSequentAndAntecedentIndexes(indexes, seqLenWithSequents=0,
-                                   seqLenWithAntecedents=0):
-    newIndexes = set()
+def addCorrespondentRow(df, correspondentRowsDf, targets, aggColName,
+                        targetMapping=None):
+    if targetMapping is None:
+        targetMapping = {tr: idx for tr, idx in
+                         zip(targets, correspondentRowsDf.index)}
 
-    # Add sequent indexes
-    if seqLenWithSequents > 0:
-        for num in indexes:
-            newIndexes.update(range(num + 1,
-                                    num + seqLenWithSequents))  # adds sequents so the seqLen will be seqLenWithSequents
-
-    # Add antecedent indexes
-    if seqLenWithAntecedents > 0:
-        for num in indexes:
-            newIndexes.update(range(num - seqLenWithAntecedents + 1,
-                                    num))  # adds antecedents so the seqLen will be seqLenWithAntecedents
-
-    newIndexes.difference_update(
-        indexes)  # Remove existing elements from the newIndexes set
-    indexes = np.concatenate((indexes, np.array(list(newIndexes))))
-    indexes.sort()
-    return indexes
-
-
-def ratiosCheck(trainRatio, valRatio):
-    trainRatio, valRatio = mpf(trainRatio), mpf(valRatio)
-    testRatio = mpf(1 - trainRatio - valRatio)
-    assert mpf(sum([trainRatio, valRatio,
-                    testRatio])) == 1, 'sum of train, val and test ratios must be 1'
-    return trainRatio, valRatio, testRatio
-
-
-def simpleSplit(data, trainRatio, valRatio):
-    trainRatio, valRatio, testRatio = ratiosCheck(trainRatio, valRatio)
-    trainEnd = int(mpf(mpf(trainRatio) * len(data)))
-    valEnd = int(mpf(mpf(trainRatio + valRatio) * len(data)))
-    train = data[:trainEnd]
-    val = data[trainEnd:valEnd]
-    test = data[valEnd:]
-    return train, val, test
-
-
-def regularizeTsStartPoints(df):
-    # addTest2 needs tests
-    regularizeBoolCol(df, tsStartPointColName)
-    nonTsStartPointsFalse(df)
-
-
-def nonTsStartPointsFalse(df):
-    "to make sure all non-True values are turned to False"
-    nonStartPointCondition = df[tsStartPointColName] != True
-    df.loc[nonStartPointCondition, tsStartPointColName] = False
-
-
-def subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen, valSeqLen,
-                        testSeqLen, isAnyConditionApplied):
-    # cccDevAlgo this is to prevent that each set(train/val/test)+its seqLen exceeds from last Index of indexes
-    # bugPotentialCheck2 this implementation may have some utilized points
-    # cccDevAlgo the problem of utilizing all points and keeping the order so train uses first items
-    #  and val and test have next items is impossible for some case due to respondant seqLens
-    #  but without keeping the order, there may be some more complex algos to utilize all of the points and keep the set indexes together
-    if not isAnyConditionApplied:
-        maxLen = len(indexes)
-        for ratio, sl in zip([trainRatio, trainRatio + valRatio, 1],
-                             [trainSeqLen, valSeqLen, testSeqLen]):
-            maxLen = min((len(indexes) + 1 - sl) / ratio, maxLen)
-        indexes = indexes[:int(mpf(maxLen))]
-
-    return indexes
-
-
-def splitTsTrainValTest_DfNNpDict(df, trainRatio, valRatio, seqLen=0,
-                                  trainSeqLen=None, valSeqLen=None,
-                                  testSeqLen=None,
-                                  shuffle=True,
-                                  conditions=[splitDefaultCondition],
-                                  tailIndexesAsPossible=False,
-                                  giveStartPointsIndexes=False):
-    # addTest1 needs tests
-    # goodToHave2 do it also for other datatypes
-    #cccUsage
-    # - for seq lens pass (backcastLen+ forecastLen)
-    # - note this func expects conditions which indicate the first point(older in time|backer in sequence), beginning of backcast point;
-    #         this can be done with having '__startPoint__' with True values or other query conditions
-    # - note if u want to preserve u starting points use another column than '__startPoint__'(and use query conditions)
-    #         because it is gonna be manipulated in this func for each train,val or test set
-    # - note if your df has multipleSeries(NSeries) data, more likely you should gonna use df query conditions
-
-    trainRatio, valRatio, testRatio = ratiosCheck(trainRatio, valRatio)
-    if trainSeqLen == None:
-        trainSeqLen = seqLen
-    if valSeqLen == None:
-        valSeqLen = seqLen
-    if testSeqLen == None:
-        testSeqLen = seqLen
-
-    npDictUsed = False
-    if isinstance(df, NpDict):
-        df = df.df
-        npDictUsed = True
-    filteredDf = df.copy()
-
-    isAnyConditionApplied = False
-    doQueryNTurnisAnyConditionApplied = lambda df, con, ica: (
-    df.query(con), True)
-    for condition in conditions:
-        if condition == splitDefaultCondition:
-            try:
-                filteredDf, isAnyConditionApplied = doQueryNTurnisAnyConditionApplied(
-                    filteredDf, condition, isAnyConditionApplied)
-            except:
-                pass
-        else:
-            filteredDf, isAnyConditionApplied = doQueryNTurnisAnyConditionApplied(
-                filteredDf, condition, isAnyConditionApplied)
-
-    indexes = np.array(filteredDf.sort_index().index)
-    indexes = subtractFromIndexes(indexes, trainRatio, valRatio, trainSeqLen,
-                                  valSeqLen, testSeqLen, isAnyConditionApplied)
-
-    if shuffle:
-        # mustHave2 add compatibility to seed everything
-        np.random.shuffle(indexes)
-    trainIndexes, valIndexes, testIndexes = simpleSplit(indexes, trainRatio,
-                                                        valRatio)
-    if giveStartPointsIndexes:
-        return trainIndexes, valIndexes, testIndexes
-
-    sets = []
-    dfIndexes = df.index
-    for idx, sl in zip([trainIndexes, valIndexes, testIndexes],
-                       [trainSeqLen, valSeqLen, testSeqLen]):
-        set_ = filteredDf.loc[idx]
-        set_[tsStartPointColName] = True
-        idx2 = addSequentAndAntecedentIndexes(idx, seqLenWithSequents=sl)
-        sequenceTailIndexes = [item for item in idx2 if item not in idx]
-        try:
-            sequenceTailData = df.loc[sequenceTailIndexes]
-        except:
-            if tailIndexesAsPossible:
-                #cccDevAlgo  having tailIndexesAsPossible makes it possible for datasets to fetch data with inEqual length
-                sequenceTailIndexes = [sti for sti in sequenceTailIndexes if
-                                       sti in dfIndexes]
-                sequenceTailData = df.loc[sequenceTailIndexes]
-            else:
-                raise IndexError(
-                    "sequence tails(points which can't be the start point because of time series data)" \
-                    + "df should have '__startPoint__', False or indicated with other query conditions")
-        sequenceTailData[tsStartPointColName] = False
-        set_ = pd.concat([set_, sequenceTailData]).sort_index().reset_index(
-            drop=True)
-        sets += [set_]
-    trainDf, valDf, testDf = sets
-    if npDictUsed:
-        trainDf, valDf, testDf = NpDict(trainDf), NpDict(valDf), NpDict(testDf)
-    warningMade = False
-    for df_, ratio in zip([trainDf, valDf, testDf],
-                          [trainRatio, valRatio, testRatio]):
-        if mpf(ratio) != 0 and len(df_) == 0:
-            warningMade = True
-    if warningMade:
-        warnings.warn(
-            "the backcastLen and forecastLen seem to be high. some of the sets(train|val|test) are empty")
-        # goodToHave2 make warnings type of vAnnWarning
-        # goodToHave3 maybe print warnings in colored background
-    return trainDf, valDf, testDf
+    for target in targets:
+        if target in targetMapping:
+            target_index = targetMapping[target]
+            condition = df[aggColName + 'Type'] == target
+            df.loc[condition, correspondentRowsDf.columns] = correspondentRowsDf.iloc[
+                target_index].values
 
 
 # ---- padding
 # ----      df & series
+# mustHave2 refactor and comment these padding funcs
 def rightPadSeriesIfShorter(series, maxLen, pad=0):
     if maxLen <= 0:
         return series
@@ -363,38 +245,34 @@ def rightPadSeries(series, padLen, pad=0):
     return series
 
 
-def rightPadDfBaseFunc(func, dfOrSeries, padLen, pad=0):
+@argValidator
+def rightPadDfBaseFunc(func, dfOrSeries: Union[pd.DataFrame, pd.Series], padLen, pad=0):
+    # cccDevAlgo dont refactor unless its fully tested
     # goodToHave2 do similar for left, and reduce all to another base func
     # goodToHave3 could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     'also works with series'
     if isinstance(dfOrSeries, pd.DataFrame):
+        # acquire padded data
         tempDict = {}
         for i, col in enumerate(dfOrSeries.columns):
             if col == tsStartPointColName:
                 tempDict[col] = func(dfOrSeries[col], padLen, pad=False)
             else:
                 tempDict[col] = func(dfOrSeries[col], padLen, pad=pad)
+
+        # assign padded data to df
         for i, col in enumerate(dfOrSeries.columns):
             if i == 0:
-                if dfOrSeries.index.dtype in [np.int16, np.int32, np.int64]:
-                    dfStartInd = dfOrSeries.index.min()
-                    newIndex = [jj for jj in range(dfStartInd, dfStartInd + len(
-                        tempDict[col]))]
-                    dfOrSeries = dfOrSeries.reindex(newIndex)
-                else:
-                    newIndex = tempDict[col].index
-                    dfOrSeries = dfOrSeries.reindex(newIndex)
+                dfOrSeries, newIndex = _extend_dfIndexes(col, dfOrSeries, tempDict)
             dfOrSeries[col] = pd.Series(tempDict[col].values, index=newIndex)
         return dfOrSeries
     elif isinstance(dfOrSeries, pd.Series):
         return func(dfOrSeries, padLen, pad=pad)
-    else:
-        raise ValueError("Input must be either a DataFrame or a Series")
 
 
 def rightPadIfShorter_df(dfOrSeries, maxLen, pad=0):
-    return rightPadDfBaseFunc(rightPadSeriesIfShorter, dfOrSeries, maxLen,
-                              pad=pad)
+    return rightPadDfBaseFunc(rightPadSeriesIfShorter, dfOrSeries,
+                              maxLen, pad=pad)
 
 
 def rightPadDf(dfOrSeries, padLen, pad=0):
@@ -403,6 +281,7 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
 
 # ----      np array
 def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
+    # cccDevAlgo dont refactor unless its fully tested
     # goodToHave2 do similar for left, and reduce all to another base func
     # goodToHave3 could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     if padLen <= 0:
@@ -459,25 +338,32 @@ def rightPadTensor(tensor, padLen, pad=0):
 
 
 # ---- misc
-def calculateSingleColMinDifference(df, valueCol, resultCol):
-    df[resultCol] = df[valueCol] - df[valueCol].min()
+def calculateSingleColMinDifference(df, col, resultColName):
+    # this is non-Nseries version of calculateNSeriesMinDifference
+    df[resultColName] = df[col] - df[col].min()
 
 
-def excludeValuesFromBeginning_SingleCol(df, excludeVal, valueCol, resultCol):
-    maxVal = df[valueCol].max()
-    minVal = df[valueCol].min()
-    if maxVal - minVal <= excludeVal:
-        warnings.warn(
-            f'by excluding values form the beginning, no {resultCol} equal to True')
-    df.loc[df[valueCol] >= minVal + excludeVal, resultCol] = True
-    df.loc[df[resultCol] != True, resultCol] = False
+def excludeValuesFromEnd_SingleCol(df, excludeVal, col, resultColName):
+    # this is non-Nseries version of excludeValuesFromEnd_NSeries
+    maxVal, _ = _exclude_singleColWarn(col, df, excludeVal, resultColName, 'end')
+    mask = df[col] <= maxVal - excludeVal
+    df[resultColName] = np.where(mask, True, False)
 
 
-def excludeValuesFromEnd_SingleCol(df, excludeVal, valueCol, resultCol):
-    maxVal = df[valueCol].max()
-    minVal = df[valueCol].min()
-    if maxVal - minVal <= excludeVal:
-        warnings.warn(
-            f'by excluding values form the end, no {resultCol} equal to True')
-    df.loc[df[valueCol] <= maxVal - excludeVal, resultCol] = True
-    df.loc[df[resultCol] != True, resultCol] = False
+def excludeValuesFromBeginning_SingleCol(df, excludeVal, col, resultColName):
+    # this is non-Nseries version of excludeValuesFromBeginning_NSeries
+    _, minVal = _exclude_singleColWarn(col, df, excludeVal, resultColName, 'beginning')
+    mask = df[col] >= minVal + excludeVal
+    df[resultColName] = np.where(mask, True, False)
+
+
+def regularizeTsStartPoints(df):
+    # addTest2 needs tests
+    regularizeBoolCol(df, tsStartPointColName)
+    nonTsStartPointsFalse(df)
+
+
+def nonTsStartPointsFalse(df):
+    # to make sure all non-True values are turned to False
+    nonStartPointCondition = df[tsStartPointColName] != True
+    df.loc[nonStartPointCondition, tsStartPointColName] = False
