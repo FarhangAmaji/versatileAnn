@@ -24,7 +24,6 @@ todos
 
 - not corrected todo tag
   - kkk FF0000
-
 - bugs
   - bugCriticalUnknown FF0000
   - bugKnown1 FF0000
@@ -54,6 +53,32 @@ todos
   - userComments
     - cccAlgo FF00FF
     - cccUsage FF00FF
+
+---
+
+the devs should not be included in `master branch`
+
+---
+
+- cccDevStruct:
+
+  explains coding parts, for i.e. if some abstract class is needed or how objects should be, etc
+
+- normal comments:
+
+  - explains what the code is doing for few next lines, or less important (depending of scope of impact of lines) why its done this way
+
+- cccAlgo:
+
+  - explains what the code is doing for users. and the scope of importance is bigger
+
+- cccDevAlgo :
+
+  - similar to `normal comments` but with more importance or scope
+
+- cccUsage:
+
+  - usually is about what type of args should be passed to funcs
 
 ---
 
