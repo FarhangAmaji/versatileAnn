@@ -74,13 +74,16 @@ class NpDict(DotDict):
         return {col: self[col] for col in self.cols()}
 
     def printDict(self):
-        print('{')
-        for col in self.cols():
+        # cccAlgo
+        #  this is super useful to make a very more readable str version of df
+        #  example: prints df like `{'__startPoint__': 6 * [True] + 10 * [False] + 6 * [True] + 10 * [False] ,}`
+        print('{', end='')
+        for i, col in enumerate(self.cols()):
             colRes = list(self[col])
             if hasThisListAnyRange(colRes):
                 colRes = listToRanges(colRes)
             colRes = similarItemsString(colRes)
-            print(f"'{col}': {colRes}, ")
+            print(f"'{col}': {colRes}", end=('' if i == len(self.cols()) - 1 else ',\n'))
         print('}')
 
     def toDf(self, resetDtype=False):
@@ -298,22 +301,23 @@ def hasThisListAnyRange(list_):
 
 def similarItemsString(inputList):
     result = []
-    currentItem = inputList[0]
+    lastItem = inputList[0]
     count = 1
 
     def formatItem(item, count):
         itemStr = f"'{item}'" if isinstance(item, str) else str(item)
-        return f"{count}*[{itemStr}]" if count > 1 else itemStr
+        string = f"{count} * [{itemStr}]" if count > 1 else itemStr
+        return string
 
     for item in inputList[1:]:
-        if item == currentItem:
+        if item == lastItem:
             count += 1
         else:
-            result.append(formatItem(currentItem, count))
-            currentItem = item
+            result.append(formatItem(lastItem, count))
+            lastItem = item
             count = 1
 
-    result.append(formatItem(currentItem, count))
+    result.append(formatItem(lastItem, count))
 
     result2 = []
     currRes2 = []
@@ -330,7 +334,7 @@ def similarItemsString(inputList):
     if currRes2:
         result2.append(currResFormat(currRes2))
 
-    return '+'.join(result2)
+    return ' + '.join(result2)
 
 
 # ---- floats
