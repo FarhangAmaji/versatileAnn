@@ -105,8 +105,10 @@ def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
 
 def splitTrainValTest_mainGroup(df, mainGroups, trainRatio, valRatio, seqLen=0,
                                 trainSeqLen=None, valSeqLen=None, testSeqLen=None,
-                                shuffle=True, conditions=[splitDefaultCondition],
+                                shuffle=False, shuffleSeed=None, conditions=None,
                                 tailIndexes_evenShorter=False):
+    if shuffleSeed:
+        shuffle = True
     # cccAlgo
     #  ensures that tailIndexes are also from the same mainGroup,
     #  and different mainGroups data dont get mixed up
@@ -120,8 +122,8 @@ def splitTrainValTest_mainGroup(df, mainGroups, trainRatio, valRatio, seqLen=0,
     for groupName, groupDf in grouped:
         groupNames += [groupName]
         kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'seqLen', 'trainSeqLen',
-                                          'valSeqLen', 'testSeqLen', 'shuffle', 'conditions',
-                                          'tailIndexes_evenShorter'])
+                                          'valSeqLen', 'testSeqLen', 'shuffle', 'shuffleSeed',
+                                          'conditions', 'tailIndexes_evenShorter'])
         groupedDfs[groupName] = splitTsTrainValTest_DfNNpDict(groupDf, returnIndexes=False,
                                                               **kwargs)
     del grouped
