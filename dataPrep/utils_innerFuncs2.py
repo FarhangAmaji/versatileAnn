@@ -121,6 +121,7 @@ def _assign_IdxsToRegroup_ToSetWithMaxDemand_orRandom(expectedSetLens, idxsToReg
             else:
                 # bugPotentialCheck2
                 #  does it need to have seed assigned?!
+                random.seed(65)
                 randomSn = random.choice(setsPossibleWith_maxSetsDemand)
                 setsIndexes[randomSn].append(intr_gch)
         else:
@@ -130,6 +131,7 @@ def _assign_IdxsToRegroup_ToSetWithMaxDemand_orRandom(expectedSetLens, idxsToReg
             #  wasted. we assign it to one of possible sets
             possibleSets = [sn for sn in setNames if intr_gch not in setIdxExclusions[sn]]
             # goodToHave3 could have assigned in a way a bit more fair, like add it to set which has less data
+            random.seed(65)
             randomSn = random.choice(possibleSets)
             setsIndexes[randomSn].append(intr_gch)
 
@@ -247,6 +249,7 @@ def _updateSetIndexes_WithMaxDemand_ofAllIdxs(expectedSetLens, idxs_possibleSets
         if maxSetDemand_OfAllIdxs['value'] == 0:
             setToAssign = [sn for sn in setNames if maxSetDemand_OfAllIdxs['idx']
                            not in setIdxExclusions[sn]]
+            random.seed(65)
             setToAssign = random.choice(setToAssign)
 
         setsIndexes[setToAssign].append(maxSetDemand_OfAllIdxs['idx'])
