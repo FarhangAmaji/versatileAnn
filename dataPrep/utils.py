@@ -6,10 +6,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.utils_innerFuncs import _convertDatetimeNSortCols, _exclude_NSeriesWarn, \
+from dataPrep.utils_innerFuncs import _convertDatetimeNSortCols, _exclude_mainGroupsWarn, \
     _exclude_singleColWarn, _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
-    _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, splitDefaultCondition, \
-    _extend_dfIndexes
+    _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, _extend_dfIndexes
 from dataPrep.utils_innerFuncs import _splitApplyConditions
 from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
@@ -103,7 +102,23 @@ def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
     _splitMakeWarning(ratios, setDfs, setNames)
     return setDfs
 
-def splitTrainValTest_mainGroup(df, mainGroups, trainRatio, valRatio, seqLen=0,
+
+def addNextNPrev_tailIndexes(indexes, seqLenWithSequents=0,
+                             seqLenWithAntecedents=0):
+    # cccDevStruct due not to get circular import the code is done this way
+    return _addNextNPrev_tailIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
+
+
+def simpleSplit(data, ratios, setNames):
+    # cccDevStruct due not to get circular import the code is done this way
+    return _simpleSplit(data, ratios, setNames)
+
+
+# ---- mainGroup
+# bugPotentialCheck2
+#  its doubtful what the difference between mainGroups and NSeries, sometimes they are the same,
+#  rename the `_mainGroup` suffixes of funcs below
+def splitTrainValTest_mainGroup(df, mainGroups, *, trainRatio, valRatio, seqLen=0,
                                 trainSeqLen=None, valSeqLen=None, testSeqLen=None,
                                 shuffle=False, shuffleSeed=None, conditions=None,
                                 tailIndexes_evenShorter=False):
@@ -138,15 +153,26 @@ def splitTrainValTest_mainGroup(df, mainGroups, trainRatio, valRatio, seqLen=0,
     setDfs = {sn: dropInd(setDfs[sn]) for sn in setNames}
     return setDfs
 
-def addNextNPrev_tailIndexes(indexes, seqLenWithSequents=0,
-                             seqLenWithAntecedents=0):
-    # cccDevStruct due not to get circular import the code is done this way
-    return _addNextNPrev_tailIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
+
+def diffColValuesFromItsMin_mainGroups(df, mainGroups, col, resultColName=None):
+    minValues = df.groupby(mainGroups)[col].transform('min')
+    df[resultColName] = df[col] - minValues
 
 
-def simpleSplit(data, ratios, setNames):
-    # cccDevStruct due not to get circular import the code is done this way
-    return _simpleSplit(data, ratios, setNames)
+def setExclusionFlag_seqEnd_mainGroups(df, mainGroups, excludeVal,
+                                       col, resultColName):
+    uniqueMainGroupMax, _ = _exclude_mainGroupsWarn(col, df, excludeVal, mainGroups,
+                                                    resultColName, 'end')
+    mask = df[col] <= uniqueMainGroupMax - excludeVal
+    df[resultColName] = np.where(mask, True, False)
+
+
+def setExclusionFlag_seqBeginning_mainGroups(df, mainGroups, excludeVal,
+                                             col, resultColName):
+    _, uniqueMainGroupMin = _exclude_mainGroupsWarn(col, df, excludeVal, mainGroups,
+                                                    resultColName, 'beginning')
+    mask = df[col] >= uniqueMainGroupMin + excludeVal
+    df[resultColName] = np.where(mask, True, False)
 
 
 # ---- multi series(NSeries) data
@@ -187,30 +213,6 @@ def combineNSeries(df, aggColName, seriesTypes=None):
         combinedData = pd.concat([combinedData, seriesData[colsNotPresentIn]],
                                  axis=1)
     return combinedData
-
-
-
-
-
-def calculateNSeriesMinDifference(df, mainGroups, col, resultColName):
-    minValues = df.groupby(mainGroups)[col].transform('min')
-    df[resultColName] = df[col] - minValues
-
-
-def excludeValuesFromEnd_NSeries(df, mainGroups, excludeVal,
-                                 col, resultColName):
-    uniqueMainGroupMax, _ = _exclude_NSeriesWarn(col, df, excludeVal, mainGroups,
-                                                 resultColName, 'end')
-    mask = df[col] <= uniqueMainGroupMax - excludeVal
-    df[resultColName] = np.where(mask, True, False)
-
-
-def excludeValuesFromBeginning_NSeries(df, mainGroups, excludeVal,
-                                       col, resultColName):
-    _, uniqueMainGroupMin = _exclude_NSeriesWarn(col, df, excludeVal, mainGroups,
-                                                 resultColName, 'beginning')
-    mask = df[col] >= uniqueMainGroupMin + excludeVal
-    df[resultColName] = np.where(mask, True, False)
 
 
 def addCorrespondentRow(df, correspondentRowsDf, targets, aggColName,
@@ -341,20 +343,20 @@ def rightPadTensor(tensor, padLen, pad=0):
 
 
 # ---- misc
-def calculateSingleColMinDifference(df, col, resultColName):
-    # this is non-Nseries version of calculateNSeriesMinDifference
+def diffColValuesFromItsMin_singleCol(df, col, resultColName):
+    # this is non-mainGroups version of diffColValuesFromItsMin_mainGroups
     df[resultColName] = df[col] - df[col].min()
 
 
-def excludeValuesFromEnd_SingleCol(df, excludeVal, col, resultColName):
-    # this is non-Nseries version of excludeValuesFromEnd_NSeries
+def setExclusionFlag_seqEnd_singleCol(df, excludeVal, col, resultColName):
+    # this is non-mainGroups version of setExclusionFlag_seqEnd_mainGroups
     maxVal, _ = _exclude_singleColWarn(col, df, excludeVal, resultColName, 'end')
     mask = df[col] <= maxVal - excludeVal
     df[resultColName] = np.where(mask, True, False)
 
 
-def excludeValuesFromBeginning_SingleCol(df, excludeVal, col, resultColName):
-    # this is non-Nseries version of excludeValuesFromBeginning_NSeries
+def setExclusionFlag_seqBeginning_singleCol(df, excludeVal, col, resultColName):
+    # this is non-mainGroups version of setExclusionFlag_seqBeginning_mainGroups
     _, minVal = _exclude_singleColWarn(col, df, excludeVal, resultColName, 'beginning')
     mask = df[col] >= minVal + excludeVal
     df[resultColName] = np.where(mask, True, False)

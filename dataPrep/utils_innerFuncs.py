@@ -25,7 +25,7 @@ def _convertDatetimeNSortCols(df, dateTimeCols, sortCols):
     df = df.sort_values(by=sortCols).reset_index(drop=True)
 
 
-def _exclude_NSeriesWarn(col, df, excludeVal, mainGroups, resultColName, excludeType):
+def _exclude_mainGroupsWarn(col, df, excludeVal, mainGroups, resultColName, excludeType):
     uniqueMainGroupMax = df.groupby(mainGroups)[col].transform('max')
     uniqueMainGroupMin = df.groupby(mainGroups)[col].transform('min')
     if (uniqueMainGroupMax - uniqueMainGroupMin).min() <= excludeVal:
