@@ -325,7 +325,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     #   this should be provided either with `indexes` passed to dataset
     #   or with having `__startPoint__` in cols of df or NpDict.
 
-    def __init__(self, data, mainGroups=[], indexes=None,
+    def __init__(self, data, mainGroups=None, indexes=None,
                  *, backcastLen, forecastLen,
                  useNpDictForDfs=True, additionalInfo=None, **kwargs):
         Dataset.__init__(self)
@@ -335,7 +335,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         self._setIndexes(data, indexes, useNpDictForDfs,
                          backcastLen, forecastLen)
 
-        self.mainGroups = mainGroups
+        self.mainGroups = mainGroups or []
         # cccAlgo these Idxs are explained at _makeMainGroupsIndexes
         self.mainGroupsGeneralIdxs = {}
         self.mainGroupsRelIdxs = {}
@@ -351,18 +351,16 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
     def getBackForeCastData(self, idx, mode='backcast',
                             colsOrIndexes='___all___',
-                            shiftForward=0, outputTensor=True,
-                            canHaveShorterLength=False,
-                            rightPadIfShorter=False):
+                            *, shiftForward=0, outputTensor=True,
+                            canHaveShorterLength=False, rightPadIfShorter=False,
+                            canBeOutOfStartIndex=False):
 
-        self._assertIdx_NShift(False, idx, shiftForward)
-
+        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)#kkk
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(exclude=['dataToLook', 'canBeOutOfStartIndex'])
+        kwargs = varPasser(exclude=['dataToLook'])
 
-        return self.getBackForeCastData_general(dataToLook,
-                                                canBeOutOfStartIndex=False, **kwargs)
+        return self.getBackForeCastData_general(dataToLook, **kwargs)
         # note _IdxNdataToLook_WhileFetching works only idx is in indexes
 
     def __len__(self):
