@@ -25,7 +25,7 @@ datasetInfos = {'futureExogenousCols': futureExogenousCols,
 
 
 # ---- getEpfFrBe_processed
-def getEpfFrBe_processed(backcastLen=110, forecastLen=22,
+def getEpfFrBe_processed(*, backcastLen=110, forecastLen=22,
                          trainRatio=.7, valRatio=.2,
                          rightPadTrain=True, aggColName='price',
                          shuffle=False, shuffleSeed=None, devTestMode=False):
@@ -57,7 +57,7 @@ def getEpfFrBe_processed(backcastLen=110, forecastLen=22,
     trainDf, valDf, testDf = _splitNSeries_addStaticCorrespondentRows(**kwargs)
     return trainDf, valDf, testDf, normalizer
 
-
+# mustHave1 should have inverser also, take a look at epfFrBeTests.testInvNormalizer
 # ---- getEpfFrBe_processedInnerSteps
 def _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed):
     if shuffleSeed:
