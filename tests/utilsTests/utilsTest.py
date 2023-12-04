@@ -1,8 +1,11 @@
 import unittest
 from typing import List, Tuple, Union
 
+import torch
+
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
+from utils.vAnnGeneralUtils import equalTensors
 
 
 # ----
@@ -35,6 +38,72 @@ class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfS
                       a7, a8: List[int], a9: List[Union[str, int]], a10: List[Union[str, int]],
                       a11: int, a12: list):
         pass
+
+
+class equalTensorsTests(BaseTestClass):
+    def testDifferentFloatTypes(self):
+        pass
+
+    def testSameValues(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0])
+        tensor2 = torch.tensor([1.0, 2.0, 3.0])
+        result = equalTensors(tensor1, tensor2)
+        self.assertTrue(result)
+
+    def testDifferentValues(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0])
+        tensor2 = torch.tensor([1.1, 2.2, 3.3])
+        result = equalTensors(tensor1, tensor2)
+        self.assertFalse(result)
+
+    def testDifferentDtype(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        tensor2 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        result = equalTensors(tensor1, tensor2)
+        self.assertFalse(result)
+
+    def testDifferentDtype_withCheckTypeFalse(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        tensor2 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        result = equalTensors(tensor1, tensor2, checkType=False)
+        self.assertTrue(result)
+
+    def testDifferentDtypeInt_withCheckTypeFalse(self):
+        tensor1 = torch.tensor([1, 2, 3], dtype=torch.int64)
+        tensor2 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        result = equalTensors(tensor1, tensor2, checkType=False)
+        self.assertTrue(result)
+
+    def testFloatApproxDifferentDtypes(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        tensor2 = torch.tensor([1.0001, 2.0001, 3.0001], dtype=torch.float64)
+        result = equalTensors(tensor1, tensor2, floatApprox=True, floatPrecision=1e-3,
+                              checkType=False)
+        self.assertTrue(result)
+
+    def testDifferentDevice(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0], device='cuda:0')
+        tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
+        result = equalTensors(tensor1, tensor2)
+        self.assertFalse(result)
+
+    def testDifferentDevice_withCheckDeviceFalse(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0], device='cuda:0')
+        tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
+        result = equalTensors(tensor1, tensor2, checkDevice=False)
+        self.assertTrue(result)
+
+    def testFloatApprox(self):
+        tensor1 = torch.tensor([1.0, 2.0, 3.0])
+        tensor2 = torch.tensor([1.0001, 2.0001, 3.0001])
+        result = equalTensors(tensor1, tensor2, floatApprox=True, floatPrecision=1e-3)
+        self.assertTrue(result)
+
+    def testFloatApproxNonFloatTensors(self):
+        tensor1 = torch.tensor([1, 2, 3])
+        tensor2 = torch.tensor([1, 2, 3])
+        result = equalTensors(tensor1, tensor2, floatApprox=True, floatPrecision=1e-3)
+        self.assertTrue(result)
 
 
 # ---- run test
