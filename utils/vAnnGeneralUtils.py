@@ -139,17 +139,25 @@ def tensor_floatDtypeChangeIfNeeded(tensor):
     return tensor
 
 
-def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-4,
+def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-6,
                  checkDevice=True):
+    tensor1 = tensor1.clone()
+    tensor2 = tensor2.clone()
+
     dtypeEqual = True
     if checkType:
         dtypeEqual = tensor1.dtype == tensor2.dtype
+    else:
+        tensor1 = tensor1.to(torch.float32)
+        tensor2 = tensor2.to(torch.float32)
     if not dtypeEqual:
         return False
 
     deviceEqual = tensor1.device == tensor2.device
     if not checkDevice:
-        if not deviceEqual:  # cccDevStruct even though device check is not need but make both tensors to cpu in order not to get different device error in equal line below
+        if not deviceEqual:
+            #  even though device check is not need but make both tensors to cpu
+            #  in order not to get different device error in equal line below
             tensor1 = tensor1.to(torch.device('cpu'))
             tensor2 = tensor2.to(torch.device('cpu'))
         deviceEqual = True
@@ -361,13 +369,13 @@ def varPasser(*, localArgNames=None, exclude=None):
     dict_ = {}
     if localArgNames:
         for lan in localArgNames:
-            if lan not in exclude:  # this is usually not needed; but for the case we have some dictionary and we want to remove some keys
+            if lan not in exclude:
                 dict_[lan] = locals_[lan]
     else:
         for lan in locals_.keys():
             if lan == 'self':
                 continue
-            if lan not in exclude:  # this may be needed much more comparing to prev
+            if lan not in exclude:
                 dict_[lan] = locals_[lan]
     return dict_
 
@@ -378,6 +386,9 @@ def _allowOnlyCreationOf_ChildrenInstances(self, cls):
 
 
 def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
+    # cccAlgo
+    #  currently argValidator decorator with use of hints like List[typeX] or List[Union[typeX, int]]
+    #  does this sort of validation
     def func(obj, errMsg=''):
         if not errMsg:
             errMsg = f"the object isn't of type {typeX} or a list of it"
@@ -392,6 +403,7 @@ def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
 
 
 def nLastCallers(n=1):
+    # cccAlgo this is useful for debugging
     import inspect
     frame = inspect.currentframe().f_back
     calling_frame = frame
