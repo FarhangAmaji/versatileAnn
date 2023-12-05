@@ -1,11 +1,13 @@
 import unittest
 from typing import List, Tuple, Union
 
+import numpy as np
+import pandas as pd
 import torch
 
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
-from utils.vAnnGeneralUtils import equalTensors, DotDict
+from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict
 
 
 class DotDictTests(BaseTestClass):
@@ -75,6 +77,77 @@ class DotDictTests(BaseTestClass):
     def testSetDefault_nonExistingKey_withoutDefaultValue(self):
         value_c_noDefault = self.dotDict.setDefault('c')
         self.assertIsNone(value_c_noDefault)
+
+
+class NpDictTests(BaseTestClass):
+
+    def setUp(self):
+        self.dfData = {'a': [1, 2, 3], 'b': [4, 5, 6]}
+        self.df = pd.DataFrame(self.dfData)
+        self.npDict = NpDict(self.df)
+
+    def testInitialization_fromDataFrame(self):
+        self.assertEqual(self.npDict.shape, self.df.shape)
+        self.assertEqual(set(self.npDict.cols()), set(self.df.columns))
+
+    def testInitialization_fromDictionary(self):
+        npDict_fromDict = NpDict(self.dfData)
+        self.assertEqual(npDict_fromDict.shape, self.df.shape)
+        self.assertEqual(set(npDict_fromDict.cols()), set(self.df.columns))
+
+    def testGetDict(self):
+        for col in self.dfData:
+            self.equalArrays(self.npDict.getDict()[col], self.df[col])
+
+    def testPrintDict(self):
+        expectedPrint = "{'a': [1, 2, 3],\n" + "'b': [4, 5, 6]}"
+
+        def testFunc():
+            self.npDict.printDict()
+
+        self.assertPrint(testFunc, expectedPrint)
+
+    def testToDf(self):
+        dfFromNpDict = self.npDict.toDf()
+        self.equalDfs(dfFromNpDict, self.df)
+
+    def testToDf_resetDtype(self):
+        npDict = NpDict({'a': ['s', 1, 2, 3]})
+        self.assertEqual(npDict['a'].dtype, np.object_)
+        npDict2 = NpDict({'a': npDict['a'][1:]})
+        self.assertEqual(npDict2['a'].dtype, np.object_)
+        self.assertEqual(npDict2.toDf(resetDtype=True)['a'].dtype, np.int64)
+
+    def testDfProperty(self):
+        dfProperty = self.npDict.df
+        self.equalDfs(dfProperty, self.df)
+
+    def testGetItem_singleCol(self):
+        column_a = self.npDict['a']
+        self.equalArrays(column_a, np.array([1, 2, 3]), checkType=False)
+
+    def testGetItem_multipleCols(self):
+        selectedColumns = self.npDict[['a', 'b']]
+        self.equalArrays(selectedColumns, np.array([[1, 4], [2, 5], [3, 6]]), checkType=False)
+
+    def testGetItem_allColsSlice(self):
+        self.equalArrays(self.npDict[:], np.array([[1, 4], [2, 5], [3, 6]]), checkType=False)
+
+    def testGetItem_raiseErrorWithSlice(self):
+        with self.assertRaises(ValueError):
+            invalid_slice = self.npDict[1:3]  # Slicing other than [:] is not allowed
+
+    def testLen(self):
+        self.assertEqual(len(self.npDict), len(self.df))
+
+    def testRepr(self):
+        reprString = repr(self.npDict)
+        expectedRepr = '   a  b\n0  1  4\n1  2  5\n2  3  6'
+        self.assertEqual(reprString, expectedRepr)
+
+    def testSetItemDisabled(self):
+        with self.assertRaises(ValueError):
+            self.npDict['new_column'] = [7, 8, 9]  # __setitem__ is disabled
 
 
 class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
