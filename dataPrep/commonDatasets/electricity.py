@@ -16,22 +16,17 @@ from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, S
 from dataPrep.utils import getDatasetFiles, diffColValuesFromItsMin_mainGroups, \
     setExclusionFlag_seqEnd_mainGroups, splitTrainValTest_mainGroup
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import varPasser
+from utils.vAnnGeneralUtils import varPasser, DotDict
 
 # ----
-embedderInputSize = 369  # 369 different consumerIds
-allReals = ['hourOfDay', 'dayOfWeek', 'powerUsage', 'daysFromStart', 'hoursFromStart',
-            'daysFromStart', 'month']
-covariatesNum = len(allReals)
-
-timeIdx = 'hoursFromStart'
-mainGroups = ['consumerId']
-target = ['powerUsage']
-backcastLen = 192
-forecastLen = 1  # ccc this is for the shift
-datasetKwargs = {'mainGroups': mainGroups, 'consumerId': ['consumerId'], 'target': target,
-                 'allReals': allReals}
-
+embedderInputSize = 369  # 369 different consumerIds #kkk where should I handle this, which is a bit more general
+dataInfo = DotDict({'timeIdx': 'hoursFromStart',
+                    'mainGroups': ['consumerId'],
+                    'consumerId': ['consumerId'],
+                    'targets': ['powerUsage'],
+                    'allReals': ['hourOfDay', 'dayOfWeek', 'powerUsage', 'daysFromStart',
+                                 'hoursFromStart', 'daysFromStart', 'month']})
+dataInfo['covariatesNum'] = len(dataInfo.allReals)
 
 # ----
 
@@ -43,19 +38,21 @@ def getElectricity_processed(*, backcastLen=192, forecastLen=1,
     df = getElectricity_data(backcastLen=backcastLen, forecastLen=forecastLen,
                              devTestMode=devTestMode)
     # creating sequenceIdx
-    diffColValuesFromItsMin_mainGroups(df, mainGroups, col=timeIdx, resultColName='sequenceIdx')
+    diffColValuesFromItsMin_mainGroups(df, dataInfo.mainGroups, col=dataInfo.timeIdx, resultColName='sequenceIdx')
     # assigning start points by excluding last 'backcastLen + forecastLen-1' of each consumer
-    setExclusionFlag_seqEnd_mainGroups(df, mainGroups, backcastLen + forecastLen - 1,
+    setExclusionFlag_seqEnd_mainGroups(df, dataInfo.mainGroups, backcastLen + forecastLen - 1,
                                        col='sequenceIdx',
                                        resultColName=tsStartPointColName)
 
     normalizer = NormalizerStack(
         SingleColsStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
-        SingleColsLblEncoder(
-            mainGroups))  # cccUsage dont get it mixed up to with MainGroupNormalizers, this line just wants to convert mainGroup to 'int categories'
+        SingleColsLblEncoder(dataInfo.mainGroups))
+        # cccUsage
+        #  dont get SingleColsLblEncoder mixed up with MainGroupNormalizers,
+        #  this line just wants to convert mainGroup to 'int categories'
     normalizer.fitNTransform(df)
     kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'shuffle', 'shuffleSeed'])
-    setDfs = splitTrainValTest_mainGroup(df, mainGroups, seqLen=backcastLen + forecastLen, **kwargs)
+    setDfs = splitTrainValTest_mainGroup(df, dataInfo.mainGroups, seqLen=backcastLen + forecastLen, **kwargs)
     trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
     return trainDf, valDf, testDf, normalizer
 
@@ -82,16 +79,15 @@ class Electricity_deepArDataset(VAnnTsDataset):
         # bugPotentialCheck2 check this part
         inputs = {}
         inputs['consumerId'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                        colsOrIndexes=self.additionalInfo[
-                                                            'consumerId'])
+                                                        colsOrIndexes=self.dataInfo.consumerId)
         inputs['allReals'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                      colsOrIndexes=self.additionalInfo['allReals'])
+                                                      colsOrIndexes=self.dataInfo.allReals)
         inputs['target'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                    colsOrIndexes=self.additionalInfo['target'],
+                                                    colsOrIndexes=self.dataInfo.targets,
                                                     shiftForward=0)
 
         outputs = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                           colsOrIndexes=self.additionalInfo['target'],
+                                           colsOrIndexes=self.dataInfo.targets,
                                            shiftForward=1, canBeOutOfStartIndex=True)
 
         return inputs, outputs
@@ -101,15 +97,16 @@ class Electricity_deepArDataset(VAnnTsDataset):
 def getElectricityDataloaders(*, backcastLen=192, forecastLen=1, batchSize=64,
                               trainRatio=.7, valRatio=.2,
                               shuffle=False, shuffleSeed=None, devTestMode=False):
+    # cccAlgo forecastLen==1 is for shifting
     kwargs=varPasser(localArgNames=['backcastLen', 'forecastLen', 'trainRatio',
                                     'valRatio', 'shuffle', 'shuffleSeed', 'devTestMode'])
     trainDf, valDf, testDf, normalizer = getElectricity_processed(**kwargs)
 
     kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen, 'indexes': None,
-              'additionalInfo': datasetKwargs}
-    trainDataset = Electricity_deepArDataset(trainDf, mainGroups=mainGroups, **kwargs)
-    valDataset = Electricity_deepArDataset(valDf, mainGroups=mainGroups, **kwargs)
-    testDataset = Electricity_deepArDataset(testDf, mainGroups=mainGroups, **kwargs)
+              'dataInfo': dataInfo}
+    trainDataset = Electricity_deepArDataset(trainDf, mainGroups=dataInfo.mainGroups, **kwargs)
+    valDataset = Electricity_deepArDataset(valDf, mainGroups=dataInfo.mainGroups, **kwargs)
+    testDataset = Electricity_deepArDataset(testDf, mainGroups=dataInfo.mainGroups, **kwargs)
     del trainDf, valDf, testDf
 
     trainDataloader = VAnnTsDataloader(trainDataset, batch_size=batchSize)
