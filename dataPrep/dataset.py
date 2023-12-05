@@ -327,11 +327,11 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
     def __init__(self, data, mainGroups=None, indexes=None,
                  *, backcastLen, forecastLen,
-                 useNpDictForDfs=True, additionalInfo=None, **kwargs):
+                 useNpDictForDfs=True, dataInfo=None, **kwargs):
         Dataset.__init__(self)
         _TsRowFetcher.__init__(self, backcastLen=backcastLen,
                                forecastLen=forecastLen)
-        self.additionalInfo = additionalInfo
+        self.dataInfo = dataInfo
         self._setIndexes(data, indexes, useNpDictForDfs,
                          backcastLen, forecastLen)
 
