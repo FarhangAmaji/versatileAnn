@@ -1,8 +1,11 @@
 import inspect
+from typing import Union
 
 import numpy as np
 import pandas as pd
 import torch
+
+from utils.typeCheck import argValidator
 
 
 # ---- DotDict NpDict
@@ -67,9 +70,8 @@ class NpDict(DotDict):
     # kkk make sure other functionalities of pd df, except the things defined below are kept
     # kkk maybe also works with pd series(probably not needed)
     # kkk add setItem
-    def __init__(self, df):
-        if not (isinstance(df, pd.DataFrame) or isinstance(df, dict)):  # goodToHave3 argValidator
-            raise ValueError('only pandas DataFrames, or dictionaries are accepted')
+    @argValidator
+    def __init__(self, df: Union[pd.DataFrame, dict]):
         if isinstance(df, dict):
             df = pd.DataFrame(df)
         super().__init__({col: df[col].values for col in df.columns})
@@ -99,6 +101,14 @@ class NpDict(DotDict):
         print('}')
 
     def toDf(self, resetDtype=False):
+        # cccAlgo
+        #  assume col data consists 1 string and 3 int data like ['s',1,2,3]; the nparray has
+        #  determined the dtype==object but in the case we have removed the first string data('s'),
+        #  the dtype is not going to be changed and remains `object`, but with `resetDtype=True`,
+        #  the dtype is going to be determined again, and this time is gonna be int
+        # mustHave1
+        #  in the tutorial put the example of testToDf_resetDtype test also from getRowsByCombination
+
         return pd.DataFrame(self.getDict(resetDtype), index=self.__index__, columns=self.cols())
 
     @property
@@ -122,12 +132,14 @@ class NpDict(DotDict):
         else:
             raise KeyError(key)
 
+    def __setitem__(self, key, value):
+        raise ValueError("Item assignment is not allowed for NpDict.")
+
     def __len__(self):
         return len(self.df)
 
     def __repr__(self):
-        tempDf = self.toDf()
-        tempDf = tempDf.reset_index(drop=True)
+        tempDf = self.toDf().reset_index(drop=True)
         return str(tempDf)
 
 
