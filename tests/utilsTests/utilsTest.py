@@ -5,10 +5,78 @@ import torch
 
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
-from utils.vAnnGeneralUtils import equalTensors
+from utils.vAnnGeneralUtils import equalTensors, DotDict
 
 
-# ----
+class DotDictTests(BaseTestClass):
+    def setUp(self) -> None:
+        self.dictData = {'a': 1, 'b': 2}
+        self.dotDict = DotDict(self.dictData)
+
+    def testInitialization(self):
+        self.assertEqual(self.dotDict.dict, self.dictData)
+        self.assertEqual(self.dotDict._data, self.dictData)
+
+    def testGettingAttribute(self):
+        # cccAlgo Getting means not using .get
+        self.assertEqual(self.dotDict.a, 1)
+        self.assertEqual(self.dotDict.b, 2)
+
+    def testGettingNonexistentAttribute(self):
+        with self.assertRaises(AttributeError):
+            value = self.dotDict.c
+
+    def testGettingItem(self):
+        self.assertEqual(self.dotDict['a'], 1)
+        self.assertEqual(self.dotDict['b'], 2)
+
+    def testGettingNonexistentKey(self):
+        with self.assertRaises(KeyError):
+            value = self.dotDict['c']
+
+    def testSetItem(self):
+        self.dotDict['c'] = 3
+        self.assertEqual(self.dotDict['c'], 3)
+
+    def testLen(self):
+        dotDict = DotDict({'a': 1, 'b': 2, 'c': 3})
+        self.assertEqual(len(dotDict), 3)
+
+    def testIteration(self):
+        for key, value in self.dotDict:
+            self.assertEqual(self.dictData[key], value)
+
+    def testRepr(self):
+        self.assertEqual(repr(self.dotDict), f'DotDict: {self.dictData}')
+
+    # ---- .get
+    def testGetExistingKey_withGet(self):
+        # cccAlgo testGet is for .get
+        value_a = self.dotDict.get('a', 0)
+        self.assertEqual(value_a, 1)
+
+    def testGetNonexistentKey_withDefault_withGet(self):
+        value_c_default = self.dotDict.get('c', 0)
+        self.assertEqual(value_c_default, 0)
+
+    def testGetNonexistentKey_withoutDefault_withGet(self):
+        value_c_noDefault = self.dotDict.get('c')
+        self.assertIsNone(value_c_noDefault)
+
+    # ---- .setDefault
+    def testSetDefault_existingKey(self):
+        value_a_existing = self.dotDict.setDefault('a', 0)
+        self.assertEqual(value_a_existing, 1)
+
+    def testSetDefault_nonExistingKey(self):
+        value_c_default = self.dotDict.setDefault('c', 0)
+        self.assertEqual(value_c_default, 0)
+
+    def testSetDefault_nonExistingKey_withoutDefaultValue(self):
+        value_c_noDefault = self.dotDict.setDefault('c')
+        self.assertIsNone(value_c_noDefault)
+
+
 class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
     @typeHintChecker_AListOfSomeType
     def funcWithHints(self, a1: List[str], a2: List[int], a3: List[Tuple],
