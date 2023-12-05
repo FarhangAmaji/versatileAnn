@@ -11,17 +11,15 @@ from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer
 from dataPrep.utils import getDatasetFiles, splitTsTrainValTest_DfNNpDict, addCorrespondentRow, \
     rightPadDf, splitToNSeries, regularizeTsStartPoints
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import regularizeBoolCol, varPasser
+from utils.vAnnGeneralUtils import regularizeBoolCol, varPasser, DotDict
 from utils.warnings import Warn
 
 # ----
-futureExogenousCols = ['genForecast', 'weekDay']
-historyExogenousCols = ['systemLoad']
-staticExogenousCols = ['market0', 'market1']
-targets = ['priceFr', 'priceBe']
-datasetInfos = {'futureExogenousCols': futureExogenousCols,
-                'historyExogenousCols': historyExogenousCols,
-                'staticExogenousCols': staticExogenousCols, 'targets': ['price']}
+dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],
+                    'historyExogenousCols': ['systemLoad'],
+                    'staticExogenousCols': ['market0', 'market1'],
+                    'targets': ['priceFr', 'priceBe'],
+                    'unifiedTargets': ['price']})
 
 
 # ---- getEpfFrBe_processed
@@ -78,8 +76,9 @@ def getEpfFrBe_data(*, backcastLen=110, forecastLen=22, devTestMode=False):
 def _normalizerFit_split(mainDf, backcastLen, forecastLen, trainRatio=.7,
                          valRatio=.2, shuffle=False, shuffleSeed=None):
     normalizer = NormalizerStack(
-        SingleColsStdNormalizer([*futureExogenousCols, *historyExogenousCols]),
-        MultiColStdNormalizer(targets))
+        SingleColsStdNormalizer([*dataInfo.futureExogenousCols,
+                                 *dataInfo.historyExogenousCols]),
+        MultiColStdNormalizer(dataInfo.targets))
     # cccUsage SingleColsStdNormalizer normalize data of each col separately
     # cccUsage MultiColStdNormalizer normalize data of multiple cols based on all of those cols
     # cccUsage here we use MultiColStdNormalizer for targets('priceFr', 'priceBe'), which have same unit(Euro€)
@@ -106,8 +105,8 @@ def _rightPadTrain(rightPadTrain, trainDf, backcastLen, forecastLen):
 def _splitNSeries_addStaticCorrespondentRows(trainDf, valDf, testDf, staticDf, aggColName):
     newSets = []
     for set_ in [trainDf, valDf, testDf]:
-        set_ = splitToNSeries(set_, targets, aggColName)
-        addCorrespondentRow(set_, staticDf, targets, aggColName)
+        set_ = splitToNSeries(set_, dataInfo.targets, aggColName)
+        addCorrespondentRow(set_, staticDf, dataInfo.targets, aggColName)
         regularizeTsStartPoints(set_)  # this is just for safety
         newSets += [set_]
     trainDf, valDf, testDf = newSets
@@ -119,22 +118,19 @@ class EpfFrBeDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs = {}
         inputs['target'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                    colsOrIndexes=self.additionalInfo['targets'])
+                                                    colsOrIndexes=self.dataInfo.unifiedTargets)
         inputs['mask'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                   colsOrIndexes=['mask'])
         inputs['historyExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                              colsOrIndexes=self.additionalInfo[
-                                                                  'historyExogenousCols'])
+                                                  colsOrIndexes=self.dataInfo.historyExogenousCols)
         inputs['staticExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                             colsOrIndexes=self.additionalInfo[
-                                                                 'staticExogenousCols'])
+                                                 colsOrIndexes=self.dataInfo.staticExogenousCols)
         inputs['futureExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.fullcast,
-                                                             colsOrIndexes=self.additionalInfo[
-                                                                 'futureExogenousCols'])
+                                                 colsOrIndexes=self.dataInfo.futureExogenousCols)
 
         outputs = {}
         outputs['output'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
-                                                     colsOrIndexes=self.additionalInfo['targets'])
+                                                     colsOrIndexes=self.dataInfo.unifiedTargets)
         outputs['outputMask'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
                                                          colsOrIndexes=['mask'])
         return inputs, outputs
@@ -153,7 +149,7 @@ def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64,
 
     kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen,
               'mainGroups': [aggColName + 'Type'],
-              'indexes': None, 'additionalInfo': datasetInfos}
+              'indexes': None, 'dataInfo': dataInfo}
     trainDataset = EpfFrBeDataset(trainDf, **kwargs)
     valDataset = EpfFrBeDataset(valDf, **kwargs)
     testDataset = EpfFrBeDataset(testDf, **kwargs)
