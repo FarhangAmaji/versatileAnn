@@ -8,7 +8,8 @@ import torch
 # ---- DotDict NpDict
 class DotDict:
     def __init__(self, data):
-        # goodToHave3 only allow data which is able to have keys
+        if not hasattr(data, 'keys') or not callable(getattr(data, 'keys')):
+            raise ValueError("Input data must be a type that supports keys (e.g., a dictionary)")
         self._data = data
 
     def keys(self):
