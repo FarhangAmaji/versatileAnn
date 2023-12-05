@@ -7,40 +7,51 @@ import torch
 
 # ---- DotDict NpDict
 class DotDict:
-    # goodToHave2 add .get and setdefault
     def __init__(self, data):
-        self.data = data
+        # goodToHave3 only allow data which is able to have keys
+        self._data = data
 
     def keys(self):
-        return self.data.keys()
+        return self._data.keys()
 
     def values(self):
-        return self.data.values()
+        return self._data.values()
 
     def items(self):
-        return self.data.items()
+        return self._data.items()
 
     @property
     def dict(self):
-        return {key: self.data[key] for key in self.keys()}
+        return {key: self._data[key] for key in self.keys()}
 
     def __len__(self):
         return len(self.keys())
 
     def __getattr__(self, key):
-        if key in self.data:
-            return self.data[key]
+        if key in self._data.keys():
+            return self._data[key]
         else:
             raise AttributeError(f"'DotDict' object has no attribute '{key}'")
 
     def __getitem__(self, key):
-        if key in self.data:
-            return self.data[key]
+        if key in self._data.keys():
+            return self._data[key]
         else:
             raise KeyError(key)
 
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def setDefault(self, key, default=None):
+        if key not in self._data:
+            self._data[key] = default
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
     def __iter__(self):
-        return iter(self.data.items())
+        return iter(self._data.items())
 
     def __repr__(self):
         return 'DotDict: ' + str(self.dict)
@@ -56,7 +67,7 @@ class NpDict(DotDict):
     # kkk maybe also works with pd series(probably not needed)
     # kkk add setItem
     def __init__(self, df):
-        if not (isinstance(df, pd.DataFrame) or isinstance(df, dict)):
+        if not (isinstance(df, pd.DataFrame) or isinstance(df, dict)):  # goodToHave3 argValidator
             raise ValueError('only pandas DataFrames, or dictionaries are accepted')
         if isinstance(df, dict):
             df = pd.DataFrame(df)
@@ -65,7 +76,7 @@ class NpDict(DotDict):
         self.shape = df.shape
 
     def cols(self):
-        keys = list(self.data.keys())
+        keys = list(self._data.keys())
         return keys
 
     def getDict(self, resetDtype=False):
@@ -95,7 +106,7 @@ class NpDict(DotDict):
 
     def __getitem__(self, key):
         if key in self.cols():
-            return self.data[key]
+            return self._data[key]
         elif isinstance(key, list):
             # If a list of keys is provided, return a dictionary with selected columns
             return np.column_stack([self[col] for col in key])
