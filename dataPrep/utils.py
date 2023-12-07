@@ -372,3 +372,8 @@ def nonTsStartPointsFalse(df):
     # to make sure all non-True values are turned to False
     nonStartPointCondition = df[tsStartPointColName] != True
     df.loc[nonStartPointCondition, tsStartPointColName] = False
+
+def _applyShuffleIfSeedExists(shuffle, shuffleSeed):
+    if shuffleSeed:
+        shuffle = True
+    return shuffle

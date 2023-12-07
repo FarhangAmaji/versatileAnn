@@ -12,7 +12,7 @@ from dataPrep.normalizers_multiColNormalizer import MultiColStdNormalizer
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer
 from dataPrep.utils import getDatasetFiles, splitTsTrainValTest_DfNNpDict, addCorrespondentRow, \
-    rightPadDf, splitToNSeries, regularizeTsStartPoints
+    rightPadDf, splitToNSeries, regularizeTsStartPoints, _applyShuffleIfSeedExists
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import regularizeBoolCol, varPasser, DotDict
@@ -64,8 +64,7 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
 # mustHave1 should have inverser also, take a look at epfFrBeTests.testInvNormalizer
 # ---- getEpfFrBe_processedInnerSteps
 def _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed):
-    if shuffleSeed:
-        shuffle = True
+    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
     if shuffle:
         rightPadTrain = False
         Warn.warn('with shuffle on, rightPadTrain is not gonna be applied')

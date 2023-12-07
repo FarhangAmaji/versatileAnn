@@ -17,7 +17,7 @@ from dataPrep.dataset import VAnnTsDataset
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, SingleColsLblEncoder
 from dataPrep.utils import getDatasetFiles, diffColValuesFromItsMin_mainGroups, \
-    setExclusionFlag_seqEnd_mainGroups, splitTrainValTest_mainGroup
+    setExclusionFlag_seqEnd_mainGroups, splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import varPasser, DotDict
@@ -41,6 +41,7 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
                              trainRatio=.7, valRatio=.2,
                              shuffle=False, shuffleSeed=None, devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
+    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
     df = getElectricity_data(backcastLen=backcastLen, forecastLen=forecastLen,
                              devTestMode=devTestMode)
     # creating sequenceIdx
@@ -106,6 +107,7 @@ def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192
                               batchSize=64, trainRatio=.7, valRatio=.2, shuffle=False,
                               shuffleSeed=None, devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
+    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
     # cccAlgo forecastLen==1 is for shifting
     kwargs = varPasser(
         localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'shuffle',
