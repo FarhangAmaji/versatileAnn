@@ -6,8 +6,11 @@ this data has ['date', 'consumerId', 'hourOfDay', 'dayOfWeek', 'powerUsage','day
 there are many date cols and consumerId and powerUsage cols
 this dataset has different consumer data which are treated as separate data sequences(NSeries)
 """
+from typing import Union
+
 import pandas as pd
 
+from dataPrep.commonDatasets.commonDatasetsUtils import _dataInfoAssert
 # ---- imports
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
@@ -16,6 +19,7 @@ from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, S
 from dataPrep.utils import getDatasetFiles, diffColValuesFromItsMin_mainGroups, \
     setExclusionFlag_seqEnd_mainGroups, splitTrainValTest_mainGroup
 from utils.globalVars import tsStartPointColName
+from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import varPasser, DotDict
 
 # ----
@@ -27,18 +31,21 @@ dataInfo = DotDict({'timeIdx': 'hoursFromStart',
                     'allReals': ['hourOfDay', 'dayOfWeek', 'powerUsage', 'daysFromStart',
                                  'hoursFromStart', 'daysFromStart', 'month']})
 dataInfo['covariatesNum'] = len(dataInfo.allReals)
-
+necessaryKeys = dataInfo.keys()
 # ----
 
 # goodToHave1
 #  do these commonDataset fetcher need to have a have in order to provide unified functionality
-def getElectricity_processed(*, backcastLen=192, forecastLen=1,
+@argValidator
+def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192, forecastLen=1,
                              trainRatio=.7, valRatio=.2,
                              shuffle=False, shuffleSeed=None, devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     df = getElectricity_data(backcastLen=backcastLen, forecastLen=forecastLen,
                              devTestMode=devTestMode)
     # creating sequenceIdx
-    diffColValuesFromItsMin_mainGroups(df, dataInfo.mainGroups, col=dataInfo.timeIdx, resultColName='sequenceIdx')
+    diffColValuesFromItsMin_mainGroups(df, dataInfo.mainGroups, col=dataInfo.timeIdx,
+                                       resultColName='sequenceIdx')
     # assigning start points by excluding last 'backcastLen + forecastLen-1' of each consumer
     setExclusionFlag_seqEnd_mainGroups(df, dataInfo.mainGroups, backcastLen + forecastLen - 1,
                                        col='sequenceIdx',
@@ -94,12 +101,15 @@ class Electricity_deepArDataset(VAnnTsDataset):
 
 
 # ---- dataloader
-def getElectricityDataloaders(*, backcastLen=192, forecastLen=1, batchSize=64,
+@argValidator
+def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192, forecastLen=1, batchSize=64,
                               trainRatio=.7, valRatio=.2,
                               shuffle=False, shuffleSeed=None, devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     # cccAlgo forecastLen==1 is for shifting
-    kwargs=varPasser(localArgNames=['backcastLen', 'forecastLen', 'trainRatio',
-                                    'valRatio', 'shuffle', 'shuffleSeed', 'devTestMode'])
+    kwargs = varPasser(
+        localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'shuffle',
+                       'shuffleSeed', 'devTestMode', 'dataInfo'])
     trainDf, valDf, testDf, normalizer = getElectricity_processed(**kwargs)
 
     kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen, 'indexes': None,

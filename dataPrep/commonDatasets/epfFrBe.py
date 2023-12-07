@@ -2,6 +2,9 @@
 this is data preparation steps of hourly electricity price forecasts (EPF) for France and Belgium markets
 the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE_static.csv files
 """
+from typing import Union
+
+from dataPrep.commonDatasets.commonDatasetsUtils import _dataInfoAssert
 # ---- imports
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
@@ -20,13 +23,13 @@ dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],
                     'staticExogenousCols': ['market0', 'market1'],
                     'targets': ['priceFr', 'priceBe'],
                     'unifiedTargets': ['price']})
-
+necessaryKeys = dataInfo.keys()
 
 # ---- getEpfFrBe_processed
-def getEpfFrBe_processed(*, backcastLen=110, forecastLen=22,
-                         trainRatio=.7, valRatio=.2,
-                         rightPadTrain=True, aggColName='price',
+def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, forecastLen=22,
+                         trainRatio=.7, valRatio=.2, rightPadTrain=True, aggColName='price',
                          shuffle=False, shuffleSeed=None, devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
 
     mainDf, staticDf = getEpfFrBe_data(backcastLen=backcastLen, forecastLen=forecastLen,
@@ -137,14 +140,14 @@ class EpfFrBeDataset(VAnnTsDataset):
 
 
 # ---- dataloader
-def getEpfFrBeDataloaders(backcastLen=110, forecastLen=22, batchSize=64,
-                          trainRatio=.7, valRatio=.2,
-                          rightPadTrain=True, aggColName='price',
-                          shuffle=False, shuffleSeed=None, devTestMode=False):
+def getEpfFrBeDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=110, forecastLen=22,
+                          batchSize=64, trainRatio=.7, valRatio=.2, rightPadTrain=True,
+                          aggColName='price', shuffle=False, shuffleSeed=None, devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
     kwargs = varPasser(
         localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'rightPadTrain',
-                       'aggColName', 'devTestMode', 'shuffle', 'shuffleSeed'])
+                       'aggColName', 'devTestMode', 'shuffle', 'shuffleSeed', 'dataInfo'])
     trainDf, valDf, testDf, normalizer = getEpfFrBe_processed(**kwargs)
 
     kwargs = {'backcastLen': backcastLen, 'forecastLen': forecastLen,

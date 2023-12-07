@@ -6,9 +6,9 @@ import pandas as pd
 import torch
 
 from dataPrep.commonDatasets.electricity import getElectricity_processed, getElectricity_data, \
-    getElectricityDataloaders
+    getElectricityDataloaders, dataInfo as electricityDataInfo
 from dataPrep.commonDatasets.epfFrBe import getEpfFrBe_data, getEpfFrBe_processed, \
-    getEpfFrBeDataloaders
+    getEpfFrBeDataloaders, dataInfo as epfFrBeDataInfo
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
 
@@ -29,10 +29,11 @@ class epfFrBeTests(BaseTestClass):
         self.mainDf, staticDf = getEpfFrBe_data(devTestMode=self.devTestMode,
                                                 backcastLen=self.backcastLen,
                                                 forecastLen=self.forecastLen)
-        self.trainDf, self.valDf, self.testDf, self.normalizer = getEpfFrBe_processed(backcastLen=self.backcastLen,
-                                                                                      forecastLen=self.forecastLen, trainRatio=.6,
-                                                                                      valRatio=.2, rightPadTrain=True,
-                                                                                      aggColName=self.aggColName, devTestMode=True)
+        self.trainDf, self.valDf, self.testDf, self.normalizer = \
+            getEpfFrBe_processed(backcastLen=self.backcastLen, forecastLen=self.forecastLen,
+                                 trainRatio=.6, valRatio=.2, rightPadTrain=True,
+                                 aggColName=self.aggColName, dataInfo=epfFrBeDataInfo,
+                                 devTestMode=True)
 
     def testGetEpfFrBeProcessed(self):
         # addTest2 could have had test for innerSteps also
@@ -111,7 +112,8 @@ class epfFrBeTests(BaseTestClass):
         trainDataloader, valDataloader, testDataloader, normalizer = getEpfFrBeDataloaders(
             backcastLen=self.backcastLen, forecastLen=self.forecastLen,
             batchSize=64, trainRatio=.6, valRatio=.2,
-            rightPadTrain=True, aggColName=self.aggColName, devTestMode=self.devTestMode)
+            rightPadTrain=True, aggColName=self.aggColName, dataInfo=epfFrBeDataInfo,
+            devTestMode=self.devTestMode)
 
         # these 2 are just here in order if they make error, get detected
         next(iter(trainDataloader))
@@ -151,7 +153,7 @@ class electricityTests(BaseTestClass):
         self.setup()
         self.trainDf, self.valDf, self.testDf, self.normalizer = getElectricity_processed(
             backcastLen=self.backcastLen, forecastLen=self.forecastLen,
-            trainRatio=.6, valRatio=.2, devTestMode=True)
+            trainRatio=.6, valRatio=.2, dataInfo=electricityDataInfo, devTestMode=True)
 
     def testGetElectricity_processed(self):
         self.processedSetup()
@@ -220,7 +222,8 @@ class electricityTests(BaseTestClass):
         self.setup()
         trainDataloader, valDataloader, testDataloader, normalizer = getElectricityDataloaders(
             backcastLen=self.backcastLen, forecastLen=self.forecastLen,
-            batchSize=64, trainRatio=.7, valRatio=.2, shuffle=False, devTestMode=True)
+            batchSize=64, trainRatio=.7, valRatio=.2,
+            shuffle=False, dataInfo=electricityDataInfo, devTestMode=True)
 
         # these 2 are just here in order if they make error, get detected
         next(iter(trainDataloader))
