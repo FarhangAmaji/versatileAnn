@@ -102,9 +102,9 @@ class Electricity_deepArDataset(VAnnTsDataset):
 
 # ---- dataloader
 @argValidator
-def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192, forecastLen=1, batchSize=64,
-                              trainRatio=.7, valRatio=.2,
-                              shuffle=False, shuffleSeed=None, devTestMode=False):
+def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192, forecastLen=1,
+                              batchSize=64, trainRatio=.7, valRatio=.2, shuffle=False,
+                              shuffleSeed=None, devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     # cccAlgo forecastLen==1 is for shifting
     kwargs = varPasser(

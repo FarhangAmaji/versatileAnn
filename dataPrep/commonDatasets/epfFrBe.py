@@ -29,8 +29,9 @@ necessaryKeys = dataInfo.keys()
 # ---- getEpfFrBe_processed
 @argValidator
 def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, forecastLen=22,
-                         trainRatio=.7, valRatio=.2, rightPadTrain=True, aggColName='price',
-                         shuffle=False, shuffleSeed=None, devTestMode=False):
+                         trainRatio=.7, valRatio=.2, rightPadTrain: bool = True,
+                         aggColName: str = 'price', shuffle=False, shuffleSeed=None,
+                         devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
 
@@ -145,7 +146,8 @@ class EpfFrBeDataset(VAnnTsDataset):
 @argValidator
 def getEpfFrBeDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=110, forecastLen=22,
                           batchSize=64, trainRatio=.7, valRatio=.2, rightPadTrain=True,
-                          aggColName='price', shuffle=False, shuffleSeed=None, devTestMode=False):
+                          aggColName: str = 'price', shuffle=False, shuffleSeed=None,
+                          devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
     kwargs = varPasser(
