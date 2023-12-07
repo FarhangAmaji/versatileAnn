@@ -28,6 +28,9 @@ class DotDict:
     def dict(self):
         return {key: self._data[key] for key in self.keys()}
 
+    def copy(self):
+        return DotDict(self._data.copy())
+
     def __len__(self):
         return len(self.keys())
 
