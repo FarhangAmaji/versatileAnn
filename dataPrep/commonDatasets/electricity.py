@@ -8,9 +8,7 @@ this dataset has different consumer data which are treated as separate data sequ
 """
 from typing import Union
 
-import pandas as pd
-
-from dataPrep.commonDatasets.commonDatasetsUtils import _dataInfoAssert
+from dataPrep.commonDatasets.commonDatasets_innerStepNUtils import _dataInfoAssert, _devTestModeData
 # ---- imports
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
@@ -32,6 +30,8 @@ dataInfo = DotDict({'timeIdx': 'hoursFromStart',
                                  'hoursFromStart', 'daysFromStart', 'month']})
 dataInfo['covariatesNum'] = len(dataInfo.allReals)
 necessaryKeys = dataInfo.keys()
+
+
 # ----
 
 # goodToHave1
@@ -55,12 +55,13 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
     normalizer = NormalizerStack(
         SingleColsStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
         SingleColsLblEncoder(dataInfo.mainGroups))
-        # cccUsage
-        #  dont get SingleColsLblEncoder mixed up with MainGroupNormalizers,
-        #  this line just wants to convert mainGroup to 'int categories'
+    # cccUsage
+    #  dont get SingleColsLblEncoder mixed up with MainGroupNormalizers,
+    #  this line just wants to convert mainGroup to 'int categories'
     normalizer.fitNTransform(df)
     kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'shuffle', 'shuffleSeed'])
-    setDfs = splitTrainValTest_mainGroup(df, dataInfo.mainGroups, seqLen=backcastLen + forecastLen, **kwargs)
+    setDfs = splitTrainValTest_mainGroup(df, dataInfo.mainGroups, seqLen=backcastLen + forecastLen,
+                                         **kwargs)
     trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
     return trainDf, valDf, testDf, normalizer
 
@@ -68,16 +69,6 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
 def getElectricity_data(*, backcastLen, forecastLen, devTestMode):
     df = getDatasetFiles('electricity.csv')
     df = _devTestModeData(backcastLen, devTestMode, df, forecastLen)
-    return df
-
-
-def _devTestModeData(backcastLen, devTestMode, df, forecastLen):
-    if devTestMode:  # goodToHave3 poor implementation
-        consumer1data = df[df['consumerId'] == 'MT_001'].reset_index(drop=True).loc[
-                        0:15 + backcastLen + forecastLen]
-        consumer2data = df[df['consumerId'] == 'MT_002'].reset_index(drop=True).loc[
-                        0:15 + backcastLen + forecastLen]
-        df = pd.concat([consumer1data, consumer2data]).reset_index(drop=True)
     return df
 
 

@@ -4,19 +4,14 @@ the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE
 """
 from typing import Union
 
-from dataPrep.commonDatasets.commonDatasetsUtils import _dataInfoAssert
+from dataPrep.commonDatasets.commonDatasets_innerStepNUtils import _shuffleNRightpad_Compatibility, \
+    _normalizerFit_split, _rightPadTrain, _splitNSeries_addStaticCorrespondentRows, _dataInfoAssert
 # ---- imports
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.normalizers_multiColNormalizer import MultiColStdNormalizer
-from dataPrep.normalizers_normalizerStack import NormalizerStack
-from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer
-from dataPrep.utils import getDatasetFiles, splitTsTrainValTest_DfNNpDict, addCorrespondentRow, \
-    rightPadDf, splitToNSeries, regularizeTsStartPoints, _applyShuffleIfSeedExists
-from utils.globalVars import tsStartPointColName
+from dataPrep.utils import getDatasetFiles
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import regularizeBoolCol, varPasser, DotDict
-from utils.warnings import Warn
+from utils.vAnnGeneralUtils import varPasser, DotDict
 
 # ----
 dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],
@@ -25,6 +20,7 @@ dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],
                     'targets': ['priceFr', 'priceBe'],
                     'unifiedTargets': ['price']})
 necessaryKeys = dataInfo.keys()
+
 
 # ---- getEpfFrBe_processed
 @argValidator
@@ -38,7 +34,7 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
     mainDf, staticDf = getEpfFrBe_data(backcastLen=backcastLen, forecastLen=forecastLen,
                                        devTestMode=devTestMode)
     kwargs = varPasser(localArgNames=['mainDf', 'backcastLen', 'forecastLen', 'valRatio', 'shuffle',
-                                      'shuffleSeed'])
+                                      'shuffleSeed', 'dataInfo'])
     if rightPadTrain:
         # cccAlgo
         #  note if we have rightPadTrain==True, we want to get this order, 'testDf, valDf, trainDf',
@@ -57,18 +53,12 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
     kwargs = varPasser(localArgNames=['rightPadTrain', 'trainDf', 'backcastLen', 'forecastLen'])
     trainDf = _rightPadTrain(**kwargs)
 
-    kwargs = varPasser(localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName'])
+    kwargs = varPasser(localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName', 'dataInfo'])
     trainDf, valDf, testDf = _splitNSeries_addStaticCorrespondentRows(**kwargs)
     return trainDf, valDf, testDf, normalizer
 
+
 # mustHave1 should have inverser also, take a look at epfFrBeTests.testInvNormalizer
-# ---- getEpfFrBe_processedInnerSteps
-def _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed):
-    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
-    if shuffle:
-        rightPadTrain = False
-        Warn.warn('with shuffle on, rightPadTrain is not gonna be applied')
-    return rightPadTrain, shuffle
 
 
 def getEpfFrBe_data(*, backcastLen=110, forecastLen=22, devTestMode=False):
@@ -78,47 +68,6 @@ def getEpfFrBe_data(*, backcastLen=110, forecastLen=22, devTestMode=False):
     return mainDf, staticDf
 
 
-def _normalizerFit_split(mainDf, backcastLen, forecastLen, trainRatio=.7,
-                         valRatio=.2, shuffle=False, shuffleSeed=None):
-    normalizer = NormalizerStack(
-        SingleColsStdNormalizer([*dataInfo.futureExogenousCols,
-                                 *dataInfo.historyExogenousCols]),
-        MultiColStdNormalizer(dataInfo.targets))
-    # cccUsage SingleColsStdNormalizer normalize data of each col separately
-    # cccUsage MultiColStdNormalizer normalize data of multiple cols based on all of those cols
-    # cccUsage here we use MultiColStdNormalizer for targets('priceFr', 'priceBe'), which have same unit(Euro€)
-    mainDf['mask'] = True
-    normalizer.fitNTransform(mainDf)
-    setDfs = splitTsTrainValTest_DfNNpDict(mainDf, trainRatio=trainRatio,
-                                           valRatio=valRatio,
-                                           seqLen=backcastLen + forecastLen,
-                                           shuffle=shuffle, shuffleSeed=shuffleSeed)
-    trainDf, valDf, testDf = setDfs['train'], setDfs['val'], setDfs['test']
-    return trainDf, valDf, testDf, normalizer
-
-
-def _rightPadTrain(rightPadTrain, trainDf, backcastLen, forecastLen):
-    if rightPadTrain:
-        trainDf = rightPadDf(trainDf, forecastLen - 1)
-        # because rightPadDf adds pad=0, but the mask and tsStartPointColName must have bool data
-        regularizeBoolCol(trainDf, 'mask')
-        trainDf[tsStartPointColName] = True
-        trainDf.loc[len(trainDf) - (backcastLen + forecastLen - 1):, tsStartPointColName] = False
-    return trainDf
-
-
-def _splitNSeries_addStaticCorrespondentRows(trainDf, valDf, testDf, staticDf, aggColName):
-    newSets = []
-    for set_ in [trainDf, valDf, testDf]:
-        set_ = splitToNSeries(set_, dataInfo.targets, aggColName)
-        addCorrespondentRow(set_, staticDf, dataInfo.targets, aggColName)
-        regularizeTsStartPoints(set_)  # this is just for safety
-        newSets += [set_]
-    trainDf, valDf, testDf = newSets
-    return trainDf, valDf, testDf
-
-
-# ----
 class EpfFrBeDataset(VAnnTsDataset):
     def __getitem__(self, idx):
         inputs = {}
@@ -127,11 +76,11 @@ class EpfFrBeDataset(VAnnTsDataset):
         inputs['mask'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                                   colsOrIndexes=['mask'])
         inputs['historyExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.backcast,
-                                                  colsOrIndexes=self.dataInfo.historyExogenousCols)
+                                                              colsOrIndexes=self.dataInfo.historyExogenousCols)
         inputs['staticExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                 colsOrIndexes=self.dataInfo.staticExogenousCols)
+                                                             colsOrIndexes=self.dataInfo.staticExogenousCols)
         inputs['futureExogenous'] = self.getBackForeCastData(idx, mode=self.castModes.fullcast,
-                                                 colsOrIndexes=self.dataInfo.futureExogenousCols)
+                                                             colsOrIndexes=self.dataInfo.futureExogenousCols)
 
         outputs = {}
         outputs['output'] = self.getBackForeCastData(idx, mode=self.castModes.forecast,
