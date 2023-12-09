@@ -23,11 +23,11 @@ class temporalFusionTransformerModel(ann):
         maxEncoderLength = 10,
         staticCategoricals: List[str] = [],
         staticReals: List[str] = [],
-        timeVaryingCategoricalsEncoder: List[str] = [],
-        timeVaryingCategoricalsDecoder: List[str] = [],
-        categoricalVariableGroups: Dict[str, List[str]] = {},
-        timeVaryingRealsEncoder: List[str] = [],
-        timeVaryingRealsDecoder: List[str] = [],
+        timeVarying_categoricalsEncoder: List[str] = [],
+        timeVarying_categoricalsDecoder: List[str] = [],
+        categoricalGroupVariables: Dict[str, List[str]] = {},
+        timeVarying_realsEncoder: List[str] = [],
+        timeVarying_realsDecoder: List[str] = [],
         allReals: List[str] = [],
         allCategoricalsNonGrouped: List[str] = [],
         embeddingSizes = {},#ccc the expected type is Dict[str, List[int, int]]
@@ -40,8 +40,8 @@ class temporalFusionTransformerModel(ann):
         
         self.causalAttention = causalAttention
         self.staticVariables=staticCategoricals+staticReals
-        self.encoderVariables=timeVaryingCategoricalsEncoder+timeVaryingRealsEncoder
-        self.decoderVariables=timeVaryingCategoricalsDecoder+timeVaryingRealsDecoder
+        self.encoderVariables=timeVarying_categoricalsEncoder+timeVarying_realsEncoder
+        self.decoderVariables=timeVarying_categoricalsDecoder+timeVarying_realsDecoder
         self.allReals= allReals
         self.hiddenSize= hiddenSize
         self.targetsNum= targetsNum
@@ -50,7 +50,7 @@ class temporalFusionTransformerModel(ann):
         # embeddings
         self.inputEmbeddings = multiEmbedding(
             embeddingSizes=embeddingSizes,
-            categoricalVariableGroups=categoricalVariableGroups,
+            categoricalGroupVariables=categoricalGroupVariables,
             allCategoricalsNonGrouped=allCategoricalsNonGrouped,
             maxEmbeddingSize=hiddenSize)
 
@@ -69,27 +69,27 @@ class temporalFusionTransformerModel(ann):
             prescalers=self.prescalers)
 
         # variable selection for encoder
-        encoderInputSizes = {name: self.inputEmbeddings.outputSize[name] for name in timeVaryingCategoricalsEncoder}
-        encoderInputSizes.update({name: hiddenSize for name in timeVaryingRealsEncoder})
+        encoderInputSizes = {name: self.inputEmbeddings.outputSize[name] for name in timeVarying_categoricalsEncoder}
+        encoderInputSizes.update({name: hiddenSize for name in timeVarying_realsEncoder})
 
         "#ccc this one has contextSize"
         self.encoderVariableSelection = variableSelectionNetwork(
             inputSizes=encoderInputSizes,
             hiddenSize=hiddenSize,
-            categoricals=timeVaryingCategoricalsEncoder,
+            categoricals=timeVarying_categoricalsEncoder,
             dropoutRate=dropoutRate,
             contextSize=hiddenSize,
             prescalers=self.prescalers,
             singleVariableGrns={})
 
         # variable selection for decoder
-        decoderInputSizes = {name: self.inputEmbeddings.outputSize[name] for name in timeVaryingCategoricalsDecoder}
-        decoderInputSizes.update({name: hiddenSize for name in timeVaryingRealsDecoder})
+        decoderInputSizes = {name: self.inputEmbeddings.outputSize[name] for name in timeVarying_categoricalsDecoder}
+        decoderInputSizes.update({name: hiddenSize for name in timeVarying_realsDecoder})
         "#ccc this one has contextSize"
         self.decoderVariableSelection = variableSelectionNetwork(
             inputSizes=decoderInputSizes,
             hiddenSize=hiddenSize,
-            categoricals=timeVaryingCategoricalsDecoder,
+            categoricals=timeVarying_categoricalsDecoder,
             dropoutRate=dropoutRate,
             contextSize=hiddenSize,
             prescalers=self.prescalers,

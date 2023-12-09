@@ -51,19 +51,19 @@ maxEncoderLength = 16
 minEncoderLength = maxEncoderLength // 2
 # ----
 mainGroups=["agency", "sku"]
-categoricalVariableGroups={"specialDays": specialDays}
+categoricalGroupVariables={"specialDays": specialDays}
 
 timeIdx="timeIdx"
 targets=['volume']
 staticCategoricals=["agency", "sku"]
 staticReals=["avgPopulation2017", "avgYearlyHouseholdIncome2017"]
-timeVaryingknownCategoricals=["specialDays", "month"]
-timeVaryingknownReals=["timeIdx", "priceRegular", "discountInPercent"]
-timeVaryingUnknownCategoricals=[]
-timeVaryingUnknownReals=["volume","logVolume","industryVolume","sodaVolume","avgMaxTemp","avgVolumeByAgency","avgVolumeBySku"]
+timeVarying_knownCategoricals=["specialDays", "month"]
+timeVarying_knownReals=["timeIdx", "priceRegular", "discountInPercent"]
+timeVarying_unknownCategoricals=[]
+timeVarying_unknownReals=["volume","logVolume","industryVolume","sodaVolume","avgMaxTemp","avgVolumeByAgency","avgVolumeBySku"]
 # ---- 
-data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncoders, embeddingSizes, targetsCenterNStd, timeVaryingCategoricalsEncoder, \
-    timeVaryingRealsEncoder, timeVaryingCategoricalsDecoder, timeVaryingRealsDecoder, allReals, realScalers = preprocessTemporalFusionTransformerTrainValTestData(
+data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncoders, embeddingSizes, targetsCenterNStd, timeVarying_categoricalsEncoder, \
+    timeVarying_realsEncoder, timeVarying_categoricalsDecoder, timeVarying_realsDecoder, allReals, realScalers = preprocessTemporalFusionTransformerTrainValTestData(
     data=data,
     trainRatio=.7,
     valRatio=.3,#kkk
@@ -72,47 +72,47 @@ data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncode
     maxEncoderLength=maxEncoderLength,
     minEncoderLength=minEncoderLength,
     mainGroups=mainGroups,
-    categoricalVariableGroups=categoricalVariableGroups,
+    categoricalGroupVariables=categoricalGroupVariables,
     timeIdx=timeIdx,
     targets=targets,
     staticCategoricals=staticCategoricals,
     staticReals=staticReals,
-    timeVaryingknownCategoricals=timeVaryingknownCategoricals,
-    timeVaryingknownReals=timeVaryingknownReals,
-    timeVaryingUnknownCategoricals=timeVaryingUnknownCategoricals,
-    timeVaryingUnknownReals=timeVaryingUnknownReals
+    timeVarying_knownCategoricals=timeVarying_knownCategoricals,
+    timeVarying_knownReals=timeVarying_knownReals,
+    timeVarying_unknownCategoricals=timeVarying_unknownCategoricals,
+    timeVarying_unknownReals=timeVarying_unknownReals
 )
 # ----
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from models.temporalFusionTransformers_components import getEmbeddingSize
-allCategoricalVariableGroups = {vg1: vg for vg in categoricalVariableGroups.keys() for vg1 in categoricalVariableGroups[vg]}
+from models.temporalFusionTransformers_components import getFastAi_empericalEmbeddingSize
+allcategoricalGroupVariables = {vg1: vg for vg in categoricalGroupVariables.keys() for vg1 in categoricalGroupVariables[vg]}
 
 data['relativeTimeIdx'] = 0
-timeVaryingknownReals+=['relativeTimeIdx']
+timeVarying_knownReals+=['relativeTimeIdx']
 data['encoderLength'] = 0
 staticReals+=['encoderLength']
 
 data = data.sort_values(mainGroups + [timeIdx]).reset_index(drop=True)
-allCategoricals=list(set(staticCategoricals + timeVaryingknownCategoricals + timeVaryingUnknownCategoricals))
-allCategoricalsNonGrouped=[ac for ac in allCategoricals if ac not in categoricalVariableGroups.keys()]
-allCategoricalsNonGrouped+=list(allCategoricalVariableGroups.keys())
+allCategoricals=list(set(staticCategoricals + timeVarying_knownCategoricals + timeVarying_unknownCategoricals))
+allCategoricalsNonGrouped=[ac for ac in allCategoricals if ac not in categoricalGroupVariables.keys()]
+allCategoricalsNonGrouped+=list(allcategoricalGroupVariables.keys())
 
 categoricalEncoders={}
 for c1 in allCategoricals:
-    if c1 not in categoricalVariableGroups.keys() and c1 not in targets:
+    if c1 not in categoricalGroupVariables.keys() and c1 not in targets:
         categoricalEncoders[c1]=LabelEncoder().fit(data[c1].to_numpy().reshape(-1))
-    elif c1 in categoricalVariableGroups.keys():
-        cols=categoricalVariableGroups[c1]
+    elif c1 in categoricalGroupVariables.keys():
+        cols=categoricalGroupVariables[c1]
         categoricalEncoders[c1]=LabelEncoder().fit(data[cols].to_numpy().reshape(-1))
 
-embeddingSizes={name: [len(encoder.classes_), getEmbeddingSize(len(encoder.classes_))]
+embeddingSizes={name: [len(encoder.classes_), getFastAi_empericalEmbeddingSize(len(encoder.classes_))]
     for name, encoder in categoricalEncoders.items()}
 
 for ce in allCategoricalsNonGrouped:
-    if ce not in allCategoricalVariableGroups.keys():
+    if ce not in allcategoricalGroupVariables.keys():
         data[ce] = categoricalEncoders[ce].transform(data[ce])
-    elif ce in allCategoricalVariableGroups.keys():
-        data[ce]=categoricalEncoders[allCategoricalVariableGroups[ce]].transform(data[ce])
+    elif ce in allcategoricalGroupVariables.keys():
+        data[ce]=categoricalEncoders[allcategoricalGroupVariables[ce]].transform(data[ce])
 # ---- scaling
 eps = np.finfo(np.float16).eps
 targetsCenterNStd=pd.DataFrame()
@@ -132,10 +132,10 @@ for tg in targets:
 # ----
 "time Varying Encoder= time Varying known + time Varying unkown"
 "time Varying Decoder= time Varying known"
-timeVaryingCategoricalsEncoder=list(set(timeVaryingknownCategoricals+timeVaryingUnknownCategoricals))
-timeVaryingRealsEncoder=list(set(timeVaryingknownReals+timeVaryingUnknownReals))
-timeVaryingCategoricalsDecoder=timeVaryingknownCategoricals[:]
-timeVaryingRealsDecoder=timeVaryingknownReals[:]
+timeVarying_categoricalsEncoder=list(set(timeVarying_knownCategoricals+timeVarying_unknownCategoricals))
+timeVarying_realsEncoder=list(set(timeVarying_knownReals+timeVarying_unknownReals))
+timeVarying_categoricalsDecoder=timeVarying_knownCategoricals[:]
+timeVarying_realsDecoder=timeVarying_knownReals[:]
 # ---- split train and val
 #kkk split with respect to mainGroups
 #kkk at least maxPredictionLength in val
@@ -165,7 +165,7 @@ trainData=addSequenceEncoderNDecoderLength(trainData,minEncoderLength,maxEncoder
 valData=data[aveEachMainGroupCombinations*(1-valPredictionRatio)-maxEncoderLength-1<data[timeIdx]].reset_index(drop=True)
 valData=addSequenceEncoderNDecoderLength(valData,minEncoderLength,maxEncoderLength,minPredictionLength,maxPredictionLength)
 # ----
-allReals=list(set(staticReals+timeVaryingknownReals+timeVaryingUnknownReals))
+allReals=list(set(staticReals+timeVarying_knownReals+timeVarying_unknownReals))
 realScalers={}
 for ar in allReals:
     if ar in targets:
@@ -177,11 +177,11 @@ quantiles=[.02,.05,.25,.5,.75,.95,.98]
 model=temporalFusionTransformerModel(hiddenSize= 8, outputSize = len(quantiles), lstmLayers = 1, maxEncoderLength = 10,
 targetsNum=len(targets), attentionHeadSize = 4, dropoutRate = 0.1,
 staticCategoricals = staticCategoricals, staticReals = staticReals,
-timeVaryingCategoricalsEncoder = timeVaryingCategoricalsEncoder,
-timeVaryingCategoricalsDecoder = timeVaryingCategoricalsDecoder,
-categoricalVariableGroups = categoricalVariableGroups,
-timeVaryingRealsEncoder = timeVaryingRealsEncoder,
-timeVaryingRealsDecoder = timeVaryingRealsDecoder,
+timeVarying_categoricalsEncoder = timeVarying_categoricalsEncoder,
+timeVarying_categoricalsDecoder = timeVarying_categoricalsDecoder,
+categoricalGroupVariables = categoricalGroupVariables,
+timeVarying_realsEncoder = timeVarying_realsEncoder,
+timeVarying_realsDecoder = timeVarying_realsDecoder,
 allReals = allReals,
 allCategoricalsNonGrouped = allCategoricalsNonGrouped,
 embeddingSizes = embeddingSizes,
@@ -206,11 +206,11 @@ criterion = quantileLoss(quantiles)
 # valData=valData[valData['sequenceLength']>=minEncoderLength+minPredictionLength].reset_index(drop=True)#kkk
 externalKwargs={#kkk I just need allReals allCategoricalsNonGrouped targets maxEncoderLength maxPredictionLength
     'staticCategoricals' : staticCategoricals, 'staticReals' : staticReals,
-    'timeVaryingCategoricalsEncoder' : timeVaryingCategoricalsEncoder,
-    'timeVaryingCategoricalsDecoder' : timeVaryingCategoricalsDecoder,
-    'categoricalVariableGroups' : categoricalVariableGroups,
-    'timeVaryingRealsEncoder' : timeVaryingRealsEncoder,
-    'timeVaryingRealsDecoder' : timeVaryingRealsDecoder,
+    'timeVarying_categoricalsEncoder' : timeVarying_categoricalsEncoder,
+    'timeVarying_categoricalsDecoder' : timeVarying_categoricalsDecoder,
+    'categoricalGroupVariables' : categoricalGroupVariables,
+    'timeVarying_realsEncoder' : timeVarying_realsEncoder,
+    'timeVarying_realsDecoder' : timeVarying_realsDecoder,
     'allReals' : allReals, 'targets': targets,
     'allCategoricalsNonGrouped' : allCategoricalsNonGrouped,
     'embeddingSizes' : embeddingSizes,

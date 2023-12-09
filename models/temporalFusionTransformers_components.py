@@ -12,7 +12,7 @@ import torch.nn.functional as F
 #kkk add comments main tft init
 #kkk add comments main tft forward
 #kkk delete arg type definitions
-def getEmbeddingSize(n, maxSize = 100) -> int:
+def getFastAi_empericalEmbeddingSize(n, maxSize = 100) -> int:
     """
     Determine empirically good embedding sizes (formula taken from fastai).
     """
@@ -318,21 +318,21 @@ class multiEmbedding(nn.Module):
         self,
         embeddingSizes,#ccc the expected type is Dict[str, List[int, int]]
         allCategoricalsNonGrouped: List[str] = None,
-        categoricalVariableGroups: Dict[str, List[str]] = {},
+        categoricalGroupVariables: Dict[str, List[str]] = {},
         maxEmbeddingSize = None):
         super().__init__()
         
         # input data checks
         assert allCategoricalsNonGrouped is not None, "allCategoricalsNonGrouped must be provided."
-        categoricalGroupVariables = [name for names in categoricalVariableGroups.values() for name in names]
-        if len(categoricalVariableGroups) > 0:
-            assert all(name in embeddingSizes for name in categoricalVariableGroups), "categoricalVariableGroups must be in embeddingSizes."
-            assert not any(name in embeddingSizes for name in categoricalGroupVariables), "group variables in categoricalVariableGroups must not be in embeddingSizes."
-            assert all(name in allCategoricalsNonGrouped for name in categoricalGroupVariables), "group variables in categoricalVariableGroups must be in allCategoricalsNonGrouped."
-        assert all(name in embeddingSizes for name in embeddingSizes if name not in categoricalGroupVariables), ("all variables in embeddingSizes must be in allCategoricalsNonGrouped - but only if not already in categoricalVariableGroups.")
+        categoricalGroupVariables = [name for names in categoricalGroupVariables.values() for name in names]
+        if len(categoricalGroupVariables) > 0:
+            assert all(name in embeddingSizes for name in categoricalGroupVariables), "categoricalGroupVariables must be in embeddingSizes."
+            assert not any(name in embeddingSizes for name in categoricalGroupVariables), "group variables in categoricalGroupVariables must not be in embeddingSizes."
+            assert all(name in allCategoricalsNonGrouped for name in categoricalGroupVariables), "group variables in categoricalGroupVariables must be in allCategoricalsNonGrouped."
+        assert all(name in embeddingSizes for name in embeddingSizes if name not in categoricalGroupVariables), ("all variables in embeddingSizes must be in allCategoricalsNonGrouped - but only if not already in categoricalGroupVariables.")
 
         self.embeddingSizes = embeddingSizes
-        self.categoricalVariableGroups = categoricalVariableGroups
+        self.categoricalGroupVariables = categoricalGroupVariables
         self.maxEmbeddingSize = maxEmbeddingSize
         self.allCategoricalsNonGrouped = allCategoricalsNonGrouped
         self.initEmbeddings()
@@ -346,7 +346,7 @@ class multiEmbedding(nn.Module):
             self.embeddingSizes[name][1] = embeddingSize
         
         for name in self.embeddingSizes.keys():
-            if name in self.categoricalVariableGroups:
+            if name in self.categoricalGroupVariables:
                 #ccc embeddingBag for group categoricals like specialDays
                 self.embeddings[name] = timeDistributedEmbeddingBag(self.embeddingSizes[name][0], self.embeddingSizes[name][1], mode="sum")
             else:
@@ -360,8 +360,8 @@ class multiEmbedding(nn.Module):
     def forward(self, x) -> Dict[str, torch.Tensor]:
         inputVectors = {}
         for name, emb in self.embeddings.items():
-            if name in self.categoricalVariableGroups:
-                categoricalVariableGroup=[x[col] for col in self.categoricalVariableGroups[name]]
+            if name in self.categoricalGroupVariables:
+                categoricalVariableGroup=[x[col] for col in self.categoricalGroupVariables[name]]
                 categoricalVariableGroup=torch.stack(categoricalVariableGroup).to(categoricalVariableGroup[0].device).permute(1,2,0)
                 inputVectors[name] = emb(categoricalVariableGroup)
             else:
@@ -441,9 +441,9 @@ class interpretableMultiHeadAttention(nn.Module):#kkk how its interpretable
         return outputs, attn
 # ----
 def preprocessTemporalFusionTransformerTrainValTestData(data, trainRatio, valRatio, minPredictionLength, maxPredictionLength, maxEncoderLength, minEncoderLength,
-                            mainGroups, categoricalVariableGroups, timeIdx, targets, staticCategoricals,
-                            staticReals, timeVaryingknownCategoricals, timeVaryingknownReals, timeVaryingUnknownCategoricals,
-                            timeVaryingUnknownReals):
+                            mainGroups, categoricalGroupVariables, timeIdx, targets, staticCategoricals,
+                            staticReals, timeVarying_knownCategoricals, timeVarying_knownReals, timeVarying_unknownCategoricals,
+                            timeVarying_unknownReals):
     from sklearn.preprocessing import LabelEncoder, StandardScaler
     from functools import reduce
     def addSequenceEncoderNDecoderLength(df, mainGroupCombinations, minEncoderLength, maxEncoderLength, minPredictionLength, maxPredictionLength):
@@ -460,34 +460,34 @@ def preprocessTemporalFusionTransformerTrainValTestData(data, trainRatio, valRat
         return df
     
     testRatio=round(1-trainRatio-valRatio,3)
-    allCategoricalVariableGroups = {vg1: vg for vg in categoricalVariableGroups.keys() for vg1 in categoricalVariableGroups[vg]}
+    allcategoricalGroupVariables = {vg1: vg for vg in categoricalGroupVariables.keys() for vg1 in categoricalGroupVariables[vg]}
 
     data.loc[:,'relativeTimeIdx'] = 0
-    timeVaryingknownReals += ['relativeTimeIdx']
+    timeVarying_knownReals += ['relativeTimeIdx']
     data.loc[:,'encoderLength'] = 0
     staticReals += ['encoderLength']
 
     data = data.sort_values(mainGroups + [timeIdx]).reset_index(drop=True)
-    allCategoricals = list(set(staticCategoricals + timeVaryingknownCategoricals + timeVaryingUnknownCategoricals))
-    allCategoricalsNonGrouped = [ac for ac in allCategoricals if ac not in categoricalVariableGroups.keys()]
-    allCategoricalsNonGrouped += list(allCategoricalVariableGroups.keys())
+    allCategoricals = list(set(staticCategoricals + timeVarying_knownCategoricals + timeVarying_unknownCategoricals))
+    allCategoricalsNonGrouped = [ac for ac in allCategoricals if ac not in categoricalGroupVariables.keys()]
+    allCategoricalsNonGrouped += list(allcategoricalGroupVariables.keys())
 
     categoricalEncoders = {}
     for c1 in allCategoricals:
-        if c1 not in categoricalVariableGroups.keys() and c1 not in targets:
+        if c1 not in categoricalGroupVariables.keys() and c1 not in targets:
             categoricalEncoders[c1] = LabelEncoder().fit(data[c1].to_numpy().reshape(-1))
-        elif c1 in categoricalVariableGroups.keys():
-            cols = categoricalVariableGroups[c1]
+        elif c1 in categoricalGroupVariables.keys():
+            cols = categoricalGroupVariables[c1]
             categoricalEncoders[c1] = LabelEncoder().fit(data[cols].to_numpy().reshape(-1))
 
-    embeddingSizes = {name: [len(encoder.classes_), getEmbeddingSize(len(encoder.classes_))]
+    embeddingSizes = {name: [len(encoder.classes_), getFastAi_empericalEmbeddingSize(len(encoder.classes_))]
         for name, encoder in categoricalEncoders.items()}
 
     for ce in allCategoricalsNonGrouped:
-        if ce not in allCategoricalVariableGroups.keys():
+        if ce not in allcategoricalGroupVariables.keys():
             data[ce] = categoricalEncoders[ce].transform(data[ce])
-        elif ce in allCategoricalVariableGroups.keys():
-            data[ce] = categoricalEncoders[allCategoricalVariableGroups[ce]].transform(data[ce])
+        elif ce in allcategoricalGroupVariables.keys():
+            data[ce] = categoricalEncoders[allcategoricalGroupVariables[ce]].transform(data[ce])
 
     eps = np.finfo(np.float16).eps
     targetsCenterNStd = pd.DataFrame()
@@ -503,13 +503,13 @@ def preprocessTemporalFusionTransformerTrainValTestData(data, trainRatio, valRat
     
     "time Varying Encoder= time Varying known + time Varying unkown"
     "time Varying Decoder= time Varying known"
-    timeVaryingCategoricalsEncoder = list(set(timeVaryingknownCategoricals + timeVaryingUnknownCategoricals))
-    timeVaryingRealsEncoder = list(set(timeVaryingknownReals + timeVaryingUnknownReals))
-    timeVaryingCategoricalsDecoder = timeVaryingknownCategoricals[:]
-    timeVaryingRealsDecoder = timeVaryingknownReals[:]
+    timeVarying_categoricalsEncoder = list(set(timeVarying_knownCategoricals + timeVarying_unknownCategoricals))
+    timeVarying_realsEncoder = list(set(timeVarying_knownReals + timeVarying_unknownReals))
+    timeVarying_categoricalsDecoder = timeVarying_knownCategoricals[:]
+    timeVarying_realsDecoder = timeVarying_knownReals[:]
     
     #scaling real data
-    allReals=list(set(staticReals+timeVaryingknownReals+timeVaryingUnknownReals))
+    allReals=list(set(staticReals+timeVarying_knownReals+timeVarying_unknownReals))
     data[timeIdx+'_']=data[timeIdx]
     realScalers={}
     for ar in allReals:
@@ -556,4 +556,4 @@ def preprocessTemporalFusionTransformerTrainValTestData(data, trainRatio, valRat
     valData = addSequenceEncoderNDecoderLength(valData, mainGroupCombinations, minEncoderLength, maxEncoderLength, minPredictionLength, maxPredictionLength)
     testData = addSequenceEncoderNDecoderLength(testData, mainGroupCombinations, minEncoderLength, maxEncoderLength, minPredictionLength, maxPredictionLength)
     return data, trainData, valData, testData, allCategoricalsNonGrouped, categoricalEncoders, embeddingSizes, targetsCenterNStd, \
-         timeVaryingCategoricalsEncoder, timeVaryingRealsEncoder, timeVaryingCategoricalsDecoder, timeVaryingRealsDecoder, allReals, realScalers
+         timeVarying_categoricalsEncoder, timeVarying_realsEncoder, timeVarying_categoricalsDecoder, timeVarying_realsDecoder, allReals, realScalers
