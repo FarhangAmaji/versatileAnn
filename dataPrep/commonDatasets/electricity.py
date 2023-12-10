@@ -87,7 +87,7 @@ class Electricity_deepArDataset(VAnnTsDataset):
 
         outputs = self.getBackForeCastData(idx, mode=self.castModes.backcast,
                                            colsOrIndexes=self.dataInfo.targets,
-                                           shiftForward=1, canBeOutOfStartIndex=True)
+                                           shiftForward=1, canShiftedIndex_BeOutOfStartIndexes=True)
 
         return inputs, outputs
 

@@ -195,7 +195,7 @@ class _TsRowFetcher:
         if isinstance(data, NpDict):  # NpDict
             res = self._getCastByMode(self.getRows_npDict, **kwargs)
 
-        elif isinstance(data, pd.DataFrame):  # pd.df
+        elif isinstance(data, (pd.DataFrame, pd.Series)):  # pd.df
             res = self._getCastByMode(self.getRows_df, **kwargs)
 
         elif isinstance(data, np.ndarray):  # np.array
@@ -353,15 +353,18 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                             colsOrIndexes='___all___',
                             *, shiftForward=0, outputTensor=True,
                             canHaveShorterLength=False, rightPadIfShorter=False,
-                            canBeOutOfStartIndex=False):
+                            canShiftedIndex_BeOutOfStartIndexes=False):
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)#kkk
+        self._assertIdxInIndexes_dependingOnAllowance(False, idx)
+        self._assertIdxInIndexes_dependingOnAllowance(canShiftedIndex_BeOutOfStartIndexes,
+                                                      idx + shiftForward)
+        # note _IdxNdataToLook_WhileFetching works only idx is in indexes
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(exclude=['dataToLook'])
+        kwargs = varPasser(exclude=['dataToLook'],
+                           rename={'canShiftedIndex_BeOutOfStartIndexes': 'canBeOutOfStartIndex'})
 
         return self.getBackForeCastData_general(dataToLook, **kwargs)
-        # note _IdxNdataToLook_WhileFetching works only idx is in indexes
 
     def __len__(self):
         return len(self.indexes)
@@ -369,7 +372,8 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     def __getitem__(self, idx):
         # bugPotentialCheck1
         #  these has problem with dataloader commonCollate_fn:
-        #                   TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object
+        #           TypeError: default_collate: batch must contain tensors, numpy arrays, numbers,
+        #           dicts or lists; found object
         self._assertIdxInIndexes(idx)
         if self.mainGroups:
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
