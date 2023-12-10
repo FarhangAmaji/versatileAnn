@@ -5,6 +5,7 @@ from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances
+from utils.warnings import Warn
 
 
 # ---- normalizers: MainGroupNormalizers
@@ -31,6 +32,12 @@ class _MainGroupBaseNormalizer:
             _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
         self.mainGroupColNames = mainGroupColNames
         self.uniqueCombos = self._getUniqueCombinations(df)
+        self._getMainGroupUniqueVals(df, mainGroupColNames)
+
+    def _getMainGroupUniqueVals(self, df, mainGroupColNames):
+        self._mainGroupUniqueVals = {}
+        for mainGroup in mainGroupColNames:
+            self._mainGroupUniqueVals[mainGroup] = list(df[mainGroup].unique())
 
     def uniqueCombosShortReprs(self):
         return [combo.shortRepr() for combo in self.uniqueCombos]
@@ -87,7 +94,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
                                      _BaseNormalizer):
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
         _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
-        super().__init__(df, mainGroupColNames)
+        _MainGroupBaseNormalizer.__init__(self, df, mainGroupColNames, internalCall=True)
         self.colNames = colNames
         self.container = {}
         for col in colNames:
@@ -97,18 +104,56 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     @argValidator
     def fitCol(self, df: pd.DataFrame, col):
+        self._warnToInverseTransform_mainGroups(df)
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
             dfToFit = dfToFit.reset_index(drop=True)
             self.container[col][combo.shortRepr()].fit(dfToFit)
 
+    def _warnToInverseTransform_mainGroups(self, df):
+        # addTest2 maybe for other functionalities which use this
+        # cccAlgo
+        #  methods in this class need data of mainGroups as they were initialized,
+        #  usually when mainGroups themselves also transformed, to use methods of this class u need
+        #  to inverseTransform mainGroups and retransform after utilizing method wanted
+        # goodToHave3
+        #  maybe as possible this class may had taken stackNormalizer and had done inverseTransform
+        #  and retransform it, automatically
+        #  note check for danger of multiple flow between this class and stackNormalizer
+        # cccDevAlgo #  addTest1 add test for this
+        #  this is an old note on this problem
+        #  """normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
+        #  normalizer.fitNTransform(df)"""
+        #  this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
+        #  of SingleColsLblEncoder, values of mainGroups are changed
+        #  kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
+        #  - for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
+        #  - (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
+        mainGroupsNeededToInverseTransformed = []
+        for mainGroup in self.mainGroupColNames:
+            currentUniqueValues = df[mainGroup].unique()
+            supposedUniqueValues = self._mainGroupUniqueVals[mainGroup]
+
+            if any(value not in supposedUniqueValues for value in currentUniqueValues):
+                mainGroupsNeededToInverseTransformed.append(mainGroup)
+            else:
+                if not all(value in supposedUniqueValues for value in currentUniqueValues):
+                    Warn.warn(f'data distortion Warning: seems some data have been added to' +
+                              ' original {mainGroup} column')
+        if mainGroupsNeededToInverseTransformed:
+            raise RuntimeError('it seems "' + ', '.join(mainGroupsNeededToInverseTransformed) +
+                               '" need to be inverseTransformed. if you want them transformed' +
+                               ' after using this method, retransform them back again')
+
     @argValidator
     def fit(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         for col in self.colNames:
             self.fitCol(df, col)
 
     @argValidator
     def transformCol(self, df: pd.DataFrame, col):
+        self._warnToInverseTransform_mainGroups(df)
         dfCopy = df.copy()
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
@@ -121,21 +166,25 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     @argValidator
     def transform(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         for col in self.colNames:
             df[col] = self.transformCol(df, col)
 
     @argValidator
     def fitNTransformCol(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         self.fitCol(df)
         self.transformCol(df)
 
     @argValidator
     def fitNTransform(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         self.fit(df)
         self.transform(df)
 
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
+        self._warnToInverseTransform_mainGroups(df)
         dfCopy = df.copy()
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
@@ -149,6 +198,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     @argValidator
     def inverseTransform(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         for col in self.colNames:
             df[col] = self.inverseTransformCol(df, col)
 
@@ -160,6 +210,7 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
 
     @argValidator
     def setMeanNStd_ofMainGroups(self, df: pd.DataFrame):
+        self._warnToInverseTransform_mainGroups(df)
         # cccAlgo
         #  for each col, makes f'{col}Mean' and f'{col}Std'
         #  note setMeanNStd_ofMainGroups needs to have unTransformed mainGroups. so if needed,
@@ -174,15 +225,6 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
                 df.loc[inds, f'{col}Mean'] = comboMean
                 df.loc[inds, f'{col}Std'] = comboStd
 
-    # mustHave2
-    #  """normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
-    #  normalizer.fitNTransform(df)"""
-    #  this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
-    #  of SingleColsLblEncoder, values of mainGroups are changed
-    #  kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
-    #  - for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
-    #  - (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
-    #  addTest1 add test for this
     def __repr__(self):
         return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
