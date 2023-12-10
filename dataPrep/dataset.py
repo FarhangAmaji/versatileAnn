@@ -33,8 +33,6 @@ class _TsRowFetcher:
         self.forecastLen = forecastLen
         self.indexes = None
 
-        # make some names shorter
-        self._assertIdx_NShift = self._assertIdx_NShiftInIndexes_dependingOnAllowance
 
     @staticmethod
     def singleFeatureShapeCorrection(data):
@@ -52,7 +50,7 @@ class _TsRowFetcher:
         # note this also works with series
         # qqq does this idx match with getItem of dataset
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
+        self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         assert idx + shiftForward in df.index, _TsRowFetcher.errMsgs['non-negStartingPointDf']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
@@ -75,7 +73,7 @@ class _TsRowFetcher:
                        canBeOutOfStartIndex=False, canHaveShorterLength=False,
                        rightPadIfShorter=False):
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
+        self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointTensor']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
@@ -97,7 +95,7 @@ class _TsRowFetcher:
                        canBeOutOfStartIndex=False, canHaveShorterLength=False,
                        rightPadIfShorter=False):
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
+        self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpDict']
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
@@ -119,7 +117,7 @@ class _TsRowFetcher:
                         canBeOutOfStartIndex=False, canHaveShorterLength=False,
                         rightPadIfShorter=False):
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
+        self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpArray']
 
         # cccDevAlgo
@@ -172,7 +170,7 @@ class _TsRowFetcher:
             raise ValueError(
                 "u should either pass '___all___' for all feature cols or a list of their columns or indexes")
 
-        self._assertIdx_NShift(canBeOutOfStartIndex, idx, shiftForward)
+        self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         # cccAlgo idx+shiftForward also should be in data indexes
         kwargs = varPasser(exclude=['canBeOutOfStartIndex', 'outputTensor'])
         res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
@@ -231,19 +229,15 @@ class _TsRowFetcher:
         else:
             assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' castModes"
 
-    def _assertIdxInIndexes(self, idx):
-        if self.indexes is not None:
-            assert idx in self.indexes, f'{idx} is not in indexes'
-            # goodToHave3 this should have been IndexError, but changing it, requires changing some tests
+    def _assertIdxInIndexes(self, idx, isAllowed=False):
+        if not isAllowed:
+            if self.indexes is not None:
+                assert idx in self.indexes, f'{idx} is not in indexes'
+                # goodToHave3 this should have been IndexError, but changing it, requires changing some tests
 
-    def _assertIdxInIndexes_dependingOnAllowance(self, allowance, idx):
-        if not allowance:
-            self._assertIdxInIndexes(idx)
-
-    def _assertIdx_NShiftInIndexes_dependingOnAllowance(self, allowance, idx,
-                                                        shiftForward):
-        self._assertIdxInIndexes_dependingOnAllowance(allowance, idx)
-        self._assertIdxInIndexes_dependingOnAllowance(allowance, idx + shiftForward)
+    def _assertIdx_NShiftInIndexes(self, idx, shiftForward, isAllowed):
+        self._assertIdxInIndexes(idx, isAllowed)
+        self._assertIdxInIndexes(idx + shiftForward, isAllowed)
 
     def _hasShorterLen(self, len_, slice_, isItDfLen=False):
         normalSliceLen = slice_.stop - slice_.start
@@ -257,9 +251,9 @@ class _TsRowFetcher:
 
         return sliceLen > len_
 
-    def _assertCanHaveShorterLength_dependingOnAllowance(self, allowance, len_,
+    def _assertCanHaveShorterLength_dependingOnAllowance(self, isAllowed, len_,
                                                          slice_, isItDfLen=False):
-        if not allowance:
+        if not isAllowed:
             assert not self._hasShorterLen(len_, slice_, isItDfLen=isItDfLen), \
                 _TsRowFetcher.errMsgs['shorterLen']
 
@@ -355,9 +349,8 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                             canHaveShorterLength=False, rightPadIfShorter=False,
                             canShiftedIndex_BeOutOfStartIndexes=False):
 
-        self._assertIdxInIndexes_dependingOnAllowance(False, idx)
-        self._assertIdxInIndexes_dependingOnAllowance(canShiftedIndex_BeOutOfStartIndexes,
-                                                      idx + shiftForward)
+        self._assertIdxInIndexes(idx, False)
+        self._assertIdxInIndexes(idx + shiftForward, canShiftedIndex_BeOutOfStartIndexes)
         # note _IdxNdataToLook_WhileFetching works only idx is in indexes
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
@@ -374,7 +367,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         #  these has problem with dataloader commonCollate_fn:
         #           TypeError: default_collate: batch must contain tensors, numpy arrays, numbers,
         #           dicts or lists; found object
-        self._assertIdxInIndexes(idx)
+        self._assertIdxInIndexes(idx, False)
         if self.mainGroups:
             dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
             if isinstance(dataToLook, NpDict):
@@ -402,7 +395,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
     # ---- Private methods
     def _IdxNdataToLook_WhileFetching(self, idx):
-        self._assertIdxInIndexes(idx)
+        self._assertIdxInIndexes(idx, False)
         # goodToHave3 its was better a cccAlgo was written, to know which if parts handles what situations
         if self.mainGroups:
             groupName = self._findIdxIn_mainGroupsRelIdxs(idx)
