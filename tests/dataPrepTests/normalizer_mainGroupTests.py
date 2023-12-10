@@ -9,6 +9,7 @@ from dataPrep.normalizers_mainGroupNormalizers import (_MainGroupBaseNormalizer,
                                                        MainGroupSingleColsStdNormalizer,
                                                        MainGroupSingleColsLblEncoder)
 from dataPrep.normalizers_normalizerStack import NormalizerStack
+from dataPrep.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from tests.baseTest import BaseTestClass
 
 
@@ -100,7 +101,7 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
 # ---- MainGroupSingleColsNormalizerTests
 class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
     def setUp(self):
-        # kkk could had a better example
+        # goodToHave2 could had a better example
         self.df = pd.DataFrame(data={
             'A': ['A1', 'A2', 'A3', 'A4', 'A1', 'A3'],
             'B': ['B1', 'B2', 'B4', 'B4', 'B1', 'B2'],
@@ -119,15 +120,13 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
     def normalizerStackSetUp(self):
         self.normalizerStack = NormalizerStack(
-            MainGroupSingleColsStdNormalizer(self.df, ['A', 'B'],
-                                             ['col1', 'col2']))
+            MainGroupSingleColsStdNormalizer(self.df, ['A', 'B'], ['col1', 'col2']))
 
-    def testStraightFitNTransform(self):
+    def testDirectFitNTransform(self):
+        # direct means without stackNormalizer
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupSingleColsStdNormalizer(self.df,
-                                                                    ['A', 'B'],
-                                                                    ['col1',
-                                                                     'col2'])
+        MainGroupBaseNormalizer_ = MainGroupSingleColsStdNormalizer(self.df, ['A', 'B'],
+                                                                    ['col1', 'col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform)
 
@@ -145,7 +144,7 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
 class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
     def setUp(self):
-        # kkk could had a better example
+        # goodToHave2 could had a better example
         self.df = pd.DataFrame(data={
             'A': ['A1', 'A2', 'A3', 'A4', 'A1', 'A3', 'A2'],
             'B': ['B1', 'B2', 'B4', 'B4', 'B1', 'B2', 'B2'],
@@ -172,17 +171,26 @@ class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
 
     def normalizerStackSetUp(self):
         self.normalizerStack = NormalizerStack(
-            MainGroupSingleColsLblEncoder(self.df, ['A', 'B'],
-                                          ['col1', 'col2']))
+            MainGroupSingleColsLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
 
-    def testStraightFitNTransform(self):
+    def testDirectFitNTransform(self):
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupSingleColsLblEncoder(self.df,
-                                                                 ['A', 'B'],
-                                                                 ['col1',
-                                                                  'col2'])
+        MainGroupBaseNormalizer_ = MainGroupSingleColsLblEncoder(self.df, ['A', 'B'],
+                                                                 ['col1', 'col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
+
+    def test_warnToInverseTransform_mainGroups(self):
+        self.setUp()
+        normalizerStack = NormalizerStack(
+            SingleColsLblEncoder(['A']),
+            MainGroupSingleColsLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
+        with self.assertRaises(RuntimeError) as context:
+            normalizerStack.fitNTransform(self.df)
+        self.assertEqual(str(context.exception),
+                     'it seems "A" need to be inverseTransformed. if you want them transformed' +
+                     ' after using this method, retransform them back again')
+
 
 
 # ---- run test
