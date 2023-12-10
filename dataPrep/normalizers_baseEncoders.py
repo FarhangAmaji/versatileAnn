@@ -119,8 +119,10 @@ class _LblEncoder(_BaseEncoder):
     def _baseTransform(self, data: Union[pd.DataFrame, pd.Series], transformTypeName,
                        transformFunc, TransformedAlreadyCheckFunc, force=False):
         # cccUsage
-        #  Warning: the transform/inverseTransform in general can be applied multiple times; so if the data may differ as wanted.
+        #  Warning: the transform/inverseTransform in general can be applied multiple times
+        #  so if the data may differ as wanted.
         #  in _LblEncoder has been tried to reduce this risk, but again there may be no guarantee
+        #  note only this baseEncoder has ability to skip retransfroming(either transform or inversetransform)
         data_ = data.values.reshape(-1)
         if self._isFitted:
             if (not force) and TransformedAlreadyCheckFunc(data_):
@@ -178,9 +180,6 @@ class _IntLabelsString(_BaseEncoder):
         elif isinstance(data, pd.DataFrame):
             output = data.applymap(
                 lambda x: self.intToLabelMapping.get(x, x))
-        else:
-            output = None
-            assert False, 'argValidator has not worked'
         return output
 
     @argValidator

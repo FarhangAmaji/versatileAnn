@@ -1,6 +1,7 @@
 import pandas as pd
 
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
+from dataPrep.normalizers_mainGroupNormalizers import _MainGroupBaseNormalizer
 from utils.typeCheck import argValidator
 
 
@@ -67,8 +68,21 @@ class NormalizerStack:
     def inverseTransform(self, df: pd.DataFrame):
         # bugPotentialCheck2
         #  in the past this loop was applied reversed; but later I found no meaningful difference; have this mind later if a bug occurred.
+        mainGroupsInverseTransformedNow = []
         for col in list(self.normalizers.keys()):
-            df[col] = self.inverseTransformCol(df, col)
+            # cccAlgo
+            #  for inversing cols which have maingroups, the mainGroups should inversed first
+            if isinstance(self.normalizers[col], _MainGroupBaseNormalizer):
+                for mainGroup in self.normalizers[col].mainGroupColNames:
+                    if mainGroup in self.normalizers.keys():
+                        df[mainGroup] = self.inverseTransformCol(df, mainGroup)
+                        mainGroupsInverseTransformedNow.append(mainGroup)
+            # cccAlgo
+            #  because only _LblEncoder amongst baseEncoders has the ability to skip inverseTransforms,
+            #  in the case that maingroup may not be _LblEncoder we skip those maingroups already
+            #  inverseTransformed here in line #LSkmg1
+            if col not in mainGroupsInverseTransformedNow: #LSkmg1
+                df[col] = self.inverseTransformCol(df, col)
 
     def __repr__(self):
         return str(self.uniqueNormalizers)
