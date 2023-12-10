@@ -1,6 +1,7 @@
 """
 https://www.kaggle.com/datasets/utathya/future-volume-prediction
-this dataset is usually treated as multiple series(NSeries) with mainGroups of `agency` and `sku`(stock keeping units (SKU))
+this dataset is usually treated as multiple series(NSeries) with mainGroups of `agency` and
+`sku`(stock keeping units (SKU))
 it has also these features:
     date:'date'(months)
     production volumes:'sku'(volume that agency has stocked),'volume', 'industryVolume', 'sodaVolume'
@@ -10,239 +11,186 @@ it has also these features:
     specialDays:'easterDay',  'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
                 'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup', 'footballGoldCup',
                 'beerCapital', 'musicFest'
+note the encoder and decoder lengths are not fixed and differ for each point. therefore there are min
+and max for them, also rightPadIfShorter=True is used in dataset
 """
-# ---- imports
-import numpy as np
-import pandas as pd
+from typing import Union
 
+# ---- imports
+import pandas as pd
+import torch
+
+from dataPrep.commonDatasets.commonDatasets_innerStepNUtils import _addTargetMeanNStd, \
+    _addEmbeddingSizes, _addTimeVarying_EncoderNDecoder, _getFullOrNotConditions, \
+    _addAllReals, _normalizingAllReals, _makingTimeIdx, \
+    _addingSomeOtherFeatures, _dataInfoAssert, _devStallionTestModeData, _splitFullN_nonFullEqually
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.normalizers_mainGroupNormalizers import NormalizerStack, SingleColsLblEncoder, \
-    MainGroupSingleColsStdNormalizer, SingleColsStdNormalizer
-from dataPrep.utils import getDatasetFiles, splitTrainValTest_NSeries
+from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers_normalizerStack import NormalizerStack
+from dataPrep.normalizers_singleColsNormalizer import SingleColsLblEncoder
+from dataPrep.utils import getDatasetFiles, _applyShuffleIfSeedExists
 # kkk replace this from a particular model, to general embedding files
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
-from models.temporalFusionTransformers_components import getEmbeddingSize
-from utils.globalVars import tsStartPointColName
+from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import DotDict, varPasser
 
 # ----
 # kkk explain timeVarying|static;real|categorical;known|unknown
-timeIdx = 'timeIdx'
-mainGroups = ['agency', 'sku']
-target = ['volume']
-specialDays = ['easterDay',
-               'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
-               'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup',
-               'footballGoldCup', 'beerCapital', 'musicFest']
-categoricalVariableGroups = {"specialDays": specialDays}
-categoricalSingularVariables = ["agency", "sku", "month"]
+# timeIdx = 'timeIdx'
+# mainGroups = ['agency', 'sku']
+# targets = ['volume']
+# specialDays = ['easterDay',
+#                'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
+#                'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup',
+#                'footballGoldCup', 'beerCapital', 'musicFest']
+# categoricalGroupVariables = {"specialDays": specialDays}
+# categoricalSingularVariables = ["agency", "sku", "month"]
 
-staticCategoricals = ["agency", "sku"]
-staticReals = ["avgPopulation2017", "avgYearlyHouseholdIncome2017"]
-timeVaryingknownCategoricals = ["specialDays", "month"]
-timeVaryingknownReals = ["timeIdx", "priceRegular", "discountInPercent"]
-timeVaryingUnknownCategoricals = []
-timeVaryingUnknownReals = ["volume", "logVolume", "industryVolume", "sodaVolume", "avgMaxTemp",
-                           "avgVolumeByAgency", "avgVolumeBySku"]
+# staticCategoricals = ["agency", "sku"]
+# staticReals = ["avgPopulation2017", "avgYearlyHouseholdIncome2017"]
+# timeVarying_knownCategoricals = ["specialDays", "month"]
+# timeVarying_knownReals = ["timeIdx", "priceRegular", "discountInPercent"]
+# timeVarying_unknownCategoricals = []
+# timeVarying_unknownReals = ["volume", "logVolume", "industryVolume", "sodaVolume", "avgMaxTemp",
+#                            "avgVolumeByAgency", "avgVolumeBySku"]
 
-dataInfo = {'mainGroups': mainGroups, 'target': target,
-            'categoricalVariableGroups': categoricalVariableGroups,
-            'categoricalSingularVariables': categoricalSingularVariables,
-            'staticCategoricals': staticCategoricals,
-            'staticReals': staticReals,
-            'timeVaryingknownCategoricals': timeVaryingknownCategoricals,
-            'timeVaryingknownReals': timeVaryingknownReals,
-            'timeVaryingUnknownCategoricals': timeVaryingUnknownCategoricals,
-            'timeVaryingUnknownReals': timeVaryingUnknownReals}
+dataInfo = DotDict({'timeIdx': 'timeIdx',
+                    'mainGroups': ['agency', 'sku'],
+                    'targets': ['volume'],
+                    'categoricalGroupVariables': {
+                        "specialDays": ['easterDay', 'goodFriday', 'newYear', 'christmas',
+                                        'laborDay', 'independenceDay', 'revolutionDayMemorial',
+                                        'regionalGames', 'fifaU17WorldCup', 'footballGoldCup',
+                                        'beerCapital', 'musicFest']},
+                    'categoricalSingularVariables': ["agency", "sku", "month"],
+                    'staticCategoricals': ["agency", "sku"],
+                    'staticReals': ["avgPopulation2017", "avgYearlyHouseholdIncome2017"],
+                    'timeVarying_knownCategoricals': ["specialDays", "month"],
+                    'timeVarying_knownReals': ["timeIdx", "priceRegular", "discountInPercent"],
+                    'timeVarying_unknownCategoricals': [],
+                    'timeVarying_unknownReals': ["volume", "logVolume", "industryVolume",
+                                                 "sodaVolume", "avgMaxTemp", "avgVolumeByAgency",
+                                                 "avgVolumeBySku"]})
+necessaryKeys = dataInfo.keys()
 
 
-def getStallionTftProcessed(maxEncoderLength=24, maxPredictionLength=6, minEncoderLength=12,
-                            minPredictionLength=1, **dataInfo):
-    dataInfo = dataInfo['dataInfo']
-    mainGroups = dataInfo['mainGroups']
-    target = dataInfo['target']
-    categoricalVariableGroups = dataInfo['categoricalVariableGroups']
-    categoricalSingularVariables = dataInfo['categoricalSingularVariables']
-    staticCategoricals = dataInfo['staticCategoricals']
-    staticReals = dataInfo['staticReals']
-    timeVaryingknownCategoricals = dataInfo['timeVaryingknownCategoricals']
-    timeVaryingknownReals = dataInfo['timeVaryingknownReals']
-    timeVaryingUnknownCategoricals = dataInfo['timeVaryingUnknownCategoricals']
-    timeVaryingUnknownReals = dataInfo['timeVaryingUnknownReals']
+@argValidator
+def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24,
+                          maxPredictionLength=6, minEncoderLength=12, minPredictionLength=1,
+                          trainRatio=.7, valRatio=.2, shuffle=False, shuffleSeed=None,
+                          devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
+    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
+    # dataInfo = dataInfo['dataInfo']
+    # mainGroups = dataInfo['mainGroups']
+    # targets = dataInfo['targets']
+    # categoricalGroupVariables = dataInfo['categoricalGroupVariables']
+    # categoricalSingularVariables = dataInfo['categoricalSingularVariables']
+    # staticCategoricals = dataInfo['staticCategoricals']
+    # staticReals = dataInfo['staticReals']
+    # timeVarying_knownCategoricals = dataInfo['timeVarying_knownCategoricals']
+    # timeVarying_knownReals = dataInfo['timeVarying_knownReals']
+    # timeVarying_unknownCategoricals = dataInfo['timeVarying_unknownCategoricals']
+    # timeVarying_unknownReals = dataInfo['timeVarying_unknownReals']
 
-    df = getDatasetFiles('stallion.csv')
-    df["timeIdx"] = df["date"].dt.year * 12 + df["date"].dt.month
-    df["timeIdx"] -= df["timeIdx"].min()
+    df = getStallion_data(devTestMode, maxEncoderLength, maxPredictionLength)
+    _makingTimeIdx(df)
+    _addingSomeOtherFeatures(dataInfo, df)
 
-    # adding some other features
-    df["month"] = df.date.dt.month.astype(str).astype("category")  # categories have be strings
-    df["logVolume"] = np.log(df.volume + 1e-8)
-    df["avgVolumeBySku"] = df.groupby(["timeIdx", "sku"], observed=True).volume.transform("mean")
-    df["avgVolumeByAgency"] = df.groupby(["timeIdx", "agency"], observed=True).volume.transform(
-        "mean")
-
-    df['relativeTimeIdx'] = 0
-    df['encoderLength'] = 0
-    timeVaryingknownReals += ['relativeTimeIdx']
-    staticReals += ['encoderLength']
-    df = df.sort_values(mainGroups + [timeIdx]).reset_index(drop=True)
-
-    normalizer = NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target),
-                                 SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
-    """#ccc pay attention if the MainGroupSingleColsStdNormalizer was passed after SingleColsLblEncoder,
-     because it sets up uniquecombos first and after SingleColsLblEncoder's fitNTransform those values would have changed,
-     we have to pass it before the SingleColsLblEncoder"""
+    df = df.sort_values(dataInfo.mainGroups + [dataInfo.timeIdx]).reset_index(drop=True)
+    normalizer = NormalizerStack(  # LStl1
+        MainGroupSingleColsStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),
+        SingleColsLblEncoder(
+            ['sku', 'agency', 'month', *dataInfo.categoricalGroupVariables['specialDays']]))
     normalizer.fitNTransform(df)
-    for col in mainGroups:
-        df[col] = normalizer.inverseTransformCol(df, col)
+    # cccAlgo
+    #  pay attention if the MainGroupSingleColsStdNormalizer was passed after
+    #  SingleColsLblEncoder, because it sets up uniquecombos first and after SingleColsLblEncoder's
+    #  fitNTransform those values would have changed,; we have to pass it before the SingleColsLblEncoder
+    _addTargetMeanNStd(dataInfo, df, normalizer)
+    _addEmbeddingSizes(dataInfo, normalizer)
+    _addTimeVarying_EncoderNDecoder(dataInfo)
 
-    normalizer.uniqueNormalizers[0].getMeanNStd(df)
-    staticReals.extend([f'{target[0]}Mean', f'{target[0]}Std'])
-    for col in mainGroups:
-        df[col] = normalizer.transformCol(df, col)
+    _addAllReals(dataInfo)
+    _normalizingAllReals(dataInfo, df, normalizer)
 
-    categoricalClasses = normalizer.uniqueNormalizers[1].getClasses()
-    embeddingSizes = {}
-    for col in ['sku', 'month', 'agency']:
-        embeddingSizes[col] = [len(categoricalClasses[col]),
-                               getEmbeddingSize(len(categoricalClasses[col]))]
-    classesLen = 0
-    for col in specialDays:
-        classesLen += len(categoricalClasses[col])
-    embeddingSizes['specialDays'] = [classesLen, getEmbeddingSize(classesLen)]
+    _getFullOrNotConditions(dataInfo, df, maxEncoderLength, maxPredictionLength, minEncoderLength,
+                            minPredictionLength, normalizer)
+    # setsDf = _splitFullN_nonFullEqually(dataInfo, df, maxEncoderLength, maxPredictionLength)
 
-    "time Varying Encoder= time Varying known + time Varying unkown"
-    "time Varying Decoder= time Varying known"
-    timeVaryingCategoricalsEncoder = list(
-        set(timeVaryingknownCategoricals + timeVaryingUnknownCategoricals))
-    timeVaryingRealsEncoder = list(set(timeVaryingknownReals + timeVaryingUnknownReals))
-    timeVaryingCategoricalsDecoder = timeVaryingknownCategoricals[:]
-    timeVaryingRealsDecoder = timeVaryingknownReals[:]
+    setsDf = _splitFullN_nonFullEqually(dataInfo, df, maxEncoderLength, maxPredictionLength,
+                                        trainRatio, valRatio, shuffle, shuffleSeed)
+    trainDf, valDf, testDf = setsDf['train'], setsDf['val'], setsDf['test']
 
-    allReals = list(set(staticReals + timeVaryingknownReals + timeVaryingUnknownReals))
-    allReals = list(set(allReals) - set(target))
-    normalizer.addNormalizer(SingleColsStdNormalizer(allReals))
-    normalizer.uniqueNormalizers[2].fitNTransform(df)
+    # adding predictLens to dataInfo
+    predictLens = varPasser(
+        localArgNames=['minPredictionLength', 'maxPredictionLength', 'maxEncoderLength',
+                       'minEncoderLength'])
+    dataInfo._data.update(predictLens)
+    return trainDf, valDf, testDf, normalizer, dataInfo
 
-    df[timeIdx] = normalizer.inverseTransformCol(df, timeIdx)
 
-    uniqueMainGroupMax = df.groupby(mainGroups)[timeIdx].transform('max')
-    for col, maxLength in zip(['encoderLength', 'decoderLength', 'sequenceLength'],
-                              [maxEncoderLength, maxPredictionLength,
-                               maxEncoderLength + maxPredictionLength]):
-        df[col] = uniqueMainGroupMax - df[timeIdx] + 1
-        df[col] = df[col].apply(lambda x: min(x, maxLength))
-
-    fullLenConditions = (df['sequenceLength'] == maxEncoderLength + maxPredictionLength)
-    df.loc[fullLenConditions, 'fullLenConditions'] = True
-    df.loc[~fullLenConditions, 'fullLenConditions'] = False
-
-    notFullLenButMoreThanMinEncoderNPredictLenConditions = (df['fullLenConditions'] == False) & (
-            df['encoderLength'] >= minEncoderLength) & (df[
-                                                            'decoderLength'] >= minPredictionLength)
-    df.loc[
-        notFullLenButMoreThanMinEncoderNPredictLenConditions, 'notFullLenButMoreThanMinEncoderNPredictLenConditions'] = True
-    df.loc[
-        ~notFullLenButMoreThanMinEncoderNPredictLenConditions, 'notFullLenButMoreThanMinEncoderNPredictLenConditions'] = False
-
-    df[timeIdx] = normalizer.transformCol(df, timeIdx)
-
-    trainDf1, valDf1, testDf1 = splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7,
-                                                          valRatio=.2,
-                                                          seqLen=maxEncoderLength + maxPredictionLength,
-                                                          shuffle=True,
-                                                          conditions=['fullLenConditions==True'])
-
-    trainDf2, valDf2, testDf2 = splitTrainValTest_NSeries(df, mainGroups, trainRatio=.7,
-                                                          valRatio=.2,
-                                                          seqLen=maxEncoderLength + maxPredictionLength,
-                                                          shuffle=True,
-                                                          conditions=[
-                                                              'notFullLenButMoreThanMinEncoderNPredictLenConditions==True'],
-                                                          tailIndexesAsPossible=True)
-
-    sets = []
-    for df1, df2 in zip([trainDf1, valDf1, testDf1], [trainDf2, valDf2, testDf2]):
-        concatDf = pd.concat([df1, df2])
-        concatDf[tsStartPointColName] = concatDf.groupby(concatDf.index)[
-            tsStartPointColName].transform('any')
-        concatDf = concatDf[~concatDf.index.duplicated(keep='first')]
-        sets += [concatDf]
-    trainDf, valDf, testDf = sets
-
-    datasetKwargs = {'target': target, 'categoricalVariableGroups': categoricalVariableGroups,
-                     'categoricalSingularVariables': categoricalSingularVariables,
-                     'staticCategoricals': staticCategoricals,
-                     'staticReals': staticReals,
-                     'timeVaryingknownCategoricals': timeVaryingknownCategoricals,
-                     'timeVaryingknownReals': timeVaryingknownReals,
-                     'timeVaryingUnknownCategoricals': timeVaryingUnknownCategoricals,
-                     'timeVaryingUnknownReals': timeVaryingUnknownReals,
-                     'minPredictionLength': minPredictionLength,
-                     'maxPredictionLength': maxPredictionLength,
-                     'maxEncoderLength': maxEncoderLength,
-                     'minEncoderLength': minEncoderLength,
-                     'timeVaryingCategoricalsEncoder': timeVaryingCategoricalsEncoder,
-                     'timeVaryingRealsEncoder': timeVaryingRealsEncoder,
-                     'timeVaryingCategoricalsDecoder': timeVaryingCategoricalsDecoder,
-                     'timeVaryingRealsDecoder': timeVaryingRealsDecoder, 'allReals': allReals}
-    return trainDf, valDf, testDf, normalizer, datasetKwargs
+def getStallion_data(devTestMode, maxEncoderLength, maxPredictionLength):
+    df = getDatasetFiles('stallion.csv')
+    df = _devStallionTestModeData(devTestMode, df, maxEncoderLength, maxPredictionLength)
+    return df
 
 
 # ----
 class StallionTftDataset(VAnnTsDataset):
     def __getitem__(self, idx):
-        encoderLength = self.data.loc[idx, 'encoderLength']
-        decoderLength = self.data.loc[idx, 'decoderLength']
+        mainGroupData, relIdx = self._IdxNdataToLook_WhileFetching(idx)
+        encoderLength = int(mainGroupData['encoderLength'][relIdx])
+        decoderLength = int(mainGroupData['decoderLength'][relIdx])
 
         inputs = {}
         inputs['encoderLengths'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                            colsOrIndexes='encoderLength',
+                                                            colsOrIndexes=['encoderLength'],
                                                             rightPadIfShorter=True)
         inputs['decoderLengths'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
-                                                            colsOrIndexes='decoderLength',
+                                                            colsOrIndexes=['decoderLength'],
                                                             rightPadIfShorter=True)
 
         inputs['allReals'] = {}
-        for ar in self.allReals:
+        for ar in self.dataInfo.allReals:
             inputs['allReals'][ar] = self.getBackForeCastData(idx, mode=self.castModes.fullcast,
-                                                              colsOrIndexes=ar,
+                                                              colsOrIndexes=[ar],
                                                               rightPadIfShorter=True)
 
         fullcastLen = self.backcastLen + self.forecastLen
-        inputs['allReals']['relativeTimeIdx'] = pd.Series(
-            [i for i in range(-encoderLength, decoderLength)])
-        inputs['allReals']['relativeTimeIdx'] /= self.maxEncoderLength
-        inputs['allReals']['relativeTimeIdx'] = rightPadIfShorter_df(
-            inputs['allReals']['relativeTimeIdx'], fullcastLen)
+        relativeTimeIdx = pd.Series([i for i in range(-encoderLength, decoderLength)])
+        relativeTimeIdx /= self.dataInfo.maxEncoderLength
+        relativeTimeIdx = rightPadIfShorter_df(relativeTimeIdx, fullcastLen)
+        inputs['allReals']['relativeTimeIdx'] = torch.tensor(relativeTimeIdx.values)
 
-        inputs['allReals']['encoderLength'] = pd.Series(
-            [(encoderLength - .5 * self.maxEncoderLength)
+        encoderLengthRows = pd.Series(
+            [(encoderLength - .5 * self.dataInfo.maxEncoderLength)
              for i in range(encoderLength + decoderLength)])
-        inputs['allReals']['encoderLength'] /= self.maxEncoderLength * 2
-        inputs['allReals']['encoderLength'] = rightPadIfShorter_df(
-            inputs['allReals']['encoderLength'], fullcastLen)
+        encoderLengthRows /= self.dataInfo.maxEncoderLength * 2
+        encoderLengthRows = rightPadIfShorter_df(encoderLengthRows, fullcastLen)
+        inputs['allReals']['encoderLength'] = torch.tensor(encoderLengthRows.values)
 
         inputs['categorical'] = {}
         inputs['categorical']['singular'] = {}
         inputs['categorical']['groups'] = {}
-        for sc in self.categoricalSingularVariables:
+        for sc in self.dataInfo.categoricalSingularVariables:
             inputs['categorical']['singular'][sc] = self.getBackForeCastData(idx,
-                                                                             mode=self.castModes.fullcast,
-                                                                             colsOrIndexes=sc,
-                                                                             rightPadIfShorter=True)
+                                                                     mode=self.castModes.fullcast,
+                                                                     colsOrIndexes=[sc],
+                                                                     rightPadIfShorter=True)
 
-        for gc in self.categoricalVariableGroups:
+        for gc, gcVal in self.dataInfo.categoricalGroupVariables.items():
             inputs['categorical']['groups'][gc] = {}
-            for gc1 in gc.keys():
+            for gc1 in gcVal:
                 inputs['categorical']['groups'][gc][gc1] = self.getBackForeCastData(idx,
-                                                                                    mode=self.castModes.fullcast,
-                                                                                    colsOrIndexes=gc1,
-                                                                                    rightPadIfShorter=True)
+                                                                    mode=self.castModes.fullcast,
+                                                                    colsOrIndexes=[gc1],
+                                                                    rightPadIfShorter=True)
 
         outputs = {}
-        groupName, relIdx = self.findIdxInMainGroupsIndexes(idx)
-        outputs['volume'] = self.data[groupName]['volume'][
+
+        outputs['volume'] = mainGroupData['volume'][
                             relIdx + encoderLength:relIdx + encoderLength + decoderLength]
         outputs['volume'] = rightPadIfShorter_npArray(outputs['volume'], fullcastLen)
 
@@ -250,28 +198,26 @@ class StallionTftDataset(VAnnTsDataset):
 
 
 # ---- dataloader
-def getStallionTftDataloaders(maxEncoderLength=24, maxPredictionLength=6, minEncoderLength=12,
-                              minPredictionLength=1, mainGroups=['agency', 'sku'], batchSize=64,
-                              dataInfo=dataInfo):
-    trainDf, valDf, testDf, normalizer, datasetKwargs = getStallionTftProcessed(
-        maxEncoderLength=maxEncoderLength,
-        maxPredictionLength=maxPredictionLength, minEncoderLength=minEncoderLength,
-        minPredictionLength=minPredictionLength, dataInfo=dataInfo)
+@argValidator
+def getStallion_TftDataloaders(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24,
+                               maxPredictionLength=6, minEncoderLength=12, minPredictionLength=1,
+                               mainGroups=['agency', 'sku'], batchSize=64, trainRatio=.7,
+                               valRatio=.2, shuffle=False, shuffleSeed=None, devTestMode=False):
+    dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
+    shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
+    kwargs = varPasser(localArgNames=['maxEncoderLength', 'maxPredictionLength', 'minEncoderLength',
+                                      'minPredictionLength', 'dataInfo', 'trainRatio', 'valRatio',
+                                      'shuffle', 'shuffleSeed', 'devTestMode'])
+    trainDf, valDf, testDf, normalizer, dataInfo = getStallion_processed(**kwargs)
 
-    stallionTftTrainDataset = StallionTftDataset(trainDf, backcastLen=maxEncoderLength,
-                                                 forecastLen=maxPredictionLength,
-                                                 mainGroups=mainGroups, indexes=None,
-                                                 **datasetKwargs)
-    stallionTftValDataset = StallionTftDataset(valDf, backcastLen=maxEncoderLength,
-                                               forecastLen=maxPredictionLength,
-                                               mainGroups=mainGroups, indexes=None, **datasetKwargs)
-    stallionTftTestDataset = StallionTftDataset(testDf, backcastLen=maxEncoderLength,
-                                                forecastLen=maxPredictionLength,
-                                                mainGroups=mainGroups, indexes=None,
-                                                **datasetKwargs)
+    kwargs = {'backcastLen': maxEncoderLength, 'forecastLen': maxPredictionLength,
+              'mainGroups': mainGroups, 'dataInfo': dataInfo}
+    trainDataset = StallionTftDataset(trainDf, **kwargs)
+    valDataset = StallionTftDataset(valDf, **kwargs)
+    testDataset = StallionTftDataset(testDf, **kwargs)
     del trainDf, valDf, testDf
 
-    stallionTftTrainDataloader = VAnnTsDataloader(stallionTftTrainDataset, batch_size=batchSize)
-    stallionTftValDataloader = VAnnTsDataloader(stallionTftValDataset, batch_size=batchSize)
-    stallionTftTestDataloader = VAnnTsDataloader(stallionTftTestDataset, batch_size=batchSize)
-    return stallionTftTrainDataloader, stallionTftValDataloader, stallionTftTestDataloader, normalizer
+    trainDataloader = VAnnTsDataloader(trainDataset, batch_size=batchSize)
+    valDataloader = VAnnTsDataloader(valDataset, batch_size=batchSize)
+    testDataloader = VAnnTsDataloader(testDataset, batch_size=batchSize)
+    return trainDataloader, valDataloader, testDataloader, normalizer

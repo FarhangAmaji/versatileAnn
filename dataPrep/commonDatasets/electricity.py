@@ -8,7 +8,7 @@ this dataset has different consumer data which are treated as separate data sequ
 """
 from typing import Union
 
-from dataPrep.commonDatasets.commonDatasets_innerStepNUtils import _dataInfoAssert, _devTestModeData
+from dataPrep.commonDatasets.commonDatasets_innerStepNUtils import _dataInfoAssert, _devElectricityTestModeData
 # ---- imports
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
@@ -68,7 +68,7 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
 
 def getElectricity_data(*, backcastLen, forecastLen, devTestMode):
     df = getDatasetFiles('electricity.csv')
-    df = _devTestModeData(backcastLen, devTestMode, df, forecastLen)
+    df = _devElectricityTestModeData(backcastLen, devTestMode, df, forecastLen)
     return df
 
 
