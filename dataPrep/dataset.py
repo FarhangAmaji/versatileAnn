@@ -297,6 +297,12 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     noIndexesAssertionMsg = "u have to pass indexes unless both backcastLen and forecastLen are 0," + \
                             " or u have passed a pd.df or NpDict with __startPoint__ column"
 
+    # goodToHave1
+    #  having data splitted in train,val,test datasets, makes many self.data duplicated with only
+    #  tsStartPointColName different for each set. so its not memory efficient.
+    #  so to allocate less memory there should some things changed in
+    #  splits(splitTsTrainValTest_DfNNpDict and splitTrainValTest_mainGroup) and datasets and
+    #  dataloader
     # mustHave2 model should check device, backcastLen, forecastLen with this
 
     # cccAlgo
