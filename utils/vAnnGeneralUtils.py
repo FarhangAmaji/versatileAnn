@@ -388,23 +388,34 @@ def gpuMemoryUsed():
 
 
 # kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
-def varPasser(*, localArgNames=None, exclude=None):
-    if exclude is None:
-        exclude = []
-    # kkk add var renamer
+def varPasser(*, localArgNames=None, exclude=None, rename=None):
+    localArgNames = localArgNames or []
+    exclude = exclude or []
+    rename = rename or {}
+
     locals_ = inspect.currentframe().f_back.f_locals
-    dict_ = {}
-    if localArgNames:
-        for lan in localArgNames:
-            if lan not in exclude:
-                dict_[lan] = locals_[lan]
-    else:
-        for lan in locals_.keys():
-            if lan == 'self':
+    for rn in rename.keys():
+        if rn not in locals_.keys():
+            raise ValueError(f'{rn} is not in the local vars')
+
+    argsToGet = set(localArgNames[:] + list(rename.keys()))
+    result = {}
+    for atg in argsToGet:
+        if atg not in locals_.keys():
+            raise ValueError(f'{atg} is not in the local vars')
+        if atg not in exclude:
+            result[atg] = locals_[atg]
+
+    if not localArgNames:
+        for loc in locals_.keys():
+            if loc == 'self':
                 continue
-            if lan not in exclude:
-                dict_[lan] = locals_[lan]
-    return dict_
+            if loc not in exclude:
+                result[loc] = locals_[loc]
+    for rn, rnVal in rename.items():
+        result[rnVal] = result[rn]
+        del result[rn]
+    return result
 
 
 def _allowOnlyCreationOf_ChildrenInstances(self, cls):
