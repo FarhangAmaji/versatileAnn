@@ -139,6 +139,8 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
         dfCopy = df.copy()
         for _, combo in self.uniqueCombos.items():
             dfToFit = self.getRowsByCombination(df, combo)
+            if dfToFit.empty:
+                continue
             inds = dfToFit.index
             dfToFit = dfToFit.reset_index(drop=True)
             dfCopy.loc[inds, col] = self.container[col][combo.shortRepr()].inverseTransformCol(
@@ -157,12 +159,16 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
                          colNames)
 
     @argValidator
-    def getMeanNStd(self, df: pd.DataFrame):
+    def setMeanNStd_ofMainGroups(self, df: pd.DataFrame):
+        # cccAlgo
+        #  for each col, makes f'{col}Mean' and f'{col}Std'
+        #  note setMeanNStd_ofMainGroups needs to have unTransformed mainGroups. so if needed,
+        #  inverseTransform them and transform them again after applying this func
         for col in self.colNames:
             for _, combo in self.uniqueCombos.items():
                 dfToFit = self.getRowsByCombination(df, combo)
                 inds = dfToFit.index
-                scaler = self.container[col][combo.shortRepr()].scalers[col].scaler
+                scaler = self.container[col][combo.shortRepr()].encoders[col].scaler
                 comboMean = scaler.mean_[0]
                 comboStd = scaler.scale_[0]
                 df.loc[inds, f'{col}Mean'] = comboMean
