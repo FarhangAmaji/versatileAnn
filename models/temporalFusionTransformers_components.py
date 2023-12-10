@@ -13,6 +13,7 @@ import torch.nn.functional as F
 #kkk add comments main tft forward
 #kkk delete arg type definitions
 def getFastAi_empericalEmbeddingSize(n, maxSize = 100) -> int:
+    # goodToHave2 relocate this
     """
     Determine empirically good embedding sizes (formula taken from fastai).
     """

@@ -13,6 +13,7 @@ it has also these features:
                 'beerCapital', 'musicFest'
 note the encoder and decoder lengths are not fixed and differ for each point. therefore there are min
 and max for them, also rightPadIfShorter=True is used in dataset
+- note timeVarying|static;real|categorical;known|unknown are counterpart of eachother
 """
 from typing import Union
 
@@ -30,31 +31,11 @@ from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNorm
 from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from dataPrep.utils import getDatasetFiles, _applyShuffleIfSeedExists
-# kkk replace this from a particular model, to general embedding files
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import DotDict, varPasser
 
 # ----
-# kkk explain timeVarying|static;real|categorical;known|unknown
-# timeIdx = 'timeIdx'
-# mainGroups = ['agency', 'sku']
-# targets = ['volume']
-# specialDays = ['easterDay',
-#                'goodFriday', 'newYear', 'christmas', 'laborDay', 'independenceDay',
-#                'revolutionDayMemorial', 'regionalGames', 'fifaU17WorldCup',
-#                'footballGoldCup', 'beerCapital', 'musicFest']
-# categoricalGroupVariables = {"specialDays": specialDays}
-# categoricalSingularVariables = ["agency", "sku", "month"]
-
-# staticCategoricals = ["agency", "sku"]
-# staticReals = ["avgPopulation2017", "avgYearlyHouseholdIncome2017"]
-# timeVarying_knownCategoricals = ["specialDays", "month"]
-# timeVarying_knownReals = ["timeIdx", "priceRegular", "discountInPercent"]
-# timeVarying_unknownCategoricals = []
-# timeVarying_unknownReals = ["volume", "logVolume", "industryVolume", "sodaVolume", "avgMaxTemp",
-#                            "avgVolumeByAgency", "avgVolumeBySku"]
-
 dataInfo = DotDict({'timeIdx': 'timeIdx',
                     'mainGroups': ['agency', 'sku'],
                     'targets': ['volume'],
@@ -82,17 +63,6 @@ def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24
                           devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
-    # dataInfo = dataInfo['dataInfo']
-    # mainGroups = dataInfo['mainGroups']
-    # targets = dataInfo['targets']
-    # categoricalGroupVariables = dataInfo['categoricalGroupVariables']
-    # categoricalSingularVariables = dataInfo['categoricalSingularVariables']
-    # staticCategoricals = dataInfo['staticCategoricals']
-    # staticReals = dataInfo['staticReals']
-    # timeVarying_knownCategoricals = dataInfo['timeVarying_knownCategoricals']
-    # timeVarying_knownReals = dataInfo['timeVarying_knownReals']
-    # timeVarying_unknownCategoricals = dataInfo['timeVarying_unknownCategoricals']
-    # timeVarying_unknownReals = dataInfo['timeVarying_unknownReals']
 
     df = getStallion_data(devTestMode, maxEncoderLength, maxPredictionLength)
     _makingTimeIdx(df)
@@ -100,14 +70,13 @@ def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24
 
     df = df.sort_values(dataInfo.mainGroups + [dataInfo.timeIdx]).reset_index(drop=True)
     normalizer = NormalizerStack(  # LStl1
-        MainGroupSingleColsStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),
+        MainGroupSingleColsStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),  # LStl2
         SingleColsLblEncoder(
-            ['sku', 'agency', 'month', *dataInfo.categoricalGroupVariables['specialDays']]))
+            ['sku', 'agency', 'month', *dataInfo.categoricalGroupVariables['specialDays']]))  # LStl3
     normalizer.fitNTransform(df)
-    # cccAlgo
-    #  pay attention if the MainGroupSingleColsStdNormalizer was passed after
-    #  SingleColsLblEncoder, because it sets up uniquecombos first and after SingleColsLblEncoder's
-    #  fitNTransform those values would have changed,; we have to pass it before the SingleColsLblEncoder
+    # cccUsage
+    #  pay attention 'sku', 'agency' are mainGroups for targets in line #LStl2
+    #  also note #LStl3 themselves are being transformed, so # LStl3 must be after #LStl2
     _addTargetMeanNStd(dataInfo, df, normalizer)
     _addEmbeddingSizes(dataInfo, normalizer)
     _addTimeVarying_EncoderNDecoder(dataInfo)
@@ -117,7 +86,6 @@ def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24
 
     _getFullOrNotConditions(dataInfo, df, maxEncoderLength, maxPredictionLength, minEncoderLength,
                             minPredictionLength, normalizer)
-    # setsDf = _splitFullN_nonFullEqually(dataInfo, df, maxEncoderLength, maxPredictionLength)
 
     setsDf = _splitFullN_nonFullEqually(dataInfo, df, maxEncoderLength, maxPredictionLength,
                                         trainRatio, valRatio, shuffle, shuffleSeed)
