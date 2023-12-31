@@ -1,6 +1,7 @@
 import inspect
 from typing import Union
 
+import aiohttp
 import numpy as np
 import pandas as pd
 import torch
@@ -67,7 +68,7 @@ class DotDict:
 class NpDict(DotDict):
     """
     converts cols of df to a dict of np arrays or
-    also helps reassigning the dtypes of df subsets
+    also helps re-assigning the dtypes of df subsets
     """
 
     # kkk make sure other functionalities of pd df, except the things defined below are kept
@@ -375,6 +376,20 @@ def similarItemsString(inputList):
 # ---- floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num, precisionOrder)
+
+
+# ---- download
+async def downloadFileAsync(url, destination, event=None):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                content = await response.read()
+                with open(destination, 'wb') as f:
+                    f.write(content)
+                if event:
+                    event.set()  # Set the event to signal that the file has been downloaded
+            else:
+                raise Exception(f"Failed to download file. Status code: {response.status}")
 
 
 # ---- misc
