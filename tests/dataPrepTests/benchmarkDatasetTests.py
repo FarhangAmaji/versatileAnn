@@ -1,18 +1,29 @@
 # ---- imports
 
 import unittest
-
+import os
 import pandas as pd
 import torch
 
-from dataPrep.commonDatasets.electricity import getElectricity_processed, getElectricity_data, \
+from dataBenchmarks.benchmarkPrep.electricity import getElectricity_processed, getElectricity_data, \
     getElectricityDataloaders, dataInfo as electricityDataInfo
-from dataPrep.commonDatasets.epfFrBe import getEpfFrBe_data, getEpfFrBe_processed, \
+from dataBenchmarks.benchmarkPrep.epfFrBe import getEpfFrBe_data, getEpfFrBe_processed, \
     getEpfFrBeDataloaders, dataInfo as epfFrBeDataInfo
-from dataPrep.commonDatasets.stallion import getStallion_processed, getStallion_TftDataloaders, \
+from dataBenchmarks.benchmarkPrep.stallion import getStallion_processed, getStallion_TftDataloaders, \
     getStallion_data, dataInfo as stallionDataInfo
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
+from dataBenchmarks.getData import getDatasetFiles, _getFilePathInDataStoreLocation
+
+
+# ---- getDatasetFiles
+class getDatasetFilesTests(BaseTestClass):
+    def test(self):
+        filepath = _getFilePathInDataStoreLocation("EPF_FR_BE_static.csv")
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        getDatasetFiles("EPF_FR_BE_static.csv")
+        self.assertTrue(os.path.exists(filepath))
 
 
 # ---- epfFrBeTests
