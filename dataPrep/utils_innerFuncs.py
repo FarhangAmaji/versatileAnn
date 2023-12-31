@@ -15,16 +15,6 @@ from utils.warnings import Warn
 splitDefaultCondition = f'{tsStartPointColName} == True'
 
 
-def _convertDateTimeCols(df, dateTimeCols):
-    for dc in dateTimeCols:
-        df[dc] = pd.to_datetime(df[dc])
-
-
-def _convertDatetimeNSortCols(df, dateTimeCols, sortCols):
-    _convertDateTimeCols(df, dateTimeCols)
-    df = df.sort_values(by=sortCols).reset_index(drop=True)
-
-
 def _exclude_mainGroupsWarn(col, df, excludeVal, mainGroups, resultColName, excludeType):
     uniqueMainGroupMax = df.groupby(mainGroups)[col].transform('max')
     uniqueMainGroupMin = df.groupby(mainGroups)[col].transform('min')

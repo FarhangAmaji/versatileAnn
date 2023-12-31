@@ -6,39 +6,14 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.utils_innerFuncs import _convertDatetimeNSortCols, _exclude_mainGroupsWarn, \
-    _exclude_singleColWarn, _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
+from dataPrep.utils_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleColWarn, \
+    _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
     _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, _extend_dfIndexes
 from dataPrep.utils_innerFuncs import _splitApplyConditions
 from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser
-
-# ---- datasets
-datasetsRelativePath = r'..\data\datasets'
-knownDatasets_dateTimeCols = {
-    "EPF_FR_BE.csv": {'dateTimeCols': ["dateTime"], 'sortCols': ['dateTime']},
-    "stallion.csv": {'dateTimeCols': ["date"], 'sortCols': ["agency", "sku"]},
-    "electricity.csv": {'dateTimeCols': ["date"],
-                        'sortCols': ['consumerId', 'hoursFromStart']}}
-
-
-def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None):
-    # mustHave3 should remove data from this github repo and add them to another github repo,
-    #  so if the data is not available, it should download data from there
-    dateTimeCols = dateTimeCols or []
-    sortCols = sortCols or []
-
-    currentDir = os.path.dirname(os.path.abspath(__file__))
-    filePath = os.path.normpath(os.path.join(currentDir, datasetsRelativePath, fileName))
-    df = pd.read_csv(filePath)
-    if fileName in knownDatasets_dateTimeCols.keys():
-        dataset = knownDatasets_dateTimeCols[fileName]
-        _convertDatetimeNSortCols(df, dataset['dateTimeCols'], dataset['sortCols'])
-    else:
-        _convertDatetimeNSortCols(df, dateTimeCols, sortCols)
-    return df
 
 
 # ---- data split
