@@ -173,7 +173,7 @@ the comments use `better comments` extention with these added style to `settings
         },
     /*	# questions */
         {
-            "text": "style2",
+            "text": "qqq",
             "color": "#9696FF"
         }
     ],
