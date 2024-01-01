@@ -1,13 +1,9 @@
-data/bestModels
-shit.py
-shit2.py
-check n beats/
-helper codes/
 __pycache__/
-churnTotResultsNoCv.csv
-transformer_from_scratch.py
-codeemprium.py
-versetaileAnn private notes.md
+data/bestModels
+data/datasets
+check others/
+devDocs/tempCodeTry/
+devDocs/versetaileAnn private notes.md
 .git/info/exclude
 .coverage
 htmlcov
@@ -15,6 +11,3 @@ coverage_html
 .idea/codeStyles/codeStyleConfig.xml
 .idea/vcs.xml
 .idea/other.xml
-devDocs/tempCodeTry/
-devDocs/tempCodeTry/tempCode.py
-data\datasets
