@@ -7,7 +7,7 @@ import torch
 
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
-from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict
+from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict, snakeToCamel, camelToSnake
 
 
 class DotDictTests(BaseTestClass):
@@ -245,6 +245,18 @@ class equalTensorsTests(BaseTestClass):
         tensor2 = torch.tensor([1, 2, 3])
         result = equalTensors(tensor1, tensor2, floatApprox=True, floatPrecision=1e-3)
         self.assertTrue(result)
+
+
+class CaseChangeTests(BaseTestClass):
+    def testSnakeToCamel(self):
+        snakeString = "example_snake_case_string"
+        camelCaseResult = snakeToCamel(snakeString)
+        self.assertEqual(camelCaseResult, "exampleSnakeCaseString")
+
+    def testCamelToSnake(self):
+        camelString = "exampleCamelCaseString"
+        snakeCaseResult = camelToSnake(camelString)
+        self.assertEqual(snakeCaseResult, "example_camel_case_string")
 
 
 # ---- run test
