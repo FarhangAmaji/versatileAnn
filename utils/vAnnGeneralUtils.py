@@ -1,6 +1,6 @@
 import inspect
 from typing import Union
-
+import re
 import aiohttp
 import numpy as np
 import pandas as pd
@@ -453,6 +453,20 @@ def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
             raise ValueError(errMsg)
 
     return func
+
+
+def camelToSnake(camelString):
+    # Use regular expression to insert underscores before capital letters
+    snakeString = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camelString)
+    # Convert to lowercase
+    snakeString = snakeString.lower()
+    return snakeString
+
+
+def snakeToCamel(snake_string):
+    # Use regular expression to capitalize letters following underscores
+    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snake_string)
+    return camelString
 
 
 def nLastCallers(n=1):
