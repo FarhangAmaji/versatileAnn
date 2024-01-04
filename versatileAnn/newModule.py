@@ -55,27 +55,19 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         pl.LightningModule.__init__(self)
         NewWrapper_properties.__init__(self, modelName, devMode)
         self.dummy = nn.Linear(7, 1)
-        # kkk later check how the user should use this class; note dummyLayer is added in order not to get
-        # error of optimizer
+        # kkk later check how the user should use this class; note dummyLayer is added in order not
+        #  to get error of optimizer; note specially inheriting from classes I want
 
     def forward(self, inputs, targets):
         output = {}
         output['volume'] = self.dummy(targets['volume'])  # kkk this just to get some output
         return output
 
-    def training_step(self, batch, batch_idx):
-        stepPhase = 'train'
-        inputs, targets = batch
-        # kkk later make it compatible with outputMask
-        outputs = self(inputs, targets) # kkk may add targets if its is model arguments
-
-        # calculate loss
+    def _calculateLosses(self, loss, outputs, targets):
         calculatedLosses = []
         outputsFlatData = _NestedDictStruct(outputs,
                                             giveFilledStruct=True).toList()  # kkk add to emptyStruct do it one time
         targetsFlatData = _NestedDictStruct(targets, giveFilledStruct=True).toList()
-
-        loss = None
         for i, loss_ in enumerate(self.losses):
             # kkk only for first one should make backwards and for other should do
             assert len(outputsFlatData) == len(
@@ -88,10 +80,24 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
 
             if i == 0:  # only first loss is returned, and therefore done backprop on
                 loss = calculatedLosses[0]
-        # Log losses
+        return calculatedLosses, loss
+
+    def _logLosses(self, calculatedLosses, stepPhase):
         for i, loss_ in enumerate(self.losses):  # kkk where does it save the log
-            self.log(snakeToCamel(stepPhase + type(loss_).__name__), calculatedLosses[i], on_epoch=False,
-                     prog_bar=True)
+            self.log(snakeToCamel(stepPhase + type(loss_).__name__), calculatedLosses[i],
+                     on_epoch=False, prog_bar=True)
+
+    def training_step(self, batch, batch_idx):
+        stepPhase = 'train'
+        inputs, targets = batch
+        # kkk later make it compatible with outputMask
+        outputs = self(inputs, targets)  # kkk may add targets if its is model arguments
+
+        # calculate loss
+        loss = None
+        calculatedLosses, loss = self._calculateLosses(loss, outputs, targets)
+        # Log losses
+        self._logLosses(calculatedLosses, stepPhase)
         return loss
 
     def configure_optimizers(self):  # kkk change it later
