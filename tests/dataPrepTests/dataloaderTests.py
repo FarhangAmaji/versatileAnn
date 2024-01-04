@@ -32,6 +32,11 @@ class nestedDictStructTests(BaseTestClass):
         but because we have only nestedDictStruct and _ObjectToBeTensored types with defined __repr__s
         so seems to be ok"""
 
+    def testToList(self):
+        res = _NestedDictStruct({'a': {'b': {'c': [1, 2, 3]}}, 'z': [23, 5]},
+                                giveFilledStruct=True).toList()
+        self.assertEqual(res, [[1, 2, 3], [23, 5]])
+
 
 # ----     appendValue_ToNestedDictPathTests
 class appendValue_ToNestedDictPathForSimpleDictionaryTests(BaseTestClass):
