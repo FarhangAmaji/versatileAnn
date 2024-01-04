@@ -147,7 +147,9 @@ class _ObjectToBeTensored(TensorStacker):
 
 class _NestedDictStruct:
     # addTest2 has been tested but no for every single detail
-    def __init__(self, wrappedObj):
+    def __init__(self, wrappedObj, giveFilledStruct=False):
+        # goodToHave3
+        #  later may make giveFilledStruct=True by default
         # cccAlgo
         #  an object of this class can get wrapped around other objects(wrappedObj)
         #  it differentiates between if wrappedObj is `dict` or from other types of data
@@ -161,7 +163,10 @@ class _NestedDictStruct:
         #   to convert wrappedObj to tensors in gpu
         #   ----
         #   so main purpose is to move inner parts of complex structures to gpu, when needed
-        self.struct = self.giveEmptyStruct(wrappedObj)  # can be a dict or _ObjectToBeTensored
+        self.emptyStruct = self.giveEmptyStruct(wrappedObj)  # can be a dict or _ObjectToBeTensored
+        self.struct = copy.deepcopy(self.emptyStruct)
+        if giveFilledStruct:
+            self.fillWithData(wrappedObj)
 
     def giveEmptyStruct(self, wrappedObj):
         if not isinstance(wrappedObj, dict):
@@ -175,8 +180,8 @@ class _NestedDictStruct:
             if isinstance(value, dict):
                 returnDict[key] = self.giveEmptyStruct(value)
             else:
-                returnDict[key] = _ObjectToBeTensored(
-                    value)  # inner parts of dicts if are not a dict, would be wrapped with _ObjectToBeTensored
+                # inner parts of dicts if are not a dict, would be wrapped with _ObjectToBeTensored
+                returnDict[key] = _ObjectToBeTensored(value)
         return returnDict
 
     # ---- fill with data
@@ -222,7 +227,8 @@ class _NestedDictStruct:
             tensor = tensor.squeeze(0)
         return tensor
 
-    def getValuesOfDictTypeStruct(self, dictionary, toGpuTensor=False):
+    def getValuesOfDictTypeStruct(self, dictionary=None, toGpuTensor=False):
+        dictionary = dictionary or self.struct
         returnDict = {}
         if len(dictionary) == 0:
             return {}
