@@ -11,11 +11,12 @@ from utils.vAnnGeneralUtils import snakeToCamel
 
 class NewWrapper_properties:
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True):
+    def __init__(self, modelName: str = '', devMode: bool = True, defaultPrecision=16):
         self.to('cuda' if torch.cuda.is_available() else 'cpu')
         self.losses = []
         self._setModelName(modelName)
         self.devMode = devMode
+        self.defaultPrecision = defaultPrecision
 
         if devMode:
             pass  # kkk
@@ -38,6 +39,17 @@ class NewWrapper_properties:
     @argValidator
     def losses(self, value: List[nn.modules.loss._Loss]):
         self._losses = value
+
+    @property
+    def defaultPrecision(self):
+        return self._defaultPrecision
+
+    @defaultPrecision.setter
+    @argValidator
+    def defaultPrecision(self, value: int):
+        if value not in [16, 32, 64]:
+            raise ValueError('precision only can be 16, 32 or 64')
+        self._defaultPrecision = value
 
     @property
     def devMode(self):
