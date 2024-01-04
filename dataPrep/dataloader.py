@@ -243,6 +243,23 @@ class _NestedDictStruct:
                     returnDict[key] = value.values
         return returnDict
 
+    def toList(self):
+        # cccAlgo
+        #  Loops through self.struct and adds the values to a list
+        result = []
+        def recursiveToList(dictionary, result):
+            for key, value in dictionary.items():
+                if isinstance(value, dict):
+                    recursiveToList(value, result)
+                else:
+                    if isinstance(value.values, list) and len(value.values)==1:
+                        result.append(value.values[0])
+                    else:
+                        result.append(value.values[0])
+            return result
+
+        return recursiveToList(self.struct, result)
+
     def getData_single(self, toGpuTensor=False):
         # goodToHave3 it was good if it was possible to take data only as tensor and not solely gpuTensor
         if isinstance(self.struct, _ObjectToBeTensored):
