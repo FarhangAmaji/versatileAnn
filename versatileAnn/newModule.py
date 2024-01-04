@@ -144,6 +144,15 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
             )
             self._runTrainer(trainDataloader, trainer, valDataloader)
 
+            print('running overfitBatches')
+            trainer = pl.Trainer(
+                # kkk add camelCase and snakeCase compatible options of this to passed
+                overfit_batches=1,  # Run only for a small number of epochs for faster development
+                max_epochs=100,
+                precision=self.defaultPrecision if 'precision' not in kwargs else kwargs[
+                    'precision']
+            )
+            self._runTrainer(trainDataloader, trainer, valDataloader)
         else:
             pass  # kkk
 
