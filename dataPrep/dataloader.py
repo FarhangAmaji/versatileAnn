@@ -204,6 +204,7 @@ class _NestedDictStruct:
             else:
                 appendValue_ToNestedDictPath(self, path2, value)
 
+    @staticmethod
     def fillSingleOrMultiple_WithItemData(nestedDictStructs, itemsToAdd):
         # cccAlgo
         #  if nestedDictStructs is type of `_NestedDictStruct` is called `single`
@@ -276,6 +277,7 @@ class _NestedDictStruct:
     def getDataAsGpuTensors_single(self):
         return self.getData_single(toGpuTensor=True)
 
+    @staticmethod
     def getData_singleNMultiple(nestedDictStructs, toGpuTensor=False):
         validate_IsObjOfTypeX_orAListOfTypeX(_NestedDictStruct)(nestedDictStructs)
         if isinstance(nestedDictStructs, list):  # multiple
@@ -286,7 +288,11 @@ class _NestedDictStruct:
             res = nestedDictStructs.getData_single(toGpuTensor)
         return res
 
+    @staticmethod
     def getDataAsGpuTensors_singleNMultiple(nestedDictStructs):
+        # bugPotentialCheck1(same for fillSingleOrMultiple_WithItemData and getData_singleNMultiple)
+        #  in the past(how its tests are written), it hadn't @staticmethod and probably
+        #  nestedDictStructs was assumed to be `self` but after adding @staticmethod worked as before
         return _NestedDictStruct.getData_singleNMultiple(
             nestedDictStructs, toGpuTensor=True)
 
