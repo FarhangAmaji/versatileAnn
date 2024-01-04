@@ -57,13 +57,68 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         self.dummy = nn.Linear(7, 1)
         # kkk later check how the user should use this class; note dummyLayer is added in order not to get
         # error of optimizer
+
     def forward(self, inputs, targets):
         output = {}
+        output['volume'] = self.dummy(targets['volume'])  # kkk this just to get some output
         return output
 
     def training_step(self, batch, batch_idx):
+        stepPhase = 'train'
+        inputs, targets = batch
+        # kkk later make it compatible with outputMask
+        outputs = self(inputs, targets) # kkk may add targets if its is model arguments
+
+        # calculate loss
+        calculatedLosses = []
+        outputsFlatData = _NestedDictStruct(outputs,
+                                            giveFilledStruct=True).toList()  # kkk add to emptyStruct do it one time
+        targetsFlatData = _NestedDictStruct(targets, giveFilledStruct=True).toList()
+
         loss = None
+        for i, loss_ in enumerate(self.losses):
+            # kkk only for first one should make backwards and for other should do
+            assert len(outputsFlatData) == len(
+                targetsFlatData), 'mismatch in lens of outputsFlatData and targetsFlatData'
+            lossRes = torch.Tensor([0]).to(outputsFlatData[0].device)
+            for j in range(len(outputsFlatData)):
+                lossRes += loss_(outputsFlatData[j], targetsFlatData[j])
+
+            calculatedLosses.append(lossRes)
+
+            if i == 0:  # only first loss is returned, and therefore done backprop on
+                loss = calculatedLosses[0]
+        # Log losses
+        for i, loss_ in enumerate(self.losses):  # kkk where does it save the log
+            self.log(snakeToCamel(stepPhase + type(loss_).__name__), calculatedLosses[i], on_epoch=False,
+                     prog_bar=True)
         return loss
 
     def configure_optimizers(self):  # kkk change it later
         return torch.optim.Adam(self.parameters(), lr=1e-3)
+
+    @argValidator
+    def trainModel(self, trainDataloader, *, losses: List[nn.modules.loss._Loss], maxEpochs=5,
+                   savePath, tensorboardPath='', valDataloader=None, externalKwargs=None):
+        # cccUsage
+        #  only first loss is used for backpropagation and others are just for logging
+        if losses:
+            # cccUsage
+            #  in the case outside of trainModel losses is been set, so if not passed would use them
+            self.losses = losses
+
+        if self.devMode:
+            trainer = pl.Trainer(
+                # kkk add camelCase and snakeCase compatible options of this to passed
+                fast_dev_run=True,  # Run only for a small number of epochs for faster development
+                log_every_n_steps=1,  # Log every step
+                logger=pl.loggers.TensorBoardLogger("Kog2s", name=self.modelName),
+                # kkk where does it; SavePath
+            )
+        else:
+            pass  # kkk
+
+        if valDataloader:  # kkk add camelCase and snakeCase compatible options of this to passed
+            trainer.fit(self, trainDataloader, valDataloader)
+        else:
+            trainer.fit(self, trainDataloader)
