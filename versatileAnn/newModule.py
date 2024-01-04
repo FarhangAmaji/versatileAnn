@@ -126,7 +126,7 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
 
     @argValidator
     def trainModel(self, trainDataloader, *, losses: List[nn.modules.loss._Loss], maxEpochs=5,
-                   savePath, tensorboardPath='', valDataloader=None, externalKwargs=None):
+                   savePath, tensorboardPath='', valDataloader=None, externalKwargs=None, **kwargs):
         # cccUsage
         #  only first loss is used for backpropagation and others are just for logging
         if losses:
@@ -135,16 +135,23 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
             self.losses = losses
 
         if self.devMode:
+            print('running fastDevRun')
             trainer = pl.Trainer(
                 # kkk add camelCase and snakeCase compatible options of this to passed
                 fast_dev_run=True,  # Run only for a small number of epochs for faster development
-                log_every_n_steps=1,  # Log every step
-                logger=pl.loggers.TensorBoardLogger("Kog2s", name=self.modelName),
-                # kkk where does it; SavePath
+                precision=self.defaultPrecision if 'precision' not in kwargs else kwargs[
+                    'precision']
             )
+            self._runTrainer(trainDataloader, trainer, valDataloader)
+
         else:
             pass  # kkk
 
+            # logger=pl.loggers.TensorBoardLogger(self.modelName, name=giveDateTimeStr()),
+
+        self._runTrainer(trainDataloader, trainer, valDataloader)
+
+    def _runTrainer(self, trainDataloader, trainer, valDataloader):
         if valDataloader:  # kkk add camelCase and snakeCase compatible options of this to passed
             trainer.fit(self, trainDataloader, valDataloader)
         else:
