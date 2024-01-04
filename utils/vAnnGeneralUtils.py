@@ -469,6 +469,11 @@ def snakeToCamel(snake_string):
     return camelString
 
 
+def giveDateTimeStr():
+    import datetime
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
 def nLastCallers(n=1):
     # cccAlgo this is useful for debugging
     import inspect
