@@ -67,12 +67,13 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         pl.LightningModule.__init__(self)
         NewWrapper_properties.__init__(self, modelName, devMode)
         self.dummy = nn.Linear(7, 1)
-        # kkk later check how the user should use this class; note dummyLayer is added in order not
+        # kkk iss1 later check how the user should use this class; note dummyLayer is added in order not
         #  to get error of optimizer; note specially inheriting from classes I want
 
     def forward(self, inputs, targets):
         output = {}
-        output['volume'] = self.dummy(targets['volume'])  # kkk this just to get some output
+        output['volume'] = self.dummy(
+            targets['volume'])  # kkk this just to get some output; related to iss1
         return output
 
     def _calculateLosses(self, loss, outputs, targets):
@@ -80,8 +81,8 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         outputsFlatData = _NestedDictStruct(outputs,
                                             giveFilledStruct=True).toList()  # kkk add to emptyStruct do it one time
         targetsFlatData = _NestedDictStruct(targets, giveFilledStruct=True).toList()
+
         for i, loss_ in enumerate(self.losses):
-            # kkk only for first one should make backwards and for other should do
             assert len(outputsFlatData) == len(
                 targetsFlatData), 'mismatch in lens of outputsFlatData and targetsFlatData'
             lossRes = torch.Tensor([0]).to(outputsFlatData[0].device)
@@ -95,22 +96,30 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         return calculatedLosses, loss
 
     def _logLosses(self, calculatedLosses, stepPhase):
-        for i, loss_ in enumerate(self.losses):  # kkk where does it save the log
+        on_epoch = True
+        on_step = False if stepPhase == 'train' else True
+        for i, loss_ in enumerate(self.losses):
             self.log(snakeToCamel(stepPhase + type(loss_).__name__), calculatedLosses[i],
-                     on_epoch=False, prog_bar=True)
+                     on_epoch=on_epoch, on_step=on_step, prog_bar=True)
 
-    def training_step(self, batch, batch_idx):
-        stepPhase = 'train'
+    def _tempCommonStep(self, batch, stepPhase):
         inputs, targets = batch
         # kkk later make it compatible with outputMask
         outputs = self(inputs, targets)  # kkk may add targets if its is model arguments
-
         # calculate loss
         loss = None
         calculatedLosses, loss = self._calculateLosses(loss, outputs, targets)
         # Log losses
         self._logLosses(calculatedLosses, stepPhase)
         return loss
+
+    def training_step(self, batch, batch_idx):
+        stepPhase = 'train'
+        return self._tempCommonStep(batch, stepPhase)
+
+    def validation_step(self, batch, batch_idx):
+        stepPhase = 'val'
+        return self._tempCommonStep(batch, stepPhase)
 
     def configure_optimizers(self):  # kkk change it later
         return torch.optim.Adam(self.parameters(), lr=1e-3)
