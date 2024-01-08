@@ -463,15 +463,15 @@ def camelToSnake(camelString):
     return snakeString
 
 
-def snakeToCamel(snake_string):
+def snakeToCamel(snakeString):
     # Use regular expression to capitalize letters following underscores
-    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snake_string)
+    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snakeString)
     return camelString
 
 
 def giveDateTimeStr():
     import datetime
-    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return datetime.datetime.now().strftime("%Y-%b-%d_%H-%M-%S")
 
 
 def nLastCallers(n=1):
