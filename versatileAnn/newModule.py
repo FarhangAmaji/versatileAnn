@@ -17,6 +17,7 @@ class NewWrapper_properties:
         self._setModelName(modelName)
         self.devMode = devMode
         self.defaultPrecision = defaultPrecision
+        self._outputsStruct = None
 
         if devMode:
             pass  # kkk
@@ -60,6 +61,15 @@ class NewWrapper_properties:
     def devMode(self, value: bool):
         self._devMode = value
 
+    @property
+    def _outputsStruct(self):
+        return copy.deepcopy(self.__outputsStruct)
+
+    @_outputsStruct.setter
+    @argValidator
+    def _outputsStruct(self, value: Union[_NestedDictStruct, None]):
+        self.__outputsStruct = value
+
 
 class NewWrapper(pl.LightningModule, NewWrapper_properties):
     @argValidator
@@ -77,14 +87,26 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
         return output
 
     def _calculateLosses(self, loss, outputs, targets):
+        # bugPotentialCheck1 gives error without setting losses; addTest1
         calculatedLosses = []
-        outputsFlatData = _NestedDictStruct(outputs,
-                                            giveFilledStruct=True).toList()  # kkk add to emptyStruct do it one time
-        targetsFlatData = _NestedDictStruct(targets, giveFilledStruct=True).toList()
+        if not self.losses:
+            return calculatedLosses, loss
 
-        for i, loss_ in enumerate(self.losses):
+        if not self._outputsStruct:  # to get _outputsStruct only once
+            self._outputsStruct = _NestedDictStruct(outputs)
+        if self._outputsStruct:
+            outputsFlatData = self._outputsStruct
+            outputsFlatData.fillWithData(outputs)
+            outputsFlatData = outputsFlatData.toList()
+
+            # cccDevAlgo targets is assumed to have same structure as outputs
+            targetsFlatData = self._outputsStruct
+            targetsFlatData.fillWithData(targets)
+            targetsFlatData = targetsFlatData.toList()
             assert len(outputsFlatData) == len(
                 targetsFlatData), 'mismatch in lens of outputsFlatData and targetsFlatData'
+
+        for i, loss_ in enumerate(self.losses):
             lossRes = torch.Tensor([0]).to(outputsFlatData[0].device)
             for j in range(len(outputsFlatData)):
                 lossRes += loss_(outputsFlatData[j], targetsFlatData[j])
