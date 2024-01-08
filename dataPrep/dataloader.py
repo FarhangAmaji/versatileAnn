@@ -353,6 +353,7 @@ class SamplerFor_vAnnTsDataset(Sampler):
     @argValidator
     def __init__(self, dataset: VAnnTsDataset, batchSize=None, shuffle=False, seed=None):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
+        super().__init__(dataset)
         if seed:
             shuffle = True
         if shuffle and not batchSize:

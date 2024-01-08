@@ -185,7 +185,8 @@ def getStallion_TftDataloaders(*, dataInfo: Union[DotDict, dict], maxEncoderLeng
     testDataset = StallionTftDataset(testDf, **kwargs)
     del trainDf, valDf, testDf
 
-    trainDataloader = VAnnTsDataloader(trainDataset, batch_size=batchSize)
-    valDataloader = VAnnTsDataloader(valDataset, batch_size=batchSize)
-    testDataloader = VAnnTsDataloader(testDataset, batch_size=batchSize)
+    kwargs = {'shuffle': shuffle, 'randomSeed': shuffleSeed}
+    trainDataloader = VAnnTsDataloader(trainDataset, batch_size=batchSize, **kwargs)
+    valDataloader = VAnnTsDataloader(valDataset, batch_size=batchSize, **kwargs)
+    testDataloader = VAnnTsDataloader(testDataset, batch_size=batchSize, **kwargs)
     return trainDataloader, valDataloader, testDataloader, normalizer
