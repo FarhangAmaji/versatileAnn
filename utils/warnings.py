@@ -14,19 +14,19 @@ class CustomWarning(UserWarning):
 # Custom Warn class
 class Warn:
     @staticmethod
-    def _print_warning(message, level, foreground_color, background_color):
+    def _printWithColorNBackground(message, wordsColor, backgroundColor):
         style = Style.NORMAL
-        warning_message = f"{style}{foreground_color}{background_color} {message} {Style.RESET_ALL}"
-        warnings.warn(warning_message, CustomWarning)
+        warningMessage = f"{style}{wordsColor}{backgroundColor} {message} {Style.RESET_ALL}"
+        warnings.warn(warningMessage, CustomWarning)
 
     @staticmethod
     def info(message):
-        Warn._print_warning(message, 'info', Fore.BLUE, Back.BLACK)
+        Warn._printWithColorNBackground(message, Fore.BLUE, Back.BLACK)
 
     @staticmethod
     def warn(message):
-        Warn._print_warning(message, 'warning', Fore.YELLOW, Back.BLACK)
+        Warn._printWithColorNBackground(message, Fore.YELLOW, Back.BLACK)
 
     @staticmethod
     def error(message):
-        Warn._print_warning(message, 'error', Fore.BLACK, Back.RED)
+        Warn._printWithColorNBackground(message, Fore.BLACK, Back.RED)
