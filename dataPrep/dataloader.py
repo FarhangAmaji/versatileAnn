@@ -474,14 +474,14 @@ class VAnnTsDataloader(DataLoader):
 
     @property
     def phase(self):
-        return self.phase
+        return self._phase
 
     @phase.setter
     @argValidator
     def phase(self, value: str):
         if value not in self.__possiblePhaseNames:
             raise ValueError(f"phase must be one of these: {', '.join(self.__possiblePhaseNames)}.")
-        self.phase = value
+        self._phase = value
 
     def bestNumWorkerFinder(self):
         pass
