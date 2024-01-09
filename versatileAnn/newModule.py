@@ -11,12 +11,11 @@ from utils.vAnnGeneralUtils import snakeToCamel
 
 class NewWrapper_properties:
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True, defaultPrecision=16):
+    def __init__(self, modelName: str = '', devMode: bool = True):
         self.to('cuda' if torch.cuda.is_available() else 'cpu')
         self.losses = []
         self._setModelName(modelName)
         self.devMode = devMode
-        self.defaultPrecision = defaultPrecision
         self._outputsStruct = None
 
         if devMode:
@@ -40,17 +39,6 @@ class NewWrapper_properties:
     @argValidator
     def losses(self, value: List[nn.modules.loss._Loss]):
         self._losses = value
-
-    @property
-    def defaultPrecision(self):
-        return self._defaultPrecision
-
-    @defaultPrecision.setter
-    @argValidator
-    def defaultPrecision(self, value: int):
-        if value not in [16, 32, 64]:
-            raise ValueError('precision only can be 16, 32 or 64')
-        self._defaultPrecision = value
 
     @property
     def devMode(self):
@@ -161,8 +149,6 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
             trainer = pl.Trainer(
                 # kkk add camelCase and snakeCase compatible options of this to passed
                 fast_dev_run=True,  # Run only for a small number of epochs for faster development
-                precision=self.defaultPrecision if 'precision' not in kwargs else kwargs[
-                    'precision']
             )
             self._runTrainer(trainDataloader, trainer, valDataloader)
 
@@ -171,8 +157,6 @@ class NewWrapper(pl.LightningModule, NewWrapper_properties):
                 # kkk add camelCase and snakeCase compatible options of this to passed
                 overfit_batches=1,  # Run only for a small number of epochs for faster development
                 max_epochs=100,
-                precision=self.defaultPrecision if 'precision' not in kwargs else kwargs[
-                    'precision']
             )
             self._runTrainer(trainDataloader, trainer, valDataloader)
         else:
