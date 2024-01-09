@@ -352,10 +352,12 @@ class SamplerFor_vAnnTsDataset(Sampler):
     #  this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
 
     @argValidator
-    def __init__(self, *, dataset: Union[VAnnTsDataset, None] = None, indexes: list = None, batchSize,
+    def __init__(self, *, dataset: Union[VAnnTsDataset, None] = None, indexes: list = None,
+                 batchSize,
                  shuffle=False, seed=None, shuffleFirst=True):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
-        super().__init__(dataset)
+        if dataset is not None:
+            super().__init__(dataset)
         if seed:
             shuffle = True
 
@@ -372,9 +374,9 @@ class SamplerFor_vAnnTsDataset(Sampler):
         self._shuffleNumerator_initial = 0
         self._shuffleNumerator = self._shuffleNumerator_initial
 
-
         if shuffle and shuffleFirst:
             self._shuffleIndexes()
+
     def __iter__(self):
         if self.shuffle:
             return self._iterShuffleLogic()
@@ -383,7 +385,7 @@ class SamplerFor_vAnnTsDataset(Sampler):
 
     def _iterShuffleLogic(self):
         if self._shuffleNumerator == self._iterLen:
-            self._shuffleNumerator = self._shuffleNumerator_initial # reset self._shuffleNumerator
+            self._shuffleNumerator = self._shuffleNumerator_initial  # reset self._shuffleNumerator
 
             # shuffle indexes
             self._shuffleIndexes()
@@ -400,6 +402,9 @@ class SamplerFor_vAnnTsDataset(Sampler):
     def __len__(self):
         return len(self.indexes)
 
+    def changeBatchSize(self, newBatchSize):
+        return type(self)(indexes=self.indexes, batchSize=newBatchSize, shuffle=self.shuffle,
+                          seed=self.seed, shuffleFirst=False)
 
     @property
     def shuffle(self):
