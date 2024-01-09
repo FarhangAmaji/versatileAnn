@@ -277,7 +277,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         self.assertEqual(str(dictToFill.getDataAsGpuTensors_single()), str(self.inputsRes))
 
 
-class dataloaderTests(BaseTestClass):
+class DataloaderTests(BaseTestClass):
     def setup1(self, batch_size=5):
         self.seed = 65
 
