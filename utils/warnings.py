@@ -1,13 +1,14 @@
 import warnings
+import colorama
 
-from colorama import Fore, Back, Style, init
+from colorama import Fore, Back, Style
 
 # Initialize colorama
-init(autoreset=True)
+colorama.init(autoreset=True)
 
 
 # Custom warning levels
-class CustomWarning(UserWarning):
+class CusWarn(UserWarning):
     pass
 
 
@@ -16,16 +17,16 @@ class Warn:
     @staticmethod
     def _printWithColorNBackground(message, wordsColor, backgroundColor):
         style = Style.NORMAL
-        warningMessage = f"{style}{wordsColor}{backgroundColor} {message} {Style.RESET_ALL}"
-        warnings.warn(warningMessage, CustomWarning)
+        warningMessage = f"\n{style}{wordsColor}{backgroundColor} {message} {Style.RESET_ALL}"
+        warnings.warn(warningMessage, CusWarn)
 
     @staticmethod
     def info(message):
-        Warn._printWithColorNBackground(message, Fore.BLUE, Back.BLACK)
+        Warn._printWithColorNBackground(message, Fore.BLACK, Back.BLUE)
 
     @staticmethod
     def warn(message):
-        Warn._printWithColorNBackground(message, Fore.YELLOW, Back.BLACK)
+        Warn._printWithColorNBackground(message, Fore.BLACK, Back.YELLOW)
 
     @staticmethod
     def error(message):
