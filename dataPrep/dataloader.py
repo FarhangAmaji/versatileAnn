@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import default_collate
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, tensor_floatDtypeChangeIfNeeded, \
-    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, snakeToCamel
+    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
 from utils.warnings import Warn
 
 
@@ -404,7 +404,7 @@ class VAnnTsDataloader(DataLoader):
     # mustHave2 num_workers>0 problem?!!? its not stable in `windows os`
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
     # mustHave1 be able to change batchSize
-    # goodToHave3 get dataset class name, and phase; also detect is it from predefined dataset or not
+    # goodToHave3 detect is it from predefined dataset or not
     @argValidator
     def __init__(self, dataset: VAnnTsDataset, *, name='', phase='unKnown', batch_size=64,
                  collate_fn=None, sampler=None,
@@ -415,7 +415,6 @@ class VAnnTsDataloader(DataLoader):
                 this options enables remaking that structure everytime
         """
         # dataloaderName
-        x = 0  # kkk
         self._setNameNPhase(dataset, name, phase)
 
         # cccDevAlgo
@@ -451,17 +450,15 @@ class VAnnTsDataloader(DataLoader):
                 if type(dataset).__name__ != 'VAnnTsDataset':
                     datasetName = type(dataset).__name__
                     if 'dataset' in datasetName:
-                        datasetName.replace('dataset', 'Dataloader')
+                        datasetName = datasetName.replace('dataset', 'Dataloader')
                     if 'Dataset' in datasetName:
-                        datasetName.replace('Dataset', 'Dataloader')
+                        datasetName = datasetName.replace('Dataset', 'Dataloader')
                     self.name = datasetName
         if not self.name:
             raise ValueError('provide a name for Dataloader.')
 
         self.phase = phase
-        if self.phase != 'unKnown':
-            if self.phase not in self.name:
-                self.name += snakeToCamel(self.phase)
+        self._addPhaseToNameIfItsIsnt()
 
     @property
     def shuffle(self):
@@ -481,7 +478,20 @@ class VAnnTsDataloader(DataLoader):
     def phase(self, value: str):
         if value not in self.__possiblePhaseNames:
             raise ValueError(f"phase must be one of these: {', '.join(self.__possiblePhaseNames)}.")
+
+        # remove last phase suffix from self.name
+        if hasattr(self, '_phase'):  # in order not to give error for the setting first time
+            if self.phase.capitalize() in self.name:
+                self.name = self.name.replace(self.phase.capitalize(), '')
+
         self._phase = value
+        # change phase suffix for self.name
+        self._addPhaseToNameIfItsIsnt()
+
+    def _addPhaseToNameIfItsIsnt(self):
+        if self.phase != 'unKnown':
+            if self.phase.capitalize() not in self.name:
+                self.name += self.phase.capitalize()
 
     def bestNumWorkerFinder(self):
         pass

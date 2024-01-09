@@ -278,17 +278,23 @@ class fillBatchStructWithDataTests(BaseTestClass):
 
 
 class DataloaderTests(BaseTestClass):
-    def setup1(self, batch_size=5):
+    def setup1(self, batch_size=5):  # same as DataloaderTests in dataloaderTests.py
         self.seed = 65
 
-        class customDataset(VAnnTsDataset):
+        class custom1Dataset(VAnnTsDataset):
             def __getitem__(self, idx):
                 return self.data['a'][idx]
 
-        self.dataset = customDataset(data=pd.DataFrame({'a': [i + 1000 for i in range(8, 170)]}),
-                                     backcastLen=0, forecastLen=0)
-        self.dataloader = VAnnTsDataloader(self.dataset, batch_size=batch_size, shuffle=True,
-                                           randomSeed=self.seed)
+        self.dataset = custom1Dataset(data=pd.DataFrame({'a': [i + 1000 for i in range(8, 170)]}),
+                                      backcastLen=0, forecastLen=0)
+        self.dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=batch_size,
+                                           shuffle=True, randomSeed=self.seed)
+
+    def testModelName1(self):
+        self.setup1()
+        self.assertEqual(self.dataloader.name, 'custom1DataloaderTrain')
+        self.dataloader.phase = 'test'
+        self.assertEqual(self.dataloader.name, 'custom1DataloaderTest')
 
     def testShuffledWithSeed(self):
         self.setup1()
