@@ -424,6 +424,9 @@ class SamplerFor_vAnnTsDataset(Sampler):
     def batchSize(self, value: int):
         if value < 1:
             raise ValueError('batchSize must be positive.')
+        if value % 2 != 0:
+            Warn.warn('batchSize is not even, which is not recommended.')
+
         self._batchSize = value
         self._iterLen = math.ceil(len(self.indexes) / value)
 
@@ -453,6 +456,8 @@ class VAnnTsDataloader(DataLoader):
         #  so if the user has passed `batchSize` it would work correctly. also `batchSize` has priority over 'batch_size'
         if 'batchSize' in kwargs.keys():
             batch_size = kwargs['batchSize']
+            if batch_size % 2 != 0:
+                Warn.warn('batchSize is not even, which is not recommended.')
 
         # mustHave3 make it compatible to self.device of vAnn
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
