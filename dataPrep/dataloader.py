@@ -365,6 +365,8 @@ class SamplerFor_vAnnTsDataset(Sampler):
         self._shuffleNumerator_initial = 0
         self._shuffleNumerator = self._shuffleNumerator_initial
 
+
+
     def __iter__(self):
         if self.shuffle:
             return self._iterShuffleLogic()
@@ -373,7 +375,11 @@ class SamplerFor_vAnnTsDataset(Sampler):
 
     def _iterShuffleLogic(self):
         assert self._shuffleNumerator < self.__iterLen, 'logical error'
-        if self._shuffleNumerator == self._shuffleNumerator_initial:
+        self._shuffleNumerator += 1
+        if self._shuffleNumerator == self.__iterLen:
+            self._shuffleNumerator = self._shuffleNumerator_initial
+
+            # shuffle indexes
             self.indexes = shuffleData(self.indexes, self.seed)
             # cccAlgo
             #  note indexes by getting shuffled result get changed inplace
