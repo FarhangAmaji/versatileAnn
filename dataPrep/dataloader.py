@@ -433,7 +433,6 @@ class VAnnTsDataloader(DataLoader):
     # addTest1 needs tests
     # mustHave2 num_workers>0 problem?!!? its not stable in `windows os`
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
-    # mustHave1 be able to change batchSize
     # goodToHave3 detect is it from predefined dataset or not
     # goodToHave3 to store the place that dataset and dataloader are defined
     @argValidator
@@ -471,9 +470,9 @@ class VAnnTsDataloader(DataLoader):
                             collate_fn=collate_fn, sampler=sampler,
                             shuffle=False, **kwargs)
 
-        # self.__initArgs is used in changeBatchSize
-        self.__initArgs = {'batch_size': batch_size, 'sampler': self.sampler,
-                           'collate_fn': collate_fn, 'kwargs': kwargs}
+        # self._initArgs is used in changeBatchSize
+        self._initArgs = {'batch_size': batch_size, 'sampler': self.sampler,
+                          'collate_fn': collate_fn, 'randomSeed': randomSeed, 'kwargs': kwargs}
 
     def findBatchStruct(self, batch):
         # cccAlgo
@@ -515,18 +514,18 @@ class VAnnTsDataloader(DataLoader):
         return _NestedDictStruct.getDataAsGpuTensors_singleNMultiple(batchStructCopy)
 
     def changeBatchSize(self, newBatchSize):
-        # mustHave1
-        #  be able to change batchSize
-        initArgs = copy.deepcopy(self.__initArgs)
-        kwargs = initArgs['kwargs']
+        initArgs = {key: val for key, val in self._initArgs.items()}
+        kwargs = self._initArgs['kwargs']
         del initArgs['kwargs']
+        del initArgs['sampler']  # sampler is gonna recreated so we dont pass it
 
-        # kkk if the sampler is SamplerFor_vAnnTsDataset should reset it also
         initArgs['batch_size'] = newBatchSize
         initArgs['name'] = self.name
         initArgs['phase'] = self.phase
         initArgs['shuffle'] = self.shuffle
-        newInstance = type(self)(**self.__initArgs, **kwargs)
+        initArgs['createBatchStructEverytime'] = self.createBatchStructEverytime
+        initArgs['dataset'] = self.dataset
+        newInstance = type(self)(**initArgs, **kwargs)
         return newInstance
 
     def bestNumWorkerFinder(self):
