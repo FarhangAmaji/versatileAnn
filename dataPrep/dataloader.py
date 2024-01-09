@@ -352,20 +352,18 @@ class SamplerFor_vAnnTsDataset(Sampler):
     #  this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
 
     @argValidator
-    def __init__(self, dataset: VAnnTsDataset, batchSize=None, shuffle=False, seed=None):
+    def __init__(self, dataset: VAnnTsDataset, batchSize, shuffle=False, seed=None):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
         super().__init__(dataset)
         if seed:
             shuffle = True
-        if shuffle and not batchSize:
-            raise ValueError('batchSize must be passed with shuffle True')
         self.indexes = dataset.indexes
-        self._iterLen = None
-        if batchSize:
-            self._iterLen = math.ceil(len(self.indexes) / batchSize)
+
+        self.batchSize = batchSize
         self.shuffle = shuffle
         self.seed = seed
-        self._shuffleNumerator = 0
+        self._shuffleNumerator_initial = 0
+        self._shuffleNumerator = self._shuffleNumerator_initial
 
     def __iter__(self):
         if self.shuffle:
@@ -374,14 +372,14 @@ class SamplerFor_vAnnTsDataset(Sampler):
             return iter(self.indexes)
 
     def _iterShuffleLogic(self):
-        assert self._shuffleNumerator < self._iterLen, 'logical error'
-        if self._shuffleNumerator == 0:
+        assert self._shuffleNumerator < self.__iterLen, 'logical error'
+        if self._shuffleNumerator == self._shuffleNumerator_initial:
             self.indexes = shuffleData(self.indexes, self.seed)
             # cccAlgo
             #  note indexes by getting shuffled result get changed inplace
             #  and there is way back even by making shuffle False
         self._shuffleNumerator += 1
-        if self._shuffleNumerator == self._iterLen:
+        if self._shuffleNumerator == self.__iterLen:
             self._shuffleNumerator = 0
         return iter(self.indexes)
 
@@ -396,6 +394,18 @@ class SamplerFor_vAnnTsDataset(Sampler):
     @argValidator
     def shuffle(self, value: bool):
         self._shuffle = value
+
+    @property
+    def batchSize(self):
+        return self._batchSize
+
+    @batchSize.setter
+    @argValidator
+    def batchSize(self, value: int):
+        if value < 1:
+            raise ValueError('batchSize must be positive.')
+        self._batchSize = value
+        self.__iterLen = math.ceil(len(self.indexes) / value)
 
 
 # ---- VAnnTsDataloader
