@@ -360,6 +360,35 @@ class DataloaderTests(BaseTestClass):
         expectedFirstBatch = torch.tensor([1008, 1009, 1010, 1011, 1012], dtype=torch.int64)
         self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
 
+    def testChangeBatchSize(self):
+        def print2batches(dataloader):
+            i = 0
+            for b in dataloader:
+                print(b)
+                if i == 2:
+                    break
+                i += 1
+
+        self.setup1()
+
+        def testFunc():
+            dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=2,
+                                          shuffle=True, randomSeed=self.seed)
+            print2batches(dataloader)
+            dataloader = dataloader.changeBatchSize(3)
+            print('with batchSize=3')
+            print2batches(dataloader)
+
+        expectedPrint = """tensor([1114, 1081], device='cuda:0')
+tensor([1168, 1139], device='cuda:0')
+tensor([1064, 1121], device='cuda:0')
+with batchSize=3
+tensor([1114, 1081, 1168], device='cuda:0')
+tensor([1139, 1064, 1121], device='cuda:0')
+tensor([1125, 1143, 1164], device='cuda:0')"""
+        # note the first 6 number are the same, even though the shuffle is true
+        self.assertPrint(testFunc, expectedPrint)
+
 
 # ---- run test
 if __name__ == '__main__':
