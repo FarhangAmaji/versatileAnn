@@ -285,7 +285,8 @@ class DataloaderTests(BaseTestClass):
             def __getitem__(self, idx):
                 return self.data['a'][idx]
 
-        self.dataset = custom1Dataset(data=pd.DataFrame({'a': [i + 1000 for i in range(8, 170)]}),
+        self.data = [i + 1000 for i in range(8, 170)]
+        self.dataset = custom1Dataset(data=pd.DataFrame({'a': self.data}),
                                       backcastLen=0, forecastLen=0)
         self.dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=batch_size,
                                            shuffle=True, randomSeed=self.seed)
@@ -303,13 +304,13 @@ class DataloaderTests(BaseTestClass):
         #  pytorch dataloader
         self.setup1()
         kwargs = {'phase': 'train', 'batch_size': 2, 'shuffle': True, 'randomSeed': self.seed}
-        self.dataloader = VAnnTsDataloader(self.dataset, **kwargs)
+        VAnnTsDataloader(self.dataset, **kwargs)
 
     def testKwargsPassed_noError2(self):
         self.setup1()
         kwargs = {'drop_last': False, 'phase': 'train', 'batch_size': 2, 'shuffle': True,
                   'randomSeed': self.seed}
-        self.dataloader = VAnnTsDataloader(self.dataset, **kwargs)
+        dataloader = VAnnTsDataloader(self.dataset, **kwargs)
 
     def testKwargsPassed_error(self):
         # cccDevStruct
@@ -333,7 +334,7 @@ class DataloaderTests(BaseTestClass):
     def testShuffleAllResults_1stBatch(self):
         self.setup1(batch_size=700)
         firstBatch = next(iter(self.dataloader))
-        expectedFirstBatch = shuffleData([i + 1000 for i in range(8, 170)], self.seed)
+        expectedFirstBatch = shuffleData(self.data, self.seed)
         expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=torch.int64)
         self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
 
@@ -341,16 +342,19 @@ class DataloaderTests(BaseTestClass):
         self.setup1(batch_size=700)
         firstBatch = next(iter(self.dataloader))
         secondBatch = next(iter(self.dataloader))
-        expectedFirstBatch = shuffleData([i + 1000 for i in range(8, 170)], self.seed)
+        expectedFirstBatch = shuffleData(self.data, self.seed)
         expected2ndBatch = shuffleData(expectedFirstBatch, self.seed)
         expected2ndBatch = torch.tensor(expected2ndBatch, dtype=torch.int64)
         self.equalTensors(secondBatch, expected2ndBatch, checkDevice=False)
 
     def testChangeShuffleBeforeGettingResultWithShuffleState(self):
-        self.setup1()  # self.dataloader is shuffle=True
-        # cccAlgo(same as _iterShuffleLogic)
+        self.setup1()
+        self.dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=5,
+                                           shuffle=True, randomSeed=self.seed, shuffleFirst=False)
+        # cccAlgo(same as _shuffleIndexes)
         #  note indexes by getting shuffled result get changed inplace
         #  and there is way back even by making shuffle False
+        #  note this is gonna work only when shuffleFirst=False is applied
         self.dataloader.shuffle = False
         firstBatch = next(iter(self.dataloader))
         expectedFirstBatch = torch.tensor([1008, 1009, 1010, 1011, 1012], dtype=torch.int64)
