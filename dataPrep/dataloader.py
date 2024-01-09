@@ -8,8 +8,8 @@ from torch.utils.data.dataloader import default_collate
 
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, \
-    tensor_floatDtypeChangeIfNeeded, isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
+from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, tensor_floatDtypeChangeIfNeeded, \
+    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, snakeToCamel
 from utils.warnings import Warn
 
 
@@ -248,12 +248,13 @@ class _NestedDictStruct:
         # cccAlgo
         #  Loops through self.struct and adds the values to a list
         result = []
+
         def recursiveToList(dictionary, result):
             for key, value in dictionary.items():
                 if isinstance(value, dict):
                     recursiveToList(value, result)
                 else:
-                    if isinstance(value.values, list) and len(value.values)==1:
+                    if isinstance(value.values, list) and len(value.values) == 1:
                         result.append(value.values[0])
                     else:
                         result.append(value.values[0])
@@ -402,14 +403,21 @@ class VAnnTsDataloader(DataLoader):
     # addTest1 needs tests
     # mustHave2 num_workers>0 problem?!!? its not stable in `windows os`
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
+    # mustHave1 be able to change batchSize
+    # goodToHave3 get dataset class name, and phase; also detect is it from predefined dataset or not
     @argValidator
-    def __init__(self, dataset: VAnnTsDataset, batch_size=64, collate_fn=None, sampler=None,
-                 createBatchStructEverytime=False, shuffle=False, randomSeed=None, *args, **kwargs):
+    def __init__(self, dataset: VAnnTsDataset, *, name='', phase='unKnown', batch_size=64,
+                 collate_fn=None, sampler=None,
+                 createBatchStructEverytime=False, shuffle=False, randomSeed=None, **kwargs):
         """
         createBatchStructEverytime: on some rare cases the structure of output of nn model may differ.
                 for efficiency the code only creates that structure once, but in this case,
                 this options enables remaking that structure everytime
         """
+        # dataloaderName
+        x = 0  # kkk
+        self._setNameNPhase(dataset, name, phase)
+
         # cccDevAlgo
         #  the naming format is in library is camelCase; but the pytorch uses snake_case,
         #  so if the user has passed `batchSize` it would work correctly. also `batchSize` has priority over 'batch_size'
@@ -429,7 +437,31 @@ class VAnnTsDataloader(DataLoader):
             Warn.warn('make sure you have set, VAnnTsDataset.indexes to .indexes of sampler')
         super().__init__(dataset=dataset, batch_size=batch_size,
                          collate_fn=collate_fn, sampler=sampler,
-                         shuffle=False, *args, **kwargs)
+                         shuffle=False, **kwargs)
+
+    def _setNameNPhase(self, dataset, name, phase):
+        self.__possiblePhaseNames = ['train', 'val', 'validation', 'test', 'predict', 'unKnown']
+        self.name = ''
+        if name:
+            self.name = name
+        else:
+            if type(self).__name__ != 'VAnnTsDataloader':
+                self.name = type(self).__name__
+            else:
+                if type(dataset).__name__ != 'VAnnTsDataset':
+                    datasetName = type(dataset).__name__
+                    if 'dataset' in datasetName:
+                        datasetName.replace('dataset', 'Dataloader')
+                    if 'Dataset' in datasetName:
+                        datasetName.replace('Dataset', 'Dataloader')
+                    self.name = datasetName
+        if not self.name:
+            raise ValueError('provide a name for Dataloader.')
+
+        self.phase = phase
+        if self.phase != 'unKnown':
+            if self.phase not in self.name:
+                self.name += snakeToCamel(self.phase)
 
     @property
     def shuffle(self):
@@ -439,6 +471,17 @@ class VAnnTsDataloader(DataLoader):
     @argValidator
     def shuffle(self, value: bool):
         self.sampler.shuffle = value
+
+    @property
+    def phase(self):
+        return self.phase
+
+    @phase.setter
+    @argValidator
+    def phase(self, value: str):
+        if value not in self.__possiblePhaseNames:
+            raise ValueError(f"phase must be one of these: {', '.join(self.__possiblePhaseNames)}.")
+        self.phase = value
 
     def bestNumWorkerFinder(self):
         pass
