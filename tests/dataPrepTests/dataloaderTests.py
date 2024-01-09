@@ -296,6 +296,34 @@ class DataloaderTests(BaseTestClass):
         self.dataloader.phase = 'test'
         self.assertEqual(self.dataloader.name, 'custom1DataloaderTest')
 
+    def testKwargsPassed_noError1(self):
+        # cccDevStruct
+        #  this tests that kwargs which are related to VAnnTsDataloader like(randomSeed)
+        #  are passed to the dataloader don't make conflict when **kwargs is passed to the
+        #  pytorch dataloader
+        self.setup1()
+        kwargs = {'phase': 'train', 'batch_size': 2, 'shuffle': True, 'randomSeed': self.seed}
+        self.dataloader = VAnnTsDataloader(self.dataset, **kwargs)
+
+    def testKwargsPassed_noError2(self):
+        self.setup1()
+        kwargs = {'drop_last': False, 'phase': 'train', 'batch_size': 2, 'shuffle': True,
+                  'randomSeed': self.seed}
+        self.dataloader = VAnnTsDataloader(self.dataset, **kwargs)
+
+    def testKwargsPassed_error(self):
+        # cccDevStruct
+        #  this tests that kwargs which are related to VAnnTsDataloader like(randomSeed)
+        #  are passed to the dataloader don't make conflict when **kwargs is passed to the
+        #  pytorch dataloader
+        self.setup1()
+        kwargs = {'a': 7, 'phase': 'train', 'batch_size': 2, 'shuffle': True,
+                  'randomSeed': self.seed}
+        with self.assertRaises(TypeError) as context:
+            VAnnTsDataloader(self.dataset, **kwargs)
+        self.assertEqual(str(context.exception),
+                         "DataLoader.__init__() got an unexpected keyword argument 'a'")
+
     def testShuffledWithSeed(self):
         self.setup1()
         firstBatch = next(iter(self.dataloader))
