@@ -352,21 +352,29 @@ class SamplerFor_vAnnTsDataset(Sampler):
     #  this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
 
     @argValidator
-    def __init__(self, dataset: VAnnTsDataset, batchSize, shuffle=False, seed=None):
+    def __init__(self, *, dataset: Union[VAnnTsDataset, None] = None, indexes: list = None, batchSize,
+                 shuffle=False, seed=None, shuffleFirst=True):
         # goodToHave2 super().init adds dataSource, which I dont know what it is, so later may add it
         super().__init__(dataset)
         if seed:
             shuffle = True
-        self.indexes = dataset.indexes
 
-        self.batchSize = batchSize
-        self.shuffle = shuffle
+        if indexes:
+            self.indexes = indexes
+        else:
+            if dataset is None:
+                raise ValueError('either dataset or indexes must be provided.')
+            else:
+                self.indexes = dataset.indexes
         self.seed = seed
+        self.shuffle = shuffle
+        self.batchSize = batchSize
         self._shuffleNumerator_initial = 0
         self._shuffleNumerator = self._shuffleNumerator_initial
 
 
-
+        if shuffle and shuffleFirst:
+            self._shuffleIndexes()
     def __iter__(self):
         if self.shuffle:
             return self._iterShuffleLogic()
@@ -374,23 +382,24 @@ class SamplerFor_vAnnTsDataset(Sampler):
             return iter(self.indexes)
 
     def _iterShuffleLogic(self):
-        assert self._shuffleNumerator < self.__iterLen, 'logical error'
-        self._shuffleNumerator += 1
-        if self._shuffleNumerator == self.__iterLen:
-            self._shuffleNumerator = self._shuffleNumerator_initial
+        if self._shuffleNumerator == self._iterLen:
+            self._shuffleNumerator = self._shuffleNumerator_initial # reset self._shuffleNumerator
 
             # shuffle indexes
-            self.indexes = shuffleData(self.indexes, self.seed)
-            # cccAlgo
-            #  note indexes by getting shuffled result get changed inplace
-            #  and there is way back even by making shuffle False
+            self._shuffleIndexes()
         self._shuffleNumerator += 1
-        if self._shuffleNumerator == self.__iterLen:
-            self._shuffleNumerator = 0
         return iter(self.indexes)
+
+    def _shuffleIndexes(self):
+        self.indexes = shuffleData(self.indexes, self.seed)
+        # cccAlgo
+        #  note indexes by getting shuffled result get changed inplace
+        #  and there is way back even by making shuffle False
+        #  note this is gonna work only when shuffleFirst=False is applied
 
     def __len__(self):
         return len(self.indexes)
+
 
     @property
     def shuffle(self):
@@ -411,7 +420,7 @@ class SamplerFor_vAnnTsDataset(Sampler):
         if value < 1:
             raise ValueError('batchSize must be positive.')
         self._batchSize = value
-        self.__iterLen = math.ceil(len(self.indexes) / value)
+        self._iterLen = math.ceil(len(self.indexes) / value)
 
 
 # ---- VAnnTsDataloader
@@ -425,7 +434,8 @@ class VAnnTsDataloader(DataLoader):
     @argValidator
     def __init__(self, dataset: VAnnTsDataset, *, name='', phase='unKnown',
                  batch_size=64, collate_fn=None, sampler=None,
-                 createBatchStructEverytime=False, shuffle=False, randomSeed=None, **kwargs):
+                 createBatchStructEverytime=False, shuffle=False,
+                 shuffleFirst=True, randomSeed=None, **kwargs):
         """
         createBatchStructEverytime: on some rare cases the structure of output of nn model may differ.
                 for efficiency the code only creates that structure once, but in this case,
@@ -447,8 +457,8 @@ class VAnnTsDataloader(DataLoader):
             collate_fn = self.commonCollate_fn
 
         if sampler is None:
-            sampler = SamplerFor_vAnnTsDataset(dataset, shuffle=shuffle, seed=randomSeed,
-                                               batchSize=batch_size)
+            sampler = SamplerFor_vAnnTsDataset(dataset=dataset, shuffle=shuffle, seed=randomSeed,
+                                               batchSize=batch_size, shuffleFirst=shuffleFirst)
         else:
             Warn.warn('make sure you have set, VAnnTsDataset.indexes to .indexes of sampler')
 
