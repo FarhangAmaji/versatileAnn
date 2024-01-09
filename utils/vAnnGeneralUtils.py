@@ -385,7 +385,7 @@ def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter
         raise ValueError(f'method should be a method or a function.')
 
     updatee = updatee or {}
-    methodArgs = {key: key for key in inspect.signature(method).parameters.keys()}
+    methodArgs = {key: key for key in getMethodArgs(method)}
     for key in methodArgs:
         if key in updater:
             updatee.update({key: updater[key]})
@@ -396,6 +396,11 @@ def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter
             if delAfter:
                 del updater[snakeToCamel(key)]
     return updatee
+
+
+# ---- methods and funcs
+def getMethodArgs(method):
+    return list(inspect.signature(method).parameters.keys())
 
 
 # ---- download
