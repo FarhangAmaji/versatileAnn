@@ -405,9 +405,10 @@ class VAnnTsDataloader(DataLoader):
     # goodToHave2 can later take modes, 'speed', 'gpuMemory'. for i.e. pin_memory occupies the gpuMemory but speeds up
     # mustHave1 be able to change batchSize
     # goodToHave3 detect is it from predefined dataset or not
+    # goodToHave3 to store the place that dataset and dataloader are defined
     @argValidator
-    def __init__(self, dataset: VAnnTsDataset, *, name='', phase='unKnown', batch_size=64,
-                 collate_fn=None, sampler=None,
+    def __init__(self, dataset: VAnnTsDataset, *, name='', phase='unKnown',
+                 batch_size=64, collate_fn=None, sampler=None,
                  createBatchStructEverytime=False, shuffle=False, randomSeed=None, **kwargs):
         """
         createBatchStructEverytime: on some rare cases the structure of output of nn model may differ.
@@ -434,9 +435,74 @@ class VAnnTsDataloader(DataLoader):
                                                batchSize=batch_size)
         else:
             Warn.warn('make sure you have set, VAnnTsDataset.indexes to .indexes of sampler')
-        super().__init__(dataset=dataset, batch_size=batch_size,
-                         collate_fn=collate_fn, sampler=sampler,
-                         shuffle=False, **kwargs)
+
+        DataLoader.__init__(self, dataset=dataset, batch_size=batch_size,
+                            collate_fn=collate_fn, sampler=sampler,
+                            shuffle=False, **kwargs)
+
+        # self.__initArgs is used in changeBatchSize
+        self.__initArgs = {'batch_size': batch_size, 'sampler': self.sampler,
+                           'collate_fn': collate_fn, 'kwargs': kwargs}
+
+    def findBatchStruct(self, batch):
+        # cccAlgo
+        #  .batchStruct is a `_NestedDictStruct` object(by convention, called singleType of _NestedDictStruct) or `a list of '_NestedDictStruct's`(multiple type)
+        if isListTupleOrSet(batch):
+            batchStructOfBatch = []
+            for item in batch:
+                batchStructOfBatch.append(_NestedDictStruct(item))
+            self.batchStruct = batchStructOfBatch
+        else:
+            self.batchStruct = _NestedDictStruct(batch)
+
+    def commonCollate_fn(self, batch):
+        # cccDevAlgo
+        #  for understanding gpu memory efficiency provided here take a look at devDocs\codeClarifier\gpuMemoryEfficiencyDataloader
+        # bugPotentialCheck1
+        #  dicts can't directly passed to the default_collate
+        # bugPotentialCheck1
+        #  TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object(note this was caused with dtype being object)
+        # cccDevAlgo
+        #  (how default_collate works):
+        #   example1:
+        #       converts 32lists of 2tuples which each one is a dict of 5 keys, each key has tensor of shape(7)
+        #       -> 2lists which each one is a dict of 5 keys with tensor (32,7)
+        #       and output of this func has exactly same structure as defaultCollateRes
+        #       and just tries to convert inner data to tensor, which btw probably has been already converted to tensor by default_collate
+        #       and move tensors to device(gpu)
+        #   example2:
+        #       if the output of nn model was for item1={'a':[1,2,3],'b':[88,97,103]} and item2={'a':[6,7,8],'b':[89,98,104]}.
+        #       passing them as batch=[item1,item2], to default_collate
+        #       the result would be {'a': [tensor([1, 6]), tensor([2, 7]), tensor([3, 8])],
+        #                            'b': [tensor([88, 89]), tensor([97, 98]), tensor([103, 104])]}
+        defaultCollateRes = default_collate(batch)
+        # this is to create the batchStruct once at the beginning and not everytime unless self.createBatchStructEverytime
+        if not hasattr(self, 'batchStruct') or self.createBatchStructEverytime:
+            self.findBatchStruct(defaultCollateRes)
+        batchStructCopy = copy.deepcopy(self.batchStruct)
+        _NestedDictStruct.fillSingleOrMultiple_WithItemData(batchStructCopy, defaultCollateRes)
+        return _NestedDictStruct.getDataAsGpuTensors_singleNMultiple(batchStructCopy)
+
+    def changeBatchSize(self, newBatchSize):
+        # mustHave1
+        #  be able to change batchSize
+        initArgs = copy.deepcopy(self.__initArgs)
+        kwargs = initArgs['kwargs']
+        del initArgs['kwargs']
+
+        # kkk if the sampler is SamplerFor_vAnnTsDataset should reset it also
+        initArgs['batch_size'] = newBatchSize
+        initArgs['name'] = self.name
+        initArgs['phase'] = self.phase
+        initArgs['shuffle'] = self.shuffle
+        newInstance = type(self)(**self.__initArgs, **kwargs)
+        return newInstance
+
+    def bestNumWorkerFinder(self):
+        pass
+        # mustHave2
+        #  implement it later: there is a code in `devDocs\halfCompleteCode` but because it had sometimes errors while working
+        #  with having any num_workers, its not complete; note num_workers for sure is `super unstable` in `windows os`
 
     def _setNameNPhase(self, dataset, name, phase):
         self.__possiblePhaseNames = ['train', 'val', 'validation', 'test', 'predict', 'unKnown']
@@ -492,48 +558,3 @@ class VAnnTsDataloader(DataLoader):
         if self.phase != 'unKnown':
             if self.phase.capitalize() not in self.name:
                 self.name += self.phase.capitalize()
-
-    def bestNumWorkerFinder(self):
-        pass
-        # mustHave2
-        #  implement it later: there is a code in `devDocs\halfCompleteCode` but because it had sometimes errors while working
-        #  with having any num_workers, its not complete; note num_workers for sure is `super unstable` in `windows os`
-
-    def findBatchStruct(self, batch):
-        # cccAlgo
-        #  .batchStruct is a `_NestedDictStruct` object(by convention, called singleType of _NestedDictStruct) or `a list of '_NestedDictStruct's`(multiple type)
-        if isListTupleOrSet(batch):
-            batchStructOfBatch = []
-            for item in batch:
-                batchStructOfBatch.append(_NestedDictStruct(item))
-            self.batchStruct = batchStructOfBatch
-        else:
-            self.batchStruct = _NestedDictStruct(batch)
-
-    def commonCollate_fn(self, batch):
-        # cccDevAlgo
-        #  for understanding gpu memory efficiency provided here take a look at devDocs\codeClarifier\gpuMemoryEfficiencyDataloader
-        # bugPotentialCheck1
-        #  dicts can't directly passed to the default_collate
-        # bugPotentialCheck1
-        #  TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object(note this was caused with dtype being object)
-        # cccDevAlgo
-        #  (how default_collate works):
-        #   example1:
-        #       converts 32lists of 2tuples which each one is a dict of 5 keys, each key has tensor of shape(7)
-        #       -> 2lists which each one is a dict of 5 keys with tensor (32,7)
-        #       and output of this func has exactly same structure as defaultCollateRes
-        #       and just tries to convert inner data to tensor, which btw probably has been already converted to tensor by default_collate
-        #       and move tensors to device(gpu)
-        #   example2:
-        #       if the output of nn model was for item1={'a':[1,2,3],'b':[88,97,103]} and item2={'a':[6,7,8],'b':[89,98,104]}.
-        #       passing them as batch=[item1,item2], to default_collate
-        #       the result would be {'a': [tensor([1, 6]), tensor([2, 7]), tensor([3, 8])],
-        #                            'b': [tensor([88, 89]), tensor([97, 98]), tensor([103, 104])]}
-        defaultCollateRes = default_collate(batch)
-        # this is to create the batchStruct once at the beginning and not everytime unless self.createBatchStructEverytime
-        if not hasattr(self, 'batchStruct') or self.createBatchStructEverytime:
-            self.findBatchStruct(defaultCollateRes)
-        batchStructCopy = copy.deepcopy(self.batchStruct)
-        _NestedDictStruct.fillSingleOrMultiple_WithItemData(batchStructCopy, defaultCollateRes)
-        return _NestedDictStruct.getDataAsGpuTensors_singleNMultiple(batchStructCopy)
