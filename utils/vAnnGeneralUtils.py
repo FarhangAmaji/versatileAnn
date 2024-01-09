@@ -378,6 +378,26 @@ def morePreciseFloat(num, precisionOrder=6):
     return round(num, precisionOrder)
 
 
+# ---- dicts
+@argValidator
+def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter=False):
+    if not callable(method):
+        raise ValueError(f'method should be a method or a function.')
+
+    updatee = updatee or {}
+    methodArgs = {key: key for key in inspect.signature(method).parameters.keys()}
+    for key in methodArgs:
+        if key in updater:
+            updatee.update({key: updater[key]})
+            if delAfter:
+                del updater[key]
+        if snakeToCamel(key) in updater:
+            updatee.update({key: updater[snakeToCamel(key)]})
+            if delAfter:
+                del updater[snakeToCamel(key)]
+    return updatee
+
+
 # ---- download
 async def downloadFileAsync(url, destination, event=None):
     async with aiohttp.ClientSession() as session:
