@@ -4,13 +4,13 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
+from utils.initParentClasses import initParentClasses
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getMethodArgs
-from versatileAnn.newModule.newWrapper_loss import _NewWrapper_loss
-from versatileAnn.newModule.newWrapper_modelDifferentiator import _NewWrapper_modelDifferentiator
-from versatileAnn.newModule.newWrapper_optimizer import _NewWrapper_optimizer
-from versatileAnn.newModule.newWrapper_preRunTests import _NewWrapper_preRunTests
-from versatileAnn.newModule.newWrapper_saveLoad import _NewWrapper_saveLoad
+from versatileAnn.newModule.loss import _NewWrapper_loss
+from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
+from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
+from versatileAnn.newModule.preRunTests import _NewWrapper_preRunTests
+from versatileAnn.newModule.saveLoad import _NewWrapper_saveLoad
 
 
 # kkk2 think about seed later
