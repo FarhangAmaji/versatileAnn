@@ -72,23 +72,25 @@ a.restModel()
 class NewWrapper(pl.LightningModule, _NewWrapper_properties, _NewWrapper_loss,
                  _NewWrapper_optimizer, _NewWrapper_preRunTests, _NewWrapper_saveLoad,
                  _NewWrapper_modelDifferentiator):
-    def __new__(cls, *args, **kwargs):  # kkk1 think about arg sharing with init
+    def __new__(cls, **kwargs):  # kkk1 think about arg sharing with init
+        # cccDevStruct
+        #  __new__ acts as preInit step. this is for a more clean setup.
+        #  so users don't need to init parent classes themselves.
+        #  and user can just define their model related things in __init__ and forward
+
         obj = super().__new__(cls)
-        # parent classes init are here
-        pl.LightningModule.__init__(obj, *args, **kwargs)
-        _NewWrapper_properties.__init__(obj, *args, **kwargs)
-        _NewWrapper_loss.__init__(obj, *args, **kwargs)
-        _NewWrapper_optimizer.__init__(obj, *args, **kwargs)
-        _NewWrapper_preRunTests.__init__(obj, *args, **kwargs)
-        _NewWrapper_saveLoad.__init__(obj, *args, **kwargs)
-        _NewWrapper_modelDifferentiator.__init__(obj, *args, **kwargs)
+        # parent(base) classes init are here
+        initParentClasses(cls, kwargs, obj, exceptions=['_NewWrapper_optimizer'])
         return obj
 
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True):
-        # pl.LightningModule.__init__(self)
-        # _NewWrapper_properties.__init__(self, modelName, devMode)
-        self.dummy = nn.Linear(7, 1)
+    def __init__(self, **kwargs):
+        # cccDevStruct
+        #  note __init__ and __new__ don't take optional args
+        self.dummy = nn.Linear(7, 1) # kkk this is dummy
+
+        # _NewWrapper_optimizer must be initialized at the postInitialization
+        initParentClasses(type(self), kwargs, self, just=['_NewWrapper_optimizer'])
         # kkk1 iss1 later check how the user should use this class; note dummyLayer is added in order not
         #  to get error of optimizer; note specially inheriting from classes I want
 
