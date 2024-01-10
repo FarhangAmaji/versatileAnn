@@ -1,3 +1,5 @@
+from abc import ABC
+
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -15,7 +17,7 @@ from versatileAnn.newModule.newWrapper_saveLoad import _NewWrapper_saveLoad
 # kkk2 parent classes must not have instance
 # kkk1 if I use kwargsBasedOnMethod then I should check conflicts when 2 methods get some args with same name
 
-class _NewWrapper_properties:
+class _NewWrapper_properties(ABC):
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True, lr=3e-4):
         self.to('cuda' if torch.cuda.is_available() else 'cpu')
@@ -73,13 +75,13 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties, _NewWrapper_loss,
     def __new__(cls, *args, **kwargs):  # kkk1 think about arg sharing with init
         obj = super().__new__(cls)
         # parent classes init are here
-        pl.LightningModule.__init__(obj)
-        _NewWrapper_properties.__init__(obj)
-        _NewWrapper_loss.__init__(obj)
-        _NewWrapper_optimizer.__init__(obj)
-        _NewWrapper_preRunTests.__init__(obj)
-        _NewWrapper_saveLoad.__init__(obj)
-        _NewWrapper_modelDifferentiator.__init__(obj)
+        pl.LightningModule.__init__(obj, *args, **kwargs)
+        _NewWrapper_properties.__init__(obj, *args, **kwargs)
+        _NewWrapper_loss.__init__(obj, *args, **kwargs)
+        _NewWrapper_optimizer.__init__(obj, *args, **kwargs)
+        _NewWrapper_preRunTests.__init__(obj, *args, **kwargs)
+        _NewWrapper_saveLoad.__init__(obj, *args, **kwargs)
+        _NewWrapper_modelDifferentiator.__init__(obj, *args, **kwargs)
         return obj
 
     @argValidator
