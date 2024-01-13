@@ -10,45 +10,12 @@ from versatileAnn.newModule.loss import _NewWrapper_loss
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
 from versatileAnn.newModule.preRunTests import _NewWrapper_preRunTests
+from versatileAnn.newModule.properties import _NewWrapper_properties
 from versatileAnn.newModule.saveLoad import _NewWrapper_saveLoad
-
 
 # kkk2 think about seed later
 # kkk2 parent classes must not have instance
 # kkk1 if I use kwargsBasedOnMethod then I should check conflicts when 2 methods get some args with same name
-
-class _NewWrapper_properties(ABC):
-    @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True, lr=3e-4):
-        self.to('cuda' if torch.cuda.is_available() else 'cpu')
-        self.losses = []
-        self._setModelName(modelName)
-        self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
-        self.lr = lr  # kkk2 make property
-
-        if devMode:
-            pass  # kkk?
-        else:
-            pass  # kkk?
-
-    def _setModelName(self, modelName):
-        if not modelName:
-            if self.__class__.__name__ == 'NewWrapper':
-                raise ValueError('modelName must be provided if not inherited form NewWrapper')
-            self.modelName = self.__class__.__name__
-        else:
-            self.modelName = modelName
-
-    @property
-    def devMode(self):
-        return self._devMode
-
-    @devMode.setter
-    @argValidator
-    def devMode(self, value: bool):
-        self._devMode = value
-
-
 # kkk2 rest model: after doing getInitArgs and postInitCaller
 """
 class A:
