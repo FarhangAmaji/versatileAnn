@@ -13,6 +13,7 @@ class _NewWrapper_properties(ABC):
         self._setModelName(modelName)
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
         self.lr = lr  # kkk2 make property
+        self.testPrints = testPrints
 
         if devMode:
             pass  # kkk?
@@ -36,3 +37,6 @@ class _NewWrapper_properties(ABC):
     def devMode(self, value: bool):
         self._devMode = value
 
+    def printTestPrints(self, *args):
+        if self.testPrints:
+            print(*args)
