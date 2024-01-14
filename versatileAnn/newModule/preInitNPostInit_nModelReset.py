@@ -22,6 +22,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         initiatedObj = super().__new__(cls)
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, exceptions=['_NewWrapper_optimizer'])
+        _NewWrapper_preInitNPostInit_nModelReset._initParentClasses_tillNewWrapper_withDisablingTheirInits(
+            allArgs, cls, initiatedObj, parentClasses_tillNewWrapper)
+
         # initializing _NewWrapper_optimizer
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, just=['_NewWrapper_optimizer'])
