@@ -1,6 +1,8 @@
 import inspect
-from typing import Union
 import re
+import threading
+from typing import Union
+
 import aiohttp
 import numpy as np
 import pandas as pd
@@ -497,6 +499,40 @@ def snakeToCamel(snakeString):
 def giveDateTimeStr():
     import datetime
     return datetime.datetime.now().strftime("%Y-%b-%d_%H-%M-%S")
+
+
+def inputTimeout(prompt, timeout=30):
+    """
+        Display a prompt to the user and wait for input with a specified timeout.
+
+        Parameters:
+        - prompt (str): The message to display as the input prompt.
+        - timeout (int, optional): The time limit (in seconds) for the user to input data.
+                                  Defaults to 30 seconds.
+
+        Returns:
+        - str or False: If input is received within the timeout, returns the user's input as a string.
+                        If no input is received within the timeout, returns False.
+    """
+    print(prompt)
+    user_input = [None]
+
+    def inputThread():
+        user_input[0] = input()
+
+    # Start the input thread
+    thread = threading.Thread(target=inputThread)
+    thread.start()
+
+    # Wait for the thread to finish or timeout
+    thread.join(timeout)
+
+    # Check if input was received or timeout occurred
+    if thread.is_alive():
+        # print("No input received. Continuing the code...")
+        return False
+    else:
+        return user_input[0]
 
 
 def nLastCallers(n=1):
