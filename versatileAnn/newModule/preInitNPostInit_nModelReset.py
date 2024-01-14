@@ -11,3 +11,5 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
         _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
+        argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
+            cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs)
