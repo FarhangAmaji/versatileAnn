@@ -13,3 +13,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
             cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs)
+        # parent classes of NewWrapper
+        argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper = cls._get_parentClassesOfNewWrapper(
+            _NewWrapper_Obj, kwargs)

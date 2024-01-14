@@ -30,3 +30,47 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         exclude_selfNArgsNKwargs_fromAllArgs(argsOf_parentClasses_tillNewWrapper)
         return argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper
 
+    @staticmethod
+    def _findAllParentClasses_tillNewWrapper(cls_, NewWrapper_Obj, parentClasses: dict = None):
+        # this method is similar to findParentClasses_OfAClass_tillAnotherClass in utils/initParentClasses.py
+
+        parentClasses = parentClasses or {}
+        # goodToHave3 bugPotentialCheck2
+        #  some classes may have same .__name__ but are actually different classes
+        #  but I am not counting for that(maybe later).
+        #  so for now each class is going to be captured in a dict with {class.__name__:classObj}
+
+        if str(cls_) == str(NewWrapper_Obj):
+            return parentClasses
+        elif cls_ is pl.LightningModule:
+            return parentClasses
+        elif cls_ is object:
+            return parentClasses
+
+        parentClasses.update({cls_.__name__: cls_})
+        parentsOfThisClass = cls_.__bases__
+        for potc in parentsOfThisClass:
+            parentClasses = _NewWrapper_preInitNPostInit_nModelReset_inner._findAllParentClasses_tillNewWrapper(
+                potc,
+                NewWrapper_Obj,
+                parentClasses)
+        return parentClasses
+
+    @staticmethod
+    def _get_parentClassesOfNewWrapper(NewWrapper_Obj, originalKwargs):
+        parentClassesOfNewWrapper = {pc.__name__: pc for pc in NewWrapper_Obj.__bases__}
+        argsOf_parentClassesOfNewWrapper = getArgsOfClasses(parentClassesOfNewWrapper,
+                                                            originalKwargs)
+        exclude_selfNArgsNKwargs_fromAllArgs(argsOf_parentClassesOfNewWrapper)
+
+        # cccDevStruct
+        #  note this is only for development error detection
+        #  args of parent classes of NewWrapper must not have similar names
+        for arg, argVal in argsOf_parentClassesOfNewWrapper.items():
+            if len(argVal['classes']) > 1:
+                raise InternalLogicError(
+                    "internalError: this is for development:" +
+                    "\nparentClasses of NewWrapper must not have args with similar names in their __init__."
+                    f'\narg "{arg}" is used in more than one base classes of NewWrapper: {argVal["classes"]}.')
+        return argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper
+
