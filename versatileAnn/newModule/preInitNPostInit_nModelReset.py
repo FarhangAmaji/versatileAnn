@@ -19,3 +19,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # get parent classes of `last child of all` upto NewWrapper, also args of those classes
         allArgs = cls._combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
             argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper)
+        initiatedObj = super().__new__(cls)
+        initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
+                                allArgs, exceptions=['_NewWrapper_optimizer'])
+        # initializing _NewWrapper_optimizer
+        initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
+                                allArgs, just=['_NewWrapper_optimizer'])
