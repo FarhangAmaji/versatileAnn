@@ -22,7 +22,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # give error if the user defined classes have their __new__ method
         if len(_NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_) > 1:
             _NewWrapper_Obj = \
-            _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]
+                _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]
             if cls.__new__ is not _NewWrapper_Obj.__new__:
                 raise ImplementationError(f'"{cls} class is not allowed to have __new__ method."')
 
@@ -50,6 +50,10 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
             cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs)
+
+        # warn/advice the users to not __init__ their parent classes in their code because it's
+        # done automatically here, and may cause errors
+        cls._warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper)
 
         # parent classes of NewWrapper
         argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper = cls._get_parentClassesOfNewWrapper(

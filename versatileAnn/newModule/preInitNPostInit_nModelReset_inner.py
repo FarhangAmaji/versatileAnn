@@ -4,7 +4,8 @@ import pytorch_lightning as pl
 
 from utils.customErrors import InternalLogicError
 from utils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_fromAllArgs, \
-    getArgsRelatedToAClass_fromAllArgs, orderClassNames_soChildIsAlways_afterItsParents
+    getArgsRelatedToAClass_fromAllArgs, orderClassNames_soChildIsAlways_afterItsParents, \
+    checkIfAClassIs_initingItsParentClasses_inItsInit
 from utils.warnings import Warn
 
 
@@ -123,3 +124,13 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
     @staticmethod
     def _emptyMethod_usedForDisabling__init__s(self, **kwargs):
         self.printTestPrints('emptyMethod_usedForDisabling__init__s')
+
+    @staticmethod
+    def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper):
+        # addTest2
+        for clsName, clsObj in parentClasses_tillNewWrapper.items():
+            if checkIfAClassIs_initingItsParentClasses_inItsInit(clsObj):
+                Warn.warn('you have initiated parent classes in your __init__.' +
+                          f'\n{clsName} class is one of them.' +
+                          '\nthis may cause error because parent classes are initiated automatically.' +
+                          '\nso you may want to remove the __init__ of parent classes from your __init__.')
