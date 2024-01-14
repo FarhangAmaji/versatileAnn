@@ -16,3 +16,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # parent classes of NewWrapper
         argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper = cls._get_parentClassesOfNewWrapper(
             _NewWrapper_Obj, kwargs)
+        # get parent classes of `last child of all` upto NewWrapper, also args of those classes
+        allArgs = cls._combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
+            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper)

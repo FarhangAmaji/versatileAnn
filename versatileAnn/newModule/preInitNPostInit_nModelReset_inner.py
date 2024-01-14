@@ -74,3 +74,19 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                     f'\narg "{arg}" is used in more than one base classes of NewWrapper: {argVal["classes"]}.')
         return argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper
 
+    @staticmethod
+    def _combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
+            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper):
+        allArgs = {**argsOf_parentClasses_tillNewWrapper}
+        for arg, argVal in argsOf_parentClassesOfNewWrapper.items():
+            if arg not in allArgs:
+                allArgs[arg] = argVal
+            else:
+                allArgs[arg]['classes'].extend(argVal['classes'])
+                Warn.warn(
+                    f'"{arg}" arg is used in the classes you have defined. ' +
+                    'and also exist in required args of NewWrapper.' +
+                    '\nthis may cause conflict if are used for other purposes than passing to NewWrapper.' +
+                    'you may want to change the name of this arg.')
+        return allArgs
+
