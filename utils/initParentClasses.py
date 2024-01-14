@@ -126,3 +126,24 @@ def findParentClasses_OfAClass_tillAnotherClass(cls_, classTillThatIsWanted,
             classTillThatIsWanted,
             parentClasses)
     return parentClasses
+
+
+def checkIfAClassIs_initingItsParentClasses_inItsInit(cls_):
+    # Check if the __init__ method is defined in the given class
+    if '__init__' not in cls_.__dict__:
+        return False
+
+    # Get the source code of the __init__ method
+    initSourceLines = inspect.getsourcelines(cls_.__dict__['__init__'])[0]
+    initSourceFlat = ''.join(initSourceLines)
+
+    parentClasses = cls_.__bases__
+    for parentClass in parentClasses:
+        if f'{parentClass.__name__}.__init__' in initSourceFlat:
+            return True
+
+    for line in initSourceLines:
+        if line.strip().startswith('super('):
+            return True
+
+    return False
