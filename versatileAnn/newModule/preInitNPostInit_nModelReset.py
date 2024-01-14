@@ -18,6 +18,14 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  this method is keep only to pass NewWrapperObj to __new__
 
         _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_.append(cls)
+
+        # give error if the user defined classes have their __new__ method
+        if len(_NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_) > 1:
+            _NewWrapper_Obj = \
+            _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]
+            if cls.__new__ is not _NewWrapper_Obj.__new__:
+                raise ImplementationError(f'"{cls} class is not allowed to have __new__ method."')
+
     def __new__(cls, **kwargs):
         # cccDevStruct
         #  - __new__ acts as `preInit` step, also enables to have `postInit`.
