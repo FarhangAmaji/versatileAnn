@@ -1,3 +1,12 @@
+import copy
+
+import pytorch_lightning as pl
+
+from utils.customErrors import InternalLogicError
+from utils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_fromAllArgs, \
+    getArgsRelatedToAClass_fromAllArgs, orderClassNames_soChildIsAlways_afterItsParents
+from utils.warnings import Warn
+
 
 class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
@@ -90,3 +99,27 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                     'you may want to change the name of this arg.')
         return allArgs
 
+    @staticmethod
+    def _initParentClasses_tillNewWrapper_withDisablingTheirInits(allArgsWithValues, cls,
+                                                                  initiatedObj,
+                                                                  parentClasses_tillNewWrapper):
+        # parent classes which are more base are __init__ed first
+        parentClasses_tillNewWrapper_names_ordered = orderClassNames_soChildIsAlways_afterItsParents(
+            parentClasses_tillNewWrapper)
+        for i, clsName in enumerate(parentClasses_tillNewWrapper_names_ordered):
+            classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(clsName, allArgsWithValues)
+            clsObj = parentClasses_tillNewWrapper[clsName]
+            clsObj.__init__(initiatedObj, **classRelatedArgs)
+
+            # inits are disabled so not to get inited twice; they are set back to their originalInit,
+            # at _NewWrapper_postInit
+            if clsObj is not cls:
+                clsObj.__init__ = cls._emptyMethod_usedForDisabling__init__s
+            else:
+                # replace lastChildOfAll's __init__ with _NewWrapper_postInit
+                clsObj.__init__ = cls._NewWrapper_postInit
+                clsObj.__init__(initiatedObj, **classRelatedArgs)
+
+    @staticmethod
+    def _emptyMethod_usedForDisabling__init__s(self, **kwargs):
+        self.printTestPrints('emptyMethod_usedForDisabling__init__s')
