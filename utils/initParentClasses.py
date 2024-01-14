@@ -2,6 +2,8 @@
 in the past this module had some funcs used to find all parent classes of a class
 but they didn't fulfill the purpose to be general enoguh. so I removed them.
 """
+
+
 # goodToHave2
 #  later make this module general enough to be used in other projects
 
