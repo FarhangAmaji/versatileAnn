@@ -59,8 +59,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
         _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
-        # delete not needed classesCalledBy_init_subclass_
-        del _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
 
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
             cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs)
@@ -79,10 +77,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         initiatedObj = super().__new__(cls)
 
-        # now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to initiatedObj,
-        # to clean class variable space
-        initiatedObj._parentClasses_tillNewWrapper_inits = cls._parentClasses_tillNewWrapper_inits
-        del cls._parentClasses_tillNewWrapper_inits
+        _NewWrapper_preInitNPostInit_nModelReset._managingClassVariableSpace(cls, initiatedObj)
 
         # cccDevStruct
         #  init parent classes of `last child of all` upto NewWrapper except _NewWrapper_optimizer
@@ -103,8 +98,26 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         initiatedObj._initArgs = kwargs or {}
         initiatedObj._initArgs['__plSeed__'] = _plSeed__
 
-
         return initiatedObj
+
+    @staticmethod
+    def _managingClassVariableSpace(cls, initiatedObj):
+        # cccDevStruct
+        #  moving classesCalledBy_init_subclass_ from _NewWrapper_preInitNPostInit_nModelReset to
+        #  cls. it's ok that classesCalledBy_init_subclass_ exist in cls, as it's definition is
+        #  fixed, but as the _NewWrapper_preInitNPostInit_nModelReset can be used in other classes,
+        #  so it must be cleaned
+        if hasattr(_NewWrapper_preInitNPostInit_nModelReset, 'classesCalledBy_init_subclass_'):
+            cls.classesCalledBy_init_subclass_ = _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
+            del _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
+
+        # cccDevStruct
+        #  now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to
+        #  initiatedObj, to clean class variable space.
+        #  note in _getArgsOfParentClasses_tillNewWrapper we temporarily put
+        #  _parentClasses_tillNewWrapper_inits in cls, because at that moment we don't have initiatedObj
+        initiatedObj._parentClasses_tillNewWrapper_inits = cls._parentClasses_tillNewWrapper_inits
+        del cls._parentClasses_tillNewWrapper_inits
 
     def _NewWrapper_postInit(self, **kwargs):
         self.printTestPrints('_NewWrapper_postInit func', self.__class__.__name__)
