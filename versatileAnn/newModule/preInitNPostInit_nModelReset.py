@@ -23,9 +23,13 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  so along some other classes, we store NewWrapper class object here.
 
         # cccDevStruct
-        #  note this is called even before 'last child of all'
-        #  note this is even called for NewWrapper itself, and its the first one to be called
         #  this method is keep only to pass NewWrapperObj to __new__
+        #  note this is called even before 'last child of all'
+        #  note this is even called for NewWrapper itself, and its the first one to be called;
+        #  but it's super important that NewWrapper is apparently is called only for the first
+        #  time!!! and not in next calls. therefore in _managingClassVariableSpace when releasing
+        #  classesCalledBy_init_subclass_ we still keeping its first element(NewWrapper)
+
 
         _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_.append(cls)
 
@@ -77,8 +81,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         initiatedObj = super().__new__(cls)
 
-        _NewWrapper_preInitNPostInit_nModelReset._managingClassVariableSpace(cls, initiatedObj)
-
         # cccDevStruct
         #  init parent classes of `last child of all` upto NewWrapper except _NewWrapper_optimizer
         #  _NewWrapper_optimizer is initiated few lines later, after initing parent classes till NewWrapper
@@ -97,6 +99,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # set initArgs, which is used for model reset
         cls._setInitArgs(_plSeed__, initiatedObj, kwargs)
 
+        cls._managingClassVariableSpace(cls, initiatedObj)
 
         return initiatedObj
 
@@ -107,9 +110,11 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  cls. it's ok that classesCalledBy_init_subclass_ exist in cls, as it's definition is
         #  fixed, but as the _NewWrapper_preInitNPostInit_nModelReset can be used in other classes,
         #  so it must be cleaned
-        if hasattr(_NewWrapper_preInitNPostInit_nModelReset, 'classesCalledBy_init_subclass_'):
+        #  note also read comments of __init_subclass__
+        if _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_:
             cls.classesCalledBy_init_subclass_ = _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
-            del _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
+            _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_ = [
+                _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]]
 
         # cccDevStruct
         #  now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to
