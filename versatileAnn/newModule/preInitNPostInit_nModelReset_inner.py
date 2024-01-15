@@ -29,7 +29,6 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
         # *args for subclasses of NewWrapper are not applied
         if 'args' in argsOf_parentClasses_tillNewWrapper:
-            # addTest2
             Warn.error('"*args" for subclasses of NewWrapper are not applied.' +
                        "\nthis warning is not always True, but it's better to double check" +
                        " that you have not used *args in your __init__")
@@ -127,7 +126,6 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper):
-        # addTest2
         for clsName, clsObj in parentClasses_tillNewWrapper.items():
             if checkIfAClassIs_initingItsParentClasses_inItsInit(clsObj):
                 Warn.warn('you have initiated parent classes in your __init__.' +
