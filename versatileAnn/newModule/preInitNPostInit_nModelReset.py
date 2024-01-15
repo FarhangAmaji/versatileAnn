@@ -96,3 +96,11 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # initializing _NewWrapper_optimizer
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, just=['_NewWrapper_optimizer'])
+
+    def _NewWrapper_postInit(self, **kwargs):
+        self.printTestPrints('_NewWrapper_postInit func', self.__class__.__name__)
+
+        # putting back originial inits
+        for pc, pcInfo in self._parentClasses_tillNewWrapper_inits.items():
+            pcInfo['classObj'].__init__ = pcInfo['originalInit']
+            # addTest2
