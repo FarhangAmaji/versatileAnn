@@ -95,8 +95,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
                                 allArgs, just=['_NewWrapper_optimizer'])
 
         # set initArgs, which is used for model reset
-        initiatedObj._initArgs = kwargs or {}
-        initiatedObj._initArgs['__plSeed__'] = _plSeed__
+        cls._setInitArgs(_plSeed__, initiatedObj, kwargs)
+
 
         return initiatedObj
 

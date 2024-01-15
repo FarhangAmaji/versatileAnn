@@ -127,6 +127,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                 clsObj.__init__(initiatedObj, **classRelatedArgs)
 
     @staticmethod
+    def _setInitArgs(_plSeed__, initiatedObj, kwargs):
+        kwargs_ = kwargs or {}
+        initiatedObj._initArgs = copy.deepcopy(kwargs_)
+        initiatedObj._initArgs['__plSeed__'] = _plSeed__
+
+    @staticmethod
     def _emptyMethod_usedForDisabling__init__s(self, **kwargs):
         self.printTestPrints('emptyMethod_usedForDisabling__init__s')
 
