@@ -1,9 +1,19 @@
+from utils.customErrors import ImplementationError
+
 from utils.initParentClasses import initClasses_withAllArgs
 from versatileAnn.newModule.preInitNPostInit_nModelReset_inner import \
     _NewWrapper_preInitNPostInit_nModelReset_inner
 
 
 class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nModelReset_inner):
+    """
+    local definition of 'last child of all':
+        the class which its instance is getting initialized by user.
+        in newWrapperTests_preInitNPostInit_nModelReset, in classDefinitionsSetup,
+        the GrandChild is the 'last child of all'
+    """
+    # cccDevStruct
+    #  this is called even before __init_subclass__
     classesCalledBy_init_subclass_ = []
     _parentClasses_tillNewWrapper_inits = None
 
@@ -66,6 +76,11 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
             argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper)
 
         initiatedObj = super().__new__(cls)
+
+        # now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to initiatedObj
+        initiatedObj._parentClasses_tillNewWrapper_inits = cls._parentClasses_tillNewWrapper_inits
+        del _NewWrapper_preInitNPostInit_nModelReset._parentClasses_tillNewWrapper_inits
+        del cls._parentClasses_tillNewWrapper_inits
 
         # cccDevStruct
         #  init parent classes of `last child of all` upto NewWrapper except _NewWrapper_optimizer
