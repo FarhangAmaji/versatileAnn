@@ -113,6 +113,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
             # inits are disabled so not to get inited twice; they are set back to their originalInit,
             # at _NewWrapper_postInit
+            # bugPotentialCheck2
+            #  returning initiatedObj in __new__ made to __init__s disabled here to be called again.
+            #  this can be seen when debugging through when creating an instance.
+            #  note before adding 'return initiatedObj' in __new__, this was not happening.
+            #  - another odd thing is that this recalling of __init__s is not detected by
+            #  self.assertPrint of testObjectCreation of newWrapperTests_preInitNPostInit_nModelReset
             if clsObj is not cls:
                 clsObj.__init__ = cls._emptyMethod_usedForDisabling__init__s
             else:

@@ -95,6 +95,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, just=['_NewWrapper_optimizer'])
 
+        return initiatedObj
     def _NewWrapper_postInit(self, **kwargs):
         self.printTestPrints('_NewWrapper_postInit func', self.__class__.__name__)
 
