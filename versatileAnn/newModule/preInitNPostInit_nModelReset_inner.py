@@ -99,7 +99,7 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                           '\nthis may cause conflict if are used for other purposes than passing to NewWrapper.' + \
                           'you may want to change the name of this arg.'
                 Warn.warn(warnMsg)
-                self.printTestPrints(warnMsg)  # kkk
+                self.printTestPrints(warnMsg)
         return allArgs
 
     @staticmethod
@@ -132,7 +132,7 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
     @staticmethod
     def _setInitArgs(_plSeed__, initiatedObj, kwargs):
         kwargs_ = kwargs or {}
-        initiatedObj._initArgs = copy.deepcopy(kwargs_)
+        initiatedObj._initArgs = kwargs_.copy()
         initiatedObj._initArgs['__plSeed__'] = _plSeed__
 
     @staticmethod
@@ -148,4 +148,4 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                           '\nthis may cause error because parent classes are initiated automatically.' + \
                           '\nso you may want to remove the __init__ of parent classes from your __init__.'
             Warn.warn(warnMsg)
-            self.printTestPrints(warnMsg)  # kkk
+            self.printTestPrints(warnMsg)

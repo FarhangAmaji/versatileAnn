@@ -1,3 +1,5 @@
+from random import random
+
 import pytorch_lightning as pl
 
 from utils.customErrors import ImplementationError
@@ -29,7 +31,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  but it's super important that NewWrapper is apparently is called only for the first
         #  time!!! and not in next calls. therefore in _managingClassVariableSpace when releasing
         #  classesCalledBy_init_subclass_ we still keeping its first element(NewWrapper)
-
 
         _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_.append(cls)
 
@@ -74,7 +75,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         # warn/advice the users to not __init__ their parent classes in their code because it's
         # done automatically here, and may cause errors
-        cls._warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper, initiatedObj)
+        cls._warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper,
+                                                          initiatedObj)
 
         # parent classes of NewWrapper
         argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper = cls._get_parentClassesOfNewWrapper(
@@ -83,8 +85,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # get parent classes of `last child of all` upto NewWrapper, also args of those classes
         allArgs = cls._combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
             argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper, initiatedObj)
-
-
 
         # cccDevStruct
         #  init parent classes of `last child of all` upto NewWrapper except _NewWrapper_optimizer
@@ -135,4 +135,18 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # putting back originial inits
         for pc, pcInfo in self._parentClasses_tillNewWrapper_inits.items():
             pcInfo['classObj'].__init__ = pcInfo['originalInit']
-            # addTest2
+
+    def resetModel(self, withPastSeed=True):
+        # cccDevStruct
+        #  note the __init_subclass__ is not called but _NewWrapper_postInit is called
+        classOfSelf = type(self)
+
+        kwargsToReset = self._initArgs.copy()
+        if not withPastSeed:
+            newRandomSeed = random.randint(1, 2 ** 31 - 1)
+            pl.seed_everything(newRandomSeed)
+        else:
+            pl.seed_everything(kwargsToReset['__plSeed__'])
+
+        kwargsToReset.pop('__plSeed__')
+        return classOfSelf.__new__(classOfSelf, **kwargsToReset)  # kkk does it use postInit
