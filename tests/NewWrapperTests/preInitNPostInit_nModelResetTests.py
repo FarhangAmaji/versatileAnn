@@ -3,6 +3,7 @@ import unittest
 from torch import nn
 
 from tests.baseTest import BaseTestClass
+from utils.initParentClasses import checkIfAClassIs_initingItsParentClasses_inItsInit
 from versatileAnn.newModule.newWrapper import NewWrapper
 
 
@@ -106,6 +107,92 @@ _NewWrapper_postInit func GrandChild
         model2 = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
                             additionalArg='additionalArg', testPrints=True)
         self.assertTrue(isinstance(model2, GrandChild))
+
+    def testResetModel(self):
+        # mustHave1
+        #  check does it correctly work after training some epochs, then after reseting would give
+        #  the same result
+        Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
+
+        model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
+                           additionalArg='additionalArg', testPrints=True)
+
+        def testFunc(model):
+            newModel = model.resetModel()
+            self.assertTrue(isinstance(model, GrandChild))
+
+        expectedPrint = self.expectedPrint1
+        self.assertPrint(testFunc, expectedPrint, model=model)
+
+    def testInitsToOriginal(self):
+        """
+        do init get back to their original after _NewWrapper_postInit
+        """
+        Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
+
+        model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
+                           additionalArg='additionalArg', testPrints=True)
+
+        def testFunc():
+            OtherParentOfChild(opoc='opoc')
+
+        expectedPrint = "OtherParentOfChild init"
+        self.assertPrint(testFunc, expectedPrint)
+
+    def classDefinitionsSetup2(self):
+        class Parent2(NewWrapper):
+            def __init__(self):
+                pass
+
+        class ChildWithSuper(Parent2):
+            def __init__(self, **kwargs):
+                super().__init__()
+                self.nnLayers = nn.Sequential(nn.Linear(1, 1))
+
+        return Parent2, ChildWithSuper
+
+    def testCreate2differentClasses_inheritedFromNewWrapper(self):
+        """
+        the purpose is to see if creating 2 different classes would mess up or not
+        """
+        _, ChildWithSuper = self.classDefinitionsSetup2()
+        _, GrandChild, _, _ = self.classDefinitionsSetup()
+
+        model = ChildWithSuper(modelName='ModelKog2s',
+                               additionalArg='additionalArg', testPrints=True)
+        self.assertTrue(isinstance(model, ChildWithSuper))
+
+        model2 = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
+                            additionalArg='additionalArg', testPrints=True)
+        self.assertTrue(isinstance(model2, GrandChild))
+
+    def classDefinitionsSetup3(self):
+        class Parent:
+            def __init__(self):
+                pass
+
+        class ChildWithSuper(Parent):
+            def __init__(self):
+                super().__init__()
+
+        class ChildWithParent(Parent):
+            def __init__(self):
+                Parent.__init__(self)
+
+        class ChildWithoutParent:
+            def __init__(self):
+                pass
+
+        return Parent, ChildWithSuper, ChildWithParent, ChildWithoutParent
+
+    def test_checkIfAClassIs_initingItsParentClasses_inItsInit(self):
+        Parent, ChildWithSuper, ChildWithParent, ChildWithoutParent = self.classDefinitionsSetup3()
+        func = checkIfAClassIs_initingItsParentClasses_inItsInit
+
+        self.assertFalse(func(Parent))
+        self.assertTrue(func(ChildWithSuper))
+        self.assertTrue(func(ChildWithParent))
+        self.assertFalse(func(ChildWithoutParent))
 
 
 # ---- run test
