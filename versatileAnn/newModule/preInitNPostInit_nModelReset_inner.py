@@ -12,7 +12,7 @@ from utils.warnings import Warn
 class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
-    def _getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, originalKwargs):
+    def _getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, originalKwargs, self):
         parentClasses_tillNewWrapper = cls._findAllParentClasses_tillNewWrapper(cls,
                                                                                 _NewWrapper_Obj)
 
@@ -29,9 +29,11 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
         # *args for subclasses of NewWrapper are not applied
         if 'args' in argsOf_parentClasses_tillNewWrapper:
-            Warn.error('"*args" for subclasses of NewWrapper are not applied.' +
-                       "\nthis warning is not always True, but it's better to double check" +
-                       " that you have not used *args in your __init__")
+            warnMsg = '"*args" for subclasses of NewWrapper are not applied.' + \
+                      "\nthis warning is not always True, but it's better to double check" + \
+                      " that you have not used *args in your __init__"
+            Warn.error(warnMsg)
+            self.printTestPrints(warnMsg)
             # cccDevStruct
             #  we don't make error and just give warning, because sometimes the user have not
             #  included *args in their __init__ but because of inheritance from `object`,
@@ -85,18 +87,19 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
-            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper):
+            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper, self):
         allArgs = {**argsOf_parentClasses_tillNewWrapper}
         for arg, argVal in argsOf_parentClassesOfNewWrapper.items():
             if arg not in allArgs:
                 allArgs[arg] = argVal
             else:
                 allArgs[arg]['classes'].extend(argVal['classes'])
-                Warn.warn(
-                    f'"{arg}" arg is used in the classes you have defined. ' +
-                    'and also exist in required args of NewWrapper.' +
-                    '\nthis may cause conflict if are used for other purposes than passing to NewWrapper.' +
-                    'you may want to change the name of this arg.')
+                warnMsg = f'"{arg}" arg is used in the classes you have defined. ' + \
+                          'and also exist in required args of NewWrapper.' + \
+                          '\nthis may cause conflict if are used for other purposes than passing to NewWrapper.' + \
+                          'you may want to change the name of this arg.'
+                Warn.warn(warnMsg)
+                self.printTestPrints(warnMsg)  # kkk
         return allArgs
 
     @staticmethod
@@ -137,10 +140,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         self.printTestPrints('emptyMethod_usedForDisabling__init__s')
 
     @staticmethod
-    def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper):
+    def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper, self):
         for clsName, clsObj in parentClasses_tillNewWrapper.items():
             if checkIfAClassIs_initingItsParentClasses_inItsInit(clsObj):
-                Warn.warn('you have initiated parent classes in your __init__.' +
-                          f'\n{clsName} class is one of them.' +
-                          '\nthis may cause error because parent classes are initiated automatically.' +
-                          '\nso you may want to remove the __init__ of parent classes from your __init__.')
+                warnMsg = 'you have initiated parent classes in your __init__.' + \
+                          f'\n{clsName} class is one of them.' + \
+                          '\nthis may cause error because parent classes are initiated automatically.' + \
+                          '\nso you may want to remove the __init__ of parent classes from your __init__.'
+            Warn.warn(warnMsg)
+            self.printTestPrints(warnMsg)  # kkk

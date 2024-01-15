@@ -61,15 +61,20 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # we get seed to just be sure this is the same seed applied in the model
         _plSeed__ = pl.seed_everything()
 
+        initiatedObj = super().__new__(cls)
+        # set 'testPrints' before other kwargs just to be able to use printTestPrints
+        if 'testPrints' in kwargs:
+            initiatedObj.testPrints = kwargs['testPrints']
+
         # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
         _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
 
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
-            cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs)
+            cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs, initiatedObj)
 
         # warn/advice the users to not __init__ their parent classes in their code because it's
         # done automatically here, and may cause errors
-        cls._warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper)
+        cls._warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper, initiatedObj)
 
         # parent classes of NewWrapper
         argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper = cls._get_parentClassesOfNewWrapper(
@@ -77,9 +82,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         # get parent classes of `last child of all` upto NewWrapper, also args of those classes
         allArgs = cls._combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
-            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper)
+            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper, initiatedObj)
 
-        initiatedObj = super().__new__(cls)
+
 
         # cccDevStruct
         #  init parent classes of `last child of all` upto NewWrapper except _NewWrapper_optimizer
@@ -89,7 +94,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, exceptions=['_NewWrapper_optimizer'])
 
-        _NewWrapper_preInitNPostInit_nModelReset._initParentClasses_tillNewWrapper_withDisablingTheirInits(
+        cls._initParentClasses_tillNewWrapper_withDisablingTheirInits(
             allArgs, cls, initiatedObj, parentClasses_tillNewWrapper)
 
         # initializing _NewWrapper_optimizer
