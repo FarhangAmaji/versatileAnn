@@ -4,7 +4,7 @@ import io
 from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors, equalNpDicts, varPasser
 # ----
 class BaseTestClass(unittest.TestCase):
-    def assertPrint(self, testFunc, expectedPrint):
+    def assertPrint(self, testFunc, expectedPrint, **kwargsOfTestFunc):
         capturedOutput = io.StringIO()
         
         # Redirect stdout to the StringIO object
@@ -12,7 +12,7 @@ class BaseTestClass(unittest.TestCase):
 
         try:
             # Run the test function
-            testFunc()
+            testFunc(**kwargsOfTestFunc)
             
             # Get the captured output as a string with newline characters
             printed = capturedOutput.getvalue()
