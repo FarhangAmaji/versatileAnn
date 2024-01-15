@@ -1,3 +1,5 @@
+import pytorch_lightning as pl
+
 from utils.customErrors import ImplementationError
 from utils.initParentClasses import initClasses_withAllArgs
 from versatileAnn.newModule.preInitNPostInit_nModelReset_inner import \
@@ -52,6 +54,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  detect if the super() is called or not in children; also maybe the __init__s of parent classes are directly callled
         # mustHave1 make initArgs
         print(f'NewWrapper __new__ method initiated for "{cls.__name__}" class')
+        # we get seed to just be sure this is the same seed applied in the model
+        _plSeed__ = pl.seed_everything()
 
         # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
         _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
@@ -95,7 +99,13 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         initClasses_withAllArgs(initiatedObj, parentClassesOfNewWrapper,
                                 allArgs, just=['_NewWrapper_optimizer'])
 
+        # set initArgs, which is used for model reset
+        initiatedObj._initArgs = kwargs or {}
+        initiatedObj._initArgs['__plSeed__'] = _plSeed__
+
+
         return initiatedObj
+
     def _NewWrapper_postInit(self, **kwargs):
         self.printTestPrints('_NewWrapper_postInit func', self.__class__.__name__)
 
