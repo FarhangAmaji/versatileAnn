@@ -1,5 +1,4 @@
 from utils.customErrors import ImplementationError
-
 from utils.initParentClasses import initClasses_withAllArgs
 from versatileAnn.newModule.preInitNPostInit_nModelReset_inner import \
     _NewWrapper_preInitNPostInit_nModelReset_inner
@@ -15,7 +14,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
     # cccDevStruct
     #  this is called even before __init_subclass__
     classesCalledBy_init_subclass_ = []
-    _parentClasses_tillNewWrapper_inits = None
 
     def __init_subclass__(cls, **kwargs):
         # cccDevAlgo
@@ -77,9 +75,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         initiatedObj = super().__new__(cls)
 
-        # now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to initiatedObj
+        # now we have the object, so we move cls._parentClasses_tillNewWrapper_inits to initiatedObj,
+        # to clean class variable space
         initiatedObj._parentClasses_tillNewWrapper_inits = cls._parentClasses_tillNewWrapper_inits
-        del _NewWrapper_preInitNPostInit_nModelReset._parentClasses_tillNewWrapper_inits
         del cls._parentClasses_tillNewWrapper_inits
 
         # cccDevStruct
