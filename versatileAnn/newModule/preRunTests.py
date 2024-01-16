@@ -13,10 +13,13 @@ class _NewWrapper_preRunTests:
                     **kwargs):
         # kkk correct this args
         fastDevRunKwargs = fastDevRunKwargs or {}
+        overfitBatchesKwargs = overfitBatchesKwargs or {}
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
         self.runFastDevRun(fastDevRunKwargs, kwargsRelatedToTrainer,
                            trainDataloader, valDataloader)
+        self.runOverfitBatches(kwargsRelatedToTrainer, overfitBatchesKwargs,
+                               trainDataloader, valDataloader)
 
     def runFastDevRun(self, fastDevRunKwargs, kwargsRelatedToTrainer, trainDataloader,
                       valDataloader):
@@ -36,4 +39,33 @@ class _NewWrapper_preRunTests:
             fast_dev_run=True,  # Run only for a small number of epochs for faster development
             **kwargsApplied)
         trainer.fit(self, train_dataloaders=trainDataloader, val_dataloaders=valDataloader)
+
+    def runOverfitBatches(self, kwargsRelatedToTrainer, overfitBatchesKwargs, trainDataloader,
+                          valDataloader):
+        self.printTestPrints('running overfitBatches')
+        # bugPotentialCheck2
+        #  with including 'overfit_batches' option, when the trainer is ran, "make sure you have
+        #  set, VAnnTsDataset.indexes to .indexes of sampler". this is an indication of that the
+        #  pytorchLighning tries to re__init__ the dataLoader.
+        #  but apparently the dataLoaders passed here are kept unchanged and this reiniting are
+        #  applied just internally. because the sampler of trainDataloader is still is instance of
+        #  SamplerFor_vAnnTsDataset
+
+        mainValLossName = self._getLossName('val', self.losses[0])
+        lossRatioDecrease = {}
+        callbacks_ = [StoreEpochData()]
+
+        kwargsApplied = {'overfit_batches': True, 'max_epochs': 100,#kkk
+                         'enable_checkpointing': False, 'logger': False, 'callbacks': callbacks_, }
+
+        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, overfitBatchesKwargs,
+                                             kwargsApplied)
+
+        if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
+            kwargsApplied['max_epochs'] = 50
+
+        trainer = pl.Trainer(**kwargsApplied)
+        trainer.fit(self, trainDataloader, valDataloader)
+
+        self._printLossChanges(callbacks_)
 
