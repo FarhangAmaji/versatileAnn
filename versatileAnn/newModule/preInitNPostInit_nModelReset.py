@@ -106,6 +106,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         cls._managingClassVariableSpace(cls, initiatedObj)
 
+        # call postInit here
+        cls._runPostInit(cls, initiatedObj, allArgs)
+
         return initiatedObj
 
     @staticmethod
@@ -136,9 +139,25 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         for pc, pcInfo in self._parentClasses_tillNewWrapper_inits.items():
             pcInfo['classObj'].__init__ = pcInfo['originalInit']
 
-    def resetModel(self, withPastSeed=True):
+    def resetModel(self, withPastSeed=True, attrsToKeep=None):
+        # addTest1
+        #  test if the model params are reset after some epochs of training
+        # cccUsage
+        #  this is not inplace so u have to do `self = self.resetModel()`
+        # bugPotentialCheck1
+        #  this is a major feature but very prone to bugs, many other attributes set after __init__
+        #  would be lost
+        # mustHave1
+        #  after writing whole NewWrapper code, this model reset must be revised to keep
+        #  __init__ kwargs or attributes added or replaced init kwargs
+        # mustHave2
+        #  attrsToKeep should be applied so that the attributes are kept in the same state as they are
+        # mustHave2
+        #  also add warning that [attr1, attr2, ...] are not kept in the same state as they are
         # cccDevStruct
         #  note the __init_subclass__ is not called but _NewWrapper_postInit is called
+        attrsToKeep = attrsToKeep or {}
+
         classOfSelf = type(self)
 
         kwargsToReset = self._initArgs.copy()
@@ -149,4 +168,4 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
             pl.seed_everything(kwargsToReset['__plSeed__'])
 
         kwargsToReset.pop('__plSeed__')
-        return classOfSelf.__new__(classOfSelf, **kwargsToReset)  # kkk does it use postInit
+        return classOfSelf.__new__(classOfSelf, **kwargsToReset)

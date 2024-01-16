@@ -103,14 +103,15 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         return allArgs
 
     @staticmethod
-    def _initParentClasses_tillNewWrapper_withDisablingTheirInits(allArgsWithValues, cls,
+    def _initParentClasses_tillNewWrapper_withDisablingTheirInits(allArgs, cls,
                                                                   initiatedObj,
                                                                   parentClasses_tillNewWrapper):
-        # parent classes which are more base are __init__ed first
+        # parent classes which are more base(upper parents) are __init__ed first
         parentClasses_tillNewWrapper_names_ordered = orderClassNames_soChildIsAlways_afterItsParents(
             parentClasses_tillNewWrapper)
+
         for i, clsName in enumerate(parentClasses_tillNewWrapper_names_ordered):
-            classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(clsName, allArgsWithValues)
+            classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(clsName, allArgs)
             clsObj = parentClasses_tillNewWrapper[clsName]
             clsObj.__init__(initiatedObj, **classRelatedArgs)
 
@@ -127,7 +128,6 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
             else:
                 # replace lastChildOfAll's __init__ with _NewWrapper_postInit
                 clsObj.__init__ = cls._NewWrapper_postInit
-                clsObj.__init__(initiatedObj, **classRelatedArgs)
 
     @staticmethod
     def _setInitArgs(_plSeed__, initiatedObj, kwargs):
@@ -147,5 +147,13 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                           f'\n{clsName} class is one of them.' + \
                           '\nthis may cause error because parent classes are initiated automatically.' + \
                           '\nso you may want to remove the __init__ of parent classes from your __init__.'
-            Warn.warn(warnMsg)
-            self.printTestPrints(warnMsg)
+                Warn.warn(warnMsg)
+                self.printTestPrints(warnMsg)
+
+    @staticmethod
+    def _runPostInit(cls_, initiatedObj, allArgs):
+        # cccDevStruct
+        #  cls_ is lastChildOfAll; as its __init__ has been replaced with _NewWrapper_postInit in
+        #  _initParentClasses_tillNewWrapper_withDisablingTheirInits
+        classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(cls_.__name__, allArgs)
+        cls_.__init__(initiatedObj, **classRelatedArgs)
