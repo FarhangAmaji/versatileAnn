@@ -39,7 +39,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
             _NewWrapper_Obj = \
                 _NewWrapper_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]
             if cls.__new__ is not _NewWrapper_Obj.__new__:
-                raise ImplementationError(f'"{cls} class is not allowed to have __new__ method."')
+                raise ImplementationError(f'"{cls}" class is not allowed to have __new__ method.')
 
     def __new__(cls, **kwargs):
         # cccDevStruct
@@ -59,6 +59,15 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  detect if the super() is called or not in children; also maybe the __init__s of parent classes are directly callled
         # mustHave1 make initArgs
         print(f'NewWrapper __new__ method initiated for "{cls.__name__}" class')
+
+        # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
+        _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
+
+        # check if the user has defined forward method or not
+        if cls.forward is _NewWrapper_Obj.forward:
+            raise ImplementationError(f'"{cls}" class must have "forward" method reImplemented.')
+
+
         # we get seed to just be sure this is the same seed applied in the model
         _plSeed__ = pl.seed_everything()
 
@@ -66,9 +75,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # set 'testPrints' before other kwargs just to be able to use printTestPrints
         if 'testPrints' in kwargs:
             initiatedObj.testPrints = kwargs['testPrints']
-
-        # we know the first item in .classesCalledBy_init_subclass_ is the NewWrapper class object
-        _NewWrapper_Obj = cls.classesCalledBy_init_subclass_[0]
 
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
             cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs, initiatedObj)
