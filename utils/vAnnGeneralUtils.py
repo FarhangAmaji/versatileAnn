@@ -383,6 +383,8 @@ def morePreciseFloat(num, precisionOrder=6):
 # ---- dicts
 @argValidator
 def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter=False):
+    # also takes for camelCase adaptibility for i.e. if the method takes `my_arg`
+    # but updater has `myArg`, includes `my_arg` as 'myArg'
     if not callable(method):
         raise ValueError(f'method should be a method or a function.')
 

@@ -1,11 +1,9 @@
-from abc import ABC
-
 import torch
 
 from utils.typeCheck import argValidator
 
 
-class _NewWrapper_properties(ABC):
+class _NewWrapper_properties:
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True, lr=3e-4, testPrints=False):
         self.to('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,5 +36,6 @@ class _NewWrapper_properties(ABC):
         self._devMode = value
 
     def printTestPrints(self, *args):
+        # only prints for test purposes
         if self.testPrints:
             print(*args)
