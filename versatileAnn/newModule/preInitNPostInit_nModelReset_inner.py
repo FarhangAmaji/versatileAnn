@@ -29,8 +29,9 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
         # *args for subclasses of NewWrapper are not applied
         if 'args' in argsOf_parentClasses_tillNewWrapper:
-            warnMsg = '"*args" for subclasses of NewWrapper are not applied.' + \
-                      "\nthis warning is not always True, but it's better to double check" + \
+            warnMsg = '\nWarning: using *args for subclasses of NewWrapper' + \
+                      '\n    "*args" for subclasses of NewWrapper are not applied.' + \
+                      "\n    this warning is not always True, but it's better to double check" + \
                       " that you have not used *args in your __init__"
             Warn.error(warnMsg)
             self.printTestPrints(warnMsg)
@@ -94,9 +95,10 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                 allArgs[arg] = argVal
             else:
                 allArgs[arg]['classes'].extend(argVal['classes'])
-                warnMsg = f'"{arg}" arg is used in the classes you have defined. ' + \
+                warnMsg = '\nWarning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args' + \
+                          f'\n    "{arg}" arg is used in the classes you have defined. ' + \
                           'and also exist in required args of NewWrapper.' + \
-                          '\nthis may cause conflict if are used for other purposes than passing to NewWrapper.' + \
+                          '\n    this may cause conflict if are used for other purposes than passing to NewWrapper.' + \
                           'you may want to change the name of this arg.'
                 Warn.warn(warnMsg)
                 self.printTestPrints(warnMsg)
@@ -143,12 +145,13 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
     def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper, self):
         for clsName, clsObj in parentClasses_tillNewWrapper.items():
             if checkIfAClassIs_initingItsParentClasses_inItsInit(clsObj):
-                warnMsg = 'you have initiated parent classes in your __init__.' + \
-                          f'\n{clsName} class is one of them.' + \
-                          '\nthis may cause error because parent classes are initiated automatically.' + \
-                          '\nso you may want to remove the __init__ of parent classes from your __init__.'
-                Warn.warn(warnMsg)
-                self.printTestPrints(warnMsg)
+                warnMsg = '\n Warning: defining __init__ in subclasses of NewWrapper' + \
+                          '\n    you have initiated parent classes in your __init__.' + \
+                          f'\n    "{clsName}" class is one of them.' + \
+                          '\n    this may cause error because parent classes are initiated automatically.' + \
+                          '\n    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.'
+            Warn.warn(warnMsg)
+            self.printTestPrints(warnMsg)
 
     @staticmethod
     def _runPostInit(cls_, initiatedObj, allArgs):
