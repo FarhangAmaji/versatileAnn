@@ -14,12 +14,15 @@ class _NewWrapper_preRunTests:
         # kkk correct this args
         fastDevRunKwargs = fastDevRunKwargs or {}
         overfitBatchesKwargs = overfitBatchesKwargs or {}
+        profilerKwargs = profilerKwargs or {}
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
         self.runFastDevRun(fastDevRunKwargs, kwargsRelatedToTrainer,
                            trainDataloader, valDataloader)
         self.runOverfitBatches(kwargsRelatedToTrainer, overfitBatchesKwargs,
                                trainDataloader, valDataloader)
+        trainer = self.runProfiler(kwargsRelatedToTrainer, profilerKwargs,
+                                   trainDataloader, valDataloader)
 
     def runFastDevRun(self, fastDevRunKwargs, kwargsRelatedToTrainer, trainDataloader,
                       valDataloader):
@@ -68,4 +71,21 @@ class _NewWrapper_preRunTests:
         trainer.fit(self, trainDataloader, valDataloader)
 
         self._printLossChanges(callbacks_)
+
+    def runProfiler(self, kwargsRelatedToTrainer, profilerKwargs, trainDataloader,
+                    valDataloader):
+        self.printTestPrints('running profiler')
+
+        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
+                         'profiler': PyTorchProfiler(),
+                         'logger': pl.loggers.TensorBoardLogger(self.modelName,
+                                                                name='profiler'), }
+        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, profilerKwargs,
+                                             kwargsApplied)
+
+        trainer = pl.Trainer(**kwargsApplied)
+        trainer.fit(self, trainDataloader, valDataloader)
+
+        # trainer is returned to be able to print(in _printTensorboardPath) where users can use tensorboard
+        return trainer
 
