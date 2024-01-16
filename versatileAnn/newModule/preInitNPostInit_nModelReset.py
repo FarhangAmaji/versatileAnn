@@ -1,3 +1,4 @@
+import copy
 from random import random
 
 import pytorch_lightning as pl
@@ -151,7 +152,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  after __init__ may be lost
         # mustHave1
         #  after writing whole NewWrapper code, this model reset must be revised to keep
-        #  __init__ kwargs or attributes added or replaced init kwargs
+        #  __init__ kwargs or attributes added or replaced init kwargs. specailly the attributes
+        #  which have properties to set. in general any attribue that I think user may change
         # mustHave2
         #  attrsToKeep should be applied so that the attributes are kept in the same state as they are
         # mustHave2
@@ -159,6 +161,10 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # cccDevStruct
         #  note the __init_subclass__ and _NewWrapper_postInit are not called; only __new__ is called
         attrsToKeep = attrsToKeep or {}
+
+        attrsKeptByDefault_names = ['losses']
+        for atk in attrsKeptByDefault_names:
+            attrsToKeep[atk] = copy.deepcopy(getattr(self, atk))
 
         classOfSelf = type(self)
 
@@ -173,4 +179,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset)
         newObj.__init__(**kwargsToReset)
+
+        for atk,atkVal in attrsToKeep.items():
+            setattr(newObj, atk, atkVal)
         return newObj
