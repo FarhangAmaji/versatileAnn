@@ -117,19 +117,23 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
             clsObj = parentClasses_tillNewWrapper[clsName]
             clsObj.__init__(initiatedObj, **classRelatedArgs)
 
-            # inits are disabled so not to get inited twice; they are set back to their originalInit,
-            # at _NewWrapper_postInit
-            # bugPotentialCheck2
-            #  returning initiatedObj in __new__ made to __init__s disabled here to be called again.
-            #  this can be seen when debugging through when creating an instance.
-            #  note before adding 'return initiatedObj' in __new__, this was not happening.
-            #  - another odd thing is that this recalling of __init__s is not detected by
-            #  self.assertPrint of testObjectCreation of newWrapperTests_preInitNPostInit_nModelReset
+            # cccDevStruct
+            #  - inits are disabled in order to:
+            #       1. not to get inited twice
+            #       2. also not to mess model's parameters (therefore optimizer's params)
+            #  - __init__s are set back to their originalInit later at _NewWrapper_postInit
             if clsObj is not cls:
                 clsObj.__init__ = cls._emptyMethod_usedForDisabling__init__s
             else:
                 # replace lastChildOfAll's __init__ with _NewWrapper_postInit
                 clsObj.__init__ = cls._NewWrapper_postInit
+                # cccDevStruct
+                #  in past I called line "clsObj.__init__(initiatedObj, **classRelatedArgs)"
+                #  in order to call postInit manually. but postInit is called automatically and
+                #  must not be called manually because it would mess model's parameters
+                #  (therefore optimizer's params)
+                #  also the disabling __init__s would not be applied if the postInit
+                #  is called manually
 
     @staticmethod
     def _setInitArgs(_plSeed__, initiatedObj, kwargs):
@@ -150,13 +154,5 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                           f'\n    "{clsName}" class is one of them.' + \
                           '\n    this may cause error because parent classes are initiated automatically.' + \
                           '\n    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.'
-            Warn.warn(warnMsg)
-            self.printTestPrints(warnMsg)
-
-    @staticmethod
-    def _runPostInit(cls_, initiatedObj, allArgs):
-        # cccDevStruct
-        #  cls_ is lastChildOfAll; as its __init__ has been replaced with _NewWrapper_postInit in
-        #  _initParentClasses_tillNewWrapper_withDisablingTheirInits
-        classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(cls_.__name__, allArgs)
-        cls_.__init__(initiatedObj, **classRelatedArgs)
+                Warn.warn(warnMsg)
+                self.printTestPrints(warnMsg)

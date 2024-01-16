@@ -106,9 +106,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         cls._managingClassVariableSpace(cls, initiatedObj)
 
-        # call postInit here
-        cls._runPostInit(cls, initiatedObj, allArgs)
-
         return initiatedObj
 
     @staticmethod
