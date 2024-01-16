@@ -35,25 +35,34 @@ class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
                 self.nnLayers = nn.Sequential(nn.Linear(1, 1))
                 print('GrandChild __init__;After calling Child __init__', self.__class__.__name__)
 
-        self.expectedPrint1 = """NewWrapper __new__ method initiated for "GrandChild" class
-you have initiated parent classes in your __init__.
-GrandChild class is one of them.
-this may cause error because parent classes are initiated automatically.
-so you may want to remove the __init__ of parent classes from your __init__.
-you have initiated parent classes in your __init__.
-Child class is one of them.
-this may cause error because parent classes are initiated automatically.
-so you may want to remove the __init__ of parent classes from your __init__.
-you have initiated parent classes in your __init__.
-Child class is one of them.
-this may cause error because parent classes are initiated automatically.
-so you may want to remove the __init__ of parent classes from your __init__.
-you have initiated parent classes in your __init__.
-Child class is one of them.
-this may cause error because parent classes are initiated automatically.
-so you may want to remove the __init__ of parent classes from your __init__.
-"modelName" arg is used in the classes you have defined. and also exist in required args of NewWrapper.
-this may cause conflict if are used for other purposes than passing to NewWrapper.you may want to change the name of this arg.
+        return Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild
+
+    def testObjectCreation_withPrintingSteps(self):
+        Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
+
+        def testFunc():
+            model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
+                               additionalArg='additionalArg', testPrints=True)
+
+            self.assertTrue(isinstance(model, GrandChild))
+
+        expectedPrint = """NewWrapper __new__ method initiated for "GrandChild" class
+
+ Warning: defining __init__ in subclasses of NewWrapper
+    you have initiated parent classes in your __init__.
+    "GrandChild" class is one of them.
+    this may cause error because parent classes are initiated automatically.
+    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
+
+ Warning: defining __init__ in subclasses of NewWrapper
+    you have initiated parent classes in your __init__.
+    "Child" class is one of them.
+    this may cause error because parent classes are initiated automatically.
+    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
+
+Warning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args
+    "modelName" arg is used in the classes you have defined. and also exist in required args of NewWrapper.
+    this may cause conflict if are used for other purposes than passing to NewWrapper.you may want to change the name of this arg.
 OtherParentOfChild init
 OtherParentOfGrandChild init
 Child;Before calling Parent __init__ GrandChild
@@ -66,19 +75,6 @@ emptyMethod_usedForDisabling__init__s
 GrandChild __init__;After calling Child __init__ GrandChild
 _NewWrapper_postInit func GrandChild
 """
-
-        return Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild
-
-    def testObjectCreation_withPrintingSteps(self):
-        Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
-
-        def testFunc():
-            model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
-                               additionalArg='additionalArg', testPrints=True)
-
-            self.assertTrue(isinstance(model, GrandChild))
-
-        expectedPrint = self.expectedPrint1
         self.assertPrint(testFunc, expectedPrint)
 
     def testInitArgs(self):
@@ -121,7 +117,34 @@ _NewWrapper_postInit func GrandChild
             newModel = model.resetModel()
             self.assertTrue(isinstance(model, GrandChild))
 
-        expectedPrint = self.expectedPrint1
+        expectedPrint = """NewWrapper __new__ method initiated for "GrandChild" class
+
+ Warning: defining __init__ in subclasses of NewWrapper
+    you have initiated parent classes in your __init__.
+    "GrandChild" class is one of them.
+    this may cause error because parent classes are initiated automatically.
+    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
+
+ Warning: defining __init__ in subclasses of NewWrapper
+    you have initiated parent classes in your __init__.
+    "Child" class is one of them.
+    this may cause error because parent classes are initiated automatically.
+    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
+
+Warning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args
+    "modelName" arg is used in the classes you have defined. and also exist in required args of NewWrapper.
+    this may cause conflict if are used for other purposes than passing to NewWrapper.you may want to change the name of this arg.
+OtherParentOfChild init
+OtherParentOfGrandChild init
+Child;Before calling Parent __init__ GrandChild
+NewWrapper init
+emptyMethod_usedForDisabling__init__s
+Child;After calling Parent __init__ GrandChild
+GrandChild;Before calling Child __init__ GrandChild
+emptyMethod_usedForDisabling__init__s
+emptyMethod_usedForDisabling__init__s
+GrandChild __init__;After calling Child __init__ GrandChild
+"""
         self.assertPrint(testFunc, expectedPrint, model=model)
 
     def testInitsToOriginal(self):
