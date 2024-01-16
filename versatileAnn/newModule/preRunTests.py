@@ -6,7 +6,7 @@ from pytorch_lightning.profilers import PyTorchProfiler
 from torch import nn
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getMethodRelatedKwargs, morePreciseFloat
+from utils.vAnnGeneralUtils import getMethodRelatedKwargs, morePreciseFloat, varPasser
 from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
@@ -28,25 +28,28 @@ class _NewWrapper_preRunTests:
         findBestLearningRateKwargs = findBestLearningRateKwargs or {}
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
-        self.runFastDevRun(fastDevRunKwargs, kwargsRelatedToTrainer,
-                           trainDataloader, valDataloader)
-        self.runOverfitBatches(kwargsRelatedToTrainer, overfitBatchesKwargs,
-                               trainDataloader, valDataloader)
-        trainer = self.runProfiler(kwargsRelatedToTrainer, profilerKwargs,
-                                   trainDataloader, valDataloader)
+        self.runFastDevRun(trainDataloader, valDataloader,
+                           fastDevRunKwargs, kwargsRelatedToTrainer)
+        self.runOverfitBatches(trainDataloader, valDataloader,
+                               overfitBatchesKwargs, kwargsRelatedToTrainer)
+        trainer = self.runProfiler(trainDataloader, valDataloader,
+                                   profilerKwargs, kwargsRelatedToTrainer)
 
+        kwargs_ = varPasser(
+            localArgNames=['lrRange', 'numSteps', 'lrsToFindBest', 'findBestLearningRateKwargs',
+                           'kwargsRelatedToTrainer'])
         self.findBestLearningRate(trainDataloader, valDataloader,
-                                  lrRange=lrRange, numSteps=lrNumSteps,
-                                  lrsToFindBest=lrsToFindBest,
-                                  findBestLearningRateKwargs=findBestLearningRateKwargs,
-                                  kwargsRelatedToTrainer=kwargsRelatedToTrainer)  # kkk2 add kwargs also for this
-    def runFastDevRun(self, fastDevRunKwargs, kwargsRelatedToTrainer, trainDataloader,
-                      valDataloader):
+                                  **kwargs_)
+
+    def runFastDevRun(self, trainDataloader, valDataloader=None,
+                      fastDevRunKwargs=None, kwargsRelatedToTrainer=None):
+        fastDevRunKwargs = fastDevRunKwargs or {}
+        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         # cccDevAlgo
         #  ensures whole pipeline is working correctly by running couple of epochs on a batch
         self.printTestPrints('running fastDevRun')
 
-        kwargsApplied = {'min_epochs': 2, 'logger': False, }
+        kwargsApplied = {'logger': False, }
 
         self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, fastDevRunKwargs,
                                              kwargsApplied)
@@ -59,8 +62,10 @@ class _NewWrapper_preRunTests:
             **kwargsApplied)
         trainer.fit(self, train_dataloaders=trainDataloader, val_dataloaders=valDataloader)
 
-    def runOverfitBatches(self, kwargsRelatedToTrainer, overfitBatchesKwargs, trainDataloader,
-                          valDataloader):
+    def runOverfitBatches(self, trainDataloader, valDataloader=None,
+                          overfitBatchesKwargs=None, kwargsRelatedToTrainer=None):
+        overfitBatchesKwargs = overfitBatchesKwargs or {}
+        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         self.printTestPrints('running overfitBatches')
         # bugPotentialCheck2
         #  with including 'overfit_batches' option, when the trainer is ran, "make sure you have
@@ -74,7 +79,7 @@ class _NewWrapper_preRunTests:
         lossRatioDecrease = {}
         callbacks_ = [StoreEpochData()]
 
-        kwargsApplied = {'overfit_batches': True, 'max_epochs': 100,#kkk
+        kwargsApplied = {'overfit_batches': True, 'max_epochs': 100,
                          'enable_checkpointing': False, 'logger': False, 'callbacks': callbacks_, }
 
         self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, overfitBatchesKwargs,
@@ -88,8 +93,10 @@ class _NewWrapper_preRunTests:
 
         self._printLossChanges(callbacks_)
 
-    def runProfiler(self, kwargsRelatedToTrainer, profilerKwargs, trainDataloader,
-                    valDataloader):
+    def runProfiler(self, trainDataloader, valDataloader=None,
+                    profilerKwargs=None, kwargsRelatedToTrainer=None):
+        profilerKwargs = profilerKwargs or {}
+        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         self.printTestPrints('running profiler')
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
@@ -105,9 +112,16 @@ class _NewWrapper_preRunTests:
         # trainer is returned to be able to print(in _printTensorboardPath) where users can use tensorboard
         return trainer
 
-    def findBestLearningRate(self, trainDataloader, valDataloader, lrRange=(1e-6, 5), numSteps=20,
-                             lrsToFindBest=None, findBestLearningRateKwargs=None,
-                             kwargsRelatedToTrainer=None):
+    def findBestLearningRate(self, trainDataloader, valDataloader=None,
+                             lrRange=(1e-6, 5), numSteps=20, lrsToFindBest=None,
+                             findBestLearningRateKwargs=None, kwargsRelatedToTrainer=None):
+        findBestLearningRateKwargs = findBestLearningRateKwargs or {}
+        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+
+        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False, }
+        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestLearningRateKwargs,
+                                             kwargsApplied)
+
         # cccUsage
         #  takes lr ranges either with (lrRange, numSteps) or with (lrsToFindBest)
         if lrsToFindBest:
@@ -119,10 +133,6 @@ class _NewWrapper_preRunTests:
                    range(numSteps)}
         pastLr = self.lr
         lossRatioDecrease = {}
-
-        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False, }
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestLearningRateKwargs,
-                                             kwargsApplied)
 
         mainValLossName = self._getLossName('val', self.losses[0])
         for thisLr in lrs:
