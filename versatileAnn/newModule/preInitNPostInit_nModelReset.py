@@ -67,7 +67,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         if cls.forward is _NewWrapper_Obj.forward:
             raise ImplementationError(f'"{cls}" class must have "forward" method reImplemented.')
 
-
         # we get seed to just be sure this is the same seed applied in the model
         _plSeed__ = pl.seed_everything()
 
@@ -148,8 +147,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # cccUsage
         #  this is not inplace so u have to do `self = self.resetModel()`
         # bugPotentialCheck1
-        #  this is a major feature but very prone to bugs, many other attributes set after __init__
-        #  would be lost
+        #  this is a major feature but very prone to bugs, specially the attributes which are set
+        #  after __init__ may be lost
         # mustHave1
         #  after writing whole NewWrapper code, this model reset must be revised to keep
         #  __init__ kwargs or attributes added or replaced init kwargs
@@ -158,7 +157,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # mustHave2
         #  also add warning that [attr1, attr2, ...] are not kept in the same state as they are
         # cccDevStruct
-        #  note the __init_subclass__ is not called but _NewWrapper_postInit is called
+        #  note the __init_subclass__ and _NewWrapper_postInit are not called; only __new__ is called
         attrsToKeep = attrsToKeep or {}
 
         classOfSelf = type(self)
@@ -171,4 +170,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
             pl.seed_everything(kwargsToReset['__plSeed__'])
 
         kwargsToReset.pop('__plSeed__')
-        return classOfSelf.__new__(classOfSelf, **kwargsToReset)
+
+        newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset)
+        newObj.__init__(**kwargsToReset)
+        return newObj
