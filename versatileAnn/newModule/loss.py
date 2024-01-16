@@ -1,4 +1,17 @@
-from abc import ABC
+
+class progressBarTempOff:
+    def __init__(self, instance):
+        self.instance = instance
+
+    def __enter__(self):
+        self.originalVal = self.instance.showProgressBar
+        self.instance.showProgressBar = False
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.instance.showProgressBar = self.originalVal
+
 
 class _NewWrapper_loss(ABC):  # kkk1 do it later
     def __init__(self, **kwargs):
