@@ -3,6 +3,7 @@ import copy
 import torch
 
 from utils.typeCheck import argValidator
+from utils.warnings import Warn
 
 
 class _NewWrapper_optimizer:
@@ -11,6 +12,13 @@ class _NewWrapper_optimizer:
 
     @property
     def optimizer(self):
+        # if the optimizer is not set we set a default one
+        if not hasattr(self, '_optimizer'):
+            lr = 3e-4
+            self._optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+            self.lr = lr
+            Warn.info(f'no optimizer was set, a default Adam optimizer with lr={lr} was set')
+
         return self._optimizer
 
     @optimizer.setter
