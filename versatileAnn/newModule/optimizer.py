@@ -1,4 +1,19 @@
-from abc import ABC
-class _NewWrapper_optimizer(ABC):  # kkk1 do it later
+import copy
+
+import torch
+
+from utils.typeCheck import argValidator
+
+
+class _NewWrapper_optimizer:
     def __init__(self, **kwargs):
-        self.untouchedOptimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        pass
+
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    @argValidator
+    def optimizer(self, value: torch.optim.Optimizer):
+        self._optimizer = value

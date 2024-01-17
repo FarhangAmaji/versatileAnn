@@ -158,6 +158,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  attrsToKeep should be applied so that the attributes are kept in the same state as they are
         # mustHave2
         #  also add warning that [attr1, attr2, ...] are not kept in the same state as they are
+        #  - timeOut message can be useful here
         # cccDevStruct
         #  note the __init_subclass__ and _NewWrapper_postInit are not called; only __new__ is called
         attrsToKeep = attrsToKeep or {}
