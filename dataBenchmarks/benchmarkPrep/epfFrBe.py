@@ -97,8 +97,12 @@ def getEpfFrBeDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=110, fo
                           batchSize=64, trainRatio=.7, valRatio=.2, rightPadTrain=True,
                           aggColName: str = 'price', shuffle=False, shuffleSeed=None,
                           devTestMode=False):
+    # goodToHave2
+    #  this is very slow, I should check which step is bottlenecking
+    #  also find a way to make it faster
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     rightPadTrain, shuffle = _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed)
+
     kwargs = varPasser(
         localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'rightPadTrain',
                        'aggColName', 'devTestMode', 'shuffle', 'shuffleSeed', 'dataInfo'])
