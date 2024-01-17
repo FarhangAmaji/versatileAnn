@@ -5,12 +5,11 @@ from utils.typeCheck import argValidator
 
 class _NewWrapper_properties:
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True, lr=3e-4, testPrints=False):
+    def __init__(self, modelName: str = '', devMode: bool = True, testPrints=False):
         self.to('cuda' if torch.cuda.is_available() else 'cpu')
         self.losses = []
         self._setModelName(modelName)
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
-        self.lr = lr  # kkk2 make property
         self.testPrints = testPrints
 
         if devMode:

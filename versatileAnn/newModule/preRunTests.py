@@ -45,6 +45,8 @@ class _NewWrapper_preRunTests:
                     fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
                     findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
 
+        # mustHave3
+        #  revise logging prints
         # cccUsage
         #  only first loss is used for backpropagation and others are just for logging
         if losses:

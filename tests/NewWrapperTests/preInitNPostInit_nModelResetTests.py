@@ -35,6 +35,9 @@ class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
                 self.nnLayers = nn.Sequential(nn.Linear(1, 1))
                 print('GrandChild __init__;After calling Child __init__', self.__class__.__name__)
 
+            def forward(self, inputs, targets):
+                pass
+
         return Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild
 
     def testObjectCreation_withPrintingSteps(self):
@@ -171,6 +174,9 @@ GrandChild __init__;After calling Child __init__ GrandChild
             def __init__(self, **kwargs):
                 super().__init__()
                 self.nnLayers = nn.Sequential(nn.Linear(1, 1))
+
+            def forward(self, inputs, targets):
+                pass
 
         return Parent2, ChildWithSuper
 
