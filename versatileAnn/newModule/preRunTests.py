@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.profilers import PyTorchProfiler
@@ -14,6 +14,27 @@ from versatileAnn.newModule.callbacks import StoreEpochData
 class _NewWrapper_preRunTests:
     def __init__(self, **kwargs):
         self._outputsStruct = None
+        self.keepLr_notReplaceWithBestLr = kwargs.get('keepLr_notReplaceWithBestLr', False)
+        self.keepBatchSize_notReplaceWithBestBatchSize = kwargs.get(
+            'keepBatchSize_notReplaceWithBestBatchSize', False)
+
+    @property
+    def keepLr_notReplaceWithBestLr(self):
+        return self._keepLr_notReplaceWithBestLr
+
+    @keepLr_notReplaceWithBestLr.setter
+    @argValidator
+    def keepLr_notReplaceWithBestLr(self, value: bool):
+        self._keepLr_notReplaceWithBestLr = value
+
+    @property
+    def keepBatchSize_notReplaceWithBestBatchSize(self):
+        return self._keepBatchSize_notReplaceWithBestBatchSize
+
+    @keepBatchSize_notReplaceWithBestBatchSize.setter
+    @argValidator
+    def keepBatchSize_notReplaceWithBestBatchSize(self, value: bool):
+        self._keepBatchSize_notReplaceWithBestBatchSize = value
 
     @argValidator
     def preRunTests(self, trainDataloader,
@@ -215,3 +236,35 @@ class _NewWrapper_preRunTests:
         # goodToHave2
         #  add ploting in tensorboard with a message that plot is in tensorboard
 
+    @staticmethod
+    def _collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
+                                        mainValLossName, changingParam):
+        firstEpochLoss = callbacks_[0].epochData['val'][0][mainValLossName]
+
+        lastEpochNum = list(callbacks_[0].epochData['val'].keys())
+        lastEpochNum.sort()
+        lastEpochNum = lastEpochNum[-1]
+        lastEpochLoss = callbacks_[0].epochData['val'][lastEpochNum][mainValLossName]
+        lossRatioDecrease.update({changingParam: {'ratio': lastEpochLoss / firstEpochLoss,
+                                                  '1st': firstEpochLoss, 'last': lastEpochLoss,
+                                                  'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
+
+    @staticmethod
+    def _getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, runKwargs,
+                                        kwargsApplied):
+        # cccUsage
+        #  the runKwargs which is kwargs passed by user for specific run, have higher priority
+        # cccAlgo
+        #  in finds kwargs of trainModel or runKwargs(for i.e. fastDevRunKwargs) related to pl.Trainer
+        runKwargs = getMethodRelatedKwargs(pl.Trainer, updater=runKwargs,
+                                           updatee=runKwargs, delAfter=True)
+        kwargsApplied.update(kwargsRelatedToTrainer)
+        kwargsApplied.update(runKwargs)
+
+    @staticmethod
+    def _printTensorboardPath(trainer):
+        # the last 2 folders are not included
+        tensorboardDir = os.path.abspath(trainer.logger.log_dir)
+        tensorboardDir = os.path.split(os.path.split(tensorboardDir)[0])[0]
+        Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
+                  f'"{tensorboardDir}"' + "'")
