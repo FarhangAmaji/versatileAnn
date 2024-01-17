@@ -60,21 +60,27 @@ class _NewWrapper_optimizer:
 
     def changeLearningRate(self, newLr):
         self._lr = newLr
+        if not hasattr(self, 'optimizer'):  # prevent error if the optimizer is not set yet
+            return
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = self._lr
+
 
     @property
     def lr(self):
         return self._lr
+
 
     @lr.setter
     @argValidator
     def lr(self, newLr: float):
         self.changeLearningRate(newLr)
 
+
     @argValidator
     def multiplyLr(self, factor: float):
         self.lr = self.lr * factor
+
 
     @argValidator
     def divideLr(self, factor: float):

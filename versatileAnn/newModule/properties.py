@@ -37,4 +37,5 @@ class _NewWrapper_properties:
     def printTestPrints(self, *args):
         # only prints for test purposes
         if self.testPrints:
-            print(*args)
+            for arg in args:
+                print(arg)
