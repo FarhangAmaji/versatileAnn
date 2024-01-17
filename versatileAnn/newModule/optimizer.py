@@ -47,7 +47,10 @@ class _NewWrapper_optimizer:
         #  but later can add logging so if its not True it would be logged and more precaution
         #  applied in next version
 
+
     def resetOptimizer(self, keepLr=True):
+        # cccUsage
+        #  this is inplace and no need to set, but also compatible with setting
         # cccDevAlgo
         #  this is designed in order to be sure that past accumulated
         #  params like momentum have got reset
@@ -57,6 +60,9 @@ class _NewWrapper_optimizer:
 
         optimizerClass = self._optimizerInitArgs['type']
         self.optimizer = optimizerClass(self.parameters(), **argsToReinit)
+
+        return self.optimizer  # this for the case that user does'nt know it's inplace
+
 
     def changeLearningRate(self, newLr):
         self._lr = newLr
