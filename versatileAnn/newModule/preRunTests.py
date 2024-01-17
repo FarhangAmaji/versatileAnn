@@ -16,16 +16,24 @@ class _NewWrapper_preRunTests:
         self._outputsStruct = None
 
     @argValidator
-    def preRunTests(self, trainDataloader, *, losses: List[nn.modules.loss._Loss], maxEpochs=5,
-                    savePath, tensorboardPath='', valDataloader=None, lrRange=(1e-6, 5),
-                    lrNumSteps=20, lrsToFindBest=None, fastDevRunKwargs=None,
-                    overfitBatchesKwargs=None, profilerKwargs=None, findBestLearningRateKwargs=None,
-                    findBestBatchSizesKwargs=None, **kwargs):
-        # kkk correct this args
-        fastDevRunKwargs = fastDevRunKwargs or {}
-        overfitBatchesKwargs = overfitBatchesKwargs or {}
-        profilerKwargs = profilerKwargs or {}
-        findBestLearningRateKwargs = findBestLearningRateKwargs or {}
+    def preRunTests(self, trainDataloader,
+                    *, losses: List[nn.modules.loss._Loss],
+                    valDataloader=None,
+                    lrFinderRange=(1e-6, 5), lrFinderNumSteps=20, lrsToFindBest=None,
+                    batchSizesToFindBest=None,
+                    fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
+                    findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
+
+        # cccUsage
+        #  only first loss is used for backpropagation and others are just for logging
+        if losses:
+            # cccDevStruct
+            #  in the case outside of trainModel losses is been set, so if not passed would use them
+            self.losses = losses
+
+        # mustHave2
+        #  check if model with this architecture doesnt exist allow to run.
+        #  - add force option also
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
         self.runFastDevRun(trainDataloader, valDataloader,
@@ -35,11 +43,18 @@ class _NewWrapper_preRunTests:
         trainer = self.runProfiler(trainDataloader, valDataloader,
                                    profilerKwargs, kwargsRelatedToTrainer)
 
-        kwargs_ = varPasser(
-            localArgNames=['lrRange', 'numSteps', 'lrsToFindBest', 'findBestLearningRateKwargs',
-                           'kwargsRelatedToTrainer'])
+        kwargs_ = varPasser(localArgNames=['lrsToFindBest', 'findBestLearningRateKwargs',
+                                           'kwargsRelatedToTrainer'])
         self.findBestLearningRate(trainDataloader, valDataloader,
-                                  **kwargs_)
+                                  numSteps=lrFinderNumSteps, lrRange=lrFinderRange, **kwargs_)
+
+        kwargs_ = varPasser(localArgNames=['batchSizesToFindBest', 'findBestBatchSizesKwargs',
+                                           'kwargsRelatedToTrainer'])
+        self.findBestBatchSize(trainDataloader, valDataloader,
+                               **kwargs_)
+
+        # message how to use tensorboard
+        self._printTensorboardPath(trainer)
 
     def runFastDevRun(self, trainDataloader, valDataloader=None,
                       fastDevRunKwargs=None, kwargsRelatedToTrainer=None):
@@ -113,12 +128,12 @@ class _NewWrapper_preRunTests:
         return trainer
 
     def findBestLearningRate(self, trainDataloader, valDataloader=None,
-                             lrRange=(1e-6, 5), numSteps=20, lrsToFindBest=None,
+                             *, lrRange=(1e-6, 5), numSteps=20, lrsToFindBest=None,
                              findBestLearningRateKwargs=None, kwargsRelatedToTrainer=None):
         findBestLearningRateKwargs = findBestLearningRateKwargs or {}
         kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
 
-        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False, }
+        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
         self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestLearningRateKwargs,
                                              kwargsApplied)
 
@@ -146,8 +161,8 @@ class _NewWrapper_preRunTests:
             # goodToHave1
             #  contextManger to disable progressBar temporarily
             trainer.fit(self, trainDataloader, valDataloader)
-            self._collectMetricsOfRun(callbacks_, lossRatioDecrease, mainValLossName,
-                                      thisLr)
+            self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
+                                                 mainValLossName, thisLr)
 
         bestLearningRate = min(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
         worstLearningRate = max(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
@@ -157,6 +172,46 @@ class _NewWrapper_preRunTests:
             self.lr = bestLearningRate
         else:
             self.lr = pastLr
+        # goodToHave2
+        #  add ploting in tensorboard with a message that plot is in tensorboard
+
+    @argValidator
+    def findBestBatchSize(self, trainDataloader, valDataloader=None,
+                          *, batchSizesToFindBest: Union[None, List],
+                          findBestBatchSizesKwargs=None, kwargsRelatedToTrainer=None):
+        findBestBatchSizesKwargs = findBestBatchSizesKwargs or {}
+        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+        batchSizesToFindBest = batchSizesToFindBest or [8, 16, 32, 64, 128]
+
+        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
+        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestBatchSizesKwargs,
+                                             kwargsApplied)
+
+        pastBatchSize = trainDataloader.batch_size
+        lossRatioDecrease = {}
+
+        mainValLossName = self._getLossName('val', self.losses[0])
+        for thisBatchSize in batchSizesToFindBest:
+            self = self.resetModel()
+            self.resetOptimizer()
+            trainDataloader = trainDataloader.changeBatchSize(thisBatchSize)
+            callbacks_ = [StoreEpochData()]
+            kwargsApplied['callbacks'] = callbacks_
+            trainer = pl.Trainer(**kwargsApplied)
+            # goodToHave1
+            #  contextManger to disable progressBar temporarily
+            trainer.fit(self, trainDataloader, valDataloader)
+            self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
+                                                 mainValLossName, thisBatchSize)
+
+        bestBatchSize = min(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
+        worstBatchSize = max(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
+        Warn.info(f'bestBatchSize is {bestBatchSize} and the worst being {worstBatchSize}')
+
+        if not self.keepBatchSize_notReplaceWithBestBatchSize:
+            trainDataloader = trainDataloader.changeBatchSize(bestBatchSize)
+        else:
+            trainDataloader = trainDataloader.changeBatchSize(pastBatchSize)
         # goodToHave2
         #  add ploting in tensorboard with a message that plot is in tensorboard
 
