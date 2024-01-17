@@ -50,3 +50,24 @@ class _NewWrapper_optimizer:
         optimizerClass = self._optimizerInitArgs['type']
         self.optimizer = optimizerClass(self.parameters(), **argsToReinit)
 
+    def changeLearningRate(self, newLr):
+        self._lr = newLr
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = self._lr
+
+    @property
+    def lr(self):
+        return self._lr
+
+    @lr.setter
+    @argValidator
+    def lr(self, newLr: float):
+        self.changeLearningRate(newLr)
+
+    @argValidator
+    def multiplyLr(self, factor: float):
+        self.lr = self.lr * factor
+
+    @argValidator
+    def divideLr(self, factor: float):
+        self.lr = self.lr / factor
