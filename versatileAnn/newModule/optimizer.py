@@ -35,16 +35,18 @@ class _NewWrapper_optimizer:
         # cccDevStruct
         #  this part is designed in order to be able to resetOptimizer but the args passed when
         #  setting it
-        optimizerInitArgs_names = list(value['param_groups'][0].keys())
+        optimizerInitArgs_names = list(vars(value)['param_groups'][0].keys())
         if 'params' in optimizerInitArgs_names:
             optimizerInitArgs_names.remove('params')
 
         self._optimizerInitArgs = {'type': type(value),
-                                   'args': {par: copy.deepcopy(value['param_groups'][0][par]) for
-                                            par in
-                                            optimizerInitArgs_names}}
+                                   'args': {par: copy.deepcopy(vars(value)['param_groups'][0][par])
+                                            for par in optimizerInitArgs_names}}
 
         self._optimizer = value
+
+        # make sure self.lr is in sync with optimizer lr
+        self.lr = self._optimizerInitArgs['args']['lr']
 
         # goodToHave3
         #  as I think the `value['param_groups'][0].keys()` are same as `getMethodArgs(type(value))`
