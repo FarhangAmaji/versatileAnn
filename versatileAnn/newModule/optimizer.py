@@ -16,7 +16,7 @@ class _NewWrapper_optimizer:
         if not hasattr(self, '_optimizer'):
             if hasattr(self, 'parameters'):  # to prevent error when parameters are not set
                 lr = 3e-4
-                self._optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+                self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
                 self.lr = lr
 
                 infoMsg = f'no optimizer was set, a default Adam optimizer with lr={lr} was set'
