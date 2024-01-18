@@ -274,12 +274,18 @@ def equalArrays(array1, array2, checkType=True, floatApprox=False, floatPrecisio
 
 
 # ---- lists
-def areItemsOfList1_InList2(list1, list2):
+def areItemsOfList1_InList2(list1, list2, giveNotInvolvedItems=False):
+    notInvolvedItems = []
+
     setList2 = set(list2)
     for item in list1:
         if item not in setList2:
-            return False
-    return True
+            notInvolvedItems.append(item)
+
+    result = notInvolvedItems == []
+    if giveNotInvolvedItems:
+        return result, notInvolvedItems
+    return result
 
 
 def isListTupleOrSet(obj):
@@ -383,8 +389,11 @@ def morePreciseFloat(num, precisionOrder=6):
 # ---- dicts
 @argValidator
 def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter=False):
-    # also takes for camelCase adaptibility for i.e. if the method takes `my_arg`
-    # but updater has `myArg`, includes `my_arg` as 'myArg'
+    # cccDevStruct
+    #  finds keys in updater that can be passed to method as they are in the args that method takes
+    #  updatee is the result which can have some keys from before
+    #  - also takes for camelCase adaptibility for i.e. if the method takes `my_arg`
+    #       but updater has `myArg`, includes `my_arg` as 'myArg'
     if not callable(method):
         raise ValueError(f'method should be a method or a function.')
 
@@ -400,6 +409,17 @@ def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter
             if delAfter:
                 del updater[snakeToCamel(key)]
     return updatee
+
+
+def isNestedDict(dict_):
+    if not isinstance(dict_, dict):
+        return False
+
+    for value in dict_.values():
+        if isinstance(value, dict):
+            return True
+
+    return False
 
 
 # ---- methods and funcs
@@ -482,20 +502,6 @@ def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
             raise ValueError(errMsg)
 
     return func
-
-
-def camelToSnake(camelString):
-    # Use regular expression to insert underscores before capital letters
-    snakeString = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camelString)
-    # Convert to lowercase
-    snakeString = snakeString.lower()
-    return snakeString
-
-
-def snakeToCamel(snakeString):
-    # Use regular expression to capitalize letters following underscores
-    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snakeString)
-    return camelString
 
 
 def giveDateTimeStr():
@@ -585,3 +591,36 @@ def shuffleData(inputData_, seed=None):
         raise ValueError(f"Unsupported data type: {type(inputCopy)}")
 
     return shuffledData
+
+
+# ---- str utils
+
+def camelToSnake(camelString):
+    # Use regular expression to insert underscores before capital letters
+    snakeString = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camelString)
+    # Convert to lowercase
+    snakeString = snakeString.lower()
+    return snakeString
+
+
+def snakeToCamel(snakeString):
+    # Use regular expression to capitalize letters following underscores
+    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snakeString)
+    return camelString
+
+
+@argValidator
+def joinListWithComma(list_: list, doubleQuoteItems=True):
+    if doubleQuoteItems:
+        return '"' + '", "'.join(list_) + '"'
+    return ', '.join(list_)
+
+
+@argValidator
+def spellPluralS(list_: list, string="", es=False):
+    if len(list_) > 1:
+        if es:
+            string += "es"
+        else:
+            string += "s"
+    return string
