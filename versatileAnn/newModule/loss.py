@@ -120,6 +120,25 @@ class _NewWrapper_loss:
         outputsFlatData = outputsFlatData.toList()
         return outputsFlatData
 
+    def _logLosses(self, calculatedLosses, stepPhase):
+        # kkk
+        #  take care of unsatisfaction with logs of preRunTests here
+        # kkk2
+        #  should I add more options like to be able to log.
+        #  the problem with this is that after features are added they are
+        #  outside of trainer so I may add my implementation of trainer
+        # kkk2
+        #  on_step=True for low important runs is not necessary but its important
+        #  for main runs: but I avoid complexity and put on_step one for train
+        on_step = True if stepPhase == 'train' else False
+        for i, loss_ in enumerate(self.lossFuncs):
+            # goodToHave3
+            #  somewhere it logs `epochs`(and brings it in tensorboard) which I dont want
+            self.log(self._getLossName(stepPhase, loss_),
+                     calculatedLosses[i].to(torch.device('cpu')).item(),
+                     # kkk3 why still metrics are in cuda
+                     on_epoch=True, on_step=on_step, prog_bar=self.showProgressBar)
+
     @staticmethod
     def _printLossChanges(callbacks_):
         epochValData = callbacks_[0].epochData['val']
