@@ -67,6 +67,63 @@ class _NewWrapper_loss(ABC):  # kkk1 do it later
             for metric in metrics])
         Warn.info(infoMsg)
 
+    def _warnIf_forwardOutputsNTargets_haveNoSamePattern(self, forwardOutputs, targets):
+        # kkk
+        #  but the user should be warned "once" that he/she has not
+        #  followed targets pattern; requires lots of things to take care for; like runTemp variable
+        # kkk
+        #  may move it to _flattenTargetsNOutputs_data where that targets _outputsStruct fillWithData;
+        #  and 1. make a try block there this is because not to slow down here by checking it everyRun
+        #  or 2. even better, so when giving error "once" is done we put it there
+        #  note even "once" feature is not done 3. we can put it in setter of _outputsStruct(not preferred)
+        if isinstance(targets, dict):
+            if not isinstance(forwardOutputs, dict):
+                targetsKeys = joinListWithComma(list(targets.keys()))
+                raise ValueError(
+                    f'targets of dataloader is a dict with {targetsKeys}' + \
+                    ' so forwardOutputs of forward method must follow the same pattern')
+            else:
+                noNestedDictMsg = 'must not have more than one level of nesting dictionaries.' + \
+                                  ' should be a normal dict with no dict inside'
+                if isNestedDict(targets):
+                    raise ValueError('targets of dataloader' + noNestedDictMsg)
+                if isNestedDict(targets):
+                    raise ValueError('outputs of forward' + noNestedDictMsg)
+
+                # addTest2
+                # check if forwardOutputs has keys not defined in targets
+                _, keysNotDefined = areItemsOfList1_InList2(
+                    list(forwardOutputs.keys()), list(targets.keys()), giveNotInvolvedItems=True)
+                if keysNotDefined:
+                    spelling_forWordKey = spellPluralS(keysNotDefined, 'key')  # just for details
+                    keysNotDefined = joinListWithComma(keysNotDefined)
+                    raise ValueError(
+                        f"you have defined {keysNotDefined} {spelling_forWordKey} in output of forward" + \
+                        " which are not in targets of dataloader")
+
+                # addTest2
+                # warn if targets has keys not defined in forwardOutputs
+                # the case users don't not to use all of the keys in the targets of dataloader
+                _, keysNotDefined2 = areItemsOfList1_InList2(
+                    list(targets.keys()), list(forwardOutputs.keys()), giveNotInvolvedItems=True)
+                if keysNotDefined2:
+                    # goodToHave1#kkk
+                    #  warn just once for each train run
+                    spelling_forWordKey = spellPluralS(keysNotDefined2, 'key')  # just for details
+                    keysNotDefined2 = joinListWithComma(keysNotDefined2)
+                    Warn.error(
+                        f'targets of dataloader has {keysNotDefined2} {spelling_forWordKey} which' + \
+                        ' are not taken care for in outputs of forward')
+
+        else:
+            pass
+            # do it later
+            # kkk what about when they are tensor
+
+    def _getLossName(self, stepPhase, loss_):
+        return snakeToCamel(stepPhase + type(loss_).__name__)
+
+
 # kkk maybe make a file for contextManagers in NewWrapper utils folder
 class progressBarTempOff:
     def __init__(self, instance):
