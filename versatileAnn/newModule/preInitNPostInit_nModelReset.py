@@ -163,7 +163,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  note the __init_subclass__ and _NewWrapper_postInit are not called; only __new__ is called
         attrsToKeep = attrsToKeep or {}
 
-        attrsKeptByDefault_names = ['losses']
+        attrsKeptByDefault_names = ['lossFuncs']
         for atk in attrsKeptByDefault_names:
             attrsToKeep[atk] = copy.deepcopy(getattr(self, atk))
 

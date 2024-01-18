@@ -38,7 +38,7 @@ class _NewWrapper_preRunTests:
 
     @argValidator
     def preRunTests(self, trainDataloader,
-                    *, losses: List[nn.modules.loss._Loss],
+                    *, lossFuncs: List[nn.modules.loss._Loss],
                     valDataloader=None,
                     lrFinderRange=(1e-6, 5), lrFinderNumSteps=20, lrsToFindBest=None,
                     batchSizesToFindBest=None,
@@ -49,14 +49,19 @@ class _NewWrapper_preRunTests:
         #  revise logging prints
         # cccUsage
         #  only first loss is used for backpropagation and others are just for logging
-        if losses:
+        if lossFuncs:
             # cccDevStruct
-            #  in the case outside of trainModel losses is been set, so if not passed would use them
-            self.losses = losses
+            #  in the case outside of trainModel lossFuncs is been set, so if not passed would use them
+            self.lossFuncs = lossFuncs
+        # anyway self.lossFuncs must be set
+        if not self.lossFuncs:
+            raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
+                             'preRunTests or pass them to it')
 
         # mustHave2
         #  check if model with this architecture doesnt exist allow to run.
         #  - add force option also
+        # find kwargs can be passed to pl.Trainer
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
         self.runFastDevRun(trainDataloader, valDataloader,
@@ -75,6 +80,9 @@ class _NewWrapper_preRunTests:
                                            'kwargsRelatedToTrainer'])
         self.findBestBatchSize(trainDataloader, valDataloader,
                                **kwargs_)
+
+        # goodToHave3
+        #  add finding best shuffle index!!. this may be very useful sometimes
 
         # message how to use tensorboard
         self._printTensorboardPath(trainer)
@@ -113,7 +121,7 @@ class _NewWrapper_preRunTests:
         #  applied just internally. because the sampler of trainDataloader is still is instance of
         #  SamplerFor_vAnnTsDataset
 
-        mainValLossName = self._getLossName('val', self.losses[0])
+        mainValLossName = self._getLossName('val', self.lossFuncs[0])
         lossRatioDecrease = {}
         callbacks_ = [StoreEpochData()]
 
@@ -172,7 +180,7 @@ class _NewWrapper_preRunTests:
         pastLr = self.lr
         lossRatioDecrease = {}
 
-        mainValLossName = self._getLossName('val', self.losses[0])
+        mainValLossName = self._getLossName('val', self.lossFuncs[0])
         for thisLr in lrs:
             self = self.resetModel()
             self.resetOptimizer()  # to be sure that past accumulated params like momentum have got reset
@@ -213,7 +221,7 @@ class _NewWrapper_preRunTests:
         pastBatchSize = trainDataloader.batch_size
         lossRatioDecrease = {}
 
-        mainValLossName = self._getLossName('val', self.losses[0])
+        mainValLossName = self._getLossName('val', self.lossFuncs[0])
         for thisBatchSize in batchSizesToFindBest:
             self = self.resetModel()
             self.resetOptimizer()
