@@ -1,20 +1,39 @@
+import copy
+from typing import List, Union
 
-class progressBarTempOff:
-    def __init__(self, instance):
-        self.instance = instance
+import torch
+import torch.nn as nn
 
-    def __enter__(self):
-        self.originalVal = self.instance.showProgressBar
-        self.instance.showProgressBar = False
+from dataPrep.dataloader import _NestedDictStruct
+from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import snakeToCamel, areItemsOfList1_InList2, joinListWithComma, \
+    spellPluralS, isNestedDict
+from utils.warnings import Warn
 
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.instance.showProgressBar = self.originalVal
-
-
-class _NewWrapper_loss(ABC):  # kkk1 do it later
+class _NewWrapper_loss:
     def __init__(self, **kwargs):
+        self.showProgressBar = kwargs.get('showProgressBar', True)
+        self.lossFuncs = []
+
+    @property
+    def lossFuncs(self):
+        return self._lossFuncs
+
+    @lossFuncs.setter
+    @argValidator
+    def lossFuncs(self, value: List[nn.modules.loss._Loss]):
+        self._lossFuncs = value
+
+    @property
+    def _outputsStruct(self):
+        # always return a copy, so it would be untouched
+        return copy.deepcopy(self.__outputsStruct)
+
+    @_outputsStruct.setter
+    @argValidator
+    def _outputsStruct(self, value: Union[_NestedDictStruct, None]):
+        self.__outputsStruct = value
+
 
     def _flattenTargetsNOutputs_data(self, forwardOutputs, targets):
         # cccDevStruct
