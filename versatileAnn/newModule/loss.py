@@ -34,6 +34,52 @@ class _NewWrapper_loss:
     def _outputsStruct(self, value: Union[_NestedDictStruct, None]):
         self.__outputsStruct = value
 
+    @argValidator
+    def _calculateLosses(self, loss, forwardOutputs: Union[torch.Tensor, dict],
+                         targets: Union[torch.Tensor, dict]):
+
+        # warn or error that targets and forwardOutputs based on their dict keys
+        self._warnIf_forwardOutputsNTargets_haveNoSamePattern(forwardOutputs, targets)
+
+        # bugPotentialCheck1 addTest1
+        #  gives error without setting lossFuncs;
+        #  should think is having lossFuncs is a must or I can make it optional
+        calculatedLosses = []
+        if not self.lossFuncs:  # guard clause #kkk this is related to allowing self.lossFuncs to be empty
+            return calculatedLosses, loss
+
+        if not hasattr(self, '_outputsStruct') or not self._outputsStruct:
+            self._outputsStruct = _NestedDictStruct(forwardOutputs)
+            # cccDevStruct
+            #  this is making a structure for nestedDicts(also works with other types of data);
+            #  so later in _getFlattedData we can fill it with data
+            # cccDevStruct
+            #  to get _outputsStruct only once in order not to
+            #  slow down the code by doing same thing every time
+            # cccDevAlgo
+            #  note the self._outputsStruct is built upon forwardOutputs and not targets
+            #  as we also let users not to use all of the keys in the targets of dataloader
+            #  and leave some unused
+            # kkk
+            #  where the message "once" should be applied(in the case of next features
+            #  which implements this) this part also should run do the checks
+            #  of targetsNForwardOutputs having same pattern again
+
+        outputsFlatData, targetsFlatData = self._flattenTargetsNOutputs_data(forwardOutputs,
+                                                                             targets)
+
+        for i, lossFunc_ in enumerate(self.lossFuncs):
+            lossRes = sum(lossFunc_(output, target) for output, target in
+                          zip(outputsFlatData, targetsFlatData))
+
+            calculatedLosses.append(lossRes)
+
+            # cccDevAlgo
+            #  only results of first loss function is returned; therefore, backprop is done on those
+            if i == 0:
+                returnedLoss = calculatedLosses[0]
+
+        return returnedLoss, calculatedLosses
 
     def _flattenTargetsNOutputs_data(self, forwardOutputs, targets):
         # cccDevStruct
