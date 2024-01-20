@@ -45,7 +45,14 @@ def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None, try_=0):
         os.remove(filePath)
         _downloadFileWithCurl(fileName, filePath)
 
-    df = pd.read_csv(filePath)
+    try:
+        try_ += 1
+        df = pd.read_csv(filePath)
+    except:
+        # this is for the case in the past file was download half way. and it's not working correctly
+        if try_ < 4:  # 3 tries in whole
+            os.remove(filePath)
+            return getDatasetFiles(fileName, dateTimeCols, sortCols, try_=try_)
     _convertDatetimeNSortCols(dateTimeCols, df, fileName, sortCols)
     return df
 
