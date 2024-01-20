@@ -5,15 +5,15 @@ import os
 import pandas as pd
 import torch
 
-from dataBenchmarks.benchmarkPrep.electricity import getElectricity_processed, getElectricity_data, \
+from commonDatasets.commonDatasetsPrep.electricity import getElectricity_processed, getElectricity_data, \
     getElectricityDataloaders, dataInfo as electricityDataInfo
-from dataBenchmarks.benchmarkPrep.epfFrBe import getEpfFrBe_data, getEpfFrBe_processed, \
+from commonDatasets.commonDatasetsPrep.epfFrBe import getEpfFrBe_data, getEpfFrBe_processed, \
     getEpfFrBeDataloaders, dataInfo as epfFrBeDataInfo
-from dataBenchmarks.benchmarkPrep.stallion import getStallion_processed, getStallion_TftDataloaders, \
+from commonDatasets.commonDatasetsPrep.stallion import getStallion_processed, getStallion_TftDataloaders, \
     getStallion_data, dataInfo as stallionDataInfo
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
-from dataBenchmarks.getData import getDatasetFiles, _getFilePathInDataStoreLocation
+from commonDatasets.getData import getDatasetFiles, _getFilePathInDataStoreLocation
 
 
 # ---- getDatasetFiles

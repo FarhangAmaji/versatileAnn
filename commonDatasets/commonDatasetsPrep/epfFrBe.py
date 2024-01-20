@@ -5,10 +5,10 @@ the data exists in data\datasets EPF_FR_BE.csv, EPF_FR_BE_futr.csv and EPF_FR_BE
 # ---- imports
 from typing import Union
 
-from dataBenchmarks.benchmarkPrep.benchmarkPrep_innerStepNUtils import \
+from commonDatasets.commonDatasetsPrep.commonDatasetsPrep_innerStepNUtils import \
     _shuffleNRightpad_Compatibility, _normalizerFit_split, _rightPadTrain, \
     _splitNSeries_addStaticCorrespondentRows, _dataInfoAssert
-from dataBenchmarks.getData import getDatasetFiles
+from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
