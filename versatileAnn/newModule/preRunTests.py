@@ -1,3 +1,4 @@
+import copy
 import os
 from typing import List, Union
 
@@ -64,6 +65,10 @@ class _NewWrapper_preRunTests:
         # find kwargs can be passed to pl.Trainer
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
+        # saving trainDataloader, valDataloader originals in order to keep them untouched
+        trainDataloader_untouched = copy.deepcopy(trainDataloader)
+        valDataloader_untouched = copy.deepcopy(valDataloader)
+
         self.runFastDevRun(trainDataloader, valDataloader,
                            fastDevRunKwargs, kwargsRelatedToTrainer)
         self.runOverfitBatches(trainDataloader, valDataloader,
@@ -86,6 +91,10 @@ class _NewWrapper_preRunTests:
 
         # message how to use tensorboard
         self._printTensorboardPath(trainer)
+
+        # restoring trainDataloader and valDataloader to their original
+        trainDataloader = trainDataloader_untouched
+        valDataloader = valDataloader_untouched
 
     def runFastDevRun(self, trainDataloader, valDataloader=None,
                       fastDevRunKwargs=None, kwargsRelatedToTrainer=None):
