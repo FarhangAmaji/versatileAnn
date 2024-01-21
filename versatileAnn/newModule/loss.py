@@ -86,21 +86,19 @@ class _NewWrapper_loss:
         #  because _NestedDictStruct also used here doesn't make it obligatory
         #  to have VAnnTsDataloader. and works with any dataloader
 
-        # cccDevAlgo
-        #  in rare cases there is a possibility that the structure of forwardOutputs get changed
-        #  even though it slows down the code, I think its better to to keep it safe.
-        #  so if it fails to fillData to _outputsStruct we try to remake _outputsStruct
         try:
             outputsFlatData = self._getFlattedData(forwardOutputs)
         except:
+            # cccDevAlgo
+            #  in rare cases there is a possibility that the structure of forwardOutputs get changed
+            #  even though it slows down the code, I think its better to to keep it safe.
+            #  so if it fails to fillData to _outputsStruct we try to remake _outputsStruct
             # kkk
             #  where the message "once" should be applied(in the case of next features
             #  which implements this) this part also should run do the checks
             #  of targetsNForwardOutputs having same pattern again
             self._outputsStruct = _NestedDictStruct(forwardOutputs)
             outputsFlatData = self._getFlattedData(forwardOutputs)
-
-
 
         if isinstance(forwardOutputs, dict):
             # cccDevAlgo
@@ -140,7 +138,7 @@ class _NewWrapper_loss:
                      on_epoch=True, on_step=on_step, prog_bar=self.showProgressBar)
 
     @staticmethod
-    def _printLossChanges(callbacks_):
+    def _printFirstNLast_valLossChanges(callbacks_):
         epochValData = callbacks_[0].epochData['val']
         epochNum = list(epochValData.keys())
         epochNum = epochNum[-1] + 1

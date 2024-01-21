@@ -7,6 +7,10 @@ from utils.vAnnGeneralUtils import getTorchDevice
 class _NewWrapper_properties:
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True, testPrints=False):
+        # bugPotentialCheck1 # goodToHave3
+        #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
+        #  pytorch lightning precision is 64 then should lower that to 32
+
         self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)
