@@ -1,4 +1,3 @@
-import copy
 import os
 from typing import List, Union
 
@@ -65,9 +64,11 @@ class _NewWrapper_preRunTests:
         # find kwargs can be passed to pl.Trainer
         kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
 
-        # saving trainDataloader, valDataloader originals in order to keep them untouched
-        trainDataloader_untouched = copy.deepcopy(trainDataloader)
-        valDataloader_untouched = copy.deepcopy(valDataloader)
+        # goodToHave3
+        #  I tried to create a freature for saving trainDataloader, valDataloader originals
+        #  in order to keep them untouched but it failed because doing deepcopy, maximum recursion
+        #  stack overflow occurred meaning that it has some identical parts repeated in it. so may
+        #  be add dataLoader reset later
 
         self.runFastDevRun(trainDataloader, valDataloader,
                            fastDevRunKwargs, kwargsRelatedToTrainer)
@@ -91,10 +92,6 @@ class _NewWrapper_preRunTests:
 
         # message how to use tensorboard
         self._printTensorboardPath(trainer)
-
-        # restoring trainDataloader and valDataloader to their original
-        trainDataloader = trainDataloader_untouched
-        valDataloader = valDataloader_untouched
 
     def runFastDevRun(self, trainDataloader, valDataloader=None,
                       fastDevRunKwargs=None, kwargsRelatedToTrainer=None):
