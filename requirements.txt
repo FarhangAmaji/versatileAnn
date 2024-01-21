@@ -1,3 +1,5 @@
 pytorch-lightning
 pydantic
 colorama
+tensorboard
+coverage
