@@ -113,19 +113,26 @@ class _NewWrapper_preRunTests:
         overfitBatchesKwargs = overfitBatchesKwargs or {}
         kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         self.printTestPrints('running overfitBatches')
-        # bugPotentialCheck2
+
+        # cccDevStruct # bugPotentialCheck1
         #  with including 'overfit_batches' option, when the trainer is ran, "make sure you have
         #  set, VAnnTsDataset.indexes to .indexes of sampler". this is an indication of that the
         #  pytorchLighning tries to re__init__ the dataLoader.
-        #  but apparently the dataLoaders passed here are kept unchanged and this reiniting are
-        #  applied just internally. because the sampler of trainDataloader is still is instance of
-        #  SamplerFor_vAnnTsDataset
+        #  even though it seems the dataLoaders passed here are kept unchanged and this
+        #  reiniting are applied just internally. because the sampler of trainDataloader is
+        #  still is instance of SamplerFor_vAnnTsDataset
+        #  but it gives error over .indexes of sampler which is an indicator which the sampler has
+        #  been replaced completely. so it's better to not include 'overfit_batches' option and try
+        #  to replicate it. so decided to use 'limit_train_batches' option instead. ofc with setting
+        #  dataloader shuffle to False temporarily then turn it back to its original
+        pastDataloaderShuffle = trainDataloader.shuffle
+        trainDataloader.shuffle = False
 
         mainValLossName = self._getLossName('val', self.lossFuncs[0])
         lossRatioDecrease = {}
         callbacks_ = [StoreEpochData()]
 
-        kwargsApplied = {'overfit_batches': True, 'max_epochs': 100,
+        kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
                          'enable_checkpointing': False, 'logger': False, 'callbacks': callbacks_, }
 
         self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, overfitBatchesKwargs,
@@ -137,7 +144,9 @@ class _NewWrapper_preRunTests:
         trainer = pl.Trainer(**kwargsApplied)
         trainer.fit(self, trainDataloader, valDataloader)
 
-        self._printLossChanges(callbacks_)
+        self._printFirstNLast_valLossChanges(callbacks_)
+
+        pastDataloaderShuffle = pastDataloaderShuffle
 
     def runProfiler(self, trainDataloader, valDataloader=None,
                     profilerKwargs=None, kwargsRelatedToTrainer=None):
