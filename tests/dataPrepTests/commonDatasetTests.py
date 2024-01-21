@@ -14,7 +14,7 @@ from commonDatasets.commonDatasetsPrep.stallion import getStallion_processed, ge
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
 from commonDatasets.getData import getDatasetFiles, _getFilePathInDataStoreLocation
-from utils.vAnnGeneralUtils import getTorchDevice
+from utils.vAnnGeneralUtils import getTorchDevice, toDevice
 
 
 # ---- getDatasetFiles
@@ -147,14 +147,16 @@ class epfFrBeTests(BaseTestClass):
 
 
         for key, value in testDataloader_inputs.items():
-            self.equalTensors(value, torch.tensor(expectedInputs[key]).to(device), floatApprox=True)
+            self.equalTensors(value, toDevice(torch.tensor(expectedInputs[key]), device),
+                              floatApprox=True)
 
         expectedOutputs = {}
         expectedOutputs['output'] = [[-0.7041, -0.6045, -0.7889, -0.9522],
                                      [ 1.8915,  2.0164,  1.6924,  0.6435]]
         expectedOutputs['outputMask'] = [[True, True, True, True], [True, True, True, True]]
         for key, value in testDataloader_outputs.items():
-            self.equalTensors(value, torch.tensor(expectedOutputs[key]).to(device), floatApprox=True)
+            self.equalTensors(value, toDevice(torch.tensor(expectedOutputs[key]), device),
+                              floatApprox=True)
 
 class electricityTests(BaseTestClass):
     # bugPotentialCheck1
@@ -271,14 +273,14 @@ class electricityTests(BaseTestClass):
                                     [1.1639, 1.0484, 1.0340, 1.0196],
                                     [1.0484, 1.0340, 1.0196, 1.0484]]
         for key, value in testDataloader_inputs.items():
-            self.equalTensors(value, torch.tensor(expectedInputs[key]).to(device), floatApprox=True,
-                              checkType=False)
+            self.equalTensors(value, toDevice(torch.tensor(expectedInputs[key]), device),
+                              floatApprox=True, checkType=False)
 
         expectedOutputs = [[-0.9502, -0.9502, -0.8987, -0.8987],
                            [-0.9502, -0.8987, -0.8987, -0.9244],
                            [1.0484, 1.0340, 1.0196, 1.0484],
                            [1.0340, 1.0196, 1.0484, 1.1495]]
-        self.equalTensors(testDataloader_outputs, torch.tensor(expectedOutputs).to(device),
+        self.equalTensors(testDataloader_outputs, toDevice(torch.tensor(expectedOutputs),device),
                           floatApprox=True, checkType=False)
 
 class stallionTests(BaseTestClass):
@@ -481,10 +483,10 @@ class stallionTests(BaseTestClass):
         expectedInputs['encoderLengths'] = [[4.0], [4.0], [4.0], [4.0], [4.0]]
         expectedInputs['decoderLengths'] = [[3.0], [3.0], [3.0], [3.0], [3.0]]
         self.equalTensors(testDataloader_inputs['encoderLengths'],
-                          torch.tensor(expectedInputs['encoderLengths']).to(device),
+                          toDevice(torch.tensor(expectedInputs['encoderLengths']),device),
                           floatApprox=True, checkType=False)
         self.equalTensors(testDataloader_inputs['decoderLengths'],
-                          torch.tensor(expectedInputs['decoderLengths']).to(device),
+                          toDevice(torch.tensor(expectedInputs['decoderLengths']),device),
                           floatApprox=True, checkType=False)
 
         expectedInputs['allReals']['avgVolumeByAgency'] = [[-0.3501833975315094, -1.1247056722640991, 0.304399698972702, -0.1509624570608139, -0.16722539067268372, -0.5453386306762695, -0.5697330236434937], [-1.1247056722640991, 0.304399698972702, -0.1509624570608139, -0.16722539067268372, -0.5453386306762695, -0.5697330236434937, -1.5007859468460083], [0.304399698972702, -0.1509624570608139, -0.16722539067268372, -0.5453386306762695, -0.5697330236434937, -1.5007859468460083, 0.0], [-0.3501833975315094, -1.1247056722640991, 0.304399698972702, -0.1509624570608139, -0.16722539067268372, -0.5453386306762695, -0.5697330236434937], [-1.1247056722640991, 0.304399698972702, -0.1509624570608139, -0.16722539067268372, -0.5453386306762695, -0.5697330236434937, -1.5007859468460083]]
@@ -508,7 +510,8 @@ class stallionTests(BaseTestClass):
                                                     [-1., -1., -1., -1., -1., -1., -1.]]
 
         for key, value in testDataloader_inputs['allReals'].items():
-            self.equalTensors(value, torch.tensor(expectedInputs['allReals'][key]).to(device),
+            self.equalTensors(value,
+                              toDevice(torch.tensor(expectedInputs['allReals'][key]), device),
                               floatApprox=True, checkType=False)
 
 
@@ -518,8 +521,10 @@ class stallionTests(BaseTestClass):
                                       [-0.0864, -0.5217, -0.9605, 0.0000, 0.0000, 0.0000, 0.0000],
                                       [-0.5217, -0.9605, -1.0987, 0.0000, 0.0000, 0.0000, 0.0000]]}
         self.equalTensors(testDataloader_outputs['volume'],
-                          torch.tensor(expectedOutputs['volume']).to(device),
+                          toDevice(torch.tensor(expectedOutputs['volume']), device),
                           floatApprox=True, checkType=False)
+
+
 # ---- run test
 if __name__ == '__main__':
     unittest.main()

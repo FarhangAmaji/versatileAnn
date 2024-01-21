@@ -10,7 +10,8 @@ from dataPrep.dataloader import _NestedDictStruct, appendValue_ToNestedDictPath,
 from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getTorchDeviceName
+from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getTorchDeviceName, \
+    toDevice
 
 
 # ---- dataloader tests
@@ -152,8 +153,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         obj = torch.tensor(obj)
         if obj.dtype == torch.float16 or obj.dtype == torch.float64:
             obj = obj.to(torch.float32)
-        device = getTorchDevice()
-        return obj.to(device)
+        return toDevice(obj, getTorchDevice())
 
     def tensorSetUp(self):
         toTensorFunc = self.toTensorFunc

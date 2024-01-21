@@ -10,6 +10,7 @@ import pandas as pd
 import torch
 
 from utils.typeCheck import argValidator
+from utils.warnings import Warn
 
 
 # ---- DotDict NpDict
@@ -202,6 +203,21 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
     else:
         equalVals = torch.equal(tensor1, tensor2)
     return equalVals
+
+
+def toDevice(tensor, device):
+    # cccDevAlgo
+    #  'mps' device doesn't support float64 and int64
+    # check if the device.type is 'mps' and it's float64 or int64; first change
+    # dtype to float32 or int32, after that change device
+    if device.type == 'mps':
+        if tensor.dtype == torch.float64:
+            tensor = tensor.to(torch.float32)
+            Warn.info('float64 tensor is changed to float32 to be compatible with mps')
+        elif tensor.dtype == torch.int64:
+            tensor = tensor.to(torch.int32)
+            Warn.info('int64 tensor is changed to int32 to be compatible with mps')
+    return tensor.to(device)
 
 
 # ---- dfs

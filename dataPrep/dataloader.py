@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import default_collate
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, tensor_floatDtypeChangeIfNeeded, \
-    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, getTorchDevice
+    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, getTorchDevice, toDevice
 from utils.warnings import Warn
 
 
@@ -81,7 +81,7 @@ class TensorStacker:
         self.device = getTorchDevice()
 
     def stackListToTensor_withDeviceNDtypeMatch(self, list_):
-        stackTensor = torch.stack(list_).to(self.device)
+        stackTensor = toDevice(torch.stack(list_), self.device)
         stackTensor = tensor_floatDtypeChangeIfNeeded(stackTensor)
         return stackTensor
 
