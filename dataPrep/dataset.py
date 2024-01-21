@@ -172,7 +172,8 @@ class _TsRowFetcher:
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         # cccAlgo idx+shiftForward also should be in data indexes
-        kwargs = varPasser(exclude=['canBeOutOfStartIndex', 'outputTensor'])
+        kwargs = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
+                                          'canHaveShorterLength', 'rightPadIfShorter'],)
         res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
 
         if outputTensor:
@@ -188,7 +189,8 @@ class _TsRowFetcher:
                                                           shiftForward,
                                                           canHaveShorterLength,
                                                           rightPadIfShorter):
-        kwargs = varPasser()
+        kwargs = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
+                                          'canHaveShorterLength', 'rightPadIfShorter'])
         # send to _getCastByMode depending on datatype
         if isinstance(data, NpDict):  # NpDict
             res = self._getCastByMode(self.getRows_npDict, **kwargs)
@@ -210,7 +212,9 @@ class _TsRowFetcher:
                        shiftForward, canHaveShorterLength,
                        rightPadIfShorter):
         canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
-        kwargs = varPasser(exclude=['data', 'dataTypeFunc', 'mode'])
+        kwargs = varPasser(
+            localArgNames=['idx', 'colsOrIndexes', 'shiftForward',
+                           'canHaveShorterLength', 'rightPadIfShorter'])
         if mode == self.castModes.backcast:  # backcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen, **kwargs)
@@ -360,8 +364,12 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         # note _IdxNdataToLook_WhileFetching works only idx is in indexes
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(exclude=['dataToLook'],
-                           rename={'canShiftedIndex_BeOutOfStartIndexes': 'canBeOutOfStartIndex'})
+        kwargs = varPasser(
+            localArgNames=['idx', 'mode', 'colsOrIndexes', 'shiftForward', 'outputTensor',
+                           'canHaveShorterLength', 'rightPadIfShorter',
+                           'canShiftedIndex_BeOutOfStartIndexes'],
+            exclude=['dataToLook'],
+            rename={'canShiftedIndex_BeOutOfStartIndexes': 'canBeOutOfStartIndex'})
 
         return self.getBackForeCastData_general(dataToLook, **kwargs)
 
