@@ -8,7 +8,7 @@ import torch
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
 from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict, snakeToCamel, camelToSnake, \
-    getTorchDeviceName
+    getDefaultTorchDevice_name
 
 
 class DotDictTests(BaseTestClass):
@@ -224,14 +224,14 @@ class equalTensorsTests(BaseTestClass):
         self.assertTrue(result)
 
     def testDifferentDevice(self):
-        deviceName = getTorchDeviceName()
+        deviceName = getDefaultTorchDevice_name()
         tensor1 = torch.tensor([1.0, 2.0, 3.0], device=deviceName)
         tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
         result = equalTensors(tensor1, tensor2)
         self.assertFalse(result)
 
     def testDifferentDevice_withCheckDeviceFalse(self):
-        deviceName = getTorchDeviceName()
+        deviceName = getDefaultTorchDevice_name()
         tensor1 = torch.tensor([1.0, 2.0, 3.0], device=deviceName)
         tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
         result = equalTensors(tensor1, tensor2, checkDevice=False)

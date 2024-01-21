@@ -498,11 +498,12 @@ def getTorchDevice():
     return device
 
 
-def getTorchDeviceName():
-    # mustHave1
-    #  it should take tensor as input and return device name
+def getDefaultTorchDevice_name():
+    # gives printing device name of getTorchDevice()
     device_ = torch.tensor([1, 2]).to(getTorchDevice()).device
-    deviceName = f'{device_.type}:{device_.index}'
+    deviceName = f'{device_.type}'
+    if hasattr(device_, 'index'):
+        deviceName += f':{device_.index}'
     return deviceName
 
 

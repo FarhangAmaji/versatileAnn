@@ -10,7 +10,7 @@ from dataPrep.dataloader import _NestedDictStruct, appendValue_ToNestedDictPath,
 from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getTorchDeviceName, \
+from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getDefaultTorchDevice_name, \
     toDevice
 
 
@@ -381,7 +381,7 @@ class DataloaderTests(BaseTestClass):
 
         # bugPotentialcheck1
         #  not sure about print device name
-        deviceName = getTorchDeviceName()
+        deviceName = getDefaultTorchDevice_name()
         expectedPrint = f"""tensor([1114, 1081], device='{deviceName}')
 tensor([1168, 1139], device='{deviceName}')
 tensor([1064, 1121], device='{deviceName}')
