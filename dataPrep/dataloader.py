@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import default_collate
 from dataPrep.dataset import VAnnTsDataset
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, tensor_floatDtypeChangeIfNeeded, \
-    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
+    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, getTorchDevice
 from utils.warnings import Warn
 
 
@@ -78,7 +78,7 @@ knownTypesToBeTensored = DotDict({
 
 class TensorStacker:
     def __init__(self):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = getTorchDevice()
 
     def stackListToTensor_withDeviceNDtypeMatch(self, list_):
         stackTensor = torch.stack(list_).to(self.device)
@@ -460,7 +460,7 @@ class VAnnTsDataloader(DataLoader):
                 Warn.warn('batchSize is not even, which is not recommended.')
 
         # mustHave3 make it compatible to self.device of vAnn
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = getTorchDevice()
         self.createBatchStructEverytime = createBatchStructEverytime
         if collate_fn is None:
             collate_fn = self.commonCollate_fn

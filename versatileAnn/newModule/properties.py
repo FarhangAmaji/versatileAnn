@@ -1,12 +1,13 @@
 import torch
 
 from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import getTorchDevice
 
 
 class _NewWrapper_properties:
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True, testPrints=False):
-        self.to('cuda' if torch.cuda.is_available() else 'cpu')
+        self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode

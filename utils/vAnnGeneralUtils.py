@@ -1,4 +1,5 @@
 import inspect
+import os
 import re
 import threading
 from typing import Union
@@ -441,8 +442,85 @@ async def downloadFileAsync(url, destination, event=None):
                 raise Exception(f"Failed to download file. Status code: {response.status}")
 
 
+# ---- os utils
+def filePathToDirectoryPath(path):
+    # cccDevStruct
+    #  doesn't work with no file extension paths
+    if os.path.exists(path):
+        if os.path.isfile(path):
+            directory_path = os.path.dirname(path)
+            return directory_path
+        elif os.path.isdir(path):
+            # If it's already a directory path, do nothing
+            return path
+        else:
+            raise ValueError(f"{path} is neither a file nor a directory.")
+    else:
+        raise ValueError(f"{path} doesn't exist.")
+
+
+# ---- torch utils
+def getTorchDevice():
+    # bugPotentialCheck1
+    #  this func may still not work with macbooks; ofc in general they don't work with 'cuda' but
+    #  may also not work with Mps
+    # Check if CUDA is available
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    # Check if MPS is available (only for MacOS with Metal support)
+    elif torch.backends.mps.is_available():
+        device = torch.device('mps')
+    # Check if XLA is available (only if `torch_xla` package is installed)
+    elif 'xla' in torch.__dict__:
+        device = torch.device('xla')
+    else:
+        device = torch.device('cpu')
+    return device
+
+
+def getTorchDeviceName():
+    device_ = torch.tensor([1, 2]).to(getTorchDevice()).device
+    deviceName = f'{device_.type}:{device_.index}'
+    return deviceName
+
+
+# ---- str utils
+
+def camelToSnake(camelString):
+    # Use regular expression to insert underscores before capital letters
+    snakeString = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camelString)
+    # Convert to lowercase
+    snakeString = snakeString.lower()
+    return snakeString
+
+
+def snakeToCamel(snakeString):
+    # Use regular expression to capitalize letters following underscores
+    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snakeString)
+    return camelString
+
+
+@argValidator
+def joinListWithComma(list_: list, doubleQuoteItems=True):
+    if doubleQuoteItems:
+        return '"' + '", "'.join(list_) + '"'
+    return ', '.join(list_)
+
+
+@argValidator
+def spellPluralS(list_: list, string="", es=False):
+    if len(list_) > 1:
+        if es:
+            string += "es"
+        else:
+            string += "s"
+    return string
+
+
 # ---- misc
 def gpuMemoryUsed():
+    if not torch.cuda.is_available():
+        return
     device = torch.device("cuda")
 
     memory_allocated = torch.cuda.memory_allocated(device) / 1024
@@ -591,36 +669,3 @@ def shuffleData(inputData_, seed=None):
         raise ValueError(f"Unsupported data type: {type(inputCopy)}")
 
     return shuffledData
-
-
-# ---- str utils
-
-def camelToSnake(camelString):
-    # Use regular expression to insert underscores before capital letters
-    snakeString = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camelString)
-    # Convert to lowercase
-    snakeString = snakeString.lower()
-    return snakeString
-
-
-def snakeToCamel(snakeString):
-    # Use regular expression to capitalize letters following underscores
-    camelString = re.sub(r'(?!^)_([a-zA-Z])', lambda x: x.group(1).upper(), snakeString)
-    return camelString
-
-
-@argValidator
-def joinListWithComma(list_: list, doubleQuoteItems=True):
-    if doubleQuoteItems:
-        return '"' + '", "'.join(list_) + '"'
-    return ', '.join(list_)
-
-
-@argValidator
-def spellPluralS(list_: list, string="", es=False):
-    if len(list_) > 1:
-        if es:
-            string += "es"
-        else:
-            string += "s"
-    return string

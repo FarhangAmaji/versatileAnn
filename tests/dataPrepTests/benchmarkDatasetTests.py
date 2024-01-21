@@ -14,6 +14,7 @@ from commonDatasets.commonDatasetsPrep.stallion import getStallion_processed, ge
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
 from commonDatasets.getData import getDatasetFiles, _getFilePathInDataStoreLocation
+from utils.vAnnGeneralUtils import getTorchDevice
 
 
 # ---- getDatasetFiles
@@ -120,7 +121,7 @@ class epfFrBeTests(BaseTestClass):
             self.equalDfs(set_, checkSet, checkIndex=False, floatApprox=True)
 
     def testDataloader_data(self):
-        device = torch.device('cuda')
+        device = getTorchDevice()
         self.setup()
         trainDataloader, valDataloader, testDataloader, normalizer = getEpfFrBeDataloaders(
             backcastLen=self.backcastLen, forecastLen=self.forecastLen,
@@ -231,7 +232,7 @@ class electricityTests(BaseTestClass):
             self.equalDfs(set_, checkSet, checkIndex=False, floatApprox=True)
 
     def testDataloader_data(self):
-        device = torch.device('cuda')
+        device = getTorchDevice()
         self.setup()
         trainDataloader, valDataloader, testDataloader, normalizer = getElectricityDataloaders(
             backcastLen=self.backcastLen, forecastLen=self.forecastLen,
@@ -462,7 +463,7 @@ class stallionTests(BaseTestClass):
             self.equalDfs(set_, checkSet, checkIndex=False, floatApprox=True)
 
     def testDataloader_data(self):
-        device = torch.device('cuda')
+        device = getTorchDevice()
         self.setup()
         trainDataloader, valDataloader, testDataloader, normalizer = getStallion_TftDataloaders(
             maxEncoderLength=self.maxEncoderLength, maxPredictionLength=self.maxPredictionLength,

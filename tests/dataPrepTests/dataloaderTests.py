@@ -10,7 +10,7 @@ from dataPrep.dataloader import _NestedDictStruct, appendValue_ToNestedDictPath,
 from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData
+from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getTorchDeviceName
 
 
 # ---- dataloader tests
@@ -152,7 +152,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
         obj = torch.tensor(obj)
         if obj.dtype == torch.float16 or obj.dtype == torch.float64:
             obj = obj.to(torch.float32)
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = getTorchDevice()
         return obj.to(device)
 
     def tensorSetUp(self):
@@ -379,13 +379,16 @@ class DataloaderTests(BaseTestClass):
             print('with batchSize=3')
             print2batches(dataloader)
 
-        expectedPrint = """tensor([1114, 1081], device='cuda:0')
-tensor([1168, 1139], device='cuda:0')
-tensor([1064, 1121], device='cuda:0')
+        # bugPotentialcheck1
+        #  not sure about print device name
+        deviceName = getTorchDeviceName()
+        expectedPrint = f"""tensor([1114, 1081], device='{deviceName}')
+tensor([1168, 1139], device='{deviceName}')
+tensor([1064, 1121], device='{deviceName}')
 with batchSize=3
-tensor([1114, 1081, 1168], device='cuda:0')
-tensor([1139, 1064, 1121], device='cuda:0')
-tensor([1125, 1143, 1164], device='cuda:0')"""
+tensor([1114, 1081, 1168], device='{deviceName}')
+tensor([1139, 1064, 1121], device='{deviceName}')
+tensor([1125, 1143, 1164], device='{deviceName}')"""
         # note the first 6 number are the same, even though the shuffle is true
         self.assertPrint(testFunc, expectedPrint)
 
