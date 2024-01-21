@@ -1,5 +1,6 @@
 import inspect
 import os
+import platform
 import re
 import threading
 from typing import Union
@@ -165,6 +166,9 @@ def equalNpDicts(npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=
 
 # ---- tensor
 def tensor_floatDtypeChangeIfNeeded(tensor):
+    # mustHave3
+    #  the whole code which uses this func should be revised to apply pytorch lightning
+    #  model precision to tensors and not just changing to float32 by default
     if tensor.dtype == torch.float16 or tensor.dtype == torch.float64:
         tensor = tensor.to(torch.float32)
         # kkk make it compatible to global precision
@@ -173,25 +177,25 @@ def tensor_floatDtypeChangeIfNeeded(tensor):
 
 def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-6,
                  checkDevice=True):
-    tensor1 = tensor1.clone()
-    tensor2 = tensor2.clone()
+    tensor1_ = tensor1.clone()
+    tensor2_ = tensor2.clone()
 
     dtypeEqual = True
     if checkType:
-        dtypeEqual = tensor1.dtype == tensor2.dtype
+        dtypeEqual = tensor1_.dtype == tensor2_.dtype
     else:
-        tensor1 = tensor1.to(torch.float32)
-        tensor2 = tensor2.to(torch.float32)
+        tensor1_ = tensor1_.to(torch.float32)
+        tensor2_ = tensor2_.to(torch.float32)
     if not dtypeEqual:
         return False
 
-    deviceEqual = tensor1.device == tensor2.device
+    deviceEqual = tensor1_.device == tensor2_.device
     if not checkDevice:
         if not deviceEqual:
             #  even though device check is not need but make both tensors to cpu
             #  in order not to get different device error in equal line below
-            tensor1 = tensor1.to(torch.device('cpu'))
-            tensor2 = tensor2.to(torch.device('cpu'))
+            tensor1_ = tensor1_.to(torch.device('cpu'))
+            tensor2_ = tensor2_.to(torch.device('cpu'))
         deviceEqual = True
     if not deviceEqual:
         return False
@@ -199,9 +203,9 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
     equalVals = True
     if floatApprox:
         # Check if the tensors are equal with precision
-        equalVals = torch.allclose(tensor1, tensor2, atol=floatPrecision)
+        equalVals = torch.allclose(tensor1_, tensor2_, atol=floatPrecision)
     else:
-        equalVals = torch.equal(tensor1, tensor2)
+        equalVals = torch.equal(tensor1_, tensor2_)
     return equalVals
 
 
@@ -222,7 +226,7 @@ def toDevice(tensor, device):
 
 # ---- dfs
 def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
-    # kkk needs tests
+    # addTest1
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
         return False
@@ -495,6 +499,8 @@ def getTorchDevice():
 
 
 def getTorchDeviceName():
+    # mustHave1
+    #  it should take tensor as input and return device name
     device_ = torch.tensor([1, 2]).to(getTorchDevice()).device
     deviceName = f'{device_.type}:{device_.index}'
     return deviceName
@@ -545,17 +551,40 @@ def gpuMemoryUsed():
     print(f'Memory Cached: {memory_cached:,.2f} KB')
 
 
-# kkk create func arg getter, similar to varPasser; gets locals() and a func and gets possible args from locals
 def varPasser(*, localArgNames=None, exclude=None, rename=None):
+    # cccDevAlgo
+    #  in order not to pass many local variables which have the same name to another
+    #  func by mentioning `func1(var1=var1, var2=var2,....)` with use this func
+    #  and put local variables to a dictionary and in a more clean way with pass that dict as kwargs
+    #  This function is used to pass variables from one scope to another.
+    #  It takes three optional arguments: localArgNames, exclude, and rename.
+    #  localArgNames is a list of variable names to be passed.
+    #  exclude is a list of variable names to be excluded from being passed.
+    #  rename is a dictionary where the keys are the current variable names and the values are
+    #  the new names.
+    #  simple example:
+    #  kwargs_=varPasser(localArgNames=['var1', 'var2', 'var3', 'var4', 'var5', 'var6'])
+    #  func1(**kwargs_)
     localArgNames = localArgNames or []
     exclude = exclude or []
     rename = rename or {}
 
+    # bugPotentialCheck1
+    #  this has a big bug pontential in macOs maybe other non windows Oses when the
+    #  localArgNames is None
+    if platform.system() != 'Windows' and localArgNames is None:
+        Warn.warn(f'for {platform.system()} Os(operating system) is better to pass ' + \
+                  'localArgNames and not depend on automatic variable detection of varPasser')
+
+    # Get local variables from the calling function's frame
     locals_ = inspect.currentframe().f_back.f_locals
+
+    # Check if variables specified for renaming exist in local variables
     for rn in rename.keys():
         if rn not in locals_.keys():
             raise ValueError(f'{rn} is not in the local vars')
 
+    # Collect variables to include in the result
     argsToGet = set(localArgNames[:] + list(rename.keys()))
     result = {}
     for atg in argsToGet:
@@ -564,12 +593,15 @@ def varPasser(*, localArgNames=None, exclude=None, rename=None):
         if atg not in exclude:
             result[atg] = locals_[atg]
 
+    # Include all local variables if localArgNames is not provided
     if not localArgNames:
         for loc in locals_.keys():
             if loc == 'self':
                 continue
             if loc not in exclude:
                 result[loc] = locals_[loc]
+
+    # Rename variables as specified in the 'rename' dictionary
     for rn, rnVal in rename.items():
         result[rnVal] = result[rn]
         del result[rn]
