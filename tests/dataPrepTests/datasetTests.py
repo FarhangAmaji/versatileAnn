@@ -115,8 +115,8 @@ class VAnnTsDataset_indexesSetting_noNSeriesTests(BaseTestClass):
         self.TruesIndexFromBeginning = [i for i, val in enumerate(self.df['__startPoint__']) if val == True]
 
     def assertMainGroupsIdxEmpty(self, dataset):
-        self.assertEqual(dataset.mainGroupsGeneralIdxs, {})
-        self.assertEqual(dataset.mainGroupsRelIdxs, {})
+        self.assertDictEqual(dataset.mainGroupsGeneralIdxs, {})
+        self.assertDictEqual(dataset.mainGroupsRelIdxs, {})
 
     def testDf_useNpDictForDfs_StartPointsInCols(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
@@ -156,20 +156,26 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
 
     def assertionsFor_Df_useNpDictForDfs_AndNpDict(self, dataset):
         self.assertEqual(dataset.indexes, self.TruesIndexFromBeginning)
-        self.assertEqual(dataset.mainGroupsGeneralIdxs, self.mgGeneralIndexes)
-        self.assertEqual(dataset.mainGroupsRelIdxs, self.mgRelIndexes)
+        self.assertDictEqual(dataset.mainGroupsGeneralIdxs, self.mgGeneralIndexes)
+        self.assertDictEqual(dataset.mainGroupsRelIdxs, self.mgRelIndexes)
 
     def testDf_useNpDictForDfs_StartPointsInCols(self):
-        "#ccc this is gonna be similar to testNpDict_StartPointsInCols"
+        # this is gonna be similar to testNpDict_StartPointsInCols
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
         self.assertionsFor_Df_useNpDictForDfs_AndNpDict(dataset)
 
     def testDf_noUseNpDictForDfs_StartPointsInCols(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__']==True].index))
-        self.assertEqual(dataset.mainGroupsGeneralIdxs, {('g1',): [110, 112, 113],
+        # bugPotentialCheck2 # goodToHave3
+        #  this is not an important one (because doesn't affect the correctness of code or even
+        #  user behavior at any level), but dataset.mainGroupsGeneralIdxs was checked in another
+        #  computer which was macbook and the dataset.mainGroupsGeneralIdxs was
+        #  `{'g1': [110, 112, 113], 'g2': [119, 121]}`. so this comes either macOs version of python
+        #  or maybe related to other python package differences.
+        self.assertDictEqual(dataset.mainGroupsGeneralIdxs, {('g1',): [110, 112, 113],
                                                          ('g2',): [119, 121]})
-        self.assertEqual(dataset.mainGroupsRelIdxs, {('g1',): [], ('g2',): []})
+        self.assertDictEqual(dataset.mainGroupsRelIdxs, {('g1',): [], ('g2',): []})
 
     def testNpDict_StartPointsInCols(self):
         dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
