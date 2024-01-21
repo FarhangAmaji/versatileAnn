@@ -7,7 +7,7 @@ import pandas as pd
 from utils.vAnnGeneralUtils import downloadFileAsync
 from utils.warnings import Warn
 
-datasetsRelativePath = r'.\data\datasets'
+datasetsRelativePath = os.path.join('data', 'datasets')
 knownDatasets_dateTimeCols = {
     "EPF_FR_BE.csv": {'dateTimeCols': ["dateTime"], 'sortCols': ['dateTime']},
     "stallion.csv": {'dateTimeCols': ["date"], 'sortCols': ["agency", "sku"]},
