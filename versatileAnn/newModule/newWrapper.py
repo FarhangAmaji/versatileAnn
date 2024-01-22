@@ -66,8 +66,9 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties,
     def validation_step(self, batch, batch_idx):
         phase = self.phases.val
         return self._tempCommonStep(batch, phase)
-        stepPhase = 'val'
-        return self._tempCommonStep(batch, stepPhase)
+
+    def configure_optimizers(self):
+        return self.optimizer
 
     # reset tempVar of phases on epoch start
     def on_train_epoch_start(self):
