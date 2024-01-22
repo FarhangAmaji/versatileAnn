@@ -135,7 +135,6 @@ class _NewWrapper_preRunTests:
         trainDataloader.shuffle = False
 
         mainValLossName = self._getLossName('val', self.lossFuncs[0])
-        lossRatioDecrease = {}
         callbacks_ = [StoreEpochData()]
 
         kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
@@ -152,7 +151,7 @@ class _NewWrapper_preRunTests:
 
         self._printFirstNLast_valLossChanges(callbacks_)
 
-        pastDataloaderShuffle = pastDataloaderShuffle
+        trainDataloader.shuffle = pastDataloaderShuffle
 
     def runProfiler(self, trainDataloader, valDataloader=None,
                     profilerKwargs=None, kwargsRelatedToTrainer=None):

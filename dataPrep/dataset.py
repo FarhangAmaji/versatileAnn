@@ -28,11 +28,10 @@ class _TsRowFetcher:
     def __init__(self, *, backcastLen, forecastLen):
         self.castModes = DotDict({key: key for key in
                                   ['backcast', 'forecast', 'fullcast',
-                               'singlePoint']})
+                                   'singlePoint']})
         self.backcastLen = backcastLen
         self.forecastLen = forecastLen
         self.indexes = None
-
 
     @staticmethod
     def singleFeatureShapeCorrection(data):
@@ -150,6 +149,7 @@ class _TsRowFetcher:
                                     outputTensor=True, canBeOutOfStartIndex=False,
                                     canHaveShorterLength=False,
                                     rightPadIfShorter=False):
+
         # cccDevAlgo
         #  obviously in timeseries data we want to get next rows of data.
         #  for i.e. with data=[1, 2, 3, 4, 5, 6] and with seqLen=4, only 1, 2, 3 can provide data with seqLen with want.
@@ -172,8 +172,9 @@ class _TsRowFetcher:
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         # cccAlgo idx+shiftForward also should be in data indexes
-        kwargs = varPasser(exclude=['canBeOutOfStartIndex', 'outputTensor'])
-        res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
+        varDicts = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
+                                            'canHaveShorterLength', 'rightPadIfShorter'])
+        res = self._getBackForeCastData_general_byDataType_NCastMode(**varDicts)
 
         if outputTensor:
             res = self.convertToTensor(res)
@@ -188,19 +189,20 @@ class _TsRowFetcher:
                                                           shiftForward,
                                                           canHaveShorterLength,
                                                           rightPadIfShorter):
-        kwargs = varPasser()
+        varDicts = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
+                                            'canHaveShorterLength', 'rightPadIfShorter'])
         # send to _getCastByMode depending on datatype
         if isinstance(data, NpDict):  # NpDict
-            res = self._getCastByMode(self.getRows_npDict, **kwargs)
+            res = self._getCastByMode(self.getRows_npDict, **varDicts)
 
         elif isinstance(data, (pd.DataFrame, pd.Series)):  # pd.df
-            res = self._getCastByMode(self.getRows_df, **kwargs)
+            res = self._getCastByMode(self.getRows_df, **varDicts)
 
         elif isinstance(data, np.ndarray):  # np.array
-            res = self._getCastByMode(self.getRows_npArray, **kwargs)
+            res = self._getCastByMode(self.getRows_npArray, **varDicts)
 
         elif isinstance(data, torch.Tensor):  # tensor
-            res = self._getCastByMode(self.getRows_tensor, **kwargs)
+            res = self._getCastByMode(self.getRows_tensor, **varDicts)
         else:
             assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
         return res
@@ -209,23 +211,27 @@ class _TsRowFetcher:
                        mode, colsOrIndexes,
                        shiftForward, canHaveShorterLength,
                        rightPadIfShorter):
-        canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
-        kwargs = varPasser(exclude=['data', 'dataTypeFunc', 'mode'])
+        canBeOutOfStartIndex = True
+        # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
+        varDicts = varPasser(
+            localArgNames=['idx', 'colsOrIndexes', 'shiftForward', 'canHaveShorterLength',
+                           'rightPadIfShorter', 'canBeOutOfStartIndex'])
+
         if mode == self.castModes.backcast:  # backcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
-                                upperBoundGap=self.backcastLen, **kwargs)
+                                upperBoundGap=self.backcastLen, **varDicts)
 
         elif mode == self.castModes.forecast:  # forecast mode
             return dataTypeFunc(data, lowerBoundGap=self.backcastLen,
-                                upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
+                                upperBoundGap=self.backcastLen + self.forecastLen, **varDicts)
 
         elif mode == self.castModes.fullcast:  # fullcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
-                                upperBoundGap=self.backcastLen + self.forecastLen, **kwargs)
+                                upperBoundGap=self.backcastLen + self.forecastLen, **varDicts)
 
         elif mode == self.castModes.singlePoint:  # singlePoint mode
             return dataTypeFunc(data, lowerBoundGap=0,
-                                upperBoundGap=1, **kwargs)
+                                upperBoundGap=1, **varDicts)
         else:
             assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' castModes"
 
@@ -360,10 +366,14 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         # note _IdxNdataToLook_WhileFetching works only idx is in indexes
         dataToLook, idx = self._IdxNdataToLook_WhileFetching(idx)
 
-        kwargs = varPasser(exclude=['dataToLook'],
-                           rename={'canShiftedIndex_BeOutOfStartIndexes': 'canBeOutOfStartIndex'})
+        varDicts = varPasser(
+            localArgNames=['idx', 'mode', 'colsOrIndexes', 'shiftForward', 'outputTensor',
+                           'canHaveShorterLength', 'rightPadIfShorter',
+                           'canShiftedIndex_BeOutOfStartIndexes'],
+            exclude=['dataToLook'],
+            rename={'canShiftedIndex_BeOutOfStartIndexes': 'canBeOutOfStartIndex'})
 
-        return self.getBackForeCastData_general(dataToLook, **kwargs)
+        return self.getBackForeCastData_general(dataToLook, **varDicts)
 
     def __len__(self):
         return len(self.indexes)
