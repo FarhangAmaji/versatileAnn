@@ -172,9 +172,8 @@ class _TsRowFetcher:
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         # cccAlgo idx+shiftForward also should be in data indexes
-        varDicts = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
-                                            'canHaveShorterLength', 'rightPadIfShorter'])
-        res = self._getBackForeCastData_general_byDataType_NCastMode(**varDicts)
+        kwargs = varPasser(exclude=['canBeOutOfStartIndex', 'outputTensor'])
+        res = self._getBackForeCastData_general_byDataType_NCastMode(**kwargs)
 
         if outputTensor:
             res = self.convertToTensor(res)
@@ -189,8 +188,7 @@ class _TsRowFetcher:
                                                           shiftForward,
                                                           canHaveShorterLength,
                                                           rightPadIfShorter):
-        varDicts = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
-                                            'canHaveShorterLength', 'rightPadIfShorter'])
+        kwargs = varPasser()
         # send to _getCastByMode depending on datatype
         if isinstance(data, NpDict):  # NpDict
             res = self._getCastByMode(self.getRows_npDict, **varDicts)
@@ -211,12 +209,8 @@ class _TsRowFetcher:
                        mode, colsOrIndexes,
                        shiftForward, canHaveShorterLength,
                        rightPadIfShorter):
-        canBeOutOfStartIndex = True
-        # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
-        varDicts = varPasser(
-            localArgNames=['idx', 'colsOrIndexes', 'shiftForward', 'canHaveShorterLength',
-                           'rightPadIfShorter', 'canBeOutOfStartIndex'])
-
+        canBeOutOfStartIndex = True  # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
+        kwargs = varPasser(exclude=['data', 'dataTypeFunc', 'mode'])
         if mode == self.castModes.backcast:  # backcast mode
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=self.backcastLen, **varDicts)
