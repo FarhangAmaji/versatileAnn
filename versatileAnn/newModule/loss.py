@@ -37,11 +37,8 @@ class _NewWrapper_loss:
     @argValidator
     def _calculateLosses(self, loss, forwardOutputs: Union[torch.Tensor, dict],
                          targets: Union[torch.Tensor, dict]):
-
-        # warn or error that targets and forwardOutputs based on their dict keys
-        self._warnIf_forwardOutputsNTargets_haveNoSamePattern(forwardOutputs, targets)
-
         # bugPotentialCheck1 addTest1
+
         #  gives error without setting lossFuncs;
         #  should think is having lossFuncs is a must or I can make it optional
         calculatedLosses = []
@@ -50,6 +47,9 @@ class _NewWrapper_loss:
 
         if not hasattr(self, '_outputsStruct') or not self._outputsStruct:
             self._outputsStruct = _NestedDictStruct(forwardOutputs)
+
+            # warn or error that targets and forwardOutputs based on their dict keys
+            self._warnIf_forwardOutputsNTargets_haveNoSamePattern(forwardOutputs, targets)
             # cccDevStruct
             #  this is making a structure for nestedDicts(also works with other types of data);
             #  so later in _getFlattedData we can fill it with data
@@ -60,10 +60,6 @@ class _NewWrapper_loss:
             #  note the self._outputsStruct is built upon forwardOutputs and not targets
             #  as we also let users not to use all of the keys in the targets of dataloader
             #  and leave some unused
-            # kkk
-            #  where the message "once" should be applied(in the case of next features
-            #  which implements this) this part also should run do the checks
-            #  of targetsNForwardOutputs having same pattern again
 
         outputsFlatData, targetsFlatData = self._flattenTargetsNOutputs_data(forwardOutputs,
                                                                              targets)
@@ -90,14 +86,11 @@ class _NewWrapper_loss:
             outputsFlatData = self._getFlattedData(forwardOutputs)
         except:
             # cccDevAlgo
-            #  in rare cases there is a possibility that the structure of forwardOutputs get changed
-            #  even though it slows down the code, I think its better to to keep it safe.
+            #  in rare cases there is a possibility that the structure of forwardOutputs get
+            #  changed. even though it slows down the code, I think its better to to keep it safe.
             #  so if it fails to fillData to _outputsStruct we try to remake _outputsStruct
-            # kkk
-            #  where the message "once" should be applied(in the case of next features
-            #  which implements this) this part also should run do the checks
-            #  of targetsNForwardOutputs having same pattern again
             self._outputsStruct = _NestedDictStruct(forwardOutputs)
+            self._warnIf_forwardOutputsNTargets_haveNoSamePattern(forwardOutputs, targets)
             outputsFlatData = self._getFlattedData(forwardOutputs)
 
         if isinstance(forwardOutputs, dict):
@@ -150,14 +143,8 @@ class _NewWrapper_loss:
         Warn.info(infoMsg)
 
     def _warnIf_forwardOutputsNTargets_haveNoSamePattern(self, forwardOutputs, targets):
-        # kkk
-        #  but the user should be warned "once" that he/she has not
-        #  followed targets pattern; requires lots of things to take care for; like runTemp variable
-        # kkk
-        #  may move it to _flattenTargetsNOutputs_data where that targets _outputsStruct fillWithData;
-        #  and 1. make a try block there this is because not to slow down here by checking it everyRun
-        #  or 2. even better, so when giving error "once" is done we put it there
-        #  note even "once" feature is not done 3. we can put it in setter of _outputsStruct(not preferred)
+        # cccDevStruct
+        #  note this is called only when _outputsStruct is getting set
         if isinstance(targets, dict):
             if not isinstance(forwardOutputs, dict):
                 targetsKeys = joinListWithComma(list(targets.keys()))
@@ -189,8 +176,6 @@ class _NewWrapper_loss:
                 _, keysNotDefined2 = areItemsOfList1_InList2(
                     list(targets.keys()), list(forwardOutputs.keys()), giveNotInvolvedItems=True)
                 if keysNotDefined2:
-                    # goodToHave1#kkk
-                    #  warn just once for each train run
                     spelling_forWordKey = spellPluralS(keysNotDefined2, 'key')  # just for details
                     keysNotDefined2 = joinListWithComma(keysNotDefined2)
                     Warn.error(
