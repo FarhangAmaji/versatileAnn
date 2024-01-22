@@ -41,7 +41,6 @@ def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None, try_=0):
         #  don't have csv data, instead they have sth like `version https://git-lfs.github.com/...`
         #  so it's detected is this pattern exists or not and if yes uses _downloadFileWithCurl
         #  which downloads from another url with curl
-        # delete file in filePath
         os.remove(filePath)
         _downloadFileWithCurl(fileName, filePath)
 
@@ -50,7 +49,7 @@ def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None, try_=0):
         df = pd.read_csv(filePath)
     except:
         # this is for the case in the past file was download half way. and it's not working correctly
-        if try_ < 4:  # 3 tries in whole
+        if try_ < 4:  # 3 tries in total
             os.remove(filePath)
             return getDatasetFiles(fileName, dateTimeCols, sortCols, try_=try_)
     _convertDatetimeNSortCols(dateTimeCols, df, fileName, sortCols)

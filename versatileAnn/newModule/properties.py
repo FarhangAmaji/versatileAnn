@@ -1,7 +1,5 @@
-import torch
-
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getTorchDevice
+from utils.vAnnGeneralUtils import getTorchDevice, DotDict
 
 
 class _NewWrapper_properties:
@@ -16,6 +14,7 @@ class _NewWrapper_properties:
         self._setModelName(modelName)
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
         self.testPrints = testPrints
+        self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 
         if devMode:
             pass  # kkk?
