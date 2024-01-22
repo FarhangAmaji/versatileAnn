@@ -1,5 +1,7 @@
-from abc import ABC
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 
-class _NewWrapper_modelDifferentiator(ABC):  # kkk1 do it later
+
+class _NewWrapper_modelDifferentiator:  # kkk1 do it later
     def __init__(self, **kwargs):
-        pass
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelDifferentiator)

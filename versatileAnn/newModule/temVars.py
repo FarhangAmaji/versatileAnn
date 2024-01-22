@@ -1,4 +1,4 @@
-from utils.vAnnGeneralUtils import joinListWithComma
+from utils.vAnnGeneralUtils import joinListWithComma, _allowOnlyCreationOf_ChildrenInstances
 
 
 class _NewWrapper_tempVars:
@@ -11,6 +11,9 @@ class _NewWrapper_tempVars:
         self.tempVarRun = {"train": {}, "val": {}, "test": {}, "predict": {}}
         self.tempVarRun_allPhases = {}
         # note self.tempVarRun and tempVarRun_allPhases reset on fit start
+
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_tempVars)
 
     def resetTempVar_step(self, phase):
         self._phaseValidator(phase)

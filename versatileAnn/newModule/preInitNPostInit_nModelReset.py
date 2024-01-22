@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 
 from utils.customErrors import ImplementationError
 from utils.initParentClasses import initClasses_withAllArgs
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from versatileAnn.newModule.preInitNPostInit_nModelReset_inner import \
     _NewWrapper_preInitNPostInit_nModelReset_inner
 
@@ -19,6 +20,10 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
     # cccDevStruct
     #  this is called even before __init_subclass__
     classesCalledBy_init_subclass_ = []
+
+    def __init__(self):
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_preInitNPostInit_nModelReset)
 
     def __init_subclass__(cls, **kwargs):
         # cccDevAlgo

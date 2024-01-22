@@ -7,7 +7,7 @@ import torch.nn as nn
 from dataPrep.dataloader import _NestedDictStruct
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import snakeToCamel, areItemsOfList1_InList2, joinListWithComma, \
-    spellPluralS, isNestedDict
+    spellPluralS, isNestedDict, _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 
@@ -15,6 +15,8 @@ from utils.warnings import Warn
 class _NewWrapper_lossNRegularization:
     def __init__(self, **kwargs):
         self.lossFuncs = []
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_lossNRegularization)
 
     @property
     def lossFuncs(self):

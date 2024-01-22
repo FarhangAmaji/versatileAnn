@@ -1,5 +1,5 @@
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getTorchDevice, DotDict
+from utils.vAnnGeneralUtils import getTorchDevice, DotDict, _allowOnlyCreationOf_ChildrenInstances
 
 
 class _NewWrapper_properties:
@@ -15,6 +15,9 @@ class _NewWrapper_properties:
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
+
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_properties)
 
         if devMode:
             pass  # kkk?

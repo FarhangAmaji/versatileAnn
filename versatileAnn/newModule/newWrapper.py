@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
-from versatileAnn.newModule.loss import _NewWrapper_loss
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from versatileAnn.newModule.loss import _NewWrapper_lossNRegularization
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
@@ -27,7 +27,9 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties,
     @argValidator
     def __init__(self, **kwargs):
         self.printTestPrints('NewWrapper init')
-        # not allowing this func to be used directly
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
+
 
     def forward(self, inputs, targets):
         # force reimplementing this method

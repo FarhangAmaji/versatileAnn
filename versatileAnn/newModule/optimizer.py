@@ -3,12 +3,15 @@ import copy
 import torch
 
 from utils.typeCheck import argValidator
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 
 class _NewWrapper_optimizer:
     def __init__(self, lr=3e-4, **kwargs):
         self.lr = lr
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_optimizer)
 
     @property
     def optimizer(self):
