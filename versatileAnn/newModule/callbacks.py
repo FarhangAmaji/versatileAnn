@@ -6,25 +6,26 @@ class StoreEpochData(pl.Callback):
         super().__init__()
         self.epochData = {}
 
+    def _metricUpdate(self, phase, trainer):
+        metrics = {key: value for key, value in trainer.callback_metrics.items() if
+                   key.startswith(phase)}
+        if phase not in self.epochData:
+            self.epochData.update({phase: {}})
+
+        self.epochData[phase].update({trainer.current_epoch: metrics})
+
     def on_train_epoch_end(self, trainer, pl_module):
-        stepPhase = 'train'
-        self._metricUpdate(stepPhase, trainer)
+        phase = 'train'
+        self._metricUpdate(phase, trainer)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        stepPhase = 'val'
-        self._metricUpdate(stepPhase, trainer)
+        phase = 'val'
+        self._metricUpdate(phase, trainer)
 
     def on_test_epoch_end(self, trainer, pl_module):
-        stepPhase = 'test'
-        self._metricUpdate(stepPhase, trainer)
+        phase = 'test'
+        self._metricUpdate(phase, trainer)
 
     def on_predict_epoch_end(self, trainer, pl_module):
-        stepPhase = 'predict'
-        self._metricUpdate(stepPhase, trainer)
-
-    def _metricUpdate(self, stepPhase, trainer):
-        metrics = {key: value for key, value in trainer.callback_metrics.items() if
-                   key.startswith(stepPhase)}
-        if stepPhase not in self.epochData:
-            self.epochData.update({stepPhase: {}})
-        self.epochData[stepPhase].update({trainer.current_epoch: metrics})
+        phase = 'predict'
+        self._metricUpdate(phase, trainer)

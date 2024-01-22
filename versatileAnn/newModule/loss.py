@@ -10,9 +10,10 @@ from utils.vAnnGeneralUtils import snakeToCamel, areItemsOfList1_InList2, joinLi
     spellPluralS, isNestedDict
 from utils.warnings import Warn
 
-class _NewWrapper_loss:
+
+
+class _NewWrapper_lossNRegularization:
     def __init__(self, **kwargs):
-        self.showProgressBar = kwargs.get('showProgressBar', True)
         self.lossFuncs = []
 
     @property
@@ -34,6 +35,7 @@ class _NewWrapper_loss:
     def _outputsStruct(self, value: Union[_NestedDictStruct, None]):
         self.__outputsStruct = value
 
+    # ---- _calculateLosses
     @argValidator
     def _calculateLosses(self, loss, forwardOutputs: Union[torch.Tensor, dict],
                          targets: Union[torch.Tensor, dict]):
@@ -96,7 +98,6 @@ class _NewWrapper_loss:
         if isinstance(forwardOutputs, dict):
             # cccDevAlgo
             #  this is for the feature of letting user not to use all keys of targets of dataloader
-            forwardOutputs_keys = list(forwardOutputs.keys())
             # only keep keys which are in outputs
             targets = {key: targets[key] for key in forwardOutputs.keys()}
 
@@ -110,37 +111,6 @@ class _NewWrapper_loss:
         outputsFlatData.fillWithData(data)
         outputsFlatData = outputsFlatData.toList()
         return outputsFlatData
-
-    def _logLosses(self, calculatedLosses, stepPhase):
-        # kkk
-        #  take care of unsatisfaction with logs of preRunTests here
-        # kkk2
-        #  should I add more options like to be able to log.
-        #  the problem with this is that after features are added they are
-        #  outside of trainer so I may add my implementation of trainer
-        # kkk2
-        #  on_step=True for low important runs is not necessary but its important
-        #  for main runs: but I avoid complexity and put on_step one for train
-        on_step = True if stepPhase == 'train' else False
-        for i, loss_ in enumerate(self.lossFuncs):
-            # goodToHave3
-            #  somewhere it logs `epochs`(and brings it in tensorboard) which I dont want
-            self.log(self._getLossName(stepPhase, loss_),
-                     calculatedLosses[i].to(torch.device('cpu')).item(),
-                     # kkk3 why still metrics are in cuda
-                     on_epoch=True, on_step=on_step, prog_bar=self.showProgressBar)
-
-    @staticmethod
-    def _printFirstNLast_valLossChanges(callbacks_):
-        epochValData = callbacks_[0].epochData['val']
-        epochNum = list(epochValData.keys())
-        epochNum = epochNum[-1] + 1
-        metrics = list(epochValData[0].keys())
-        infoMsg = f'over {epochNum} epochs:'
-        infoMsg += ''.join([
-            f'\n    "{metric}" changed from {epochValData[0][metric]:.5f} to {epochValData[epochNum - 1][metric]:.5f}'
-            for metric in metrics])
-        Warn.info(infoMsg)
 
     def _warnIf_forwardOutputsNTargets_haveNoSamePattern(self, forwardOutputs, targets):
         # cccDevStruct
@@ -187,20 +157,37 @@ class _NewWrapper_loss:
             # do it later
             # kkk what about when they are tensor
 
-    def _getLossName(self, stepPhase, loss_):
-        return snakeToCamel(stepPhase + type(loss_).__name__)
+    # ----
+    def _logLosses(self, calculatedLosses, phase):
+        # kkk
+        #  take care of unsatisfaction with logs of preRunTests here
+        # cccDevAlgo
+        #  on_step=True for low important runs is not necessary but its important
+        #  for main runs: but I avoid complexity and put on_step one for train
+        logOptions = {"on_step": True if phase == 'train' else False,
+                      'on_epoch': True, 'prog_bar': True}
+        if hasattr(self, '_logOptions'):
+            logOptions.update(self._logOptions)
+        for i, loss_ in enumerate(self.lossFuncs):
+            self.log(self._getLossName(phase, loss_),
+                     calculatedLosses[i].to(torch.device('cpu')).item(),
+                     **logOptions)
+            # goodToHave3
+            #  somewhere it logs `epochs`(and brings it in tensorboard) which I dont want
+            # goodToHave3
+            #  why still metrics are in cuda
 
+    @staticmethod
+    def _printFirstNLast_valLossChanges(callbacks_):
+        epochValData = callbacks_[0].epochData['val']
+        epochNum = list(epochValData.keys())
+        epochNum = epochNum[-1] + 1
+        metrics = list(epochValData[0].keys())
+        infoMsg = f'over {epochNum} epochs:'
+        infoMsg += ''.join([
+            f'\n    "{metric}" changed from {epochValData[0][metric]:.5f} to {epochValData[epochNum - 1][metric]:.5f}'
+            for metric in metrics])
+        Warn.info(infoMsg)
 
-# kkk maybe make a file for contextManagers in NewWrapper utils folder
-class progressBarTempOff:
-    def __init__(self, instance):
-        self.instance = instance
-
-    def __enter__(self):
-        self.originalVal = self.instance.showProgressBar
-        self.instance.showProgressBar = False
-
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.instance.showProgressBar = self.originalVal
+    def _getLossName(self, phase, loss_):
+        return snakeToCamel(phase + type(loss_).__name__)

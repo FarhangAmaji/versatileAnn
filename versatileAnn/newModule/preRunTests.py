@@ -6,7 +6,7 @@ from pytorch_lightning.profilers import PyTorchProfiler
 from torch import nn
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getMethodRelatedKwargs, morePreciseFloat, varPasser
+from utils.vAnnGeneralUtils import giveOnlyKwargsRelated_toMethod, morePreciseFloat, varPasser
 from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
@@ -62,7 +62,7 @@ class _NewWrapper_preRunTests:
         #  check if model with this architecture doesnt exist allow to run.
         #  - add force option also
         # find kwargs can be passed to pl.Trainer
-        kwargsRelatedToTrainer = getMethodRelatedKwargs(pl.Trainer, kwargs, delAfter=True)
+        kwargsRelatedToTrainer = giveOnlyKwargsRelated_toMethod(pl.Trainer, kwargs, delAfter=True)
 
         # goodToHave3
         #  I tried to create a freature for saving trainDataloader, valDataloader originals
@@ -131,10 +131,13 @@ class _NewWrapper_preRunTests:
         #  been replaced completely. so it's better to not include 'overfit_batches' option and try
         #  to replicate it. so decided to use 'limit_train_batches' option instead. ofc with setting
         #  dataloader shuffle to False temporarily then turn it back to its original
+        # bugPotentialCheck1
+        #  the amount which decreases the loss over 200 epochs is not really sth to be called
+        #  overfitting
+
         pastDataloaderShuffle = trainDataloader.shuffle
         trainDataloader.shuffle = False
 
-        mainValLossName = self._getLossName('val', self.lossFuncs[0])
         callbacks_ = [StoreEpochData()]
 
         kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
@@ -224,6 +227,9 @@ class _NewWrapper_preRunTests:
     def findBestBatchSize(self, trainDataloader, valDataloader=None,
                           *, batchSizesToFindBest: Union[None, List],
                           findBestBatchSizesKwargs=None, kwargsRelatedToTrainer=None):
+        # goodToHave3
+        #  check if the batchSizes are power of 2 are they slower or faster or
+        #  doesnt make any difference
         findBestBatchSizesKwargs = findBestBatchSizesKwargs or {}
         kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         batchSizesToFindBest = batchSizesToFindBest or [8, 16, 32, 64, 128]
@@ -280,8 +286,8 @@ class _NewWrapper_preRunTests:
         #  the runKwargs which is kwargs passed by user for specific run, have higher priority
         # cccAlgo
         #  in finds kwargs of trainModel or runKwargs(for i.e. fastDevRunKwargs) related to pl.Trainer
-        runKwargs = getMethodRelatedKwargs(pl.Trainer, updater=runKwargs,
-                                           updatee=runKwargs, delAfter=True)
+        runKwargs = giveOnlyKwargsRelated_toMethod(pl.Trainer, updater=runKwargs,
+                                                   updatee=runKwargs, delAfter=True)
         kwargsApplied.update(kwargsRelatedToTrainer)
         kwargsApplied.update(runKwargs)
 

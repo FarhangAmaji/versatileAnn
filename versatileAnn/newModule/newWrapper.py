@@ -1,12 +1,8 @@
-from abc import ABC
-
 import pytorch_lightning as pl
-import torch
-import torch.nn as nn
 
-from utils.initParentClasses import initParentClasses
 from utils.typeCheck import argValidator
 from versatileAnn.newModule.loss import _NewWrapper_loss
+from versatileAnn.newModule.loss import _NewWrapper_lossNRegularization
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
 from versatileAnn.newModule.preInitNPostInit_nModelReset import \
@@ -24,46 +20,52 @@ from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 
 class NewWrapper(pl.LightningModule, _NewWrapper_properties,
                  _NewWrapper_tempVars, _NewWrapper_preInitNPostInit_nModelReset,
-                 _NewWrapper_loss, _NewWrapper_optimizer,
+                 _NewWrapper_lossNRegularization, _NewWrapper_optimizer,
                  _NewWrapper_preRunTests, _NewWrapper_saveLoad,
                  _NewWrapper_modelDifferentiator):
 
     @argValidator
     def __init__(self, **kwargs):
-        # cccDevStruct
-        #  note __init__ and __new__ don't take optional args
-        self.dummy = nn.Linear(7, 1) # kkk this is dummy
-
-        # _NewWrapper_optimizer must be initialized at the postInitialization
-        initParentClasses(type(self), kwargs, self, just=['_NewWrapper_optimizer'])
-        # kkk1 iss1 later check how the user should use this class; note dummyLayer is added in order not
-        #  to get error of optimizer; note specially inheriting from classes I want
+        self.printTestPrints('NewWrapper init')
+        # not allowing this func to be used directly
 
     def forward(self, inputs, targets):
-        output = {}
-        output['volume'] = self.dummy(
-            targets['volume'])  # kkk1 this just to get some output; related to iss1
-        return output
+        # force reimplementing this method
+        raise NotImplementedError
 
     def _tempCommonStep(self, batch, phase):
         # reset tempVarStep
         self.resetTempVar_step(phase)
 
         inputs, targets = batch
-        # kkk1 later make it compatible with outputMask
-        outputs = self(inputs, targets)  # kkk2 may add targets if its is model arguments
+        # goodToHave1
+        #  later make it compatible with outputMask
+        # bugPotentialCheck2
+        #  also what if the batch has 1 items; may don't allow this one as almost everything depends on targets
+        # goodToHave1
+        #  must think about this more on how to match batchOutputs and self.forward args can get
+        #  matched and related values of batchOutputs get sent to self.forward
+        #  - may add targets if its is model arguments
+        forwardOutputs = self(inputs, targets)
+
         # calculate loss
-        loss = None
-        calculatedLosses, loss = self._calculateLosses(loss, outputs, targets)
+        # bugPotentialCheck1
+        #  if the loss is not returned from _calculatedLosses because of
+        #  not having self.lossFuncs would it make error
+        loss = None  # kkk maybe this is related to allowing self.lossFuncs to be empty
+        loss, calculatedLosses = self._calculateLosses(loss, forwardOutputs, targets)
+
         # Log losses
-        self._logLosses(calculatedLosses, stepPhase)
+        self._logLosses(calculatedLosses, phase)
         return loss
 
     def training_step(self, batch, batch_idx):
-        stepPhase = 'train'
-        return self._tempCommonStep(batch, stepPhase)
+        phase = self.phases.train
+        return self._tempCommonStep(batch, phase)
 
     def validation_step(self, batch, batch_idx):
+        phase = self.phases.val
+        return self._tempCommonStep(batch, phase)
         stepPhase = 'val'
         return self._tempCommonStep(batch, stepPhase)
 

@@ -409,7 +409,7 @@ def morePreciseFloat(num, precisionOrder=6):
 
 # ---- dicts
 @argValidator
-def getMethodRelatedKwargs(method, updater: dict, updatee: dict = None, delAfter=False):
+def giveOnlyKwargsRelated_toMethod(method, updater: dict, updatee: dict = None, delAfter=False):
     # cccDevStruct
     #  finds keys in updater that can be passed to method as they are in the args that method takes
     #  updatee is the result which can have some keys from before
