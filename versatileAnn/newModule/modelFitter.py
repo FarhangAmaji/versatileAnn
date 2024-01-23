@@ -123,6 +123,7 @@ class _NewWrapper_modelFitter:
             del kw_['callbacks']
         allUserKwargs.update(kw_)
         allUserKwargs.update(correctArgs)
+        return allUserKwargs
 
     @argValidator
     def _putTogether_plLoggers(self,
