@@ -16,6 +16,16 @@ class _NewWrapper_modelFitter:
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelFitter)
 
+    @property
+    def _logOptions(self):
+        return self.__logOptions
+
+    @_logOptions.setter
+    @argValidator
+    def _logOptions(self, value: dict):
+        self._assertPhaseBased_logOptions(value)
+        self.__logOptions = value
+
     @argValidator
     def fit(self, trainDataloader: DataLoader,
             valDataloader: Union[DataLoader, None] = None,
@@ -23,10 +33,16 @@ class _NewWrapper_modelFitter:
         # kkk support log kwargs to have phases
         # addTest1
         # cccUsage
-        #  - this method accepts kwargs related to trainer, trainer.fit, and model.log and
+        #  - this method accepts kwargs related to trainer, trainer.fit, and self.log and
         #  pass them accordingly
         #  - the order in listOfKwargs is important
-        # put together all kwargs user wants to pass to trainer, trainer.fit, and model.log
+        #  - _logOptions phase based values feature:
+        #           - args related to self.log may be a dict with these keys 'train', 'val', 'test',
+        #                   'predict' or 'else'
+        #           - this way u can specify what phase use what values and if not specified with
+        #               'else' it's gonna know
+
+        # put together all kwargs user wants to pass to trainer, trainer.fit, and self.log
         listOfKwargs = listOfKwargs or []
         listOfKwargs.append(kwargs)
         allUserKwargs = {}
@@ -64,7 +80,9 @@ class _NewWrapper_modelFitter:
                                   ['trainer', 'trainerFit', 'log']):
             # cccDevAlgo
             #  - note I have checked these 3 methods and they don't have args with mutual names
-            #  except pl.Trainer and pl.LightningModule.log which take 'logger' arg which is ok
+            #           except pl.Trainer and pl.LightningModule.log which take 'logger' arg
+            #           which is ok, even though logger in self.log is just a bool or None but in
+            #           pl.Trainer is a Logger object or a list of Logger objects or bool or None
             #  to be mutual
             #  - note giveOnlyKwargsRelated_toMethod has camelCase compatibility
             #  for i.e. if the method takes `my_arg` but updater has
@@ -103,6 +121,15 @@ class _NewWrapper_modelFitter:
                 Warn.warn(f"you have included {auk} but it doesn't match with args " + \
                           "can be passed to pl.Trainer, pl.Trainer.fit or " + \
                           "pl.LightningModule.log; even their camelCase names")
+
+    def _assertPhaseBased_logOptions(self, _logOptions):
+        # assert phaseBased _logOptions to fit in the format it should have
+        for akl, aklV in _logOptions.items():
+            if isinstance(aklV, dict):
+                if akl not in ['train', 'val', 'test', 'predict', 'else']:
+                    raise ValueError("it seems you are trying to use phaseBased logOptions" + \
+                                     f"\nthe key '{akl}' must be " + \
+                                     "'train', 'val', 'test', 'predict', 'else'")
 
     # ---- _plKwargUpdater and inners
     def _plKwargUpdater(self, allUserKwargs, kw):

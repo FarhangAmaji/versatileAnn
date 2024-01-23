@@ -288,5 +288,5 @@ class _NewWrapper_preRunTests:
 
     def _mergeKwargsWith_runKwargs(self, runKwargs, mainKwargsOfPreRunTests):
         result = mainKwargsOfPreRunTests.copy()
-        self.self._plKwargUpdater(result, runKwargs)
+        self._plKwargUpdater(result, runKwargs)
         return result

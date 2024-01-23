@@ -20,6 +20,9 @@ class preRunTests_Tests(BaseTestClass):
         self.trainDataloader, self.valDataloader, self.testDataloader, self.normalizer = getEpfFrBeDataloaders(
             backcastLen=backcastLen, forecastLen=forecastLen,
             batchSize=batchSize, shuffle=shuffle, dataInfo=dataInfo, devTestMode=devTestMode)
+        # bugPotentialCheck1
+        #  gives 'train is empty. the trainSeqLen seems to be high'; check is it giving warn
+        #  with correct reason or not
 
     def testTraining_step(self):
         # ccc it's just to see does it run or not

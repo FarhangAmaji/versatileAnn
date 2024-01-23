@@ -160,6 +160,7 @@ class _NewWrapper_lossNRegularization:
 
     # ----
     def _logLosses(self, calculatedLosses, phase):
+        # addTest2 for phaseBased_logOptions
         # kkk
         #  take care of unsatisfaction with logs of preRunTests here
         # cccDevAlgo
@@ -168,7 +169,17 @@ class _NewWrapper_lossNRegularization:
         logOptions = {"on_step": True if phase == 'train' else False,
                       'on_epoch': True, 'prog_bar': True}
         if hasattr(self, '_logOptions'):
-            logOptions.update(self._logOptions)
+            # pass _logOptions with phaseBased _logOptions format
+            # cccDevAlgo
+            #  for more info about phaseBased _logOptions take a look at modelFitter
+            for akl, aklV in self._logOptions.items():
+                if isinstance(aklV, dict):
+                    if phase in aklV.keys():
+                        logOptions.update({akl: aklV[phase]})
+                    elif 'else' in aklV.keys():
+                        logOptions.update({akl: aklV['else']})
+                else:
+                    logOptions.update({akl: self._logOptions[akl]})
 
         for i, loss_ in enumerate(self.lossFuncs):
             self.log(self._getLossName(phase, loss_),
