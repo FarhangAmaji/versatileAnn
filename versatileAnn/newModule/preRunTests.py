@@ -4,9 +4,10 @@ from typing import List, Union
 import pytorch_lightning as pl
 from pytorch_lightning.profilers import PyTorchProfiler
 from torch import nn
+from torch.utils.data import DataLoader
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import giveOnlyKwargsRelated_toMethod, morePreciseFloat, varPasser
+from utils.vAnnGeneralUtils import morePreciseFloat
 from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
@@ -47,14 +48,19 @@ class _NewWrapper_preRunTests:
                     fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
                     findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
 
+        fastDevRunKwargs = fastDevRunKwargs or {}
+        overfitBatchesKwargs = overfitBatchesKwargs or {}
+        profilerKwargs = profilerKwargs or {}
+        findBestLearningRateKwargs = findBestLearningRateKwargs or {}
+        findBestBatchSizesKwargs = findBestBatchSizesKwargs or {}
         # mustHave3
         #  revise logging prints
-        # cccUsage
-        #  only first loss is used for backpropagation and others are just for logging
         if lossFuncs:
+            self.lossFuncs = lossFuncs
+            # cccUsage
+            #  only first loss is used for backpropagation and others are just for logging
             # cccDevStruct
             #  in the case outside of trainModel lossFuncs is been set, so if not passed would use them
-            self.lossFuncs = lossFuncs
         # anyway self.lossFuncs must be set
         if not self.lossFuncs:
             raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
@@ -63,31 +69,29 @@ class _NewWrapper_preRunTests:
         # mustHave2
         #  check if model with this architecture doesnt exist allow to run.
         #  - add force option also
-        # find kwargs can be passed to pl.Trainer
-        kwargsRelatedToTrainer = giveOnlyKwargsRelated_toMethod(pl.Trainer, kwargs, delAfter=True)
 
         # goodToHave3
         #  I tried to create a freature for saving trainDataloader, valDataloader originals
         #  in order to keep them untouched but it failed because doing deepcopy, maximum recursion
         #  stack overflow occurred meaning that it has some identical parts repeated in it. so may
         #  be add dataLoader reset later
+        runKwargs_ = self._mergeKwargsWith_runKwargs(fastDevRunKwargs, kwargs)
+        self.runFastDevRun(trainDataloader, valDataloader, **runKwargs_)
 
-        self.runFastDevRun(trainDataloader, valDataloader,
-                           fastDevRunKwargs, kwargsRelatedToTrainer)
-        self.runOverfitBatches(trainDataloader, valDataloader,
-                               overfitBatchesKwargs, kwargsRelatedToTrainer)
-        trainer = self.runProfiler(trainDataloader, valDataloader,
-                                   profilerKwargs, kwargsRelatedToTrainer)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(overfitBatchesKwargs, kwargs)
+        self.runOverfitBatches(trainDataloader, valDataloader, **runKwargs_)
 
-        kwargs_ = varPasser(localArgNames=['lrsToFindBest', 'findBestLearningRateKwargs',
-                                           'kwargsRelatedToTrainer'])
+        runKwargs_ = self._mergeKwargsWith_runKwargs(profilerKwargs, kwargs)
+        trainer = self.runProfiler(trainDataloader, valDataloader, **runKwargs_)
+
+        runKwargs_ = self._mergeKwargsWith_runKwargs(findBestLearningRateKwargs, kwargs)
         self.findBestLearningRate(trainDataloader, valDataloader,
-                                  numSteps=lrFinderNumSteps, lrRange=lrFinderRange, **kwargs_)
+                                  numSteps=lrFinderNumSteps, lrRange=lrFinderRange,
+                                  lrsToFindBest=lrsToFindBest, **runKwargs_)
 
-        kwargs_ = varPasser(localArgNames=['batchSizesToFindBest', 'findBestBatchSizesKwargs',
-                                           'kwargsRelatedToTrainer'])
+        runKwargs_ = self._mergeKwargsWith_runKwargs(findBestBatchSizesKwargs, kwargs)
         self.findBestBatchSize(trainDataloader, valDataloader,
-                               **kwargs_)
+                               batchSizesToFindBest=batchSizesToFindBest, **runKwargs_)
 
         # goodToHave3
         #  add finding best shuffle index!!. this may be very useful sometimes
@@ -95,31 +99,25 @@ class _NewWrapper_preRunTests:
         # message how to use tensorboard
         self._printTensorboardPath(trainer)
 
-    def runFastDevRun(self, trainDataloader, valDataloader=None,
-                      fastDevRunKwargs=None, kwargsRelatedToTrainer=None):
-        fastDevRunKwargs = fastDevRunKwargs or {}
-        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+    @argValidator
+    def runFastDevRun(self, trainDataloader: DataLoader,
+                      valDataloader: Union[DataLoader, None] = None, **kwargs):
         # cccDevAlgo
         #  ensures whole pipeline is working correctly by running couple of epochs on a batch
         self.printTestPrints('running fastDevRun')
 
         kwargsApplied = {'logger': False, }
+        kwargsApplied.update(kwargs)
 
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, fastDevRunKwargs,
-                                             kwargsApplied)
-        # disallow changing 'fast_dev_run' option
-        if 'fast_dev_run' in kwargsApplied:
-            del kwargsApplied['fast_dev_run']
+        # force setting 'fast_dev_run' True
+        kwargsApplied['fast_dev_run'] = True
 
-        trainer = pl.Trainer(
-            fast_dev_run=True,  # Run only for a small number of epochs for faster development
-            **kwargsApplied)
-        trainer.fit(self, train_dataloaders=trainDataloader, val_dataloaders=valDataloader)
+        self.fit(trainDataloader, valDataloader, **kwargsApplied)
 
-    def runOverfitBatches(self, trainDataloader, valDataloader=None,
-                          overfitBatchesKwargs=None, kwargsRelatedToTrainer=None):
-        overfitBatchesKwargs = overfitBatchesKwargs or {}
-        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+    @argValidator
+    def runOverfitBatches(self, trainDataloader: DataLoader,
+                          valDataloader: Union[DataLoader, None] = None,
+                          **kwargs):
         self.printTestPrints('running overfitBatches')
 
         # cccDevStruct # bugPotentialCheck1
@@ -141,52 +139,50 @@ class _NewWrapper_preRunTests:
         pastDataloaderShuffle = trainDataloader.shuffle
         trainDataloader.shuffle = False
 
+        # kkk correct callbacks and logger; I think they can get single or list
         callbacks_ = [StoreEpochData()]
 
         kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
-                         'enable_checkpointing': False, 'logger': False, 'callbacks': callbacks_, }
-
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, overfitBatchesKwargs,
-                                             kwargsApplied)
+                         'enable_checkpointing': False, 'logger': False,
+                         'callbacks': callbacks_, }
+        kwargsApplied.update(kwargs)
 
         if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
             kwargsApplied['max_epochs'] = 50
 
-        trainer = pl.Trainer(**kwargsApplied)
-        trainer.fit(self, trainDataloader, valDataloader)
+        self.fit(trainDataloader, valDataloader, **kwargsApplied)
 
         self._printFirstNLast_valLossChanges(callbacks_)
 
         trainDataloader.shuffle = pastDataloaderShuffle
 
-    def runProfiler(self, trainDataloader, valDataloader=None,
-                    profilerKwargs=None, kwargsRelatedToTrainer=None):
-        profilerKwargs = profilerKwargs or {}
-        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+    @argValidator
+    def runProfiler(self, trainDataloader: DataLoader,
+                    valDataloader: Union[DataLoader, None] = None,
+                    **kwargs):
         self.printTestPrints('running profiler')
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
                          'profiler': PyTorchProfiler(),
-                         'logger': pl.loggers.TensorBoardLogger(self.modelName,
-                                                                name='profiler'), }
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, profilerKwargs,
-                                             kwargsApplied)
+                         'logger': pl.loggers.TensorBoardLogger(self.modelName, name='profiler'), }
+        kwargsApplied.update(kwargs)
 
-        trainer = pl.Trainer(**kwargsApplied)
-        trainer.fit(self, trainDataloader, valDataloader)
+        trainer = self.fit(trainDataloader, valDataloader, **kwargsApplied)
 
         # trainer is returned to be able to print(in _printTensorboardPath) where users can use tensorboard
         return trainer
 
-    def findBestLearningRate(self, trainDataloader, valDataloader=None,
+    @argValidator
+    def findBestLearningRate(self, trainDataloader: DataLoader,
+                             valDataloader: Union[DataLoader, None] = None,
                              *, lrRange=(1e-6, 5), numSteps=20, lrsToFindBest=None,
-                             findBestLearningRateKwargs=None, kwargsRelatedToTrainer=None):
-        findBestLearningRateKwargs = findBestLearningRateKwargs or {}
-        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
+                             **kwargs):
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestLearningRateKwargs,
-                                             kwargsApplied)
+        kwargsApplied.update(kwargs)
+
+        pastLr = self.lr
+        lossRatioDecrease = {}
 
         # cccUsage
         #  takes lr ranges either with (lrRange, numSteps) or with (lrsToFindBest)
@@ -197,8 +193,6 @@ class _NewWrapper_preRunTests:
             # confines lrs to a precision of 6 digits, also with using set, only unique values are kept
             lrs = {morePreciseFloat(lrRange[0] * (lrUpdateStep ** step)) for step in
                    range(numSteps)}
-        pastLr = self.lr
-        lossRatioDecrease = {}
 
         mainValLossName = self._getLossName('val', self.lossFuncs[0])
         for thisLr in lrs:
@@ -208,10 +202,8 @@ class _NewWrapper_preRunTests:
 
             callbacks_ = [StoreEpochData()]
             kwargsApplied['callbacks'] = callbacks_
-            trainer = pl.Trainer(**kwargsApplied)
-            # goodToHave1
-            #  contextManger to disable progressBar temporarily
-            trainer.fit(self, trainDataloader, valDataloader)
+
+            self.fit(trainDataloader, valDataloader, **kwargsApplied)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisLr)
 
@@ -219,6 +211,7 @@ class _NewWrapper_preRunTests:
         worstLearningRate = max(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
         Warn.info(f'bestLearningRate is {bestLearningRate} and the worst being {worstLearningRate}')
 
+        # set back lr or not
         if not self.keepLr_notReplaceWithBestLr:
             self.lr = bestLearningRate
         else:
@@ -227,19 +220,17 @@ class _NewWrapper_preRunTests:
         #  add ploting in tensorboard with a message that plot is in tensorboard
 
     @argValidator
-    def findBestBatchSize(self, trainDataloader, valDataloader=None,
+    def findBestBatchSize(self, trainDataloader: DataLoader,
+                          valDataloader: Union[DataLoader, None] = None,
                           *, batchSizesToFindBest: Union[None, List],
-                          findBestBatchSizesKwargs=None, kwargsRelatedToTrainer=None):
+                          **kwargs):
         # goodToHave3
         #  check if the batchSizes are power of 2 are they slower or faster or
         #  doesnt make any difference
-        findBestBatchSizesKwargs = findBestBatchSizesKwargs or {}
-        kwargsRelatedToTrainer = kwargsRelatedToTrainer or {}
         batchSizesToFindBest = batchSizesToFindBest or [8, 16, 32, 64, 128]
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        self._getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, findBestBatchSizesKwargs,
-                                             kwargsApplied)
+        kwargsApplied.update(kwargs)
 
         pastBatchSize = trainDataloader.batch_size
         lossRatioDecrease = {}
@@ -248,13 +239,12 @@ class _NewWrapper_preRunTests:
         for thisBatchSize in batchSizesToFindBest:
             self = self.resetModel()
             self.resetOptimizer()
+
             trainDataloader = trainDataloader.changeBatchSize(thisBatchSize)
             callbacks_ = [StoreEpochData()]
             kwargsApplied['callbacks'] = callbacks_
-            trainer = pl.Trainer(**kwargsApplied)
-            # goodToHave1
-            #  contextManger to disable progressBar temporarily
-            trainer.fit(self, trainDataloader, valDataloader)
+
+            self.fit(trainDataloader, valDataloader, **kwargsApplied)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisBatchSize)
 
@@ -262,6 +252,7 @@ class _NewWrapper_preRunTests:
         worstBatchSize = max(lossRatioDecrease, key=lambda k: lossRatioDecrease[k]['score'])
         Warn.info(f'bestBatchSize is {bestBatchSize} and the worst being {worstBatchSize}')
 
+        # set back batchSize or not
         if not self.keepBatchSize_notReplaceWithBestBatchSize:
             trainDataloader = trainDataloader.changeBatchSize(bestBatchSize)
         else:
@@ -269,6 +260,7 @@ class _NewWrapper_preRunTests:
         # goodToHave2
         #  add ploting in tensorboard with a message that plot is in tensorboard
 
+    # ---- utils
     @staticmethod
     def _collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                         mainValLossName, changingParam):
@@ -283,21 +275,14 @@ class _NewWrapper_preRunTests:
                                                   'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
 
     @staticmethod
-    def _getKwargsApplied_forRelatedRun(kwargsRelatedToTrainer, runKwargs,
-                                        kwargsApplied):
-        # cccUsage
-        #  the runKwargs which is kwargs passed by user for specific run, have higher priority
-        # cccAlgo
-        #  in finds kwargs of trainModel or runKwargs(for i.e. fastDevRunKwargs) related to pl.Trainer
-        runKwargs = giveOnlyKwargsRelated_toMethod(pl.Trainer, updater=runKwargs,
-                                                   updatee=runKwargs, delAfter=True)
-        kwargsApplied.update(kwargsRelatedToTrainer)
-        kwargsApplied.update(runKwargs)
-
-    @staticmethod
     def _printTensorboardPath(trainer):
         # the last 2 folders are not included
         tensorboardDir = os.path.abspath(trainer.logger.log_dir)
         tensorboardDir = os.path.split(os.path.split(tensorboardDir)[0])[0]
         Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
                   f'"{tensorboardDir}"' + "'")
+
+    def _mergeKwargsWith_runKwargs(self, runKwargs, kwargs):
+        runKwargs_ = kwargs.copy()
+        runKwargs_.update(runKwargs)
+        return runKwargs_

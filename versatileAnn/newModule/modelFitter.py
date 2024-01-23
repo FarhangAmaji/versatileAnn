@@ -15,9 +15,9 @@ class _NewWrapper_modelFitter:
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelFitter)
 
     @argValidator
-    def train(self, trainDataLoader: DataLoader,
-              valDataLoader: Union[DataLoader, None] = None,
-              listOfKwargs: List[dict] = None, **kwargs):
+    def fit(self, trainDataloader: DataLoader,
+            valDataloader: Union[DataLoader, None] = None,
+            listOfKwargs: List[dict] = None, **kwargs):
         # kkk support log kwargs to have phases
         # addTest1
         # cccUsage
@@ -51,7 +51,7 @@ class _NewWrapper_modelFitter:
             del appliedKwargs['trainerFit']['train_dataloaders']
         if 'val_dataloaders' in appliedKwargs['trainerFit']:
             del appliedKwargs['trainerFit']['val_dataloaders']
-        trainer.fit(self, trainDataLoader, valDataLoader, **appliedKwargs['trainerFit'])
+        trainer.fit(self, trainDataloader, valDataloader, **appliedKwargs['trainerFit'])
 
         self._logOptions = {}
         return trainer
@@ -68,11 +68,12 @@ class _NewWrapper_modelFitter:
             #  for i.e. if the method takes `my_arg` but updater has
             #  `myArg`, includes `my_arg` as 'myArg'
             appliedKwargs[methName] = {}
-            giveOnlyKwargsRelated_toMethod(meth, updater=allUserKwargs,
-                                           updatee=appliedKwargs[methName])
+            appliedKwargs[methName] = giveOnlyKwargsRelated_toMethod(meth, updater=allUserKwargs,
+                                                             updatee=appliedKwargs[methName])
         return appliedKwargs
 
     def _removeNotAllowedArgs(self, allUserKwargs, appliedKwargs, notAllowedArgs):
+        # addTest2
         for naa in notAllowedArgs:
             for ak in appliedKwargs.keys():
                 for ak2 in appliedKwargs[ak].keys():
@@ -83,6 +84,7 @@ class _NewWrapper_modelFitter:
                         del allUserKwargs[ak2]  # in order to give warning again in leftOvers part
 
     def _warnForNotUsedArgs(self, allUserKwargs, appliedKwargs):
+        # addTest2
         # warn for left over kwargs, the kwargs which user has passed but don't
         # fit in pl.Trainer, pl.Trainer.fit or pl.LightningModule.log
         for auk in allUserKwargs:
