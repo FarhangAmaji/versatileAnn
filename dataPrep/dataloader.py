@@ -522,7 +522,7 @@ class VAnnTsDataloader(DataLoader):
         initArgs = {key: val for key, val in self._initArgs.items()}
         kwargs = self._initArgs['kwargs']
         del initArgs['kwargs']
-        del initArgs['sampler']  # sampler is gonna recreated so we dont pass it
+        del initArgs['sampler']  # sampler is gonna recreated so we don't pass it
 
         initArgs['batch_size'] = newBatchSize
         initArgs['name'] = self.name

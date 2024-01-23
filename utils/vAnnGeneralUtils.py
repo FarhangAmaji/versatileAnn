@@ -425,7 +425,7 @@ def giveOnlyKwargsRelated_toMethod(method, updater: dict, updatee: dict = None, 
             updatee.update({key: updater[key]})
             if delAfter:
                 del updater[key]
-        if snakeToCamel(key) in updater:
+        elif snakeToCamel(key) in updater:
             updatee.update({key: updater[snakeToCamel(key)]})
             if delAfter:
                 del updater[snakeToCamel(key)]

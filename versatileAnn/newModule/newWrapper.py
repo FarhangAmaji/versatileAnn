@@ -2,9 +2,9 @@ import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
-from versatileAnn.newModule.fit import _NewWrapper_modelFitter
-from versatileAnn.newModule.loss import _NewWrapper_lossNRegularization
+from versatileAnn.newModule.lossNRegularization import _NewWrapper_lossNRegularization
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
+from versatileAnn.newModule.modelFitter import _NewWrapper_modelFitter
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
 from versatileAnn.newModule.preInitNPostInit_nModelReset import \
     _NewWrapper_preInitNPostInit_nModelReset
@@ -30,7 +30,6 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties,
         self.printTestPrints('NewWrapper init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
-
 
     def forward(self, inputs, targets):
         # force reimplementing this method
@@ -61,7 +60,7 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties,
         # Log losses
         self._logLosses(calculatedLosses, phase)
         return loss
-
+#kkk add test and predict
     def training_step(self, batch, batch_idx):
         phase = self.phases.train
         return self._tempCommonStep(batch, phase)
