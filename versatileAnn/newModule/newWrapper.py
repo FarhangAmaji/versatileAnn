@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from versatileAnn.newModule.fit import _NewWrapper_modelFitter
 from versatileAnn.newModule.loss import _NewWrapper_lossNRegularization
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
@@ -21,8 +22,8 @@ from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 class NewWrapper(pl.LightningModule, _NewWrapper_properties,
                  _NewWrapper_tempVars, _NewWrapper_preInitNPostInit_nModelReset,
                  _NewWrapper_lossNRegularization, _NewWrapper_optimizer,
-                 _NewWrapper_preRunTests, _NewWrapper_saveLoad,
-                 _NewWrapper_modelDifferentiator):
+                 _NewWrapper_modelFitter, _NewWrapper_preRunTests,
+                 _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator):
 
     @argValidator
     def __init__(self, **kwargs):

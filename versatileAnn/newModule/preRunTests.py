@@ -18,6 +18,7 @@ class _NewWrapper_preRunTests:
         self.keepBatchSize_notReplaceWithBestBatchSize = kwargs.get(
             'keepBatchSize_notReplaceWithBestBatchSize', False)
 
+    # ---- properties
     @property
     def keepLr_notReplaceWithBestLr(self):
         return self._keepLr_notReplaceWithBestLr
@@ -36,6 +37,7 @@ class _NewWrapper_preRunTests:
     def keepBatchSize_notReplaceWithBestBatchSize(self, value: bool):
         self._keepBatchSize_notReplaceWithBestBatchSize = value
 
+    # ----
     @argValidator
     def preRunTests(self, trainDataloader,
                     *, lossFuncs: List[nn.modules.loss._Loss],
@@ -134,6 +136,7 @@ class _NewWrapper_preRunTests:
         # bugPotentialCheck1
         #  the amount which decreases the loss over 200 epochs is not really sth to be called
         #  overfitting
+        #  https://stackoverflow.com/questions/77854815/replicating-overfit-batches-functionality-of-pytorch-lightning
 
         pastDataloaderShuffle = trainDataloader.shuffle
         trainDataloader.shuffle = False
