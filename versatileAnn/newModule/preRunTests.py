@@ -107,7 +107,7 @@ class _NewWrapper_preRunTests:
         self.printTestPrints('running fastDevRun')
 
         kwargsApplied = {'logger': False, }
-        kwargsApplied.update(kwargs)
+        self._plKwargUpdater(kwargsApplied, kwargs)
 
         # force setting 'fast_dev_run' True
         kwargsApplied['fast_dev_run'] = True
@@ -139,13 +139,12 @@ class _NewWrapper_preRunTests:
         pastDataloaderShuffle = trainDataloader.shuffle
         trainDataloader.shuffle = False
 
-        # kkk correct callbacks and logger; I think they can get single or list
         callbacks_ = [StoreEpochData()]
 
         kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
                          'enable_checkpointing': False, 'logger': False,
                          'callbacks': callbacks_, }
-        kwargsApplied.update(kwargs)
+        self._plKwargUpdater(kwargsApplied, kwargs)
 
         if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
             kwargsApplied['max_epochs'] = 50
@@ -165,7 +164,7 @@ class _NewWrapper_preRunTests:
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
                          'profiler': PyTorchProfiler(),
                          'logger': pl.loggers.TensorBoardLogger(self.modelName, name='profiler'), }
-        kwargsApplied.update(kwargs)
+        self._plKwargUpdater(kwargsApplied, kwargs)
 
         trainer = self.fit(trainDataloader, valDataloader, **kwargsApplied)
 
@@ -179,7 +178,7 @@ class _NewWrapper_preRunTests:
                              **kwargs):
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        kwargsApplied.update(kwargs)
+        self._plKwargUpdater(kwargsApplied, kwargs)
 
         pastLr = self.lr
         lossRatioDecrease = {}
@@ -200,10 +199,13 @@ class _NewWrapper_preRunTests:
             self.resetOptimizer()  # to be sure that past accumulated params like momentum have got reset
             self.changeLearningRate(thisLr)
 
+            kwargsAppliedCopy = kwargsApplied.copy()
             callbacks_ = [StoreEpochData()]
-            kwargsApplied['callbacks'] = callbacks_
+            # its wrong to 'kwargsApplied['callbacks'] = callbacks_'
+            callbacks_Kwargs = {'callbacks': callbacks_}
+            self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.fit(trainDataloader, valDataloader, **kwargsApplied)
+            self.fit(trainDataloader, valDataloader, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisLr)
 
@@ -230,7 +232,7 @@ class _NewWrapper_preRunTests:
         batchSizesToFindBest = batchSizesToFindBest or [8, 16, 32, 64, 128]
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        kwargsApplied.update(kwargs)
+        self._plKwargUpdater(kwargsApplied, kwargs)
 
         pastBatchSize = trainDataloader.batch_size
         lossRatioDecrease = {}
@@ -239,12 +241,14 @@ class _NewWrapper_preRunTests:
         for thisBatchSize in batchSizesToFindBest:
             self = self.resetModel()
             self.resetOptimizer()
-
             trainDataloader = trainDataloader.changeBatchSize(thisBatchSize)
-            callbacks_ = [StoreEpochData()]
-            kwargsApplied['callbacks'] = callbacks_
 
-            self.fit(trainDataloader, valDataloader, **kwargsApplied)
+            kwargsAppliedCopy = kwargsApplied.copy()
+            callbacks_ = [StoreEpochData()]
+            callbacks_Kwargs = {'callbacks': callbacks_}
+            self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
+
+            self.fit(trainDataloader, valDataloader, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisBatchSize)
 
@@ -282,7 +286,7 @@ class _NewWrapper_preRunTests:
         Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
                   f'"{tensorboardDir}"' + "'")
 
-    def _mergeKwargsWith_runKwargs(self, runKwargs, kwargs):
-        runKwargs_ = kwargs.copy()
-        runKwargs_.update(runKwargs)
-        return runKwargs_
+    def _mergeKwargsWith_runKwargs(self, runKwargs, mainKwargsOfPreRunTests):
+        result = mainKwargsOfPreRunTests.copy()
+        self.self._plKwargUpdater(result, runKwargs)
+        return result
