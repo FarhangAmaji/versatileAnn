@@ -530,6 +530,14 @@ def joinListWithComma(list_: list, doubleQuoteItems=True):
     return ', '.join(list_)
 
 
+def randomStringGenerator(stringLength=4, characters=None):
+    import random
+    import string
+    characters = characters or (string.ascii_letters + string.digits)
+
+    return ''.join(random.choices(characters, k=stringLength))
+
+
 @argValidator
 def spellPluralS(list_: list, string="", es=False):
     if len(list_) > 1:

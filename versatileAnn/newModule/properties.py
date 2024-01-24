@@ -3,6 +3,7 @@ from utils.vAnnGeneralUtils import getTorchDevice, DotDict, _allowOnlyCreationOf
 
 
 class _NewWrapper_properties:
+    # kkk rename this properties doesnt make sense
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True, testPrints=False):
         # bugPotentialCheck1 # goodToHave3

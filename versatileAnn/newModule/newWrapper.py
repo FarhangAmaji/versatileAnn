@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
-from versatileAnn.newModule.lossNRegularization import _NewWrapper_lossNRegularization
+from versatileAnn.newModule.lossModule import _NewWrapper_loss
 from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
 from versatileAnn.newModule.modelFitter import _NewWrapper_modelFitter
 from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
@@ -10,6 +10,7 @@ from versatileAnn.newModule.preInitNPostInit_nModelReset import \
     _NewWrapper_preInitNPostInit_nModelReset
 from versatileAnn.newModule.preRunTests import _NewWrapper_preRunTests
 from versatileAnn.newModule.properties import _NewWrapper_properties
+from versatileAnn.newModule.regularization import _NewWrapper_regularization
 from versatileAnn.newModule.saveLoad import _NewWrapper_saveLoad
 from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 
@@ -19,14 +20,18 @@ from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 # kkk1 if I use kwargsBasedOnMethod then I should check conflicts when 2 methods get some args with same name
 
 
-class NewWrapper(pl.LightningModule, _NewWrapper_properties,
-                 _NewWrapper_tempVars, _NewWrapper_preInitNPostInit_nModelReset,
-                 _NewWrapper_lossNRegularization, _NewWrapper_optimizer,
+class NewWrapper(pl.LightningModule,
+                 _NewWrapper_properties, _NewWrapper_tempVars,
+                 _NewWrapper_preInitNPostInit_nModelReset, _NewWrapper_optimizer,
+                 _NewWrapper_loss, _NewWrapper_regularization,
                  _NewWrapper_modelFitter, _NewWrapper_preRunTests,
                  _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator):
 
     @argValidator
     def __init__(self, **kwargs):
+        # kkk
+        #  this init should take all other args which it parent classes take because the user can
+        #  really check all parent classes to see what functionalities does class offer
         self.printTestPrints('NewWrapper init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
@@ -60,7 +65,8 @@ class NewWrapper(pl.LightningModule, _NewWrapper_properties,
         # Log losses
         self._logLosses(calculatedLosses, phase)
         return loss
-#kkk add test and predict
+
+    # kkk add test and predict
     def training_step(self, batch, batch_idx):
         phase = self.phases.train
         return self._tempCommonStep(batch, phase)

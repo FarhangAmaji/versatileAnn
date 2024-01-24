@@ -11,11 +11,11 @@ from utils.vAnnGeneralUtils import snakeToCamel, areItemsOfList1_InList2, joinLi
 from utils.warnings import Warn
 
 
-class _NewWrapper_lossNRegularization:
+class _NewWrapper_loss:
     def __init__(self, **kwargs):
         self.lossFuncs = []
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_lossNRegularization)
+        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_loss)
 
     @property
     def lossFuncs(self):
@@ -39,14 +39,14 @@ class _NewWrapper_lossNRegularization:
     # ---- _calculateLosses
     @argValidator
     def _calculateLosses(self, loss, forwardOutputs: Union[torch.Tensor, dict],
-                         targets: Union[torch.Tensor, dict]):
+                         targets: Union[torch.Tensor, dict], phase):
         # bugPotentialCheck1 addTest1
 
         #  gives error without setting lossFuncs;
         #  should think is having lossFuncs is a must or I can make it optional
         calculatedLosses = []
         if not self.lossFuncs:  # guard clause #kkk this is related to allowing self.lossFuncs to be empty
-            return calculatedLosses, loss
+            return loss, calculatedLosses
 
         if not hasattr(self, '_outputsStruct') or not self._outputsStruct:
             self._outputsStruct = _NestedDictStruct(forwardOutputs)

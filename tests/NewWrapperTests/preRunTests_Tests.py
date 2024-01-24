@@ -31,8 +31,9 @@ class preRunTests_Tests(BaseTestClass):
 
         class NNDummy(NewWrapper):
             def __init__(self, **kwargs):
-                self.l1 = nn.Linear(4, 20)
-                self.l2 = nn.Linear(20, 4)
+                # this just in order to see does it run of not so 1 neuron is enough
+                self.l1 = nn.Linear(4, 1)
+                self.l2 = nn.Linear(1, 4)
 
             def forward(self, inputs, targets):
                 output = {}
