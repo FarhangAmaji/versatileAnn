@@ -5,7 +5,8 @@ from utils.vAnnGeneralUtils import getTorchDevice, DotDict, _allowOnlyCreationOf
 class _NewWrapper_properties:
     # kkk rename this properties doesnt make sense
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True, testPrints=False):
+    def __init__(self, modelName: str = '', devMode: bool = True,
+                 noAdditionalOptions: bool = False, testPrints=False):
         # bugPotentialCheck1 # goodToHave3
         #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
         #  pytorch lightning precision is 64 then should lower that to 32
@@ -13,6 +14,7 @@ class _NewWrapper_properties:
         self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)
+        self.noAdditionalOptions = noAdditionalOptions
         self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
