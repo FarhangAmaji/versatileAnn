@@ -133,3 +133,52 @@ class _NewWrapper_regularization:
     def noGeneralRegularization(self):
         self.generalRegularization = LossRegularizator(LossRegularizator.nullDictValue)
 
+    # ---- specific layer regularizations
+    def _register_VAnnCustomLayers_regularizations(self):
+        # addTest1
+        # cccDevAlgo
+        #  VAnnCustomLayers can have regularization on their layer
+        for layerName, layer in vars(self)['_modules'].items():
+            # kkk2 does this layerName match 'layerName = name.split('.')[0]' in _setOperationalRegularizations
+            # kkk2 if I have layer which has other 2 layers inside what's going to happen
+            # kkk2 does plModule also have layers in _modules
+            # kkk2 why vars(self)['_modules'] and not self._modules
+            if isinstance(layer, VAnnCustomLayer):
+                if layer.regularization:  # Llr1
+                    if layerName not in self._specificLayerRegularization.keys():
+                        self._specificLayerRegularization[layerName] = {'layer': layer,
+                                                                        'regularization': layer.regularization}
+
+    @argValidator
+    def addLayerRegularization(self, regDict: dict):
+        # cccUsage
+        #  the format of regDict is {layer:{'type':type,'value':value}}
+        #  or {layer:RegularizatorObject}
+
+        for layer, regVal in regDict.items():
+            if not isinstance(layer, nn.Module):
+                raise ValueError(f'{layer} layer must be an instance of nn.Module')
+
+            # check regVal has correct reg format
+            if not isinstance(regVal, LossRegularizator):
+                # assumes it's a dict with correct format
+                regDict[layer] = LossRegularizator(regVal)
+                # if it has error the LossRegularizator constructor will raise error
+
+        for layer, regVal in regDict.items():
+            # kkk2 vars(self)['_modules']
+            # kkk2 check if all layer names match
+
+            # check does this layer exist in modules
+            foundLayer = False
+            for existingLayerName, existingLayer in vars(self)['_modules'].items():
+                if layer is existingLayer:
+                    foundLayer = True
+                    layerName = existingLayerName
+                    break
+            if not foundLayer:
+                raise ValueError(f'{layer} is not in layers of this model')
+
+            self._specificLayerRegularization[layerName] = {'layer': layer,
+                                                            'regularization': regVal}
+
