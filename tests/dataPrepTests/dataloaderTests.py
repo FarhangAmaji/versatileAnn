@@ -278,7 +278,7 @@ class fillBatchStructWithDataTests(BaseTestClass):
 
 
 class DataloaderTests(BaseTestClass):
-    def setup1(self, batch_size=5):  # same as DataloaderTests in dataloaderTests.py
+    def setup1(self, batch_size=5):
         self.seed = 65
 
         class custom1Dataset(VAnnTsDataset):

@@ -1,6 +1,6 @@
 numpy
 pandas
-torch==2.1.2+cu111
+torch==2.1.2+cu118
 pytorch-lightning
 pydantic
 colorama
