@@ -1,26 +1,40 @@
 # versatileAnn\layers\customLayers.py
+from typing import Optional, Callable
+
 import torch.nn as nn
 
-class CustomLayer(nn.Module):
-    def __init__(self, innerSize, outterSize, activation=None, dropoutRate=None, normalization=None, regularization=None):
-        super(CustomLayer, self).__init__()
+from utils.typeCheck import argValidator
+from versatileAnn.newModule.regularization import LossRegularizator
+
+
+class VAnnCustomLayer(nn.Module):
+    @argValidator
+    def __init__(self, innerSize: int, outterSize: int,
+                 activation: Optional[Callable] = None,
+                 dropoutRate: float = None, normalization: str = None,
+                 regularization=None):
+        # cccUsage
+        #  note the order is 1. main layer 2. normalization 3. activation 4. dropout
+        super(VAnnCustomLayer, self).__init__()
         self.innerSize = innerSize
         self.outterSize = outterSize
-        self.activation = activation
-        self.dropoutRate = dropoutRate
-        self.normalization = normalization
+        self.dropoutRate = dropoutRate  # goodToHave2 if dropout changes also change dropout layer
+
         if regularization:
-            assert isinstance(regularization, (list, set)), "Regularization should be a list or set"
-            assert len(regularization) == 2, "Regularization should have a length of 2"
-            assert regularization[0] in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
-            self.regularization=regularization
+            self.regularization = LossRegularizator(regularization)
         else:
-            self.regularization=None
+            # cccDevAlgo
+            #  note 'LossRegularizator(None)' is not set, and 'None' is set.
+            #  so this way is more efficient and in line #Llr1 we don't assume it has a
+            #  regularization and we pass by it
+            self.regularization = None
 
         layers = [nn.Linear(innerSize, outterSize)]
 
         if normalization is not None:
-            assert normalization in ['batch', 'layer'], f"Invalid normalization option: {normalization}"
+            if normalization not in ['batch', 'layer']:
+                raise ValueError(f"Invalid normalization option: {normalization}")
+
             if normalization == 'batch':
                 normLayer = nn.BatchNorm1d(outterSize)
             else:
@@ -31,8 +45,8 @@ class CustomLayer(nn.Module):
             layers.append(activation)
 
         if dropoutRate:
-            assert isinstance(dropoutRate, (int, float)), f"dropoutRateType={type(dropoutRate)} is not int or float"
-            assert 0 <= dropoutRate <= 1, f"dropoutRate={dropoutRate} is not between 0 and 1"
+            if not 0 < dropoutRate < 1:
+                raise ValueError(f"dropoutRate={dropoutRate} is not between 0 and 1")
             drLayer = nn.Dropout(p=dropoutRate)
             layers.append(drLayer)
 
@@ -42,13 +56,21 @@ class CustomLayer(nn.Module):
         return self.layer(x)
 
 
-class linLReluNormDropout(CustomLayer):
-    def __init__(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=None, normalization='layer', regularization=None):
+class linLReluNormDropout(VAnnCustomLayer):
+    def __init__(self, innerSize, outterSize, leakyReluNegSlope=0.05, dropoutRate=None,
+                 normalization='layer', regularization=None):
+        # goodToHave2
+        #  think about removing this
         activation = nn.LeakyReLU(negative_slope=leakyReluNegSlope)
-        super(linLReluNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization, regularization=regularization)
+        super(linLReluNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate,
+                                                  normalization, regularization=regularization)
 
 
-class linLSigmoidNormDropout(CustomLayer):
-    def __init__(self, innerSize, outterSize, dropoutRate=None, normalization='layer', regularization=None):
+class linLSigmoidNormDropout(VAnnCustomLayer):
+    def __init__(self, innerSize, outterSize, dropoutRate=None, normalization='layer',
+                 regularization=None):
+        # goodToHave2
+        #  think about removing this
         activation = nn.Sigmoid()
-        super(linLSigmoidNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate, normalization, regularization=regularization)
+        super(linLSigmoidNormDropout, self).__init__(innerSize, outterSize, activation, dropoutRate,
+                                                     normalization, regularization=regularization)
