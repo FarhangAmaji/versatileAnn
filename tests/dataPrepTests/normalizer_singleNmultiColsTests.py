@@ -211,10 +211,10 @@ class otherTests(BaseTestClass):
 
     def testNonDfOrSeries_pydanticAssertion(self):
         StdScaler_ = _StdScaler()
-        with self.assertRaises(pydantic.error_wrappers.ValidationError) as context:
+        with self.assertRaises(pydantic.ValidationError) as context:
             StdScaler_.fit([5, 3, 7])
         self.assertEqual(str(context.exception),
-                         '2 validation errors for Fit\ndata\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndata\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)')
+                         '2 validation errors for Fit\ndata.is-instance[DataFrame]\n  Input should be an instance of DataFrame [type=is_instance_of, input_value=[5, 3, 7], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.5/v/is_instance_of\ndata.is-instance[Series]\n  Input should be an instance of Series [type=is_instance_of, input_value=[5, 3, 7], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.5/v/is_instance_of')
 
     def testLblEncoderIntRaiseValueError(self):
         lblEnc = _LblEncoder()
