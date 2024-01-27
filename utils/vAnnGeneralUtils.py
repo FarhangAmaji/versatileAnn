@@ -499,12 +499,37 @@ def getTorchDevice():
 
 
 def getDefaultTorchDevice_name():
-    # gives printing device name of getTorchDevice()
     device_ = torch.tensor([1, 2]).to(getTorchDevice()).device
-    deviceName = f'{device_.type}'
-    if hasattr(device_, 'index'):
-        deviceName += f':{device_.index}'
+    deviceName = ''
+
+    if device_.type == 'cuda':
+        if hasattr(device_, 'index'):
+            deviceName = f"{device_.type}:{device_.index}"
+        else:
+            deviceName = f"{device_.type}"
+
+    elif device_.type == 'mps':
+        deviceName = f'{device_.type}'
+    elif device_.type == 'cpu':
+        deviceName = 'cpu'
+    # bugPotentialCheck2
+    #  not sure about xla devices
+
     return deviceName
+
+
+def getDefaultTorchDevice_printName():
+    # gives printing device name of getTorchDevice()
+    deviceName = getDefaultTorchDevice_name()
+    devicePrintName = ''
+    if 'cuda' in deviceName or 'mps' in deviceName:
+        devicePrintName = f", device='{deviceName}'"
+    elif 'cpu' in deviceName:
+        devicePrintName = ''
+    # bugPotentialCheck2
+    #  not sure about xla devices
+
+    return devicePrintName
 
 
 # ---- str utils

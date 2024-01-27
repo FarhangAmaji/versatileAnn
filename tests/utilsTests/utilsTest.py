@@ -225,6 +225,10 @@ class equalTensorsTests(BaseTestClass):
 
     def testDifferentDevice(self):
         deviceName = getDefaultTorchDevice_name()
+        # so if there is no other device available this test can't be done
+        if deviceName == 'cpu':
+            return
+
         tensor1 = torch.tensor([1.0, 2.0, 3.0], device=deviceName)
         tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
         result = equalTensors(tensor1, tensor2)
@@ -232,6 +236,10 @@ class equalTensorsTests(BaseTestClass):
 
     def testDifferentDevice_withCheckDeviceFalse(self):
         deviceName = getDefaultTorchDevice_name()
+        # so if there is no other device available this test can't be done
+        if deviceName == 'cpu':
+            return
+
         tensor1 = torch.tensor([1.0, 2.0, 3.0], device=deviceName)
         tensor2 = torch.tensor([1.0, 2.0, 3.0], device='cpu')
         result = equalTensors(tensor1, tensor2, checkDevice=False)

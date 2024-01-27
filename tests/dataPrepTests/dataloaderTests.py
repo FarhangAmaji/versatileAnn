@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 import torch
 
-# ----
 from dataPrep.dataloader import _NestedDictStruct, appendValue_ToNestedDictPath, VAnnTsDataloader
 from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, getDefaultTorchDevice_name, \
+from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, \
+    getDefaultTorchDevice_printName, \
     toDevice
 
 
@@ -381,14 +381,14 @@ class DataloaderTests(BaseTestClass):
 
         # bugPotentialcheck1
         #  not sure about print device name
-        deviceName = getDefaultTorchDevice_name()
-        expectedPrint = f"""tensor([1114, 1081], device='{deviceName}')
-tensor([1168, 1139], device='{deviceName}')
-tensor([1064, 1121], device='{deviceName}')
+        devicePrintName = getDefaultTorchDevice_printName()
+        expectedPrint = f"""tensor([1114, 1081]{devicePrintName})
+tensor([1168, 1139]{devicePrintName})
+tensor([1064, 1121]{devicePrintName})
 with batchSize=3
-tensor([1114, 1081, 1168], device='{deviceName}')
-tensor([1139, 1064, 1121], device='{deviceName}')
-tensor([1125, 1143, 1164], device='{deviceName}')"""
+tensor([1114, 1081, 1168]{devicePrintName})
+tensor([1139, 1064, 1121]{devicePrintName})
+tensor([1125, 1143, 1164]{devicePrintName})"""
         # note the first 6 number are the same, even though the shuffle is true
         self.assertPrint(testFunc, expectedPrint)
 

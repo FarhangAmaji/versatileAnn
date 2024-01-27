@@ -137,7 +137,7 @@ def _downloadFileWithCurl(fileName, filePath):
     url = f'https://github.com/FarhangAmaji/Datasets/raw/main/demand/{fileName}'
     # goodToHave2 # bugPotentialCheck1
     #  this loop gets closed and gives error below at end of program
-    #  it's not a realy important error but keeps the loop open till the program is running
+    #  it's not a really important error but keeps the loop open till the program is running
     #  error:
     #  """
     #  File "C:\Program Files\Python310\lib\asyncio\proactor_events.py", line 116, in __del__
