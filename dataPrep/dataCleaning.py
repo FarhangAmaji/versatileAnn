@@ -32,7 +32,6 @@ def noNanOrNoneTensor(data: torch.Tensor):
     if torch.isnan(data).any().item():
         raise ValueError("The PyTorch tensor contains NaN values.")
 
-@argValidator
 def noNanOrNoneData(data: Union[torch.Tensor, NpDict, np.ndarray, pd.DataFrame, pd.Series]):
     if isinstance(data, (pd.DataFrame, pd.Series)):
         noNanOrNoneDf(data)
@@ -42,3 +41,5 @@ def noNanOrNoneData(data: Union[torch.Tensor, NpDict, np.ndarray, pd.DataFrame, 
         noNanOrNoneNpDict(data)
     elif isinstance(data, torch.Tensor):
         noNanOrNoneTensor(data)
+    # else:
+    #     raise ValueError('noNanOrNoneData only gets torch.Tensor, NpDict, np.ndarray, pd.DataFrame or pd.Series')
