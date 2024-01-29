@@ -11,6 +11,9 @@ class _NewWrapper_properties:
         #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
         #  pytorch lightning precision is 64 then should lower that to 32
 
+        # bugPotentialCheck1
+        #  setting device may not be compatible, of get use the best out of pytorch lightning
+        #  multiple gpu or distributed capabilities
         self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)

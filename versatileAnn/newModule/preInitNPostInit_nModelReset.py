@@ -166,9 +166,14 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         #  - timeOut message can be useful here
         # cccDevStruct
         #  note the __init_subclass__ and _NewWrapper_postInit are not called; only __new__ is called
+        # kkk
+        #  wherer and why prints sth like ##teamcity[testStdErr timestamp='2024-01-30T00:29:05.138' flowId='preRunTests_Tests.preRunTests_Tests.testTraining_step' locationHint='python<F:\projects\public github projects\private repos\versatileAnnModule\tests\newWrapperTests>://preRunTests_Tests.preRunTests_Tests.testTraining_step' name='testTraining_step' nodeId='3' out='F:\projects\public github projects\private repos\versatileAnnModule\utils\warnings.py:21: CusWarn: |n|[22m|[30m|[44m generalRegularization is not provided; so it is set to default "l2 regularization" with value of 1e-3|nyou may either pass noAdditionalOptions=True to model or call .noGeneralRegularization method on model.|nor set .generalRegularization to another value for i.e. {"type":"l1","value":.02} |[0m|n  warnings.warn(warningMessage, CusWarn)|n' parentNodeId='2']
         attrsToKeep = attrsToKeep or {}
 
-        attrsKeptByDefault_names = ['lossFuncs']
+        # bugPotentialCheck1
+        #  in past we didn't have optimizer and _optimizerInitArgs in attrsKeptByDefault_names but
+        #  worked fine but now it doesn't. so had to add them to it
+        attrsKeptByDefault_names = ['lossFuncs', 'optimizer', '_optimizerInitArgs']
         for atk in attrsKeptByDefault_names:
             attrsToKeep[atk] = copy.deepcopy(getattr(self, atk))
 
@@ -186,6 +191,6 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset)
         newObj.__init__(**kwargsToReset)
 
-        for atk,atkVal in attrsToKeep.items():
+        for atk, atkVal in attrsToKeep.items():
             setattr(newObj, atk, atkVal)
         return newObj
