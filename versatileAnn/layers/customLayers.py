@@ -4,7 +4,7 @@ from typing import Optional, Callable
 import torch.nn as nn
 
 from utils.typeCheck import argValidator
-from versatileAnn.newModule.regularization import LossRegularizator
+from versatileAnn.utils import LossRegularizator
 
 
 class VAnnCustomLayer(nn.Module):
