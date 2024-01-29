@@ -74,13 +74,13 @@ class stdNormalizerTests(BaseTestClass):
     def testFitAgain(self):
         # cccDevStruct this is example of checking expectedPrints in tests
 
-        def testFunc():
+        def innerFunc():
             self.transformSetUp()
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
 
-        self.assertPrint(testFunc, self.expectedPrint['testFitAgain'])
+        self.assertPrint(innerFunc, self.expectedPrint['testFitAgain'])
 
     def testInverseTransform(self):
         self.inverseTransformSetUp()
@@ -139,13 +139,13 @@ class LblEncoderTest(stdNormalizerTests):
     # self.floatPrecision= 0.001
 
     def testTransformAgain(self):
-        def testFunc():
+        def innerFunc():
             self.transformSetUp()
             self.normalizerStack.fitNTransform(self.dfToDoTest)
             self.normalizerStack.transformCol(self.dfToDoTest, 'col2')
             self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
 
-        self.assertPrint(testFunc, self.expectedPrint['testTransformAgain'])
+        self.assertPrint(innerFunc, self.expectedPrint['testTransformAgain'])
 
     def testInverseTransform(self):
         self.inverseTransformSetUp()
@@ -153,13 +153,13 @@ class LblEncoderTest(stdNormalizerTests):
         self.equalDfs(self.dfToDoTest, self.dfUntouched)
 
     def testInverseTransformAgain(self):
-        def testFunc():
+        def innerFunc():
             self.inverseTransformSetUp()
             self.normalizerStack.inverseTransform(self.dfToDoTest)
             self.normalizerStack.inverseTransform(self.dfToDoTest)
             self.equalDfs(self.dfToDoTest, self.dfUntouched)
 
-        self.assertPrint(testFunc, self.expectedPrint['testInverseTransformAgain'])
+        self.assertPrint(innerFunc, self.expectedPrint['testInverseTransformAgain'])
 
 
 class lblEncoderWithIntLabelsStringTests(BaseTestClass):

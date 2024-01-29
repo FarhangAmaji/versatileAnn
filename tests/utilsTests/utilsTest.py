@@ -103,10 +103,10 @@ class NpDictTests(BaseTestClass):
     def testPrintDict(self):
         expectedPrint = "{'a': [1, 2, 3],\n" + "'b': [4, 5, 6]}"
 
-        def testFunc():
+        def innerFunc():
             self.npDict.printDict()
 
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(innerFunc, expectedPrint)
 
     def testToDf(self):
         dfFromNpDict = self.npDict.toDf()

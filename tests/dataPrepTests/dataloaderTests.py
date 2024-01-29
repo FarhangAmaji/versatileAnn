@@ -371,7 +371,7 @@ class DataloaderTests(BaseTestClass):
 
         self.setup1()
 
-        def testFunc():
+        def innerFunc():
             dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=2,
                                           shuffle=True, randomSeed=self.seed)
             print2batches(dataloader)
@@ -390,7 +390,7 @@ tensor([1114, 1081, 1168]{devicePrintName})
 tensor([1139, 1064, 1121]{devicePrintName})
 tensor([1125, 1143, 1164]{devicePrintName})"""
         # note the first 6 number are the same, even though the shuffle is true
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(innerFunc, expectedPrint)
 
 
 # ---- run test

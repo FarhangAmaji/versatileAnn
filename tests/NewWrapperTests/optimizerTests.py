@@ -26,7 +26,7 @@ class newWrapperTests_optimizer(BaseTestClass):
         return model
 
     def testDefaultOptimizerSetup(self):
-        def testFunc():
+        def innerFunc():
             ChildClass = self.setUp()
             model = ChildClass(testPrints=True)
             self.assertTrue(isinstance(model.optimizer, torch.optim.Adam))
@@ -36,7 +36,7 @@ no optimizer was set, a default Adam optimizer with lr=0.0003 was set
 _NewWrapper_postInit func
 ChildClass
 """
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(innerFunc, expectedPrint)
 
     def test_OptimizerInitArgs1(self):
         ChildClass = self.setUp()

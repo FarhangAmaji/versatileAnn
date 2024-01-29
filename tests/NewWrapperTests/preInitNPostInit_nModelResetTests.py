@@ -43,7 +43,7 @@ class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
     def testObjectCreation_withPrintingSteps(self):
         Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
 
-        def testFunc():
+        def innerFunc():
             model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
                                additionalArg='additionalArg', testPrints=True)
 
@@ -80,7 +80,7 @@ no optimizer was set, a default Adam optimizer with lr=0.0003 was set
 _NewWrapper_postInit func
 GrandChild
 """
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(innerFunc, expectedPrint)
 
     def testInitArgs(self):
         Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
@@ -118,7 +118,7 @@ GrandChild
         model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
                            additionalArg='additionalArg', testPrints=True)
 
-        def testFunc(model):
+        def innerFunc(model):
             newModel = model.resetModel()
             self.assertTrue(isinstance(model, GrandChild))
 
@@ -150,7 +150,7 @@ emptyMethod_usedForDisabling__init__s
 emptyMethod_usedForDisabling__init__s
 GrandChild __init__;After calling Child __init__ GrandChild
 """
-        self.assertPrint(testFunc, expectedPrint, model=model)
+        self.assertPrint(innerFunc, expectedPrint, model=model)
 
     def testInitsToOriginal(self):
         """
@@ -161,11 +161,11 @@ GrandChild __init__;After calling Child __init__ GrandChild
         model = GrandChild(modelName='ModelKog2s', opoc='opoc', opogc='opogc',
                            additionalArg='additionalArg', testPrints=True)
 
-        def testFunc():
+        def innerFunc():
             OtherParentOfChild(opoc='opoc')
 
         expectedPrint = "OtherParentOfChild init"
-        self.assertPrint(testFunc, expectedPrint)
+        self.assertPrint(innerFunc, expectedPrint)
 
     def classDefinitionsSetup2(self):
         class Parent2(NewWrapper):
