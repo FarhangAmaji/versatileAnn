@@ -76,7 +76,6 @@ GrandChild;Before calling Child __init__ GrandChild
 emptyMethod_usedForDisabling__init__s
 emptyMethod_usedForDisabling__init__s
 GrandChild __init__;After calling Child __init__ GrandChild
-no optimizer was set, a default Adam optimizer with lr=0.0003 was set
 _NewWrapper_postInit func
 GrandChild
 """

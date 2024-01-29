@@ -32,7 +32,6 @@ class newWrapperTests_optimizer(BaseTestClass):
             self.assertTrue(isinstance(model.optimizer, torch.optim.Adam))
 
         expectedPrint = """NewWrapper __new__ method initiated for "ChildClass" class
-no optimizer was set, a default Adam optimizer with lr=0.0003 was set
 _NewWrapper_postInit func
 ChildClass
 """

@@ -1,4 +1,5 @@
 import copy
+from typing import Optional
 
 import torch
 
@@ -8,8 +9,17 @@ from utils.warnings import Warn
 
 
 class _NewWrapper_optimizer:
-    def __init__(self, lr=3e-4, **kwargs):
-        self.lr = lr
+    def __init__(self, optimizer: Optional[torch.optim.Optimizer] = None,
+                 lr: Optional[float] = None,
+                 **kwargs):
+        if optimizer:
+            self.optimizer = optimizer
+            if lr:
+                raise ValueError(
+                    "you have passed optimizer and lr together. just pass the optimizer")
+        if lr is not None:
+            self.lr = lr
+
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_optimizer)
 
@@ -20,9 +30,10 @@ class _NewWrapper_optimizer:
             if hasattr(self, 'parameters'):  # to prevent error when parameters are not set
                 lr = 3e-4
                 self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-                self.lr = lr
 
                 infoMsg = f'no optimizer was set, a default Adam optimizer with lr={lr} was set'
+                # note we check some tests with the things printed but Warn.info is not on prints
+                # so we do self.printTestPrints(infoMsg)
                 self.printTestPrints(infoMsg)
                 Warn.info(infoMsg)
 
@@ -38,6 +49,8 @@ class _NewWrapper_optimizer:
         # cccDevStruct
         #  this part is designed in order to be able to resetOptimizer but the args passed when
         #  setting it
+        # cccWhy
+        #  minor: value which is a torch.optim.Optimizer is not subscriptable so we do vars(value)
         optimizerInitArgs_names = list(vars(value)['param_groups'][0].keys())
         if 'params' in optimizerInitArgs_names:
             optimizerInitArgs_names.remove('params')
@@ -56,7 +69,6 @@ class _NewWrapper_optimizer:
         #  but later can add logging so if its not True it would be logged and more precaution
         #  applied in next version
 
-
     def resetOptimizer(self, keepLr=True):
         # cccUsage
         #  this is inplace and no need to set, but also compatible with setting
@@ -72,7 +84,6 @@ class _NewWrapper_optimizer:
 
         return self.optimizer  # this for the case that user does'nt know it's inplace
 
-
     def changeLearningRate(self, newLr):
         self._lr = newLr
         if not hasattr(self, 'optimizer'):  # prevent error if the optimizer is not set yet
@@ -80,22 +91,18 @@ class _NewWrapper_optimizer:
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = self._lr
 
-
     @property
     def lr(self):
         return self._lr
-
 
     @lr.setter
     @argValidator
     def lr(self, newLr: float):
         self.changeLearningRate(newLr)
 
-
     @argValidator
     def multiplyLr(self, factor: float):
         self.lr = self.lr * factor
-
 
     @argValidator
     def divideLr(self, factor: float):

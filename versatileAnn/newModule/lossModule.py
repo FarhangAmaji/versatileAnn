@@ -1,5 +1,5 @@
 import copy
-from typing import List, Union
+from typing import List, Union, Optional
 
 import torch
 import torch.nn as nn
@@ -12,8 +12,8 @@ from utils.warnings import Warn
 
 
 class _NewWrapper_loss:
-    def __init__(self, **kwargs):
-        self.lossFuncs = []
+    def __init__(self, lossFuncs: Optional[List[nn.modules.loss._Loss]] = [], **kwargs):
+        self.lossFuncs = lossFuncs or []
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_loss)
 
@@ -24,6 +24,8 @@ class _NewWrapper_loss:
     @lossFuncs.setter
     @argValidator
     def lossFuncs(self, value: List[nn.modules.loss._Loss]):
+        # bugPotentialCheck1
+        #  when we pass [] doesn't give error
         self._lossFuncs = value
 
     @property

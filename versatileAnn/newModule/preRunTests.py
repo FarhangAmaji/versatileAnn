@@ -1,5 +1,5 @@
 import os
-from typing import List, Union
+from typing import List, Union, Optional
 
 import pytorch_lightning as pl
 from pytorch_lightning.profilers import PyTorchProfiler
@@ -13,11 +13,11 @@ from versatileAnn.newModule.callbacks import StoreEpochData
 
 
 class _NewWrapper_preRunTests:
-    def __init__(self, **kwargs):
+    def __init__(self, keepLr_notReplaceWithBestLr: Optional[bool] = False,
+                 keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
         self._outputsStruct = None
-        self.keepLr_notReplaceWithBestLr = kwargs.get('keepLr_notReplaceWithBestLr', False)
-        self.keepBatchSize_notReplaceWithBestBatchSize = kwargs.get(
-            'keepBatchSize_notReplaceWithBestBatchSize', False)
+        self.keepLr_notReplaceWithBestLr = keepLr_notReplaceWithBestLr
+        self.keepBatchSize_notReplaceWithBestBatchSize = keepBatchSize_notReplaceWithBestBatchSize
 
     # ---- properties
     @property
