@@ -1,8 +1,8 @@
 numpy
 pandas
-torch --index-url https://download.pytorch.org/whl/cu118
 pytorch-lightning
 pydantic
 colorama
 tensorboard
 coverage
+scikit-learn
