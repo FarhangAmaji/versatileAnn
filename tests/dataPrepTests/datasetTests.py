@@ -350,7 +350,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
     def testDataTypeError(self):
-        dataset = VAnnTsDataset({'a':10,'b':30}, backcastLen=0, forecastLen=0)
+        dataset = VAnnTsDataset({'a': 10, 'b': 30}, backcastLen=0, forecastLen=0)
         with self.assertRaises(ValueError) as context:
             dataset[0]
         self.assertEqual(str(context.exception), 'only datasets with pd.DataFrame, NpDict, np.array and torch.Tensor data can use __getitem__')

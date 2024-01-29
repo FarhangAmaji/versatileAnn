@@ -216,6 +216,9 @@ class _NewWrapper_preRunTests:
         # set back lr or not
         if not self.keepLr_notReplaceWithBestLr:
             self.lr = bestLearningRate
+            Warn.info(f"changed learningRate to bestLearningRate." + \
+                      "\nif you want to keep ur learningRate pass" + \
+                      "keepLr_notReplaceWithBestLr=True to model.")
         else:
             self.lr = pastLr
         # goodToHave2
@@ -259,6 +262,9 @@ class _NewWrapper_preRunTests:
         # set back batchSize or not
         if not self.keepBatchSize_notReplaceWithBestBatchSize:
             trainDataloader = trainDataloader.changeBatchSize(bestBatchSize)
+            Warn.info(f"changed batchSize to bestBatchSize." + \
+                      "\nif you want to keep ur batchSize pass" + \
+                      "keepBatchSize_notReplaceWithBestBatchSize=True to model.")
         else:
             trainDataloader = trainDataloader.changeBatchSize(pastBatchSize)
         # goodToHave2
