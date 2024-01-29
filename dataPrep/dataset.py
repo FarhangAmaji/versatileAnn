@@ -553,8 +553,18 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         raise IndexError(f'{idx} is not in any of groups')
 
     def _noNanOrNoneDataAssertion(self):
-        noNanOrNoneData(self.data)
-
+        # cccwhy
+        #  note self.data can be anything but main types check are tailored to be used are  df, NpDict or a dict of dfs or NpDicts
+        if isinstance(self.data, dict):
+            for key in self.data.keys():
+                if isinstance(self.data[key],
+                              (torch.Tensor, NpDict, np.ndarray, pd.DataFrame, pd.Series)):
+                    # these types are the ones which can be checked by noNanOrNoneData
+                    # and if self.data[key] is not from these types is ignored; as simple dicts
+                    # are also allowed for self.data
+                    noNanOrNoneData(self.data[key])
+        else:
+            noNanOrNoneData(self.data)
     def _shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape

@@ -41,5 +41,5 @@ def noNanOrNoneData(data: Union[torch.Tensor, NpDict, np.ndarray, pd.DataFrame, 
         noNanOrNoneNpDict(data)
     elif isinstance(data, torch.Tensor):
         noNanOrNoneTensor(data)
-    # else:
-    #     raise ValueError('noNanOrNoneData only gets torch.Tensor, NpDict, np.ndarray, pd.DataFrame or pd.Series')
+    else:
+        raise ValueError('noNanOrNoneData only gets torch.Tensor, NpDict, np.ndarray, pd.DataFrame or pd.Series')
