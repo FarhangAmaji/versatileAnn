@@ -73,3 +73,7 @@ class LossRegularizator:
             return torch.norm(param) * self.value
         raise InternalLogicError('sth has gone wrong and type is not one of ' + \
                                  "'l1', 'l2', 'None'(str)")
+
+    def __str__(self):
+        dict_ = {'type': self.type, 'value': self.value}
+        return f"LossRegularizator{dict_}"

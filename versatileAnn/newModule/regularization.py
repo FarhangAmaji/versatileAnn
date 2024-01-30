@@ -22,8 +22,6 @@ class _NewWrapper_regularization:
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_regularization)
 
-        # kkk1 do _setOperationalRegularizations in each run
-        # kkk3 think about renaming some internal regularization to reg
         # cccDevAlgo
         #  - this module(NewWrapper) by default sets some features like generalRegularization
         #       or gradient clipping
@@ -68,13 +66,13 @@ class _NewWrapper_regularization:
 
     # ---- specific layer regularizations
     def _register_VAnnCustomLayers_regularizations(self):
-        # addTest1
+        # goodToHave1
+        #  now only detects if VAnnCustomLayer is the main layer in model but if
+        #  VAnnCustomLayer is in a class and that class is the main layer in model
+        #  regularization won't get detected
         # cccDevAlgo
         #  VAnnCustomLayers can have regularization on their layer
         for layerName, layer in self._modules.items():
-            # kkk2 does this layerName match 'layerName = name.split('.')[0]' in _setOperationalRegularizations
-            # kkk2 if I have layer which has other 2 layers inside what's going to happen
-            # kkk2 does plModule also have layers in _modules
             if isinstance(layer, VAnnCustomLayer):
                 if layer.regularization:  # Llr1
                     if layerName not in self._specificLayerRegularization.keys():
@@ -82,10 +80,15 @@ class _NewWrapper_regularization:
 
     @argValidator
     def addLayerRegularization(self, regDict: dict):
-        # cccUsage#kkk is this comment correct
+        # goodToHave1
+        #  similar to goodToHave of _register_VAnnCustomLayers_regularizations:
+        #  again won't work if the layer is not the main layer; even though
+        #  adding it works but won't get affected
+        # cccUsage
+        #  this is for adding regularization to non-VAnnCustomLayer
         #  the format of regDict is {layer:{'type':type,'value':value}}
         #  or {layer:RegularizatorObject}
-
+        #  note this func can be used in model __init__ or even after that
         for layer, regVal in regDict.items():
             if not isinstance(layer, nn.Module):
                 raise ValueError(f'{layer} layer must be an instance of nn.Module')
@@ -97,8 +100,6 @@ class _NewWrapper_regularization:
                 # if it has error the LossRegularizator constructor will raise error
 
         for layer, regVal in regDict.items():
-            # kkk2 check if all layer names match
-
             # check does this layer exist in modules
             foundLayer = False
             for existingLayerName, existingLayer in self._modules.items():
@@ -116,8 +117,7 @@ class _NewWrapper_regularization:
         # note _operationalRegularizations is set on each run not to slow down
         # also renewed if there are changes on different runs
         self._operationalRegularizations = {}  # reset
-        # kkk2 explain what is this doing
-        # addTest1
+
         self._register_VAnnCustomLayers_regularizations()
         hasGeneralRegularization = False if self.generalRegularization.type == 'None' else True
 
