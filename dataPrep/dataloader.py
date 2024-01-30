@@ -249,15 +249,12 @@ class _NestedDictStruct:
         #  Loops through self.struct and adds the values to a list
         result = []
 
-        def recursiveToList(dictionary, result):
-            for key, value in dictionary.items():
-                if isinstance(value, dict):
+        def recursiveToList(struct, result):
+            if isinstance(struct, dict):
+                for key, value in struct.items():
                     recursiveToList(value, result)
-                else:
-                    if isinstance(value.values, list) and len(value.values) == 1:
-                        result.append(value.values[0])
-                    else:
-                        result.append(value.values[0])
+            else:  # value is _ObjectToBeTensored
+                result.append(struct.values[0])
             return result
 
         return recursiveToList(self.struct, result)
