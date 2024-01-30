@@ -42,7 +42,7 @@ class preRunTests_Tests(BaseTestClass):
 
         model = NNDummy(testPrints=True)
         model.preRunTests(trainDataloader=self.trainDataloader, valDataloader=self.valDataloader,
-                          lossFuncs=[nn.MSELoss(), nn.L1Loss()], max_epochs=4)
+                          lossFuncs=[nn.MSELoss(), nn.L1Loss()], max_epochs=3)
 
 
 # ---- run test

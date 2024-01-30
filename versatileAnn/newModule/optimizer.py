@@ -10,8 +10,8 @@ from utils.warnings import Warn
 
 class _NewWrapper_optimizer:
     def __init__(self, optimizer: Optional[torch.optim.Optimizer] = None,
-                 lr: Optional[float] = None,
-                 **kwargs):
+                 lr: Optional[float] = None, **kwargs):
+
         if optimizer:
             self.optimizer = optimizer
             if lr:
@@ -52,8 +52,20 @@ class _NewWrapper_optimizer:
         # cccWhy
         #  minor: value which is a torch.optim.Optimizer is not subscriptable so we do vars(value)
         optimizerInitArgs_names = list(vars(value)['param_groups'][0].keys())
+        # cccWhy
+        #  params are dynamic and must not be saved
         if 'params' in optimizerInitArgs_names:
             optimizerInitArgs_names.remove('params')
+
+        # it's not allowed to have weight_decay in optimizer and generalRegularization(ofc not None
+        # version) together
+        # addTest2
+        if self._generalRegularization.type != 'None':
+            if 'weight_decay' in optimizerInitArgs_names:
+                if value.param_groups[0]['weight_decay'] != 0:
+                    Warn.warn(
+                        f'the model has generalRegularization of {self._generalRegularization}' + \
+                        "so can't set weight_decay for optimizer and weight_decay will be set 0.")
 
         self._optimizerInitArgs = {'type': type(value),
                                    'args': {par: copy.deepcopy(vars(value)['param_groups'][0][par])

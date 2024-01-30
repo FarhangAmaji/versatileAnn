@@ -61,6 +61,18 @@ class _NewWrapper_regularization:
         else:  # None
             self._generalRegularization = LossRegularizator(LossRegularizator.nullDictValue)
 
+        # it's not allowed to have weight_decay in optimizer and generalRegularization(ofc not None
+        # version) together
+        # addTest2
+        if self._generalRegularization.type != 'None':
+            if hasattr(self, '_optimizer'):
+                if self._optimizer is not None:
+                    if 'weight_decay' in self._optimizer.param_groups[0].keys():
+                        if self._optimizer.param_groups[0]['weight_decay'] != 0:
+                            self._optimizer.param_groups[0]['weight_decay'] = 0
+                            Warn.warn("because the generalRegularization is set the " + \
+                                      "weight_decay of optimizer has been set to 0")
+
     def noGeneralRegularization(self):
         self.generalRegularization = LossRegularizator(LossRegularizator.nullDictValue)
 
