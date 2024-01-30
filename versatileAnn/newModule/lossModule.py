@@ -40,15 +40,14 @@ class _NewWrapper_loss:
 
     # ---- _calculateLosses
     @argValidator
-    def _calculateLosses(self, loss, forwardOutputs: Union[torch.Tensor, dict],
-                         targets: Union[torch.Tensor, dict], phase):
+    def _calculateLosses(self, forwardOutputs: Union[torch.Tensor, dict],
+                         targets: Union[torch.Tensor, dict]):
         # bugPotentialCheck1 addTest1
-
         #  gives error without setting lossFuncs;
         #  should think is having lossFuncs is a must or I can make it optional
         calculatedLosses = []
         if not self.lossFuncs:  # guard clause #kkk this is related to allowing self.lossFuncs to be empty
-            return loss, calculatedLosses
+            return None, calculatedLosses
 
         if not hasattr(self, '_outputsStruct') or not self._outputsStruct:
             self._outputsStruct = _NestedDictStruct(forwardOutputs)
@@ -70,6 +69,7 @@ class _NewWrapper_loss:
                                                                              targets)
 
         for i, lossFunc_ in enumerate(self.lossFuncs):
+            # adding all different losses to a single number which is total loss
             lossRes = sum(lossFunc_(output, target) for output, target in
                           zip(outputsFlatData, targetsFlatData))
 
@@ -79,6 +79,21 @@ class _NewWrapper_loss:
             #  only results of first loss function is returned; therefore, backprop is done on those
             if i == 0:
                 returnedLoss = calculatedLosses[0]
+                # add regularizations to loss
+                # cccDevAlgo
+                #  the regularization is not just added in 'train' phase. even though in
+                #  other phases it might slow down but in order to have same scale of losses
+                #  in all phases, it's better to add regularizations to loss in all phases
+                if 'operationalRegularizations_isSet' not in self._tempVarRun_allPhases_hidden:
+                    # cccWhat
+                    #  note _setOperationalRegularizations is set once at beginning of each run
+                    #  which means it's calculated only once at each run
+                    #  also renews _operationalRegularizations because the different regularizations
+                    #  may be added between different runs
+                    self._setOperationalRegularizations()
+                    self._tempVarRun_allPhases_hidden['operationalRegularizations_isSet'] = True
+
+                returnedLoss = self.addRegularizationsToLoss(returnedLoss)
 
         return returnedLoss, calculatedLosses
 

@@ -61,15 +61,15 @@ class LossRegularizator:
         raise AttributeError('value of LossRegularizator object is not allowed to be changed')
 
     # ----
-
-    def addRegularizationToParam(self, param):
-        # goodToHave3 add argValidator
-        # kkk2 these need to device?
+    @argValidator
+    def addRegularizationToParam(self, param: torch.nn.parameter.Parameter):
+        # bugPotentialCheck3
+        #  these need to device?
         if self.type == 'None':
             return torch.tensor(0)
         elif self.type == 'l1':
-            return torch.linalg.norm(param, 1) * self.value  # kkk2 is this correct for l1
+            return torch.linalg.norm(param, 1) * self.value
         elif self.type == 'l2':
-            return torch.norm(param) * self.value  # kkk2 is this correct for l2
+            return torch.norm(param) * self.value
         raise InternalLogicError('sth has gone wrong and type is not one of ' + \
                                  "'l1', 'l2', 'None'(str)")

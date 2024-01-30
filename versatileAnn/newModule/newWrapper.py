@@ -59,8 +59,7 @@ class NewWrapper(pl.LightningModule,
         # bugPotentialCheck1
         #  if the loss is not returned from _calculatedLosses because of
         #  not having self.lossFuncs would it make error
-        loss = None  # kkk maybe this is related to allowing self.lossFuncs to be empty
-        loss, calculatedLosses = self._calculateLosses(loss, forwardOutputs, targets)
+        loss, calculatedLosses = self._calculateLosses(forwardOutputs, targets)
 
         # Log losses
         self._logLosses(calculatedLosses, phase)
@@ -97,3 +96,4 @@ class NewWrapper(pl.LightningModule,
             self.resetTempVar_run(phase)
 
         self.resetTempVarRun_allPhases()
+        self._tempVarRun_allPhases_hidden = {}

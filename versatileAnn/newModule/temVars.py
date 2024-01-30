@@ -10,6 +10,7 @@ class _NewWrapper_tempVars:
         self.tempVarEpoch = {"train": {}, "val": {}, "test": {}, "predict": {}}
         self.tempVarRun = {"train": {}, "val": {}, "test": {}, "predict": {}}
         self.tempVarRun_allPhases = {}
+        self._tempVarRun_allPhases_hidden = {}  # for internal use
         # note self.tempVarRun and tempVarRun_allPhases reset on fit start
 
         # not allowing this class to have direct instance

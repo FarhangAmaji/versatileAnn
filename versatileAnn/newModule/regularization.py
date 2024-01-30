@@ -71,20 +71,18 @@ class _NewWrapper_regularization:
         # addTest1
         # cccDevAlgo
         #  VAnnCustomLayers can have regularization on their layer
-        for layerName, layer in vars(self)['_modules'].items():
+        for layerName, layer in self._modules.items():
             # kkk2 does this layerName match 'layerName = name.split('.')[0]' in _setOperationalRegularizations
             # kkk2 if I have layer which has other 2 layers inside what's going to happen
             # kkk2 does plModule also have layers in _modules
-            # kkk2 why vars(self)['_modules'] and not self._modules
             if isinstance(layer, VAnnCustomLayer):
                 if layer.regularization:  # Llr1
                     if layerName not in self._specificLayerRegularization.keys():
-                        self._specificLayerRegularization[layerName] = {'layer': layer,
-                                                                        'regularization': layer.regularization}
+                        self._specificLayerRegularization[layerName] = layer.regularization
 
     @argValidator
     def addLayerRegularization(self, regDict: dict):
-        # cccUsage
+        # cccUsage#kkk is this comment correct
         #  the format of regDict is {layer:{'type':type,'value':value}}
         #  or {layer:RegularizatorObject}
 
@@ -99,12 +97,11 @@ class _NewWrapper_regularization:
                 # if it has error the LossRegularizator constructor will raise error
 
         for layer, regVal in regDict.items():
-            # kkk2 vars(self)['_modules']
             # kkk2 check if all layer names match
 
             # check does this layer exist in modules
             foundLayer = False
-            for existingLayerName, existingLayer in vars(self)['_modules'].items():
+            for existingLayerName, existingLayer in self._modules.items():
                 if layer is existingLayer:
                     foundLayer = True
                     layerName = existingLayerName
@@ -112,24 +109,29 @@ class _NewWrapper_regularization:
             if not foundLayer:
                 raise ValueError(f'{layer} is not in layers of this model')
 
-            self._specificLayerRegularization[layerName] = {'layer': layer,
-                                                            'regularization': regVal}
+            self._specificLayerRegularization[layerName] = regVal
 
     # ----
     def _setOperationalRegularizations(self):
-        self._register_VAnnCustomLayers_regularizations()
+        # note _operationalRegularizations is set on each run not to slow down
+        # also renewed if there are changes on different runs
         self._operationalRegularizations = {}  # reset
         # kkk2 explain what is this doing
         # addTest1
         self._register_VAnnCustomLayers_regularizations()
-        hasGeneralRegularization = False if self.generalRegularization['type'] == 'None' else True
+        hasGeneralRegularization = False if self.generalRegularization.type == 'None' else True
 
-        _specificlayerRegularization_names = self._specificLayerRegularization.keys()
         for name, param in self.named_parameters():
-            layerName = name.split('.')[0]  # kkk2 explain why this line
-            if layerName in _specificlayerRegularization_names:
+            layerName = name.split('.')[0]
+            # note name looks like 'layer1Name.layer.0.weight' which is self.layer1Name.layer[0].weight
+            # note layer1Name is the name of attribute of the model class so layerName here gets
+            # name of attribute of the model:layer1Name
+
+            # if the layer has a regularization of it's own then that one is applied
+            # otherwise the general regularization if available is applied
+            if layerName in self._specificLayerRegularization.keys():
                 self._operationalRegularizations[layerName] = \
-                    self._specificLayerRegularization[layerName]['regularization']
+                    self._specificLayerRegularization[layerName]
             else:
                 if hasGeneralRegularization:
                     self._operationalRegularizations[layerName] = self.generalRegularization
@@ -137,6 +139,9 @@ class _NewWrapper_regularization:
     def addRegularizationsToLoss(self, loss):
         addedReg = torch.tensor(0., requires_grad=True)
         for name, param in self.named_parameters():
-            if name in self._operationalRegularizations.keys():
-                addedReg += self._operationalRegularizations[name].addRegularizationToParam(param)
+            layerName = name.split('.')[0]
+            if layerName in self._operationalRegularizations.keys():
+                regularization = self._operationalRegularizations[layerName]
+
+                addedReg = addedReg + regularization.addRegularizationToParam(param)
         return loss + addedReg
