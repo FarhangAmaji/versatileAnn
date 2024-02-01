@@ -97,3 +97,8 @@ class NewWrapper(pl.LightningModule,
 
         self.resetTempVarRun_allPhases()
         self._tempVarRun_allPhases_hidden = {}
+
+    def _isCls_NewWrapperClass(self, cls_):
+        # cccDevAlgo
+        #  this is a util to be used in parent classes and not get circular import error
+        return cls_ is NewWrapper

@@ -80,6 +80,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         # set 'testPrints' before other kwargs just to be able to use printTestPrints
         if 'testPrints' in kwargs:
             initiatedObj.testPrints = kwargs['testPrints']
+        else:
+            initiatedObj.testPrints = False
 
         argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper = \
             cls._getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, kwargs, initiatedObj)
