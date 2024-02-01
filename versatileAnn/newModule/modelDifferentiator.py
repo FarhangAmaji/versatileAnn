@@ -2,8 +2,9 @@ import inspect
 
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
-    NoneToNullValueOrValue, isCustomFunction
+    NoneToNullValueOrValue, isCustomFunction, DotDict
 from utils.warnings import Warn
+from versatileAnn.utils import LossRegularizator
 
 
 # kkk comment and clean this and its tests + m1 +m2
@@ -131,8 +132,10 @@ class _NewWrapper_modelDifferentiator:
     def _getCustomClassDefinition(self, cls_):
         # Helper function to get the definition of a custom class
 
-        # kkk also prevent LossRegulator and DotDict and NpDict(and other defined classes in this module)
         if self._isCls_NewWrapperClass(cls_):
+            return None
+        if cls_ in [LossRegularizator, DotDict]:
+            # prevent classes defined in this project
             return None
         if isCustomClass(cls_):
             return inspect.getsource(cls_)
