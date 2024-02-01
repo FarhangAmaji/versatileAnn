@@ -26,9 +26,9 @@ class _NewWrapper_modelDifferentiator:
         unorderedClasses, visitedClasses = self._getAllNeededClassDefinitions(obj)
         # we are just doing _getAllNeededClassDefinitions twice so maybe warns in # Lwnt may prevent because they may be added later in loops
         unorderedClasses, visitedClasses = self._getAllNeededClassDefinitions(obj,
-                                                              visitedClasses=visitedClasses,
-                                                              classDefinitions=unorderedClasses,
-                                                              secondTime=True)
+                                                                              visitedClasses=visitedClasses,
+                                                                              classDefinitions=unorderedClasses,
+                                                                              secondTime=True)
 
         # Order the class definitions based on dependencies
         classDefinitionsWithInfo = self._findClassNamesAndDependencies(unorderedClasses)
@@ -38,13 +38,14 @@ class _NewWrapper_modelDifferentiator:
         return orderedClasses + funcDefinitions
 
     def _getAllNeededClassDefinitions(self, obj, visitedClasses=None, classDefinitions=None,
-                                      secondTime=False):
+                                      secondTime=False, visitedWarns=None):
         # Method to get all class definitions needed for an object
 
         # this func is recursively called so in order not fall in to infinite loop, visitedClasses
         # is declared
         visitedClasses = NoneToNullValueOrValue(visitedClasses, set())
         classDefinitions = NoneToNullValueOrValue(classDefinitions, [])
+        visitedWarns = NoneToNullValueOrValue(visitedWarns, set())
         # duty1: Get definitions of the main object's class and its parent classes
         self._getClassAndItsParentsDefinitions(obj.__class__, visitedClasses,
                                                classDefinitions)
@@ -53,7 +54,7 @@ class _NewWrapper_modelDifferentiator:
         # kkk add comment about we are not looping through parent vars(as maybe we don't access to their objects directly) but as their attributes exist in our ojbect(which is inherited from them) we can get definitions they need
         # kkk if later wanted to add a loop through parent we may use __qualname__ to created something like visited for classes and attributes
         if isinstance(obj, dict):
-            self._attributesLoop(classDefinitions, obj, visitedClasses)
+            self._attributesLoop(classDefinitions, obj, visitedClasses, visitedWarns, secondTime)
         elif isFunctionOrMethod(obj)[0]:
             isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
                 obj)
@@ -63,22 +64,24 @@ class _NewWrapper_modelDifferentiator:
                     self._getClassDefinitions_ifNotGotBefore(classOrFuncObject, visitedClasses,
                                                              classDefinitions)
                 else:  # failed to get class object
-                    if secondTime:
-                        classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
-                        visitedClasses_names = [c.__name__ for c in visitedClasses]
-                        if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
-                            # kkk add giveWarning with qualname
-                            Warn.error(  # Lwnt
-                                f'{classNameOf_staticOrInstanceMethod} definition is not included.')
+                    classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
+                    visitedClasses_names = [c.__name__ for c in visitedClasses]
+                    if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
+                        if obj.__qualname__ not in visitedWarns and secondTime:
+                            visitedWarns.add(obj.__qualname__)
+                            warnMsg = f'{classNameOf_staticOrInstanceMethod} definition is not included.'
+                            self.printTestPrints(warnMsg)
+                            Warn.error(warnMsg)  # Lwnt
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)
-            self._attributesLoop(classDefinitions, objVars, visitedClasses)
+            self._attributesLoop(classDefinitions, objVars, visitedClasses, visitedWarns,
+                                 secondTime)
         elif not hasattr(obj, '__dict__'):
             return classDefinitions
 
         return classDefinitions, visitedClasses
 
-    def _attributesLoop(self, classDefinitions, objVars, visitedClasses):
+    def _attributesLoop(self, classDefinitions, objVars, visitedClasses, visitedWarns, secondTime):
         for varName, varValue in objVars.items():
 
             if inspect.isclass(varValue):
@@ -88,7 +91,8 @@ class _NewWrapper_modelDifferentiator:
                                                        classDefinitions)
             else:
                 self._getAllNeededClassDefinitions(varValue, visitedClasses,
-                                                   classDefinitions)
+                                                   classDefinitions, visitedWarns=visitedWarns,
+                                                   secondTime=secondTime)
 
     def _getClassAndItsParentsDefinitions(self, cls_, visitedClasses, classDefinitions):
         # Helper function to get definitions of a class and its parent classes recursively
