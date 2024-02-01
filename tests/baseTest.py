@@ -13,6 +13,7 @@ class BaseTestClass(unittest.TestCase):
         # Redirect stdout to the StringIO object
         sys.stdout = capturedOutput
 
+        result = None
         try:
             # Run the test function
             result = innerFunc(**kwargsOfTestFunc)
@@ -27,7 +28,7 @@ class BaseTestClass(unittest.TestCase):
         finally:
             # Restore the original stdout even if an exception occurs
             sys.stdout = sys.__stdout__
-            return None
+            return result
 
     def equalDfs(self, df1, df2,
                  checkIndex=True, floatApprox=False, floatPrecision=0.0001):

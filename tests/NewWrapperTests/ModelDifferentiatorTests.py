@@ -97,8 +97,13 @@ class NNDummy(Parent1, Parent2):
 class ModelDifferentiatorTests(BaseTestClass):
     def test1(self):
         model = NNDummy(midLayer1=5, midLayer2=6, midLayerp1=18, midLayer2p1=7, midLayer2p2=8,
-                        lossFuncs=[nn.MSELoss(), nn.L1Loss()])
-        definitions = model._getAllNeededDefinitions(model)
+                        lossFuncs=[nn.MSELoss(), nn.L1Loss()], testPrints=True)
+
+        # kkk if added to postInit and the results differ should still use this example
+        def innerFunc():
+            definitions = model._getAllNeededDefinitions(model)
+            return definitions
+
         expectedDefinitions = [
             'class Parent2p2p2:\n    def __init__(self):\n        self.layp2p2p2 = 16\n',
             'class Parent1p1:\n    def __init__(self):\n        self.layp1p1 = 4\n',
@@ -116,6 +121,13 @@ class ModelDifferentiatorTests(BaseTestClass):
             'class LossRegularizator:\n    nullDictValue = {\'type\': \'None\', \'value\': None}\n\n    @argValidator\n    def __init__(self, value: Union[dict, None]):\n        correctFormatMsg = \'correct regularization format examples: \' + \\\n                           \'\\n{"type":"l1","value":.02}, {"type":"l2","value":.02}, \' + \\\n                           \'{"type":"None","value":None}\'\n        if not value:\n            self._type = "None"\n            self._value = None\n            return\n\n        if \'type\' not in value.keys():\n            Warn.error(correctFormatMsg)\n            raise ValueError(\'for creating LossRegularizator object "type" key is required\')\n        if value[\'type\'] not in regularizationTypes:\n            Warn.error(correctFormatMsg)\n            raise ValueError(\'regularization type must be one of \' + \\\n                             "\'l1\', \'l2\', \'None\'(str)")\n\n        if value[\'type\'] == \'None\':\n            self._type = "None"\n            self._value = None\n            return\n\n        if \'value\' not in value.keys():\n            Warn.error(correctFormatMsg)\n            raise ValueError(\'for l1 and l2 regularizations defining dict must have "value" key\')\n        if not isinstance(value[\'value\'], (float)):\n            raise ValueError(\'regularization value must be float\')\n\n        self._type = value[\'type\']\n        self._value = value[\'value\']\n\n    # cccDevAlgo disable changing type and value\n    @property\n    def type(self):\n        return self._type\n\n    @type.setter\n    def type(self, value):\n        raise AttributeError(\'type of LossRegularizator object is not allowed to be changed\')\n\n    @property\n    def value(self):\n        return self._value\n\n    @value.setter\n    def value(self, value):\n        raise AttributeError(\'value of LossRegularizator object is not allowed to be changed\')\n\n    # ----\n    @argValidator\n    def addRegularizationToParam(self, param: torch.nn.parameter.Parameter):\n        # bugPotentialCheck3\n        #  these need to device?\n        if self.type == \'None\':\n            return torch.tensor(0)\n        elif self.type == \'l1\':\n            return torch.linalg.norm(param, 1) * self.value\n        elif self.type == \'l2\':\n            return torch.norm(param) * self.value\n        raise InternalLogicError(\'sth has gone wrong and type is not one of \' + \\\n                                 "\'l1\', \'l2\', \'None\'(str)")\n\n    def __str__(self):\n        dict_ = {\'type\': self.type, \'value\': self.value}\n        return f"LossRegularizator{dict_}"\n',
             "class NNDummyModule4:\n    def __init__(self):\n        self.a2 = 24\n\n    def md(self):\n        return ''\n",
             "def aFuncDefForParent1():\n    print('aFuncDefForParent1')\n"]
+        expectedPrint = """NNDummyModule3ClassForInstanceMethod definition is not included.
+NNDummyModule1ClassForStaticAndInstanceMethod definition is not included.
+NNDummyModule1ClassForStaticAndInstanceMethod definition is not included.
+NNDummyModule2ClassForStaticMethod definition is not included.
+ClassForStaticMethod_forParent2p1 definition is not included.
+"""
+        definitions = self.assertPrint(innerFunc, expectedPrint)
         self.assertEqual(expectedDefinitions, definitions)
 
 
