@@ -1,27 +1,33 @@
-import unittest
-import sys
 import io
+import sys
+import unittest
+
 from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors, equalNpDicts, varPasser
+
+
 # ----
 class BaseTestClass(unittest.TestCase):
     def assertPrint(self, innerFunc, expectedPrint, **kwargsOfTestFunc):
         capturedOutput = io.StringIO()
-        
+
         # Redirect stdout to the StringIO object
         sys.stdout = capturedOutput
 
         try:
             # Run the test function
-            innerFunc(**kwargsOfTestFunc)
-            
+            result = innerFunc(**kwargsOfTestFunc)
+
             # Get the captured output as a string with newline characters
             printed = capturedOutput.getvalue()
-            
+
             # Assert that the expected print was printed
             self.assertIn(expectedPrint, printed)
+
+            return result
         finally:
             # Restore the original stdout even if an exception occurs
             sys.stdout = sys.__stdout__
+            return None
 
     def equalDfs(self, df1, df2,
                  checkIndex=True, floatApprox=False, floatPrecision=0.0001):
@@ -42,7 +48,7 @@ class BaseTestClass(unittest.TestCase):
             localArgNames=['tensor1', 'tensor2', 'checkType', 'floatApprox', 'floatPrecision',
                            'checkDevice'])
         self.assertTrue(equalTensors(**kwargs_))
-        
+
     def equalNpDicts(self, npd1, npd2,
                      checkIndex=True, floatApprox=False, floatPrecision=0.0001):
         kwargs_ = varPasser(
