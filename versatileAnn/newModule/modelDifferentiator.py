@@ -1,6 +1,9 @@
 import inspect
 
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
+    isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
+    NoneToNullValueOrValue
+from utils.warnings import Warn
 
 
 class _NewWrapper_modelDifferentiator:
@@ -10,6 +13,8 @@ class _NewWrapper_modelDifferentiator:
 
     # kkk save profiler on architecture definitions/seed
     def _getAllNeededDefinitions(self, obj):
+        # goodToHave3
+        #  maybe object in this func is not needed
         # addTest1
         # Method to get all class definitions in the correct order
         # kkk probably somewhere in postInit this should be called 'self._getAllNeededDefinitions(self)'
@@ -20,7 +25,9 @@ class _NewWrapper_modelDifferentiator:
         # Order the class definitions based on dependencies
         classDefinitionsWithInfo = self._findClassNamesAndDependencies(unorderedClasses)
         orderedClasses = self._getOrderedClassDefinitions(classDefinitionsWithInfo)
-        return '\n'.join(orderedClasses)
+
+        funcDefinitions = self._getAttributesFuncDefinitions(obj)
+        return orderedClasses + funcDefinitions
 
     def _getAllNeededClassDefinitions(self, obj, visitedClasses=None, classDefinitions=None):
         # Method to get all class definitions needed for an object
@@ -40,6 +47,22 @@ class _NewWrapper_modelDifferentiator:
         # kkk if later wanted to add a loop through parent we may use __qualname__ to created something like visited for classes and attributes
         if isinstance(obj, dict):
             self._attributesLoop(classDefinitions, obj, visitedClasses)
+        elif isFunctionOrMethod(obj)[0]:
+            isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
+                obj)
+            if isClass:  # getting class object of static or instance method
+                if classOrFuncObject and inspect.isclass(
+                        classOrFuncObject):  # successful in getting class object
+                    self._getClassDefinitions_ifNotGotBefore(classOrFuncObject, visitedClasses,
+                                                             classDefinitions)
+                else:  # failed to get class object
+                    classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
+                    visitedClasses_names = [c.__name__ for c in visitedClasses]
+                    if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
+                        # kkk maybe do it twice so if still not involved give the warn
+                        # kkk add giveWarning with qualname
+                        Warn.error(
+                            f'{classNameOf_staticOrInstanceMethod} definition is not included.')
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)
             self._attributesLoop(classDefinitions, objVars, visitedClasses)
@@ -98,8 +121,8 @@ class _NewWrapper_modelDifferentiator:
         # Helper function to get the definition of a custom class
 
         # kkk if it should be NewWrapper, so should placed there
-        if self._isCls_NewWrapperClass(
-                cls_):  # kkk should it be NewWrapper or _NewWrapper_modelDifferentiator; does this new architecture make problems?
+        if self._isCls_NewWrapperClass(cls_):
+            # kkk should it be NewWrapper or _NewWrapper_modelDifferentiator; does this new architecture make problems?
             return None
         if isCustomClass(cls_):
             return inspect.getsource(cls_)
@@ -107,6 +130,7 @@ class _NewWrapper_modelDifferentiator:
 
     @staticmethod
     def _findClassNamesAndDependencies(classDefinitions):
+        # kkk check this
         # Helper function to find class names and their dependencies from class definitions
         classDefinitionsWithInfo = []
 
@@ -135,7 +159,7 @@ class _NewWrapper_modelDifferentiator:
     @staticmethod
     def _getOrderedClassDefinitions(classDefinitionsWithInfo):
         # Helper function to order class definitions based on their dependencies
-
+        # kkk check this
         changes = 1
         while changes != 0:
             changes = 0
@@ -152,3 +176,33 @@ class _NewWrapper_modelDifferentiator:
         for i in range(len(classDefinitionsWithInfo)):
             classDefinitions.append(classDefinitionsWithInfo[i]['def'])
         return classDefinitions
+
+    def _getAttributesFuncDefinitions(self, obj, visitedFuncs=None, funcDefinitions=None):
+        visitedFuncs = NoneToNullValueOrValue(visitedFuncs, set())
+        funcDefinitions = NoneToNullValueOrValue(funcDefinitions, [])
+
+        if isinstance(obj, dict):
+            for varName, varValue in obj.items():
+
+                if not inspect.isclass(varValue):
+                    self._getAttributesFuncDefinitions(varValue, visitedFuncs,
+                                                       funcDefinitions)
+        elif isFunctionOrMethod(obj)[0]:  # kkk
+            isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
+                obj)
+            if not isClass:
+                if classOrFuncObject not in visitedFuncs:
+                    visitedFuncs.add(classOrFuncObject)
+                    funcDefinitions.append(inspect.getsource(classOrFuncObject))
+                    # kkk if the func is a custom user defined func should be added
+        elif hasattr(obj, '__dict__'):
+            objVars = vars(obj)
+            for varName, varValue in objVars.items():
+
+                if not inspect.isclass(varValue):
+                    self._getAttributesFuncDefinitions(varValue, visitedFuncs,
+                                                       funcDefinitions)
+        elif not hasattr(obj, '__dict__'):
+            return funcDefinitions
+
+        return funcDefinitions

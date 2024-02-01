@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import threading
+import types
 from typing import Union
 
 import aiohttp
@@ -449,6 +450,58 @@ def isNestedDict(dict_):
 # ---- methods and funcs
 def getMethodArgs(method):
     return list(inspect.signature(method).parameters.keys())
+
+
+# ---- methods and funcs: detect funcs, instance methods or static methods
+
+def isStaticmethod(method):
+    if not isinstance(method, types.FunctionType):
+        return False
+
+    return inspect.getsource(method).strip().startswith('@staticmethod')
+
+
+def getStaticmethod_actualClass(method):
+    '''
+    it's not possible to get actual class of a static method don't have
+    access to its instance or class.
+    this 'globals().get(className)' doesn't work always, ofc it may work
+    sometimes if the className is in globals
+    '''
+    if not isStaticmethod(method):
+        return ''
+    qualname = method.__qualname__
+    className = qualname.split('.')[0]
+    actualClass = globals().get(className)
+    return actualClass
+
+
+def isFunctionOrMethod(obj):
+    if isStaticmethod(obj):
+        return True, "Static Method"
+    elif isinstance(obj, types.FunctionType):
+        if len(obj.__qualname__.split('.')) > 1:
+            return True, "Instance Method"
+        return True, "Function"
+    elif isinstance(obj, types.MethodType):
+        return True, "Instance Method"
+    else:
+        return False, "not a method or a func"
+
+
+def _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(obj):
+    funcOrNot, result = isFunctionOrMethod(obj)
+    if not funcOrNot:
+        return False, None  # first one is isClass, next one is ClassOrFunc object
+
+    if result == "Static Method":
+        return True, getStaticmethod_actualClass(obj)
+    elif result == "Function":
+        return False, obj
+    elif result == "Instance Method":
+        if hasattr(obj, '__self__'):
+            return True, obj.__self__.__class__
+        return True, obj
 
 
 # ---- classes utils
