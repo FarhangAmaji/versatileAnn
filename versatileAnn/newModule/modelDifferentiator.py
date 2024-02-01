@@ -57,22 +57,8 @@ class _NewWrapper_modelDifferentiator:
         if isinstance(obj, dict):
             self._attributesLoop(classDefinitions, obj, visitedClasses, visitedWarns, secondTime)
         elif isFunctionOrMethod(obj)[0]:
-            isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
-                obj)
-            if isClass:  # getting class object of static or instance method
-                if classOrFuncObject and inspect.isclass(
-                        classOrFuncObject):  # successful in getting class object
-                    self._getClassDefinitions_ifNotGotBefore(classOrFuncObject, visitedClasses,
-                                                             classDefinitions)
-                else:  # failed to get class object
-                    classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
-                    visitedClasses_names = [c.__name__ for c in visitedClasses]
-                    if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
-                        if obj.__qualname__ not in visitedWarns and secondTime:
-                            visitedWarns.add(obj.__qualname__)
-                            warnMsg = f'{classNameOf_staticOrInstanceMethod} definition is not included.'
-                            self.printTestPrints(warnMsg)
-                            Warn.error(warnMsg)  # Lwnt
+            self._addStaticOrInstanceMethods_orWarnIfNotPossible(classDefinitions, obj, secondTime,
+                                                                 visitedClasses, visitedWarns)
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)
             self._attributesLoop(classDefinitions, objVars, visitedClasses, visitedWarns,
@@ -81,6 +67,25 @@ class _NewWrapper_modelDifferentiator:
             return classDefinitions
 
         return classDefinitions, visitedClasses
+
+    def _addStaticOrInstanceMethods_orWarnIfNotPossible(self, classDefinitions, obj, secondTime,
+                                                        visitedClasses, visitedWarns):
+        isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
+            obj)
+        if isClass:  # getting class object of static or instance method
+            if classOrFuncObject and inspect.isclass(
+                    classOrFuncObject):  # successful in getting class object
+                self._getClassDefinitions_ifNotGotBefore(classOrFuncObject, visitedClasses,
+                                                         classDefinitions)
+            else:  # failed to get class object
+                classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
+                visitedClasses_names = [c.__name__ for c in visitedClasses]
+                if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
+                    if obj.__qualname__ not in visitedWarns and secondTime:
+                        visitedWarns.add(obj.__qualname__)
+                        warnMsg = f'{classNameOf_staticOrInstanceMethod} definition is not included.'
+                        self.printTestPrints(warnMsg)
+                        Warn.error(warnMsg)  # Lwnt
 
     def _attributesLoop(self, classDefinitions, objVars, visitedClasses, visitedWarns, secondTime):
         for varName, varValue in objVars.items():
@@ -147,26 +152,26 @@ class _NewWrapper_modelDifferentiator:
         # Helper function to find class names and their dependencies from class definitions
         classDefinitionsWithInfo = []
 
-        for i in range(len(classDefinitions)):
-            classDef = classDefinitions[i]
+        for classDef in classDefinitions:
+            # bugPotentialCHeck1
+            #  this way of finding superClasses is dependent on written class code;
+            #  so if the class name and superClasses are in 2 or more lines it would give error
             # Extract the class name
             classNameWithDependencies = classDef.split("class ")[1].split(":")[0].strip()
 
             # Find the superclass names (if any)
             if '(' in classNameWithDependencies:
-                class_name = classNameWithDependencies.split("(")[0].strip()
+                className = classNameWithDependencies.split("(")[0].strip()
                 superclasses = [s.strip() for s in
-                                classNameWithDependencies.split("(")[1].split(")")[0].split(
-                                    ",")]
-                superclasses = [s.split('=')[1].strip() if '=' in s else s for s in
-                                superclasses]
+                                classNameWithDependencies.split("(")[1].split(")")[0].split(",")]
+                superclasses = [s.split('=')[1].strip() if '=' in s else s for s in superclasses]
 
                 classDefinitionsWithInfo.append(
-                    {'class_name': class_name, 'dep': superclasses, 'def': classDef})
+                    {'className': className, 'dep': superclasses, 'def': classDef})
             else:
-                class_name = classNameWithDependencies
+                className = classNameWithDependencies
                 classDefinitionsWithInfo.append(
-                    {'class_name': class_name, 'dep': [], 'def': classDef})
+                    {'className': className, 'dep': [], 'def': classDef})
         return classDefinitionsWithInfo
 
     @staticmethod
@@ -180,7 +185,7 @@ class _NewWrapper_modelDifferentiator:
                 dependencies = classDefinitionsWithInfo[i]['dep']
                 for k in range(len(dependencies)):
                     for j in range(len(classDefinitionsWithInfo)):
-                        if dependencies[k] == classDefinitionsWithInfo[j]['class_name']:
+                        if dependencies[k] == classDefinitionsWithInfo[j]['className']:
                             if j > i:
                                 classDefinitionsWithInfo[j], classDefinitionsWithInfo[i] = \
                                     classDefinitionsWithInfo[i], classDefinitionsWithInfo[j]
