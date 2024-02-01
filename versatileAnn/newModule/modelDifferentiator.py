@@ -1,6 +1,6 @@
 import inspect
 
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass
 
 
 class _NewWrapper_modelDifferentiator:
@@ -36,8 +36,8 @@ class _NewWrapper_modelDifferentiator:
 
         # duty2: getting class definitions for attributes(object variables)
         # kkk should visitedClasses be extended or in inner funcs appended as list is mutable
-        #kkk add comment about we are not looping through parent vars(as maybe we don't access to their objects directly) but as their attributes exist in our ojbect(which is inherited from them) we can get definitions they need
-        #kkk if later wanted to add a loop through parent we may use __qualname__ to created something like visited for classes and attributes
+        # kkk add comment about we are not looping through parent vars(as maybe we don't access to their objects directly) but as their attributes exist in our ojbect(which is inherited from them) we can get definitions they need
+        # kkk if later wanted to add a loop through parent we may use __qualname__ to created something like visited for classes and attributes
         if isinstance(obj, dict):
             self._attributesLoop(classDefinitions, obj, visitedClasses)
         elif hasattr(obj, '__dict__'):
@@ -101,30 +101,9 @@ class _NewWrapper_modelDifferentiator:
         if self._isCls_NewWrapperClass(
                 cls_):  # kkk should it be NewWrapper or _NewWrapper_modelDifferentiator; does this new architecture make problems?
             return None
-        if self.isCustomClass(cls_):
+        if isCustomClass(cls_):
             return inspect.getsource(cls_)
         return None
-
-    @staticmethod
-    def isCustomClass(cls_):
-        # kkk move it to utils
-        # Helper function to check if a class is a custom(user defined and not python builtin or not from packages) class
-
-        import builtins
-        import pkg_resources
-        import types
-        if cls_ is None or cls_ is types.NoneType:  # kkk
-            return False
-        moduleName = getattr(cls_, '__module__', '')
-        return (
-                isinstance(cls_, type) and
-                not (
-                        cls_ in builtins.__dict__.values()
-                        or any(moduleName.startswith(package.key) for package in
-                               pkg_resources.working_set)
-                        or moduleName.startswith('collections')
-                )
-        ) and not issubclass(cls_, types.FunctionType)
 
     @staticmethod
     def _findClassNamesAndDependencies(classDefinitions):

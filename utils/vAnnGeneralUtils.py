@@ -14,6 +14,9 @@ from utils.typeCheck import argValidator
 from utils.warnings import Warn
 
 
+# goodToHave2
+#  split it to multiple files
+
 # ---- DotDict NpDict
 class DotDict:
     def __init__(self, data):
@@ -446,6 +449,27 @@ def isNestedDict(dict_):
 # ---- methods and funcs
 def getMethodArgs(method):
     return list(inspect.signature(method).parameters.keys())
+
+
+# ---- classes utils
+def isCustomClass(cls_):
+    # Helper function to check if a class is a custom(user defined and not python builtin or not from packages) class
+
+    import builtins
+    import pkg_resources
+    import types
+    if cls_ is None or cls_ is types.NoneType:  # kkk
+        return False
+    moduleName = getattr(cls_, '__module__', '')
+    return (
+            isinstance(cls_, type) and
+            not (
+                    cls_ in builtins.__dict__.values()
+                    or any(moduleName.startswith(package.key) for package in
+                           pkg_resources.working_set)
+                    or moduleName.startswith('collections')
+            )
+    ) and not issubclass(cls_, types.FunctionType)
 
 
 # ---- download
