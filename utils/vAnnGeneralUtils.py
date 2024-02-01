@@ -650,6 +650,22 @@ def spellPluralS(list_: list, string="", es=False):
     return string
 
 
+# ---- variable
+def NoneToNullValueOrValue(var, nullVal):
+    '''
+    it's a very important to prevent bugs
+    'a=a or []' must be '[] if a is None else a' of as this func is
+    specially in recursive funcs and the variable is mutable so we have counted
+    on the fact it is mutable.
+    it's common that first few iters may not populate the variable
+    so when the one populates it is a different variable than the variable in the upper func(the
+    one has called this func) so it is a variable at different memory location
+    '''
+    if var is None:
+        return nullVal
+    return var
+
+
 # ---- misc
 def gpuMemoryUsed():
     if not torch.cuda.is_available():

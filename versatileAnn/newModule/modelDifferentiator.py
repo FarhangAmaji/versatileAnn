@@ -34,8 +34,8 @@ class _NewWrapper_modelDifferentiator:
 
         # this func is recursively called so in order not fall in to infinite loop, visitedClasses
         # is declared
-        visitedClasses = visitedClasses or set()
-        classDefinitions = classDefinitions or []
+        visitedClasses = NoneToNullValueOrValue(visitedClasses, set())
+        classDefinitions = NoneToNullValueOrValue(classDefinitions, [])
         # duty1: Get definitions of the main object's class and its parent classes
         # kkk does it get custom class defs or all classes?
         self._getClassAndItsParentsDefinitions(obj.__class__, visitedClasses,
@@ -95,8 +95,8 @@ class _NewWrapper_modelDifferentiator:
     def _getParentClassDefinitions(self, cls_, visited=None, classDefinitions=None):
         # Helper function to get definitions of parent classes recursively
 
-        visited = visited or set()
-        classDefinitions = classDefinitions or []
+        visited = NoneToNullValueOrValue(visited, set())
+        classDefinitions = NoneToNullValueOrValue(classDefinitions, [])
 
         # not allowing to collect NewWrapper and it's parent definitions
         if self._isCls_NewWrapperClass(cls_):
