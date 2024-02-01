@@ -2,7 +2,7 @@ import inspect
 
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
-    NoneToNullValueOrValue
+    NoneToNullValueOrValue, isCustomFunction
 from utils.warnings import Warn
 
 
@@ -192,8 +192,9 @@ class _NewWrapper_modelDifferentiator:
                 obj)
             if not isClass:
                 if classOrFuncObject not in visitedFuncs:
-                    visitedFuncs.add(classOrFuncObject)
-                    funcDefinitions.append(inspect.getsource(classOrFuncObject))
+                    if isCustomFunction(classOrFuncObject):
+                        visitedFuncs.add(classOrFuncObject)
+                        funcDefinitions.append(inspect.getsource(classOrFuncObject))
                     # kkk if the func is a custom user defined func should be added
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)

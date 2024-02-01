@@ -452,6 +452,28 @@ def getMethodArgs(method):
     return list(inspect.signature(method).parameters.keys())
 
 
+def isCustomFunction(func):
+    # Helper function to check if a function is a custom (user-defined and not Python built-in or from packages) function
+
+    import builtins
+    import pkg_resources
+    import types
+
+    if func is None or func is types.NoneType:
+        return False
+
+    moduleName = getattr(func, '__module__', '')
+    return (
+            isinstance(func, types.FunctionType) and
+            not (
+                    func in builtins.__dict__.values()
+                    or any(moduleName.startswith(package.key) for package in
+                           pkg_resources.working_set)
+                    or moduleName.startswith('collections')
+            )
+    )
+
+
 # ---- methods and funcs: detect funcs, instance methods or static methods
 
 def isStaticmethod(method):
