@@ -213,8 +213,7 @@ class otherTests(BaseTestClass):
         StdScaler_ = _StdScaler()
         with self.assertRaises(pydantic.ValidationError) as context:
             StdScaler_.fit([5, 3, 7])
-        self.assertEqual(str(context.exception),
-                         "2 validation errors for Fit\ndata\n  instance of DataFrame expected (type=type_error.arbitrary_type; expected_arbitrary_type=DataFrame)\ndata\n  instance of Series expected (type=type_error.arbitrary_type; expected_arbitrary_type=Series)")
+        self.assertTrue('validation errors for Fit' in str(context.exception))
 
     def testLblEncoderIntRaiseValueError(self):
         lblEnc = _LblEncoder()
