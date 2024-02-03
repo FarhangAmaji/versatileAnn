@@ -1,3 +1,4 @@
+import os
 import unittest
 from typing import List, Tuple, Union
 
@@ -8,7 +9,7 @@ import torch
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
 from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict, snakeToCamel, camelToSnake, \
-    getDefaultTorchDevice_name
+    getDefaultTorchDevice_name, getProjectDirectory, findClassDefinition
 
 
 class DotDictTests(BaseTestClass):
@@ -268,6 +269,80 @@ class CaseChangeTests(BaseTestClass):
         camelString = "exampleCamelCaseString"
         snakeCaseResult = camelToSnake(camelString)
         self.assertEqual(snakeCaseResult, "example_camel_case_string")
+
+
+# ----
+class FindClassDefinitionTests(BaseTestClass):
+    def testExistingClass(self):
+        res = findClassDefinition(getProjectDirectory(), 'MainGroupSingleColsStdNormalizer')
+        expectedPath = os.path.join(getProjectDirectory(), 'dataPrep',
+                                    'normalizers_mainGroupNormalizers.py')
+        self.assertEqual(res[1][0], expectedPath)
+        expectedDef = """class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
+
+    def __init__(self, df, mainGroupColNames, colNames: list):
+
+        super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
+
+                         colNames)
+
+
+
+    @argValidator
+
+    def setMeanNStd_ofMainGroups(self, df: pd.DataFrame):
+
+        self._warnToInverseTransform_mainGroups(df)
+
+        # cccAlgo
+
+        #  for each col, makes f'{col}Mean' and f'{col}Std'
+
+        #  note setMeanNStd_ofMainGroups needs to have unTransformed mainGroups. so if needed,
+
+        #  inverseTransform them and transform them again after applying this func
+
+        for col in self.colNames:
+
+            for _, combo in self.uniqueCombos.items():
+
+                dfToFit = self.getRowsByCombination(df, combo)
+
+                inds = dfToFit.index
+
+                scaler = self.container[col][combo.shortRepr()].encoders[col].scaler
+
+                comboMean = scaler.mean_[0]
+
+                comboStd = scaler.scale_[0]
+
+                df.loc[inds, f'{col}Mean'] = comboMean
+
+                df.loc[inds, f'{col}Std'] = comboStd
+
+
+
+    def __repr__(self):
+
+        return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
+"""
+        self.assertEqual(res[2][0], expectedDef)
+
+    def testNonExistingClass(self):
+        res = findClassDefinition(getProjectDirectory(), 'qqBangBang')
+        self.assertEqual(res, (False, [], []))
+
+    def testExistingClass_inMultiplePlaces(self):
+        res = findClassDefinition(getProjectDirectory(),
+                                  'NNDummyModule1ClassForStaticAndInstanceMethod')
+        expectedPaths = [os.path.join(getProjectDirectory(), 'tests', 'newWrapperTests',
+                                      'ModelDifferentiatorTests_dummyClassDefs', 'm1.py'),
+                         os.path.join(getProjectDirectory(), 'tests', 'utilsTests',
+                                      'dummyForTest.py')]
+        self.assertEqual(res[1], expectedPaths)
+        def1 = "class NNDummyModule1ClassForStaticAndInstanceMethod:\n\n    def __init__(self):\n\n        self.ke = 78\n\n\n\n    @staticmethod\n\n    def static_Method1():\n\n        print('staticmethod for NNDummyModule1')\n\n\n\n    def instanceMeth1(self):\n\n        print('instancemethod for NNDummyModule1')\n"
+        self.assertEqual(res[2][0], def1)
+        self.assertEqual(res[2][1], def1)
 
 
 # ---- run test
