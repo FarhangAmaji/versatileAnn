@@ -32,6 +32,7 @@ class NewWrapper(pl.LightningModule,
         # kkk
         #  this init should take all other args which it parent classes take because the user can
         #  really check all parent classes to see what functionalities does class offer
+        self.__version__ = '0.2'
         self.printTestPrints('NewWrapper init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
@@ -65,13 +66,20 @@ class NewWrapper(pl.LightningModule,
         self._logLosses(calculatedLosses, phase)
         return loss
 
-    # kkk add test and predict
     def training_step(self, batch, batch_idx):
         phase = self.phases.train
         return self._tempCommonStep(batch, phase)
 
     def validation_step(self, batch, batch_idx):
         phase = self.phases.val
+        return self._tempCommonStep(batch, phase)
+
+    def test_step(self, batch, batch_idx):
+        phase = self.phases.test
+        return self._tempCommonStep(batch, phase)
+
+    def predict_step(self, batch, batch_idx):
+        phase = self.phases.predict
         return self._tempCommonStep(batch, phase)
 
     def configure_optimizers(self):
