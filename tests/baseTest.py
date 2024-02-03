@@ -24,11 +24,10 @@ class BaseTestClass(unittest.TestCase):
             # Assert that the expected print was printed
             self.assertIn(expectedPrint, printed)
 
-            return result
         finally:
             # Restore the original stdout even if an exception occurs
             sys.stdout = sys.__stdout__
-            return result
+        return result
 
     def equalDfs(self, df1, df2,
                  checkIndex=True, floatApprox=False, floatPrecision=0.0001):

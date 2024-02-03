@@ -101,7 +101,8 @@ class ModelDifferentiatorTests(BaseTestClass):
 
         # kkk if added to postInit and the results differ should still use this example
         def innerFunc():
-            model._getAllNeededDefinitions(model)
+            definitions = model._getAllNeededDefinitions(model)
+            return definitions
 
         expectedDefinitions = [
             'class Parent1p1:\n    def __init__(self):\n        self.layp1p1 = 4\n',
@@ -125,8 +126,7 @@ NNDummyModule1ClassForStaticAndInstanceMethod definition is not included.
 NNDummyModule2ClassForStaticMethod definition is not included.
 ClassForStaticMethod_forParent2p1 definition is not included.
 """
-        self.assertPrint(innerFunc, expectedPrint)
-        definitions = model._getAllNeededDefinitions(model)
+        definitions = self.assertPrint(innerFunc, expectedPrint)
         self.assertEqual(expectedDefinitions, definitions)
 
 
