@@ -3,6 +3,8 @@ from typing import get_type_hints
 
 from pydantic import validate_arguments
 
+from utils.customErrors import InternalLogicError
+
 
 def isHintTypeOfAListOfSomeType(typ):
     # cccAlgo
@@ -31,7 +33,8 @@ def typeHintChecker_AListOfSomeType(func):
         argParams = allFuncParams[:]
         for k in kwargs:
             argParams.remove(k)
-        assert len(argParams) == len(args), 'internal logic error'
+        if len(argParams) != len(args):
+            raise InternalLogicError
         allArgs = {}
         for i, ap in enumerate(argParams):
             allArgs[ap] = args[i]

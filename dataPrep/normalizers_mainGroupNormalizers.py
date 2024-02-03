@@ -12,10 +12,12 @@ from utils.warnings import Warn
 class _Combo:
     def __init__(self, defDict, mainGroupColNames):
         for key in defDict:
-            assert key in mainGroupColNames, f"'{key}' is not a valid column name in mainGroupColNames."
+            if key not in mainGroupColNames:
+                raise ValueError(f"'{key}' is not a valid column name in mainGroupColNames.")
 
         for col in mainGroupColNames:
-            assert col in defDict, f"'{col}' is missing in combo definition."
+            if col not in defDict:
+                raise ValueError(f"'{col}' is missing in combo definition.")
 
         self.defDict = defDict
 
@@ -66,7 +68,7 @@ class _MainGroupBaseNormalizer:
                 return self.findMatchingCombo_shortRepr(combo)
         elif isinstance(combo, dict) or isInputComboStr_NRepresentsADict:
             return self.findMatchingCombo_dictRepr(combo)
-        assert False, f'no {str(combo)} is in uniqueCombos'
+        raise ValueError(f'no {str(combo)} is in uniqueCombos')
 
     def _getUniqueCombinations(self, df):
         comboObjs = {}

@@ -152,7 +152,8 @@ def setExclusionFlag_seqBeginning_mainGroups(df, mainGroups, excludeVal,
 
 # ---- multi series(NSeries) data
 def splitToNSeries(df, pastCols, aggColName):
-    assert aggColName not in df.columns, 'splitToNSeries: aggColName must not be in df columns'
+    if aggColName in df.columns:
+        raise ValueError('splitToNSeries: aggColName must not be in df columns')
     processedData = pd.DataFrame({})
     otherCols = [col for col in df.columns if col not in pastCols]
     for i, pc in enumerate(pastCols):
@@ -211,7 +212,8 @@ def rightPadSeriesIfShorter(series, maxLen, pad=0):
     if maxLen <= 0:
         return series
     currentLength = len(series)
-    assert currentLength <= maxLen, f"The series length is greater than {maxLen}: {currentLength}"
+    if currentLength > maxLen:
+        raise ValueError(f"The series length is greater than {maxLen}: {currentLength}")
     if currentLength < maxLen:
         series = rightPadSeries(series, maxLen - currentLength, pad=pad)
     return series
@@ -280,7 +282,8 @@ def rightPadIfShorter_npArray(arr, maxLen, pad=0):
     if maxLen <= 0:
         return arr
     currentLength = len(arr)
-    assert currentLength <= maxLen, f"The array length is greater than {maxLen}: {currentLength}"
+    if currentLength > maxLen:
+        raise ValueError(f"The array length is greater than {maxLen}: {currentLength}")
     if currentLength < maxLen:
         arr = rightPadNpArrayBaseFunc(arr, maxLen, pad=pad)
     return arr
@@ -307,7 +310,8 @@ def rightPadIfShorter_tensor(tensor, maxLen, pad=0):
     if maxLen <= 0:
         return tensor
     currentLength = tensor.size(0)
-    assert currentLength <= maxLen, f"The tensor length is greater than {maxLen}: {currentLength}"
+    if currentLength > maxLen:
+        raise ValueError(f"The tensor length is greater than {maxLen}: {currentLength}")
     if currentLength < maxLen:
         tensor = rightPadTensorBaseFunc(tensor, maxLen, pad=pad)
     return tensor

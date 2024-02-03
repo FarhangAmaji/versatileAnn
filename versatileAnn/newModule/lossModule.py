@@ -120,8 +120,8 @@ class _NewWrapper_loss:
             targets = {key: targets[key] for key in forwardOutputs.keys()}
 
         targetsFlatData = self._getFlattedData(targets)
-        assert len(outputsFlatData) == len(targetsFlatData), \
-            'mismatch in lens of outputsFlatData and targetsFlatData'
+        if len(outputsFlatData) != len(targetsFlatData):
+            raise ValueError('mismatch in lens of outputsFlatData and targetsFlatData')
         return outputsFlatData, targetsFlatData
 
     def _getFlattedData(self, data):

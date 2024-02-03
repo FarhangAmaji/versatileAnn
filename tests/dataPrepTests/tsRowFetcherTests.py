@@ -555,7 +555,7 @@ class TestTsRowFetcher_ShorterLen(BaseTestClass):
         self.fetcher.getBackForeCastData_general(self.df, 130, **commonkwargs2)
 
     def test_Error_Df(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(self.df, 131, **commonkwargs2)
         self.assertTrue(_TsRowFetcher.errMsgs['shorterLen'], str(context.exception))
 
@@ -573,7 +573,7 @@ class TestTsRowFetcher_ShorterLen(BaseTestClass):
         # kkk may have added the result check(maybe not needed ofc, done in other tests)
 
     def test_Error_NpDict(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(NpDict(self.df), 1, **commonkwargs2)
         self.assertTrue(_TsRowFetcher.errMsgs['shorterLen'], str(context.exception))
 
@@ -649,24 +649,24 @@ class TestTsRowFetcher_OutOfDataError(BaseTestClass):
         self.df = dfSample1.copy()
 
     def test_Df(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(self.df, 129, **commonkwargs2)
         self.assertTrue(_TsRowFetcher.errMsgs['non-negStartingPointDf'], str(context.exception))
 
     def test_NpDict(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(NpDict(self.df), -1, **commonkwargs2)
         self.assertTrue(_TsRowFetcher.errMsgs['non-negStartingPointNpDict'], str(context.exception))
 
     def test_NpArray(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(self.df.values, -1, mode='backcast',
                                                      colsOrIndexes=[0, 2], outputTensor=False)
         self.assertTrue(_TsRowFetcher.errMsgs['non-negStartingPointNpArray'],
                         str(context.exception))
 
     def test_Tensor(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.fetcher.getBackForeCastData_general(torch.tensor(self.df.values), -1,
                                                      mode='backcast',
                                                      colsOrIndexes=[0, 2], outputTensor=False)
@@ -717,13 +717,13 @@ class TestDataset_noNSeries_InDatasetIndexes(BaseTestClass):
         self.dataset = VAnnTsDataset(self.df, backcastLen=2, forecastLen=3, useNpDictForDfs=False)
 
     def test_notInDatasetIndexes(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.dataset.getBackForeCastData(134, **commonkwargs3,
                                              shiftForward=0, rightPadIfShorter=False)
         self.assertTrue("134 is not in indexes", str(context.exception))
 
     def test_withShift_notInDatasetIndexes(self):
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             self.dataset.getBackForeCastData(137, **commonkwargs3,
                                              shiftForward=-2, rightPadIfShorter=False)
         self.assertTrue("135 is not in indexes", str(context.exception))

@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from dataPrep.dataCleaning import noNanOrNoneData
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, \
     rightPadIfShorter_tensor
+from utils.customErrors import InternalLogicError
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, DotDict, tensor_floatDtypeChangeIfNeeded, \
@@ -20,8 +21,7 @@ class _TsRowFetcher:
     errMsgs = {}
     errMsgs['shorterLen'] = "this output is shorter than requested"
     for it in ['Df', 'Tensor', 'NpDict', 'NpArray']:
-        errMsgs[
-            f'non-negStartingPoint{it}'] = f'the starting point for {it} should be non-negative'
+        errMsgs[f'non-negStartingPoint{it}'] = f'the starting point for {it} should be non-negative'
 
     errMsgs = DotDict(errMsgs)
 
@@ -50,7 +50,12 @@ class _TsRowFetcher:
         # qqq does this idx match with getItem of dataset
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        assert idx + shiftForward in df.index, _TsRowFetcher.errMsgs['non-negStartingPointDf']
+        # bugPotentialCheck2
+        #  in past I had 'if idx + shiftForward not in df.index:' then raise ValueError but found it
+        #  not needed and self._assertIdx_NShiftInIndexes
+        #  recheck later and if not found any it needed again remove this msg
+        if idx + shiftForward < 0:
+            raise ValueError(_TsRowFetcher.errMsgs['non-negStartingPointDf'])
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap - 1 + shiftForward)
@@ -73,7 +78,8 @@ class _TsRowFetcher:
                        rightPadIfShorter=False):
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointTensor']
+        if idx + shiftForward < 0:
+            raise ValueError(_TsRowFetcher.errMsgs['non-negStartingPointTensor'])
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap + shiftForward)
@@ -95,7 +101,8 @@ class _TsRowFetcher:
                        rightPadIfShorter=False):
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpDict']
+        if idx + shiftForward < 0:
+            raise ValueError(_TsRowFetcher.errMsgs['non-negStartingPointNpDict'])
 
         slice_ = slice(idx + lowerBoundGap + shiftForward,
                        idx + upperBoundGap + shiftForward)
@@ -117,7 +124,8 @@ class _TsRowFetcher:
                         rightPadIfShorter=False):
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        assert idx + shiftForward >= 0, _TsRowFetcher.errMsgs['non-negStartingPointNpArray']
+        if idx + shiftForward < 0:
+            raise ValueError(_TsRowFetcher.errMsgs['non-negStartingPointNpArray'])
 
         # cccDevAlgo
         #  for np arrays [-1]results a value so we have to make assertion;
@@ -204,7 +212,8 @@ class _TsRowFetcher:
         elif isinstance(data, torch.Tensor):  # tensor
             res = self._getCastByMode(self.getRows_tensor, **varDicts)
         else:
-            assert False, 'to use "getBackForeCastData" data type should be pandas.DataFrame or torch.Tensor or np.ndarray or NpDict'
+            raise ValueError('to use "getBackForeCastData" data type should be ' + \
+                             'pandas.DataFrame or torch.Tensor or np.ndarray or NpDict')
         return res
 
     def _getCastByMode(self, dataTypeFunc, data, idx,
@@ -233,12 +242,14 @@ class _TsRowFetcher:
             return dataTypeFunc(data, lowerBoundGap=0,
                                 upperBoundGap=1, **varDicts)
         else:
-            assert False, "_getCastByMode is only works one of 'backcast', 'forecast', 'fullcast','singlePoint' castModes"
+            raise ValueError("_getCastByMode is only works one of 'backcast', 'forecast', " + \
+                             "'fullcast','singlePoint' castModes")
 
     def _assertIdxInIndexes(self, idx, isAllowed=False):
         if not isAllowed:
             if self.indexes is not None:
-                assert idx in self.indexes, f'{idx} is not in indexes'
+                if idx not in self.indexes:
+                    raise ValueError(f'{idx} is not in indexes')
                 # goodToHave3 this should have been IndexError, but changing it, requires changing some tests
 
     def _assertIdx_NShiftInIndexes(self, idx, shiftForward, isAllowed):
@@ -253,15 +264,17 @@ class _TsRowFetcher:
         else:
             sliceLen = normalSliceLen
 
-        assert sliceLen >= len_, "_hasShorterLen: internal logic error, Length is greater than expected"
+        if not sliceLen >= len_:
+            raise InternalLogicError("_hasShorterLen: internal logic error, " + \
+                                     "Length is greater than expected")
 
         return sliceLen > len_
 
     def _assertCanHaveShorterLength_dependingOnAllowance(self, isAllowed, len_,
                                                          slice_, isItDfLen=False):
         if not isAllowed:
-            assert not self._hasShorterLen(len_, slice_, isItDfLen=isItDfLen), \
-                _TsRowFetcher.errMsgs['shorterLen']
+            if self._hasShorterLen(len_, slice_, isItDfLen=isItDfLen):
+                raise ValueError(_TsRowFetcher.errMsgs['shorterLen'])
 
     @argValidator
     def _rightPadShorterIfAllowed(self, shorterLenAllowance,
@@ -285,7 +298,7 @@ class _TsRowFetcher:
                 elif isinstance(resData, torch.Tensor):
                     return rightPadIfShorter_tensor(resData, sliceLen, pad=pad)
                 else:
-                    assert False, 'only pd.DataFrame,pd.Series, Np array and tensor are allowed'
+                    raise ValueError('only pd.DataFrame,pd.Series, Np array and tensor are allowed')
             else:
                 # cccAlgo
                 #  this part returns result which is shorter than regular(depending on back and forecastLens);
@@ -392,7 +405,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
             elif isinstance(dataToLook, pd.DataFrame):
                 return dataToLook.loc[idx]
             else:
-                assert False, '__getitem__: internal logic error'
+                raise InternalLogicError('__getitem__: internal logic error')
 
         # no mainGroups
         if isinstance(self.data, NpDict):
@@ -468,12 +481,13 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                 # cccAlgo note the indexes are relative df.indexes. for i.e. if the df.indexes was [130,131,132,...]
                 # and 130 and 132 have __startPoint__==True, indexes would be [0,2,...]
             else:
-                assert False, '_setIndexes: internal logic error'
+                raise InternalLogicError('_setIndexes: internal logic error')
 
         self.indexes = list(indexes)
 
     def _assignMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
-        assert self.mainGroups, 'no mainGroups to assign idxs'
+        if not self.mainGroups:
+            raise InternalLogicError('no mainGroups to assign idxs')
         if not (isinstance(data, pd.DataFrame) or isinstance(data, NpDict)):
             raise ValueError('only pd.DataFrame or NpDict can have mainGroups defined')
 
@@ -492,7 +506,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                                             npDictData=False,
                                             convGroupData_ToNpDict=False)
         else:
-            assert False, 'only pd.DataFrame and NpDicts can have mainGroups defined'
+            raise InternalLogicError('only pd.DataFrame and NpDicts can have mainGroups defined')
 
     def _assignData_NMainGroupsIdxs(self, data, mainGroups, useNpDictForDfs):
         if mainGroups:
@@ -546,7 +560,8 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                 self.mainGroupsRelIdxs[groupName] = []
 
     def _findIdxIn_mainGroupsRelIdxs(self, idx):
-        assert self.mainGroups, 'dataset doesnt have mainGroups'
+        if not self.mainGroups:
+            raise InternalLogicError('dataset doesnt have mainGroups')
         for groupName in self.mainGroupsGeneralIdxs.keys():
             if idx in self.mainGroupsGeneralIdxs[groupName]:
                 return groupName

@@ -274,8 +274,8 @@ def npArrayBroadCast(arr, shape):
     shape = tuple(shape)
     arrShape = arr.shape
     arrShapeLen = len(arrShape)
-    assert arrShape[:arrShapeLen] == shape[
-                                     :arrShapeLen], 'np array and the given shape, doesnt have same first dims'
+    if arrShape[:arrShapeLen] != shape[:arrShapeLen]:
+        raise ValueError('np array and the given shape, doesnt have same first dims')
     repeatCount = np.prod(shape[arrShapeLen:])
     res = np.repeat(arr, repeatCount).reshape(shape)
     return res
@@ -355,7 +355,8 @@ def listRangesToList(rangeList):
     if not rangeList:
         return []
 
-    assert all(isinstance(rg, range) for rg in rangeList), 'Not all items are ranges'
+    if not all(isinstance(rg, range) for rg in rangeList):
+        raise ValueError('Not all items are ranges')
 
     res = []
     for rg in rangeList:

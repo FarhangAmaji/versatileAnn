@@ -211,8 +211,8 @@ class _NestedDictStruct:
         #  and if is `a list of _NestedDictStructs` is called `multiple`
         validate_IsObjOfTypeX_orAListOfTypeX(_NestedDictStruct)(nestedDictStructs)
         if isinstance(nestedDictStructs, list):
-            assert len(nestedDictStructs) == len(itemsToAdd), \
-                'nestedDictStructs and itemsToAdd dont have the same length'
+            if len(nestedDictStructs) != len(itemsToAdd):
+                raise ValueError('nestedDictStructs and itemsToAdd dont have the same length')
             for i, nestedDictStruct in enumerate(nestedDictStructs):
                 nestedDictStruct.fillWithData(itemsToAdd[i])
         else:
@@ -270,7 +270,7 @@ class _NestedDictStruct:
         elif isinstance(self.struct, dict):
             return self.getValuesOfDictTypeStruct(self.struct, toGpuTensor=toGpuTensor)
         else:
-            assert False, '.struct is not dict or _ObjectToBeTensored'
+            raise ValueError('.struct is not dict or _ObjectToBeTensored')
 
     def getDataAsGpuTensors_single(self):
         return self.getData_single(toGpuTensor=True)

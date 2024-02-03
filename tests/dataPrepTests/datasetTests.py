@@ -306,7 +306,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
     def testDf_useNpDictForDfs_StartPointsInCols_expectedRaisingIndexError_notInTsStartPointIndexes(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
         idx = 1
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -320,7 +320,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
     def testDf_noUseNpDictForDfs_StartPointsInCols_expectedRaisingIndexError_notInTsStartPointIndexes(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         idx = 11 #dataset.indexes==[110, 112, 113, 115]
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -337,7 +337,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         npDict=NpDict(self.df)
         dataset = VAnnTsDataset(npDict, **self.kwargs)
         idx = 13 #this not in npDict at all( len of npDict is 10), and the problem is not, not to have tsStartPoint==True
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -345,7 +345,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         npDict=NpDict(self.df)
         dataset = VAnnTsDataset(npDict, **self.kwargs)
         idx = 1
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -368,7 +368,7 @@ class VAnnTsDataset_NoNSeries_GetItemTests(BaseTestClass):
         npArray = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         dataset = VAnnTsDataset(npArray, backcastLen=0, forecastLen=0, indexes=[0,2])
         idx = 1
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 # ----         VAnnTsDataset_NSeries_GetItemTests
@@ -391,7 +391,7 @@ class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
     def testDf_StartPointsInCols_useNpDictForDfs_expectedRaisingIndexError_notInTsStartPointIndexes(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=True, **self.kwargs)
         idx = 8#from g2
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -405,7 +405,7 @@ class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
     def testDf_StartPointsInCols_noUseNpDictForDfs_expectedRaisingIndexError_notInTsStartPointIndexes(self):
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         idx = 111# from g1
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 
@@ -422,7 +422,7 @@ class VAnnTsDataset_NSeries_GetItemTests(BaseTestClass):
     def testNpDict_StartPointsInCols_expectedRaisingIndexError_notInTsStartPointIndexes(self):
         dataset = VAnnTsDataset(NpDict(self.df), **self.kwargs)
         idx = 14#from g2
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             dataset[idx]
         self.assertEqual(str(context.exception), f"{idx} is not in indexes")
 # ---- run test
