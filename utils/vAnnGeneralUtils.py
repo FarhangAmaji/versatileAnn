@@ -566,11 +566,33 @@ def isCustomClass(cls_):
 
 
 def findClassDefinition(directoryPath, className):
+    """
+    This function searches for a specific class definition in all Python files within a given directory.
+
+    Returns:
+    tuple: A tuple containing three elements:
+        - A boolean indicating whether the class was found exactly once.
+        - A list of file paths where the class definition was found.
+        - A list of the class definitions found.
+    """
+
     filePathsHavingTheDefinitionOfClass = []
     classDefinitions = []
 
     class ClassVisitor(ast.NodeVisitor):
+        """
+        This class is a subclass of ast.NodeVisitor used to visit nodes in the AST.
+        It overrides the visit_ClassDef method to process class definition nodes.
+        """
+
         def visit_ClassDef(self, node):
+            """
+            This method is called for each class definition node in the AST.
+            If the class name matches the target class name, it appends its source code to lastClassDefinitions.
+
+            Parameters:
+            node (ast.ClassDef): The class definition node to process.
+            """
             if node.name == className:
                 start_line = node.lineno
                 # Find the last line of the class definition
@@ -586,11 +608,13 @@ def findClassDefinition(directoryPath, className):
                 filePath = os.path.join(root, file)
                 try:
                     with open(filePath, 'r') as f:
-                        lines = f.readlines()  # Read the lines of the file
+                        lines = f.readlines()
                         tree = ast.parse(''.join(lines))
-                        lastClassDefinitions = []  # Initialize lastClassDefinitions for this file
+                        lastClassDefinitions = []
+                        # reset lastClassDefinitions for this file; as it is the indicator of
+                        # 'ClassVisitor().visit(tree)' being successful or not
                         ClassVisitor().visit(tree)
-                        if lastClassDefinitions:  # Check if lastClassDefinitions is not empty
+                        if lastClassDefinitions:
                             filePathsHavingTheDefinitionOfClass.append(filePath)
                             classDefinitions.extend(lastClassDefinitions)
                 except Exception as e:
