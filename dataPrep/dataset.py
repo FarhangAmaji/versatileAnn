@@ -51,7 +51,7 @@ class _TsRowFetcher:
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
         # bugPotentialCheck2
-        #  in past I had 'if idx + shiftForward not in df.index:' then raise ValueError but found it
+        #  in past this code had 'if idx + shiftForward not in df.index:' then raise ValueError but found it
         #  not needed and self._assertIdx_NShiftInIndexes
         #  recheck later and if not found any it needed again remove this msg
         if idx + shiftForward < 0:
