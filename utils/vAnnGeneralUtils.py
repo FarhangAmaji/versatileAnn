@@ -1,3 +1,4 @@
+import ast
 import inspect
 import os
 import platform
@@ -564,6 +565,46 @@ def isCustomClass(cls_):
     ) and not issubclass(cls_, types.FunctionType)
 
 
+def findClassDefinition(directoryPath, className):
+    filePathsHavingTheDefinitionOfClass = []
+    classDefinitions = []
+
+    class ClassVisitor(ast.NodeVisitor):
+        def visit_ClassDef(self, node):
+            if node.name == className:
+                start_line = node.lineno
+                # Find the last line of the class definition
+                end_line = max((getattr(n, 'end_lineno', start_line) for n in ast.walk(node)),
+                               default=start_line)
+                classDefinition = lines[start_line - 1:end_line]
+                lastClassDefinitions.append('\n'.join(classDefinition))
+            self.generic_visit(node)
+
+    for root, dirs, files in os.walk(directoryPath):
+        for file in files:
+            if file.endswith('.py'):
+                filePath = os.path.join(root, file)
+                try:
+                    with open(filePath, 'r') as f:
+                        lines = f.readlines()  # Read the lines of the file
+                        tree = ast.parse(''.join(lines))
+                        lastClassDefinitions = []  # Initialize lastClassDefinitions for this file
+                        ClassVisitor().visit(tree)
+                        if lastClassDefinitions:  # Check if lastClassDefinitions is not empty
+                            filePathsHavingTheDefinitionOfClass.append(filePath)
+                            classDefinitions.extend(lastClassDefinitions)
+                except Exception as e:
+                    print(
+                        f"findClassDefinition: An error occurred while parsing the file {filePath}: {e}")
+
+    if len(filePathsHavingTheDefinitionOfClass) == 0:
+        return False, [], []
+    elif len(filePathsHavingTheDefinitionOfClass) == 1:
+        return True, filePathsHavingTheDefinitionOfClass, classDefinitions
+    else:
+        return False, filePathsHavingTheDefinitionOfClass, classDefinitions
+
+
 # ---- download
 async def downloadFileAsync(url, destination, event=None):
     async with aiohttp.ClientSession() as session:
@@ -593,6 +634,25 @@ def filePathToDirectoryPath(path):
             raise ValueError(f"{path} is neither a file nor a directory.")
     else:
         raise ValueError(f"{path} doesn't exist.")
+
+
+def nFoldersBack(path, n=1):
+    # Get the absolute path to handle both relative and absolute paths
+    absolutePath = os.path.abspath(path)
+
+    # Navigate three levels up for directories
+    for _ in range(n):
+        absolutePath = os.path.dirname(absolutePath)
+
+    # If the original path is a file, go up one more level
+    if os.path.isfile(path):
+        absolutePath = os.path.dirname(absolutePath)
+
+    return absolutePath
+
+
+def getProjectDirectory():
+    return nFoldersBack(os.path.abspath(__file__))
 
 
 # ---- torch utils
