@@ -269,6 +269,22 @@ def regularizeBoolCol(df, colName):
     df[colName] = df[colName].astype(bool)
 
 
+def pandasGroupbyAlternative(df, columns, **kwargs):
+    """
+    Custom implementation of pandas' groupby method to ensure consistent behavior across
+    different versions.
+
+    In some pandas versions, grouping by a single column results in keys as tuples ('g1',).
+    In other versions, keys are returned as values from the column ('g1').
+    This function ensures group names are always strings, not tuples, regardless of pandas version.
+    """
+    grouped = df.groupby(columns, **kwargs)
+    for groupName, groupDf in grouped:
+        if isinstance(groupName, tuple) and len(groupName) == 1:
+            groupName = groupName[0]
+        yield groupName, groupDf
+
+
 # ---- np array
 def npArrayBroadCast(arr, shape):
     shape = tuple(shape)

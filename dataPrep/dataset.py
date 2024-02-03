@@ -12,7 +12,7 @@ from utils.customErrors import InternalLogicError
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import NpDict, DotDict, tensor_floatDtypeChangeIfNeeded, \
-    varPasser
+    varPasser, pandasGroupbyAlternative
 from utils.warnings import Warn
 
 
@@ -536,7 +536,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         #         mainGroupsRelIdxs for Group 'B' gonna be:[]
 
         df = data.df if npDictData else data
-        for groupName, groupDf in df.groupby(mainGroups):
+        for groupName, groupDf in pandasGroupbyAlternative(df, mainGroups):
             if convGroupData_ToNpDict:  # this accounts for npDict and (df with useNpDictForDfs)
                 # cccUsage note all indexes like self.indexes or mainGroupsGeneralIdxs are the indexes of df
                 self.data[groupName] = NpDict(groupDf)

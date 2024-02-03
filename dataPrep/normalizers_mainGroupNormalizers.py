@@ -4,7 +4,8 @@ from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances
+from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances, \
+    pandasGroupbyAlternative
 from utils.warnings import Warn
 
 
@@ -73,7 +74,7 @@ class _MainGroupBaseNormalizer:
     def _getUniqueCombinations(self, df):
         comboObjs = {}
 
-        for groupName, groupDf in df.groupby(self.mainGroupColNames):
+        for groupName, groupDf in pandasGroupbyAlternative(df, self.mainGroupColNames):
             comboDict = dict(zip(self.mainGroupColNames, groupName))
             combo = _Combo(comboDict, self.mainGroupColNames)
             comboObjs.update({f'{combo.__repr__()}': combo})

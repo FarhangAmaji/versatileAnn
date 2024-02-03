@@ -13,7 +13,8 @@ from dataPrep.utils_innerFuncs import _splitApplyConditions
 from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser
+from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser, \
+    pandasGroupbyAlternative
 
 
 # ---- data split
@@ -104,7 +105,7 @@ def splitTrainValTest_mainGroup(df, mainGroups, *, trainRatio, valRatio, seqLen=
     #  and different mainGroups data dont get mixed up
     # addTest1
     # mustHave2 shuffle should have seed
-    grouped = df.groupby(mainGroups)
+    grouped = pandasGroupbyAlternative(df, mainGroups)
 
     groupedDfs = {}
     groupNames = []

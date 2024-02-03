@@ -167,10 +167,10 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
         TruesIndexFromBeginning = lambda inpList: [i for i, val in enumerate(inpList) if
                                                    val == True]
         self.TruesIndexFromBeginning = TruesIndexFromBeginning(self.df['__startPoint__'])
-        self.mgGeneralIndexes = {('g1',): [0, 2, 3],
-                                 ('g2',): [9, 11]}
-        self.mgRelIndexes = {('g1',): TruesIndexFromBeginning(g1startPoints),
-                             ('g2',): TruesIndexFromBeginning(g2startPoints)}
+        self.mgGeneralIndexes = {'g1': [0, 2, 3],
+                                 'g2': [9, 11]}
+        self.mgRelIndexes = {'g1': TruesIndexFromBeginning(g1startPoints),
+                             'g2': TruesIndexFromBeginning(g2startPoints)}
 
     def assertionsFor_Df_useNpDictForDfs_AndNpDict(self, dataset):
         self.setUp()
@@ -194,9 +194,9 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
         #  computer which was macbook and the dataset.mainGroupsGeneralIdxs was
         #  `{'g1': [110, 112, 113], 'g2': [119, 121]}`. so this comes either macOs version of python
         #  or maybe related to other python package differences.
-        self.assertDictEqual(dataset.mainGroupsGeneralIdxs, {('g1',): [110, 112, 113],
-                                                             ('g2',): [119, 121]})
-        self.assertDictEqual(dataset.mainGroupsRelIdxs, {('g1',): [], ('g2',): []})
+        self.assertDictEqual(dataset.mainGroupsGeneralIdxs, {'g1': [110, 112, 113],
+                                                             'g2': [119, 121]})
+        self.assertDictEqual(dataset.mainGroupsRelIdxs, {'g1': [], 'g2': []})
 
     def testNpDict_StartPointsInCols(self):
         self.setUp()
