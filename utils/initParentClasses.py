@@ -29,6 +29,7 @@ def exclude_selfNArgsNKwargs_fromAllArgs(allArgs: dict):
     for removeArg in ['self', 'args', 'kwargs']:
         if removeArg in allArgs:
             allArgs.pop(removeArg)
+    return allArgs
 
 
 @argValidator

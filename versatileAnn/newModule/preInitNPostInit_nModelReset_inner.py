@@ -39,7 +39,8 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
             #  we don't make error and just give warning, because sometimes the user have not
             #  included *args in their __init__ but because of inheritance from `object`,
             #  __init__ has *args
-        exclude_selfNArgsNKwargs_fromAllArgs(argsOf_parentClasses_tillNewWrapper)
+        argsOf_parentClasses_tillNewWrapper = exclude_selfNArgsNKwargs_fromAllArgs(
+            argsOf_parentClasses_tillNewWrapper)
         return argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper
 
     @staticmethod
@@ -73,7 +74,8 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         parentClassesOfNewWrapper = {pc.__name__: pc for pc in NewWrapper_Obj.__bases__}
         argsOf_parentClassesOfNewWrapper = getArgsOfClasses(parentClassesOfNewWrapper,
                                                             originalKwargs)
-        exclude_selfNArgsNKwargs_fromAllArgs(argsOf_parentClassesOfNewWrapper)
+        argsOf_parentClassesOfNewWrapper = exclude_selfNArgsNKwargs_fromAllArgs(
+            argsOf_parentClassesOfNewWrapper)
 
         # cccDevStruct
         #  note this is only for development error detection
