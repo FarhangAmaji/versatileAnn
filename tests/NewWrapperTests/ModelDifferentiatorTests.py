@@ -46,7 +46,10 @@ class Parent2p1:
 
 
 class Parent2(Parent2p1, Parent2p2):
-    # kkk nn.Module should not be a parent; kkk why
+    # bugPotentialCheck1
+    #  nn.Module should not be a parent
+    # goodToHave2
+    #  why nn.Module should not be a parent
     def __init__(self, midLayer2):
         self.layp21 = NNDummyModule1()
         self.layp22 = NNDummyModule2()

@@ -821,7 +821,7 @@ def spellPluralS(list_: list, string="", es=False):
 
 
 # ---- variable
-def NoneToNullValueOrValue(var, nullVal):
+def setDefaultIfNone(var, nullVal):
     '''
     it's a very important to prevent bugs
     'a=a or []' must be '[] if a is None else a' of as this func is

@@ -46,9 +46,9 @@ class _NewWrapper_modelDifferentiator:
 
         # this func is recursively called so in order not fall in to infinite loop, visitedClasses
         # is declared
-        visitedClasses = NoneToNullValueOrValue(visitedClasses, set())
-        classesDict = NoneToNullValueOrValue(classesDict, {})
-        visitedWarns = NoneToNullValueOrValue(visitedWarns, set())
+        visitedClasses = setDefaultIfNone(visitedClasses, set())
+        classesDict = setDefaultIfNone(classesDict, {})
+        visitedWarns = setDefaultIfNone(visitedWarns, set())
         # duty1: Get definitions of the main object's class and its parent classes
         self._getClassAndItsParentsDefinitions(obj.__class__, visitedClasses,
                                                classesDict)
@@ -147,8 +147,8 @@ class _NewWrapper_modelDifferentiator:
         # bugPotentialCheck2
         #  is possible to get in to infinite loop
 
-        visited = NoneToNullValueOrValue(visited, set())
-        classesDict = NoneToNullValueOrValue(classesDict, {})
+        visited = setDefaultIfNone(visited, set())
+        classesDict = setDefaultIfNone(classesDict, {})
 
         # not allowing to collect NewWrapper and it's parent definitions
         if self._isCls_NewWrapperClass(cls_):
@@ -195,8 +195,8 @@ class _NewWrapper_modelDifferentiator:
         #  assume that some attribute is just definition of a func
         #  so in order to have the all components that let this class to be created; the
         #  definition of that function should be included
-        visitedFuncs = NoneToNullValueOrValue(visitedFuncs, set())
-        funcDefinitions = NoneToNullValueOrValue(funcDefinitions, [])
+        visitedFuncs = setDefaultIfNone(visitedFuncs, set())
+        funcDefinitions = setDefaultIfNone(funcDefinitions, [])
 
         if isinstance(obj, dict):
             for varName, varValue in obj.items():
