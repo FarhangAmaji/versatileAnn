@@ -565,7 +565,7 @@ def isCustomClass(cls_):
     ) and not issubclass(cls_, types.FunctionType)
 
 
-def findClassDefinition(directoryPath, className):
+def findClassDefinition_inADirectory(directoryPath, className):
     """
     This function searches for a specific class definition in all Python files within a given directory.
 
@@ -619,7 +619,7 @@ def findClassDefinition(directoryPath, className):
                             classDefinitions.extend(lastClassDefinitions)
                 except Exception as e:
                     print(
-                        f"findClassDefinition: An error occurred while parsing the file {filePath}: {e}")
+                        f"findClassDefinition_inADirectory: An error occurred while parsing the file {filePath}: {e}")
 
     if len(filePathsHavingTheDefinitionOfClass) == 0:
         return False, [], []
@@ -627,6 +627,55 @@ def findClassDefinition(directoryPath, className):
         return True, filePathsHavingTheDefinitionOfClass, classDefinitions
     else:
         return False, filePathsHavingTheDefinitionOfClass, classDefinitions
+
+
+def getClassObjectFromFile(className, filePath):
+    """
+    Get the class object based on the provided class name and file path.
+
+    :return: Class object if found, otherwise None.
+    """
+    import importlib
+    import sys
+    try:
+        # Extract the directory containing the module
+        module_dir = os.path.dirname(filePath)
+
+        # Add the module directory to sys.path
+        sys.path.append(module_dir)
+
+        # Import the module dynamically
+        module_name = os.path.splitext(os.path.basename(filePath))[0]
+        module = importlib.import_module(module_name)
+
+        # Retrieve the class object using the class name
+        classObject = getattr(module, className)
+
+        # Check if the retrieved object is a class
+        if isinstance(classObject, type):
+            return classObject
+        else:
+            print(f"{className} is not a class in {filePath}.")
+    except ImportError:
+        print(f"Module {filePath} not found.")
+    except AttributeError:
+        print(f"Class {className} not found in {filePath}.")
+    finally:
+        # Remove the module directory from sys.path to avoid conflicts
+        sys.path.remove(module_dir)
+
+    return None
+
+
+def findClassObject_inADirectory(directoryPath, className):
+    classObjects = []
+    res = findClassDefinition_inADirectory(directoryPath, className)
+    paths = res[1]
+
+    for path in paths:
+        classObjects.append(getClassObjectFromFile(className, path))
+
+    return classObjects
 
 
 # ---- download
