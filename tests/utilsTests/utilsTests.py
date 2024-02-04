@@ -337,13 +337,13 @@ class FindClassDefinitionTests(BaseTestClass):
 
     def testExistingClass_inMultiplePlaces(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
-                                               'NNDummyModule1ClassForStaticAndInstanceMethod')
-        expectedPaths = [os.path.join(getProjectDirectory(), 'tests', 'newWrapperTests',
-                                      'ModelDifferentiatorTests_dummyClassDefs', 'm1.py'),
+                                               'NNDummyFor_findClassDefinition_inADirectoryTest')
+        expectedPaths = [os.path.join(getProjectDirectory(), 'tests', 'utilsTests',
+                                      'dummyForTest.py'),
                          os.path.join(getProjectDirectory(), 'tests', 'utilsTests',
-                                      'dummyForTest.py')]
+                                      'dummyForTest2.py')]
         self.assertEqual(res['filePaths'], expectedPaths)
-        def1 = "class NNDummyModule1ClassForStaticAndInstanceMethod:\n\n    def __init__(self):\n\n        self.ke = 78\n\n\n\n    @staticmethod\n\n    def static_Method1():\n\n        print('staticmethod for NNDummyModule1')\n\n\n\n    def instanceMeth1(self):\n\n        print('instancemethod for NNDummyModule1')\n"
+        def1 = "class NNDummyFor_findClassDefinition_inADirectoryTest:\n\n    def __init__(self):\n\n        self.ke = 78\n\n\n\n    @staticmethod\n\n    def static_Method1():\n\n        print('staticmethod for NNDummyModule1')\n\n\n\n    def instanceMeth1(self):\n\n        print('instancemethod for NNDummyModule1')\n"
         self.assertEqual(res['Definitions'][0], def1)
         self.assertEqual(res['Definitions'][1], def1)
 

@@ -565,7 +565,7 @@ def isCustomClass(cls_):
     ) and not issubclass(cls_, types.FunctionType)
 
 
-def findClassDefinition_inADirectory(directoryPath, className):
+def findClassDefinition_inADirectory(directoryPath, className, printOff=False):
     """
     This function searches for a specific class definition in all Python files within a given directory.
     """
@@ -612,14 +612,15 @@ def findClassDefinition_inADirectory(directoryPath, className):
                             filePathsHavingTheDefinitionOfClass.append(filePath)
                             classDefinitions.extend(lastClassDefinitions)
                 except Exception as e:
-                    print(
-                        f"findClassDefinition_inADirectory: An error occurred while parsing the file {filePath}: {e}")
+                    if not printOff:
+                        print(
+                            f"findClassDefinition_inADirectory: An error occurred while parsing the file {filePath}: {e}")
 
     return {'className': className, 'Definitions': classDefinitions,
             'filePaths': filePathsHavingTheDefinitionOfClass}
 
 
-def getClassObjectFromFile(className, filePath):
+def getClassObjectFromFile(className, filePath, printOff=False):
     """
     Get the class object based on the provided class name and file path.
 
@@ -645,11 +646,14 @@ def getClassObjectFromFile(className, filePath):
         if isinstance(classObject, type):
             return classObject
         else:
-            print(f"{className} is not a class in {filePath}.")
+            if not printOff:
+                print(f"{className} is not a class in {filePath}.")
     except ImportError:
-        print(f"Module {filePath} not found.")
+        if not printOff:
+            print(f"Module {filePath} not found.")
     except AttributeError:
-        print(f"Class {className} not found in {filePath}.")
+        if not printOff:
+            print(f"Class {className} not found in {filePath}.")
     finally:
         # Remove the module directory from sys.path to avoid conflicts
         sys.path.remove(moduleDir)
@@ -657,13 +661,14 @@ def getClassObjectFromFile(className, filePath):
     return None
 
 
-def findClassObject_inADirectory(directoryPath, className):
+def findClassObject_inADirectory(directoryPath, className, printOff=False):
     result = {'className': className, 'classObjects': [],
               'filePaths': [], 'Definitions': []}
-    findClassDefinitionRes = findClassDefinition_inADirectory(directoryPath, className)
+    findClassDefinitionRes = findClassDefinition_inADirectory(directoryPath, className,
+                                                              printOff=printOff)
 
     for i, path in enumerate(findClassDefinitionRes['filePaths']):
-        result['classObjects'].append(getClassObjectFromFile(className, path))
+        result['classObjects'].append(getClassObjectFromFile(className, path, printOff=printOff))
         result['filePaths'].append(findClassDefinitionRes['filePaths'][i])
         result['Definitions'].append(findClassDefinitionRes['Definitions'][i])
 
@@ -717,7 +722,8 @@ def nFoldersBack(path, n=1):
 
 
 def getProjectDirectory():
-    return nFoldersBack(os.path.abspath(__file__))
+    # this is supposed to bring same result from anywhere this func is called
+    return nFoldersBack(os.path.abspath(__file__), n=1)
 
 
 # ---- torch utils
