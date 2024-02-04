@@ -565,56 +565,62 @@ def isCustomClass(cls_):
     ) and not issubclass(cls_, types.FunctionType)
 
 
-def findClassDefinition_inADirectory(directoryPath, className, printOff=False):
+class ClassVisitor(ast.NodeVisitor):
     """
-    This function searches for a specific class definition in all Python files within a given directory.
+    This class is a subclass of ast.NodeVisitor used to visit nodes in the AST.
+    It overrides the visit_ClassDef method to process class definition nodes.
     """
 
+    def __init__(self, className, lines):
+        self.className = className
+        self.classDefinitions = []
+        self.lines = lines
+
+    def visit_ClassDef(self, node):
+        """
+        This method is called for each class definition node in the AST.
+        If the class name matches the target class name, it appends its source code to lastClassDefinitions.
+
+        Parameters:
+        node (ast.ClassDef): The class definition node to process.
+        """
+        if node.name == self.className:
+            start_line = node.lineno
+            # Find the last line of the class definition
+            end_line = max((getattr(n, 'end_lineno', start_line) for n in ast.walk(node)),
+                           default=start_line)
+            classDefinition = self.lines[start_line - 1:end_line]
+            self.classDefinitions.append('\n'.join(classDefinition))
+        self.generic_visit(node)
+
+
+def findClassDefinition_inAFile(filePath, className, printOff=False):
+    try:
+        with open(filePath, 'r') as f:
+            lines = f.readlines()
+            tree = ast.parse(''.join(lines))
+            visitor = ClassVisitor(className, lines)
+            visitor.visit(tree)
+            return visitor.classDefinitions
+    except Exception as e:
+        if not printOff:
+            print(
+                f"findClassDefinition_inAFile: An error occurred while parsing the file {filePath}: {e}")
+        return []
+
+
+def findClassDefinition_inADirectory(directoryPath, className, printOff=False):
     filePathsHavingTheDefinitionOfClass = []
     classDefinitions = []
-
-    class ClassVisitor(ast.NodeVisitor):
-        """
-        This class is a subclass of ast.NodeVisitor used to visit nodes in the AST.
-        It overrides the visit_ClassDef method to process class definition nodes.
-        """
-
-        def visit_ClassDef(self, node):
-            """
-            This method is called for each class definition node in the AST.
-            If the class name matches the target class name, it appends its source code to lastClassDefinitions.
-
-            Parameters:
-            node (ast.ClassDef): The class definition node to process.
-            """
-            if node.name == className:
-                start_line = node.lineno
-                # Find the last line of the class definition
-                end_line = max((getattr(n, 'end_lineno', start_line) for n in ast.walk(node)),
-                               default=start_line)
-                classDefinition = lines[start_line - 1:end_line]
-                lastClassDefinitions.append('\n'.join(classDefinition))
-            self.generic_visit(node)
 
     for root, dirs, files in os.walk(directoryPath):
         for file in files:
             if file.endswith('.py'):
                 filePath = os.path.join(root, file)
-                try:
-                    with open(filePath, 'r') as f:
-                        lines = f.readlines()
-                        tree = ast.parse(''.join(lines))
-                        lastClassDefinitions = []
-                        # reset lastClassDefinitions for this file; as it is the indicator of
-                        # 'ClassVisitor().visit(tree)' being successful or not
-                        ClassVisitor().visit(tree)
-                        if lastClassDefinitions:
-                            filePathsHavingTheDefinitionOfClass.append(filePath)
-                            classDefinitions.extend(lastClassDefinitions)
-                except Exception as e:
-                    if not printOff:
-                        print(
-                            f"findClassDefinition_inADirectory: An error occurred while parsing the file {filePath}: {e}")
+                fileClassDefinitions = findClassDefinition_inAFile(filePath, className, printOff)
+                if fileClassDefinitions:
+                    filePathsHavingTheDefinitionOfClass.append(filePath)
+                    classDefinitions.extend(fileClassDefinitions)
 
     return {'className': className, 'Definitions': classDefinitions,
             'filePaths': filePathsHavingTheDefinitionOfClass}
