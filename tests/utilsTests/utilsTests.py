@@ -280,7 +280,7 @@ class FindClassDefinitionTests(BaseTestClass):
                                                'MainGroupSingleColsStdNormalizer')
         expectedPath = os.path.join(getProjectDirectory(), 'dataPrep',
                                     'normalizers_mainGroupNormalizers.py')
-        self.assertEqual(res[1][0], expectedPath)
+        self.assertEqual(res['filePaths'][0], expectedPath)
         expectedDef = """class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
 
     def __init__(self, df, mainGroupColNames, colNames: list):
@@ -329,11 +329,11 @@ class FindClassDefinitionTests(BaseTestClass):
 
         return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 """
-        self.assertEqual(res[2][0], expectedDef)
+        self.assertEqual(res['Definitions'][0], expectedDef)
 
     def testNonExistingClass(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(), 'qqBangBang')
-        self.assertEqual(res, (False, [], []))
+        self.assertEqual(res, {'className': 'qqBangBang', 'Definitions': [], 'filePaths': []})
 
     def testExistingClass_inMultiplePlaces(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
@@ -342,17 +342,18 @@ class FindClassDefinitionTests(BaseTestClass):
                                       'ModelDifferentiatorTests_dummyClassDefs', 'm1.py'),
                          os.path.join(getProjectDirectory(), 'tests', 'utilsTests',
                                       'dummyForTest.py')]
-        self.assertEqual(res[1], expectedPaths)
+        self.assertEqual(res['filePaths'], expectedPaths)
         def1 = "class NNDummyModule1ClassForStaticAndInstanceMethod:\n\n    def __init__(self):\n\n        self.ke = 78\n\n\n\n    @staticmethod\n\n    def static_Method1():\n\n        print('staticmethod for NNDummyModule1')\n\n\n\n    def instanceMeth1(self):\n\n        print('instancemethod for NNDummyModule1')\n"
-        self.assertEqual(res[2][0], def1)
-        self.assertEqual(res[2][1], def1)
+        self.assertEqual(res['Definitions'][0], def1)
+        self.assertEqual(res['Definitions'][1], def1)
 
 
 class getClassObjectFromFileTest(BaseTestClass):
     def test(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
                                                'MainGroupSingleColsStdNormalizer')
-        classObj = getClassObjectFromFile('MainGroupSingleColsStdNormalizer', res[1][0])
+        classObj = getClassObjectFromFile('MainGroupSingleColsStdNormalizer', res['filePaths'][0])
+
         self.assertEqual(classObj.__name__, MainGroupSingleColsStdNormalizer.__name__)
         self.assertEqual(dir(classObj), dir(MainGroupSingleColsStdNormalizer))
 
