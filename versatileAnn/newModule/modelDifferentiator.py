@@ -311,14 +311,14 @@ class _NewWrapper_modelDifferentiator:
         #  with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
         NewWrapper = self._getNewWrapper_classObject()
         try:
-            for definition in self.allDefinitions:
+            for i, definition in enumerate(self.allDefinitions):
                 for className, classCode in definition.items():
                     try:
                         exec(classCode, locals())
                     except IndentationError:
                         cleanedDefinition = self._removeIndentsFromDefinition(classCode)
                         exec(cleanedDefinition)
-                        definition = {className: cleanedDefinition}
+                        self.allDefinitions[i] = {className: cleanedDefinition}
 
             return True  # returning sanity of allDefinitions
         except Exception as e:
@@ -407,6 +407,7 @@ class _NewWrapper_modelDifferentiator:
             try:
                 exec(definition)
             except IndentationError:
+                oldLocals = set(locals().keys())
                 cleanedDefinition = self._removeIndentsFromDefinition(definition)
                 exec(cleanedDefinition)
 

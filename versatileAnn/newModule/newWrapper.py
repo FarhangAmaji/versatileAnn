@@ -110,3 +110,6 @@ class NewWrapper(pl.LightningModule,
         # cccDevAlgo
         #  this is a util to be used in parent classes and not get circular import error
         return cls_ is NewWrapper
+
+    def _getNewWrapper_classObject(self):
+        return NewWrapper

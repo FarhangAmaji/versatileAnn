@@ -566,6 +566,8 @@ def isCustomClass(cls_):
 
 
 class ClassVisitor(ast.NodeVisitor):
+    # goodToHave2
+    #  make a similar version for funcs
     """
     This class is a subclass of ast.NodeVisitor used to visit nodes in the AST.
     It overrides the visit_ClassDef method to process class definition nodes.

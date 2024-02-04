@@ -97,8 +97,21 @@ class NNDummy(Parent1, Parent2):
         return self.layp2p2p1p12(x)
 
 
+class class1Parent:
+    def __init__(self):
+        self.var1 = 1
+
+
+class class1(NewWrapper, class1Parent):
+    def __init__(self):
+        self.var2 = 1
+
+    def forward(self, inputs, targets):
+        return
+
+
 class ModelDifferentiatorTests(BaseTestClass):
-    def test1(self):
+    def test_getAllNeededDefinitions(self):
         model = NNDummy(midLayer1=5, midLayer2=6, midLayerp1=18, midLayer2p1=7, midLayer2p2=8,
                         lossFuncs=[nn.MSELoss(), nn.L1Loss()], testPrints=True)
 
@@ -146,6 +159,39 @@ class ModelDifferentiatorTests(BaseTestClass):
         expectedPrint = ""
         definitions = self.assertPrint(innerFunc, expectedPrint)
         self.assertEqual(expectedDefinitions, definitions)
+
+    def setUp(self):
+        self.class1 = class1
+        self.addedClassDef = 'class addedClass(addedClassParent):\n    def __init__(self):\n        self.layac1 = 4\n'
+        self.addedClassParentDef = 'class addedClassParent:\n    def __init__(self):\n        self.layacp1 = 7\n'
+
+    def test_addDefinitionsTo_allDefinitions_fail(self):
+        # this will fail because addedClassDef wants to get added before it's parent is added
+        self.setUp()
+        model = self.class1()
+        model._getAllNeededDefinitions(model)
+        with self.assertRaises(NameError) as context:
+            model.addDefinitionsTo_allDefinitions([self.addedClassDef])
+        self.assertEqual(str(context.exception), "name 'addedClassParent' is not defined")
+
+    def test_addDefinitionsTo_allDefinitions(self):
+        func1Def = "def func1():\n    print('func1')\n"
+        self.setUp()
+        model = self.class1()
+        model._getAllNeededDefinitions(model)
+
+        expectedDefinitions = [{
+                                   'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
+                               {
+                                   'class1': 'class class1(NewWrapper, class1Parent):\n    def __init__(self):\n        self.var2 = 1\n\n    def forward(self, inputs, targets):\n        return\n'},
+                               {
+                                   'addedClassParent': 'class addedClassParent:\n    def __init__(self):\n        self.layacp1 = 7\n'},
+                               {
+                                   'addedClass': 'class addedClass(addedClassParent):\n    def __init__(self):\n        self.layac1 = 4\n'},
+                               {'func1': "def func1():\n    print('func1')\n"}]
+        newAllDefinitions = model.addDefinitionsTo_allDefinitions(
+            [func1Def, self.addedClassParentDef, self.addedClassDef])
+        self.assertEqual(expectedDefinitions, newAllDefinitions)
 
 
 # ---- run test
