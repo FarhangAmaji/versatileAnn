@@ -113,6 +113,10 @@ class ModelDifferentiatorTests(BaseTestClass):
             'class NNDummyModule1(nn.Module):\n    def __init__(self):\n        super(NNDummyModule1, self).__init__()\n        self.lay11 = nn.Linear(1, 3)\n        self.lay12 = nn.Linear(3, 1)\n        self.statMeth = NNDummyModule1ClassForStaticAndInstanceMethod.static_Method1\n        self.instanceMeth = NNDummyModule1ClassForStaticAndInstanceMethod.instanceMeth1\n\n    def forward(self, inputs, targets):\n        return self.lay12(self.lay11(inputs))\n',
             'class NNDummyModule2(nn.Module):\n    def __init__(self):\n        super(NNDummyModule2, self).__init__()\n        self.lay21 = nn.Linear(1, 4)\n        self.lay22 = nn.Linear(4, 1)\n        self.statMeth2 = NNDummyModule2ClassForStaticMethod.static_Method2\n\n    def forward(self, inputs, targets):\n        return self.lay22(self.lay21(inputs))\n',
             "class NNDummyModule4:\n    def __init__(self):\n        self.a2 = 24\n\n    def md(self):\n        return ''\n",
+            "class NNDummyModule3ClassForInstanceMethod:\n    def __init__(self):\n        self.ke = 47\n\n    def instanceMethod3(self):\n        print('instance method for NNDummyModule3')\n",
+            "class NNDummyModule1ClassForStaticAndInstanceMethod:\n    def __init__(self):\n        self.ke = 78\n\n    @staticmethod\n    def static_Method1():\n        print('staticmethod for NNDummyModule1')\n\n    def instanceMeth1(self):\n        print('instancemethod for NNDummyModule1')\n",
+            "class NNDummyModule2ClassForStaticMethod:\n    def __init__(self):\n        self.ke = 43\n\n    @staticmethod\n    def static_Method2():\n        print('staticmethod for NNDummyModule2')\n",
+            "class ClassForStaticMethod_forParent2p1:\n    def __init__(self):\n        self.ke = 27\n\n    @staticmethod\n    def static_Methodp2p1():\n        print('staticmethod for Parent2p1')\n",
             'class Parent1(NewWrapper, Parent1p1):\n    def __init__(self, midLayerp1):\n        self.layp11 = NNDummyModule1()\n        self.layp12 = NNDummyModule2()\n        self.layp13 = nn.Linear(1, midLayerp1)\n        self.layp14 = nn.Linear(midLayerp1, 1)\n        self.p1FuncDef = aFuncDefForParent1\n\n    def forward(self, inputs, targets):\n        x = self.layp12(self.layp11(inputs))\n        return self.layp14(self.layp13(x))\n',
             'class Parent2p2p1(Parent2p2p1p1):\n    def __init__(self):\n        self.layp2p2p1 = 15\n',
             'class Parent2p2(Parent2p2p1, Parent2p2p2):\n    def __init__(self, midLayer2p2):\n        self.layp2p2 = 5\n',
@@ -120,12 +124,7 @@ class ModelDifferentiatorTests(BaseTestClass):
             'class NNDummy(Parent1, Parent2):\n    def __init__(self, midLayer1):\n        self.lay1 = NNDummyModule1()\n        self.lay2 = NNDummyModule2()\n        self.classDefExample = NNDummyModule4\n        self.lay3 = nn.Linear(1, midLayer1)\n        self.lay4 = nn.Linear(midLayer1, 1)\n\n    def forward(self, inputs, targets):\n        x = self.lay2(self.lay1(inputs))\n        x = self.lay4(self.lay3(x))\n        return self.layp2p2p1p12(x)\n',
             "def aFuncDefForParent1():\n    print('aFuncDefForParent1')\n"]
 
-        expectedPrint = """NNDummyModule3ClassForInstanceMethod definition is not included.
-NNDummyModule1ClassForStaticAndInstanceMethod definition is not included.
-NNDummyModule1ClassForStaticAndInstanceMethod definition is not included.
-NNDummyModule2ClassForStaticMethod definition is not included.
-ClassForStaticMethod_forParent2p1 definition is not included.
-"""
+        expectedPrint = ""
         definitions = self.assertPrint(innerFunc, expectedPrint)
         self.assertEqual(expectedDefinitions, definitions)
 

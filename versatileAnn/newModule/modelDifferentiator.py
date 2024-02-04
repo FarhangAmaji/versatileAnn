@@ -3,7 +3,8 @@ import inspect
 from utils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
-    NoneToNullValueOrValue, isCustomFunction, DotDict
+    NoneToNullValueOrValue, isCustomFunction, DotDict, getProjectDirectory, \
+    findClassObject_inADirectory, joinListWithComma
 from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
@@ -53,13 +54,16 @@ class _NewWrapper_modelDifferentiator:
                                                classesDict)
 
         # duty2: getting class definitions for attributes(object variables)
-        # kkk add comment about we are not looping through parent vars(as maybe we don't access to their objects directly) but as their attributes exist in our ojbect(which is inherited from them) we can get definitions they need
-        # kkk if later wanted to add a loop through parent we may use __qualname__ to created something like visited for classes and attributes
+        # cccDevAlgo
+        #  the attributes and recursively their attributes are looped through
+        #  as some attributes are dict and don't have their anything in their __dict__
         if isinstance(obj, dict):
             self._attributesLoop(classesDict, obj, visitedClasses, visitedWarns, secondTime)
         elif isFunctionOrMethod(obj)[0]:
-            self._addStaticOrInstanceMethods_orWarnIfNotPossible(classesDict, obj, secondTime,
-                                                                 visitedClasses, visitedWarns)
+            self._addClassOf_staticOrInstanceMethods_orWarnIfNotPossible(classesDict, obj,
+                                                                         secondTime,
+                                                                         visitedClasses,
+                                                                         visitedWarns)
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)
             self._attributesLoop(classesDict, objVars, visitedClasses, visitedWarns,
@@ -69,8 +73,19 @@ class _NewWrapper_modelDifferentiator:
 
         return classesDict, visitedClasses
 
-    def _addStaticOrInstanceMethods_orWarnIfNotPossible(self, classesDict, obj, secondTime,
-                                                        visitedClasses, visitedWarns):
+    def _addClassOf_staticOrInstanceMethods_orWarnIfNotPossible(self, classesDict, obj, secondTime,
+                                                                visitedClasses, visitedWarns):
+        # cccDevAlgo
+        #  this is a rare case but it's involved
+        #  assume that some attribute is just definition of a static/instance method of some class
+        #  so in order to have the all components that let this class to be created; the
+        #  definition of that method should be included so therefore we include the definition of
+        #  its class
+        #  note the definitions may be needed to make a standalone object on model load(it's either
+        #  a feature or on the other case of not implemented in this project, you can use
+        #  definitions to utilize definitions as a standalone model)
+        #  standalone means u can create the object of class without having the code in ur files
+        # kkk modify above later
         isClass, classOrFuncObject = _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(
             obj)
         if isClass:  # getting class object of static or instance method
@@ -81,12 +96,29 @@ class _NewWrapper_modelDifferentiator:
             else:  # failed to get class object
                 classNameOf_staticOrInstanceMethod = obj.__qualname__.split('.')[0]
                 visitedClasses_names = [c.__name__ for c in visitedClasses]
-                if classNameOf_staticOrInstanceMethod not in visitedClasses_names:
-                    if obj.__qualname__ not in visitedWarns and secondTime:
-                        visitedWarns.add(obj.__qualname__)
-                        warnMsg = f'{classNameOf_staticOrInstanceMethod} definition is not included.'
-                        self.printTestPrints(warnMsg)
-                        Warn.error(warnMsg)  # Lwnt
+                if classNameOf_staticOrInstanceMethod not in visitedClasses_names and secondTime:
+                    foundClasses = findClassObject_inADirectory(getProjectDirectory(),
+                                                                classNameOf_staticOrInstanceMethod,
+                                                                printOff=self.testPrints)
+                    if len(foundClasses['classObjects']) == 1:
+                        self._getClassAndItsParentsDefinitions(foundClasses['classObjects'][0],
+                                                               visitedClasses,
+                                                               classesDict)
+                    elif len(foundClasses['classObjects']) > 1:
+                        if classNameOf_staticOrInstanceMethod not in visitedWarns:
+                            visitedWarns.add(classNameOf_staticOrInstanceMethod)
+                            warnMsg = f"{classNameOf_staticOrInstanceMethod} exists in " + \
+                                      f"{joinListWithComma(foundClasses['filePaths'])}; " + \
+                                      "so a single definition for it cannot be included"
+                            self.printTestPrints(warnMsg)
+                            Warn.error(warnMsg)  # Lwnt
+                    else:
+                        if obj.__qualname__ not in visitedWarns:
+                            visitedWarns.add(obj.__qualname__)
+                            warnMsg = f'{classNameOf_staticOrInstanceMethod} definition is not included.'
+
+                            self.printTestPrints(warnMsg)
+                            Warn.error(warnMsg)  # Lwnt
 
     def _attributesLoop(self, classesDict, objVars, visitedClasses, visitedWarns, secondTime):
         for varName, varValue in objVars.items():
@@ -158,6 +190,11 @@ class _NewWrapper_modelDifferentiator:
         return classDefinitions
 
     def _getAttributesFuncDefinitions(self, obj, visitedFuncs=None, funcDefinitions=None):
+        # cccDevAlgo
+        #  this is a rare case but it's involved
+        #  assume that some attribute is just definition of a func
+        #  so in order to have the all components that let this class to be created; the
+        #  definition of that function should be included
         visitedFuncs = NoneToNullValueOrValue(visitedFuncs, set())
         funcDefinitions = NoneToNullValueOrValue(funcDefinitions, [])
 
