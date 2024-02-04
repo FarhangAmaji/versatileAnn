@@ -6,10 +6,12 @@ import numpy as np
 import pandas as pd
 import torch
 
+from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
 from tests.baseTest import BaseTestClass
 from utils.typeCheck import typeHintChecker_AListOfSomeType
 from utils.vAnnGeneralUtils import equalTensors, DotDict, NpDict, snakeToCamel, camelToSnake, \
-    getDefaultTorchDevice_name, getProjectDirectory, findClassDefinition
+    getDefaultTorchDevice_name, getProjectDirectory, findClassDefinition_inADirectory, \
+    getClassObjectFromFile
 
 
 class DotDictTests(BaseTestClass):
@@ -274,7 +276,8 @@ class CaseChangeTests(BaseTestClass):
 # ----
 class FindClassDefinitionTests(BaseTestClass):
     def testExistingClass(self):
-        res = findClassDefinition(getProjectDirectory(), 'MainGroupSingleColsStdNormalizer')
+        res = findClassDefinition_inADirectory(getProjectDirectory(),
+                                               'MainGroupSingleColsStdNormalizer')
         expectedPath = os.path.join(getProjectDirectory(), 'dataPrep',
                                     'normalizers_mainGroupNormalizers.py')
         self.assertEqual(res[1][0], expectedPath)
@@ -329,12 +332,12 @@ class FindClassDefinitionTests(BaseTestClass):
         self.assertEqual(res[2][0], expectedDef)
 
     def testNonExistingClass(self):
-        res = findClassDefinition(getProjectDirectory(), 'qqBangBang')
+        res = findClassDefinition_inADirectory(getProjectDirectory(), 'qqBangBang')
         self.assertEqual(res, (False, [], []))
 
     def testExistingClass_inMultiplePlaces(self):
-        res = findClassDefinition(getProjectDirectory(),
-                                  'NNDummyModule1ClassForStaticAndInstanceMethod')
+        res = findClassDefinition_inADirectory(getProjectDirectory(),
+                                               'NNDummyModule1ClassForStaticAndInstanceMethod')
         expectedPaths = [os.path.join(getProjectDirectory(), 'tests', 'newWrapperTests',
                                       'ModelDifferentiatorTests_dummyClassDefs', 'm1.py'),
                          os.path.join(getProjectDirectory(), 'tests', 'utilsTests',
@@ -343,6 +346,15 @@ class FindClassDefinitionTests(BaseTestClass):
         def1 = "class NNDummyModule1ClassForStaticAndInstanceMethod:\n\n    def __init__(self):\n\n        self.ke = 78\n\n\n\n    @staticmethod\n\n    def static_Method1():\n\n        print('staticmethod for NNDummyModule1')\n\n\n\n    def instanceMeth1(self):\n\n        print('instancemethod for NNDummyModule1')\n"
         self.assertEqual(res[2][0], def1)
         self.assertEqual(res[2][1], def1)
+
+
+class getClassObjectFromFileTest(BaseTestClass):
+    def test(self):
+        res = findClassDefinition_inADirectory(getProjectDirectory(),
+                                               'MainGroupSingleColsStdNormalizer')
+        classObj = getClassObjectFromFile('MainGroupSingleColsStdNormalizer', res[1][0])
+        self.assertEqual(classObj.__name__, MainGroupSingleColsStdNormalizer.__name__)
+        self.assertEqual(dir(classObj), dir(MainGroupSingleColsStdNormalizer))
 
 
 # ---- run test
