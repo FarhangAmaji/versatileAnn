@@ -9,8 +9,9 @@ from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
 
-# kkk user manuall add to class Definitions
+# kkk user manual add to class Definitions
 # kkk final check that if the class can be recreated standalone from definitions
+# kkk with initArgs create an instance of "this class" in _modelDifferentiator_finalCheck
 # kkk add this to postInit
 # kkk does adding to postInit + initArgs will solve some not finding class definitions with 'globals().get(className)'
 # kkk add to preRunTests + also seed
@@ -51,6 +52,8 @@ class _NewWrapper_modelDifferentiator:
             class object and not its instance
         3. similar to last case; assume the user includes a independent(regular func and not
             method of a class) func so its definitions is also gets added
+
+    also does final check in order to see if can definitions executed or not
     """
 
     def __init__(self, **kwargs):
@@ -63,23 +66,31 @@ class _NewWrapper_modelDifferentiator:
         # Method to get all class or func definitions in the correct order
 
         # Get class dict({className:classObject}) of classes needed to create "this class"
-        classesDict, visitedClasses = self._getAllNeededClasses(obj)
+        classesDict, visitedClasses, _ = self._getAllNeededClasses(obj)
         # cccWhy
         #  we are just doing _getAllNeededClasses twice so maybe warns in # Lwnt
         #  may be prevented because the class they want to warn which is not included may be added
         #  later at _getAllNeededClasses so the warning is not warning correctly because the class is
         #  added later
-        classesDict, visitedClasses = self._getAllNeededClasses(obj,
-                                                                visitedClasses=visitedClasses,
-                                                                classesDict=classesDict,
-                                                                secondTime=True)
+        classesDict, visitedClasses, visitedWarns = self._getAllNeededClasses(obj,
+                                                                              visitedClasses=visitedClasses,
+                                                                              classesDict=classesDict,
+                                                                              secondTime=True)
 
         # Order the class definitions based on dependencies
         orderedClasses = orderClassNames_soChildIsAlways_afterItsParents(classesDict)
         classDefinitions = self._getClassesDefinitions(classesDict, orderedClasses)
 
         funcDefinitions = self._getAttributesFuncDefinitions(obj)
-        return classDefinitions + funcDefinitions
+
+        self.allDefinitions = classDefinitions + funcDefinitions
+        if not visitedWarns:
+            self._modelDifferentiator_finalCheck()
+        else:
+            Warn.error(
+                'as you are informed some class definitions have been failed to get included;' + \
+                '\nso the final check is not performed')
+        return self.allDefinitions
 
     def _getAllNeededClasses(self, obj, visitedClasses=None, classesDict=None,
                              secondTime=False, visitedWarns=None):
@@ -116,7 +127,7 @@ class _NewWrapper_modelDifferentiator:
         elif not hasattr(obj, '__dict__'):
             return classesDict
 
-        return classesDict, visitedClasses
+        return classesDict, visitedClasses, visitedWarns
 
     # ---- case2 methods
     def _attributesLoop(self, classesDict, objVars, visitedClasses, visitedWarns, secondTime):
@@ -281,3 +292,14 @@ class _NewWrapper_modelDifferentiator:
         for clsName in orderedClasses:
             classDefinitions.append({clsName: inspect.getsource(classesDict[clsName])})
         return classDefinitions
+
+    def _modelDifferentiator_finalCheck(self):
+        # goodToHave2
+        #  with initArgs create an instance of "this class" in _modelDifferentiator_finalCheck
+        try:
+            for definition in self.allDefinitions:
+                for class_name, class_code in definition.items():
+                    exec(class_code, locals())
+
+        except Exception as e:
+            print(f"Error failed to execute all definitions: {e}")
