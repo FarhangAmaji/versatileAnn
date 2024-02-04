@@ -1,21 +1,24 @@
 import inspect
+from typing import List
 
 from utils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
+from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
     setDefaultIfNone, isCustomFunction, DotDict, getProjectDirectory, \
-    findClassObject_inADirectory, joinListWithComma
+    findClassObject_inADirectory, joinListWithComma, getClassObjectFromFile
 from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
 
 # kkk user manual add to class Definitions
-# kkk final check that if the class can be recreated standalone from definitions
-# kkk with initArgs create an instance of "this class" in _modelDifferentiator_finalCheck
+# kkk with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
 # kkk add this to postInit
 # kkk does adding to postInit + initArgs will solve some not finding class definitions with 'globals().get(className)'
 # kkk add to preRunTests + also seed
 # kkk add to mainModelRun
+# goodToHave3
+#  this class can be a separate class of its own
 class _NewWrapper_modelDifferentiator:
     """
     # cccWhat
@@ -28,6 +31,7 @@ class _NewWrapper_modelDifferentiator:
 
     - _getAllNeededClasses is the main func of this class and other methods are just
         utility for that one
+    - user also may need to use 'addDefinitionsTo_allDefinitions'
 
     gets:
     - parent classes(case1):
@@ -84,9 +88,11 @@ class _NewWrapper_modelDifferentiator:
         funcDefinitions = self._getAttributesFuncDefinitions(obj)
 
         self.allDefinitions = classDefinitions + funcDefinitions
+
         if not visitedWarns:
-            self._modelDifferentiator_finalCheck()
+            self.allDefinitions_sanity = self._modelDifferentiator_sanityCheck()
         else:
+            self.allDefinitions_sanity = False
             Warn.error(
                 'as you are informed some class definitions have been failed to get included;' + \
                 '\nso the final check is not performed')
@@ -287,19 +293,148 @@ class _NewWrapper_modelDifferentiator:
 
     # ----
     @staticmethod
-    def _getClassesDefinitions(classesDict, orderedClasses):
+    def _getClassesDefinitions(classesDict, orderedClasses, printOff=False):
         classDefinitions = []
         for clsName in orderedClasses:
-            classDefinitions.append({clsName: inspect.getsource(classesDict[clsName])})
+            try:
+                clsCode = inspect.getsource(classesDict[clsName])
+            except OSError:  # try another way to get sourceCode
+                filePathOfClass = inspect.getfile(object)
+                clsCode = getClassObjectFromFile(clsName, filePathOfClass, printOff=printOff)
+
+            if clsCode:
+                classDefinitions.append({clsName: clsCode})
         return classDefinitions
 
-    def _modelDifferentiator_finalCheck(self):
+    def _modelDifferentiator_sanityCheck(self):
         # goodToHave2
-        #  with initArgs create an instance of "this class" in _modelDifferentiator_finalCheck
+        #  with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
+        NewWrapper = self._getNewWrapper_classObject()
         try:
             for definition in self.allDefinitions:
-                for class_name, class_code in definition.items():
-                    exec(class_code, locals())
+                for className, classCode in definition.items():
+                    try:
+                        exec(classCode, locals())
+                    except IndentationError:
+                        cleanedDefinition = self._removeIndentsFromDefinition(classCode)
+                        exec(cleanedDefinition)
+                        definition = {className: cleanedDefinition}
 
+            return True  # returning sanity of allDefinitions
         except Exception as e:
             print(f"Error failed to execute all definitions: {e}")
+            return False
+
+    # ---- addDefinitionsTo_allDefinitions
+    @argValidator
+    def addDefinitionsTo_allDefinitions(self, definitions: List[str]):
+        # kkk add comment
+        # cccUsage
+        #  note the parent classes should be passed first
+        # goodToHave3
+        #  - later make a new warning here so if the input definitions differ
+        #       from those warned at #Lwnt to be added; this warning says
+        #       'class x1,x2,... were needed but u have added class'z' also'
+        #  - automatically it should work and passing parents first should not a be must
+        defsDict_forInputDefinitions = self._getClassDict_fromDefinitionsList(definitions)
+
+        justDefsOf_allDefinitions = [next(iter(d.values())) for d in self.allDefinitions]
+        NewWrapper = self._getNewWrapper_classObject()
+        defsDict_forAllDefinitions = self._getClassDict_fromDefinitionsList(
+            justDefsOf_allDefinitions, NewWrapper=NewWrapper)
+
+        # put together old and newDefDicts
+        oldNNewDefsDict = {}
+        oldNNewDefsDict.update(defsDict_forAllDefinitions)  # old/existing defsDict
+        oldNNewDefsDict.update(defsDict_forInputDefinitions)  # new defsDict
+
+        # separate class defs and non class defs
+        oldNNewDefsDict_classes = {key: value for key, value in oldNNewDefsDict.items() if
+                                   inspect.isclass(value['classObject'])}
+        oldNNewDefsDict_nonClasses = {key: value for key, value in oldNNewDefsDict.items() if
+                                      key not in oldNNewDefsDict_classes}
+
+        # similar to _getAllNeededDefinitions Order the class definitions based on dependencies
+        oldNNewDefsDict_classes_withDefFormat = {key: value['classObject'] for key, value in
+                                                 oldNNewDefsDict_classes.items()}
+        orderedClassNames = orderClassNames_soChildIsAlways_afterItsParents(
+            oldNNewDefsDict_classes_withDefFormat)
+
+        classDefinitions = []
+        nameOfClasses_notIn_classDefinitions = []
+        for ocn in orderedClassNames:
+            if ocn in oldNNewDefsDict_classes and oldNNewDefsDict_classes[ocn]['code']:
+                classDefinitions.append({ocn: oldNNewDefsDict_classes[ocn]['code']})
+            else:
+                nameOfClasses_notIn_classDefinitions.append(ocn)
+
+        if nameOfClasses_notIn_classDefinitions:
+            classes_notIn_classDefinitions_withDefFormat = {key: value['classObject'] for key, value
+                                                            in oldNNewDefsDict_classes.items() if
+                                                            key in nameOfClasses_notIn_classDefinitions}
+
+            classDefinitions2 = self._getClassesDefinitions(
+                classes_notIn_classDefinitions_withDefFormat, nameOfClasses_notIn_classDefinitions)
+            classDefinitions = classDefinitions + classDefinitions2
+
+        nonClassDefinitions = []
+        for key, value in oldNNewDefsDict_nonClasses.items():
+            if value['code']:
+                nonClassDefinitions.append({key: value['code']})
+            else:
+                try:
+                    nonClassDefinitions.append({key: inspect.getsource(value['classObject'])})
+                except:
+                    # goodToHave2
+                    #  when a similar version of findClassDefinition_inAFile or
+                    #  getClassObjectFromFile for funcs is created when we can try sth
+                    #  like what's done on the _getClassesDefinitions
+                    # for now we can't do anything for it
+                    pass
+
+        self.allDefinitions = classDefinitions + nonClassDefinitions
+        self.allDefinitions_sanity = self._modelDifferentiator_sanityCheck()
+
+        return self.allDefinitions
+
+    def _getClassDict_fromDefinitionsList(self, definitions, **kwargs):
+        # **kwargs is defined so NewWrapper can be defined here
+        locals().update(kwargs)
+
+        defsDict = {}
+        for i, definition in enumerate(definitions):
+            oldLocals = set(locals().keys())
+            try:
+                exec(definition)
+            except IndentationError:
+                cleanedDefinition = self._removeIndentsFromDefinition(definition)
+                exec(cleanedDefinition)
+
+            newLocals = {name: obj for name, obj in locals().items() if name not in oldLocals}
+            for delVar in ['oldLocals', '__builtins__', 'cleanedDefinition']:
+                if delVar in newLocals.keys():
+                    del newLocals[delVar]
+
+            if len(newLocals) == 1:
+                definitionObjectName = list(newLocals.keys())[0]
+                defsDict[definitionObjectName] = {}
+                defsDict[definitionObjectName]['code'] = definition
+                defsDict[definitionObjectName]['classObject'] = newLocals[definitionObjectName]
+            else:
+                # bugPotentialCheck1
+                #  what other possibilities are there which make len(newLocals)>1
+                #  specially in terms of 'delVar's needed depending on different machines
+                errMsg = 'note u must pass definitions of different objects separately.'
+                errMsg += f'\napparently for definition number {i} {joinListWithComma(list(newLocals.keys()))} are passed'
+                Warn.error(errMsg)
+                raise RuntimeError(errMsg)
+        return defsDict
+
+    @staticmethod
+    def _removeIndentsFromDefinition(definition):
+        probableIndentSpaces = len(definition) - len(definition.lstrip(' '))
+        definitionLines = definition.split('\n')
+
+        cleanedLines = [line[probableIndentSpaces:] for line in definitionLines]
+        cleanedDefinition = '\n'.join(cleanedLines)
+        return cleanedDefinition
