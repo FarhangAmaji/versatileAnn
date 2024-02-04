@@ -186,7 +186,7 @@ class _NewWrapper_modelDifferentiator:
     def _getClassesDefinitions(classesDict, orderedClasses):
         classDefinitions = []
         for clsName in orderedClasses:
-            classDefinitions.append(inspect.getsource(classesDict[clsName]))
+            classDefinitions.append({clsName: inspect.getsource(classesDict[clsName])})
         return classDefinitions
 
     def _getAttributesFuncDefinitions(self, obj, visitedFuncs=None, funcDefinitions=None):
@@ -211,7 +211,8 @@ class _NewWrapper_modelDifferentiator:
                 if classOrFuncObject not in visitedFuncs:
                     if isCustomFunction(classOrFuncObject):
                         visitedFuncs.add(classOrFuncObject)
-                        funcDefinitions.append(inspect.getsource(classOrFuncObject))
+                        funcDefinitions.append(
+                            {classOrFuncObject.__name__: inspect.getsource(classOrFuncObject)})
         elif hasattr(obj, '__dict__'):
             objVars = vars(obj)
             for varName, varValue in objVars.items():
