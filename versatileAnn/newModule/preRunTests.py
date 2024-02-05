@@ -2,6 +2,7 @@ import os
 from typing import List, Union, Optional
 
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import Logger
 from pytorch_lightning.profilers import PyTorchProfiler
 from torch import nn
 from torch.utils.data import DataLoader
@@ -98,8 +99,10 @@ class _NewWrapper_preRunTests:
         #  add finding best shuffle index!!. this may be very useful sometimes
 
         # message how to use tensorboard
-        Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
-                  f'"{loggingPath}"' + "'")
+        self._informTensorboardPath(fastDevRunKwargs, findBestBatchSizesKwargs,
+                                    findBestLearningRateKwargs, kwargs, overfitBatchesKwargs,
+                                    profilerKwargs)
+
 
     @argValidator
     def runFastDevRun(self, trainDataloader: DataLoader,
@@ -283,12 +286,43 @@ class _NewWrapper_preRunTests:
                                                   '1st': firstEpochLoss, 'last': lastEpochLoss,
                                                   'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
 
-    def _getLoggingPath(self):
-        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName, name='profiler')
-        loggingPath = nFoldersBack(os.path.abspath(dummyLogger.log_dir), n=2)
-        return loggingPath
-
     def _mergeKwargsWith_runKwargs(self, runKwargs, mainKwargsOfPreRunTests):
         result = mainKwargsOfPreRunTests.copy()
         self._plKwargUpdater(result, runKwargs)
         return result
+
+
+    def _informTensorboardPath(self, fastDevRunKwargs, findBestBatchSizesKwargs,
+                               findBestLearningRateKwargs, kwargs, overfitBatchesKwargs,
+                               profilerKwargs):
+        loggingPaths = self._getPreRunLoggingPaths(fastDevRunKwargs, overfitBatchesKwargs,
+                                                   profilerKwargs, findBestLearningRateKwargs,
+                                                   findBestBatchSizesKwargs, kwargs)
+        for loggingPath in loggingPaths:
+            Warn.info(
+                "to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
+                f'"{loggingPath}"' + "'")
+
+    def _getPreRunLoggingPaths(self, fastDevRunKwargs, overfitBatchesKwargs, profilerKwargs,
+                               findBestLearningRateKwargs, findBestBatchSizesKwargs, kwargs):
+        loggingPaths = []
+        for kwarg in [kwargs, fastDevRunKwargs, overfitBatchesKwargs, profilerKwargs,
+                      findBestLearningRateKwargs, findBestBatchSizesKwargs]:
+            if 'logger' in kwarg:
+                logger = kwarg['logger']
+
+                if isinstance(logger, Logger):
+                    self._addLogDirTOLoggingPaths(loggingPaths, logger)
+                else:  # logger may be a logger instance and be a list of Loggers
+                    for logger in kwarg['logger']:
+                        self._addLogDirTOLoggingPaths(loggingPaths, logger)
+
+        if not loggingPaths:
+            dummyLogger = pl.loggers.TensorBoardLogger(self.modelName, name='a')
+            loggingPaths.append(nFoldersBack(os.path.abspath(dummyLogger.log_dir), n=2))
+        return loggingPaths
+
+    def _addLogDirTOLoggingPaths(self, loggingPaths, logger):
+        logDir = os.path.abspath(logger.log_dir)
+        if logDir not in loggingPaths:
+            loggingPaths.append(logDir)
