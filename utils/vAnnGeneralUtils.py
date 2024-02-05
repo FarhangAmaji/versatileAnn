@@ -286,6 +286,18 @@ def pandasGroupbyAlternative(df, columns, **kwargs):
         yield groupName, groupDf
 
 
+@argValidator
+def dfPrintDict(df: pd.DataFrame):
+    npd = NpDict(df)
+    npd.printDict()
+
+
+@argValidator
+def dfResetDType(df: pd.DataFrame):
+    npd = NpDict(df)
+    return npd.toDf(resetDtype=True)
+
+
 # ---- np array
 def npArrayBroadCast(arr, shape):
     shape = tuple(shape)
@@ -874,6 +886,8 @@ def varPasser(*, localArgNames=None, exclude=None, rename=None):
     exclude = exclude or []
     rename = rename or {}
 
+    # goodToHave3
+    #  think about removing this; because it's not the case
     # bugPotentialCheck1
     #  this has a big bug pontential in macOs maybe other non windows Oses when the
     #  localArgNames is None
