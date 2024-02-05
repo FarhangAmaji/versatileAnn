@@ -149,6 +149,9 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
         for pc, pcInfo in self._parentClasses_tillNewWrapper_inits.items():
             pcInfo['classObj'].__init__ = pcInfo['originalInit']
 
+        if self.getAllNeededDefinitions:
+            self._getAllNeededDefinitions(self)
+
     def resetModel(self, withPastSeed=True, attrsToKeep=None):
         # addTest1
         #  test if the model params are reset after some epochs of training
