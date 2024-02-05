@@ -11,8 +11,8 @@ from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
 
-# kkk user manual add to class Definitions
 # kkk with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
+# kkk does it need to change messages to use 'addDefinitionsTo_allDefinitions'
 # kkk add this to postInit
 # kkk does adding to postInit + initArgs will solve some not finding class definitions with 'globals().get(className)'
 # kkk add to preRunTests + also seed
@@ -60,7 +60,9 @@ class _NewWrapper_modelDifferentiator:
     also does final check in order to see if can definitions executed or not
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, getAllNeededDefinitions=True, **kwargs):
+        self.getAllNeededDefinitions = getAllNeededDefinitions
+
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelDifferentiator)
 
@@ -95,7 +97,8 @@ class _NewWrapper_modelDifferentiator:
             self.allDefinitions_sanity = False
             Warn.error(
                 'as you are informed some class definitions have been failed to get included;' + \
-                '\nso the final check is not performed')
+                '\nso the final check is not performed' + \
+                '\nuse "addDefinitionsTo_allDefinitions" to add them manually')
         return self.allDefinitions
 
     def _getAllNeededClasses(self, obj, visitedClasses=None, classesDict=None,
