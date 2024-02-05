@@ -90,7 +90,7 @@ class _NewWrapper_modelDifferentiator:
         self.allDefinitions = classDefinitions + funcDefinitions
 
         if not visitedWarns:
-            self.allDefinitions_sanity = self._modelDifferentiator_sanityCheck()
+            self._modelDifferentiator_sanityCheck()
         else:
             self.allDefinitions_sanity = False
             Warn.error(
@@ -309,6 +309,10 @@ class _NewWrapper_modelDifferentiator:
     def _modelDifferentiator_sanityCheck(self):
         # goodToHave2
         #  with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
+        # mustHave2
+        #  restructure needed
+        #  should tries several times so if the order of dependencies are not ok the code tries
+        #  it best to automatically handle it
         NewWrapper = self._getNewWrapper_classObject()
         try:
             for i, definition in enumerate(self.allDefinitions):
@@ -316,123 +320,99 @@ class _NewWrapper_modelDifferentiator:
                     try:
                         exec(classCode, locals())
                     except IndentationError:
-                        cleanedDefinition = self._removeIndentsFromDefinition(classCode)
+                        cleanedDefinition = self.removeIndents_fromCodeStringDefinition(classCode)
                         exec(cleanedDefinition)
                         self.allDefinitions[i] = {className: cleanedDefinition}
 
+            self.allDefinitions_sanity = True
             return True  # returning sanity of allDefinitions
         except Exception as e:
             print(f"Error failed to execute all definitions: {e}")
+            self.allDefinitions_sanity = False
             return False
 
-    # ---- addDefinitionsTo_allDefinitions
+    # ---- addDefinitionsTo_allDefinitions methods
     @argValidator
     def addDefinitionsTo_allDefinitions(self, definitions: List[str]):
-        # kkk add comment
-        # cccUsage
-        #  note the parent classes should be passed first
         # goodToHave3
         #  - later make a new warning here so if the input definitions differ
         #       from those warned at #Lwnt to be added; this warning says
-        #       'class x1,x2,... were needed but u have added class'z' also'
-        #  - automatically it should work and passing parents first should not a be must
-        defsDict_forInputDefinitions = self._getClassDict_fromDefinitionsList(definitions)
-
         justDefsOf_allDefinitions = [next(iter(d.values())) for d in self.allDefinitions]
-        NewWrapper = self._getNewWrapper_classObject()
-        defsDict_forAllDefinitions = self._getClassDict_fromDefinitionsList(
-            justDefsOf_allDefinitions, NewWrapper=NewWrapper)
+        definitions_fromAllDefinitions_NDefinitions = justDefsOf_allDefinitions + definitions
 
-        # put together old and newDefDicts
-        oldNNewDefsDict = {}
-        oldNNewDefsDict.update(defsDict_forAllDefinitions)  # old/existing defsDict
-        oldNNewDefsDict.update(defsDict_forInputDefinitions)  # new defsDict
+        defsDict = self._getDefDict_fromDefinitionsList(
+            definitions_fromAllDefinitions_NDefinitions)
 
-        # separate class defs and non class defs
-        oldNNewDefsDict_classes = {key: value for key, value in oldNNewDefsDict.items() if
-                                   inspect.isclass(value['classObject'])}
-        oldNNewDefsDict_nonClasses = {key: value for key, value in oldNNewDefsDict.items() if
-                                      key not in oldNNewDefsDict_classes}
-
-        # similar to _getAllNeededDefinitions Order the class definitions based on dependencies
-        oldNNewDefsDict_classes_withDefFormat = {key: value['classObject'] for key, value in
-                                                 oldNNewDefsDict_classes.items()}
-        orderedClassNames = orderClassNames_soChildIsAlways_afterItsParents(
-            oldNNewDefsDict_classes_withDefFormat)
-
-        classDefinitions = []
-        nameOfClasses_notIn_classDefinitions = []
-        for ocn in orderedClassNames:
-            if ocn in oldNNewDefsDict_classes and oldNNewDefsDict_classes[ocn]['code']:
-                classDefinitions.append({ocn: oldNNewDefsDict_classes[ocn]['code']})
-            else:
-                nameOfClasses_notIn_classDefinitions.append(ocn)
-
-        if nameOfClasses_notIn_classDefinitions:
-            classes_notIn_classDefinitions_withDefFormat = {key: value['classObject'] for key, value
-                                                            in oldNNewDefsDict_classes.items() if
-                                                            key in nameOfClasses_notIn_classDefinitions}
-
-            classDefinitions2 = self._getClassesDefinitions(
-                classes_notIn_classDefinitions_withDefFormat, nameOfClasses_notIn_classDefinitions)
-            classDefinitions = classDefinitions + classDefinitions2
-
-        nonClassDefinitions = []
-        for key, value in oldNNewDefsDict_nonClasses.items():
-            if value['code']:
-                nonClassDefinitions.append({key: value['code']})
-            else:
-                try:
-                    nonClassDefinitions.append({key: inspect.getsource(value['classObject'])})
-                except:
-                    # goodToHave2
-                    #  when a similar version of findClassDefinition_inAFile or
-                    #  getClassObjectFromFile for funcs is created when we can try sth
-                    #  like what's done on the _getClassesDefinitions
-                    # for now we can't do anything for it
-                    pass
-
-        self.allDefinitions = classDefinitions + nonClassDefinitions
-        self.allDefinitions_sanity = self._modelDifferentiator_sanityCheck()
+        self.allDefinitions = defsDict
+        self._modelDifferentiator_sanityCheck()
 
         return self.allDefinitions
 
-    def _getClassDict_fromDefinitionsList(self, definitions, **kwargs):
-        # **kwargs is defined so NewWrapper can be defined here
-        locals().update(kwargs)
+    def _getDefDict_fromDefinitionsList(self, definitions):
+        # cccUsage
+        #  definitions is a list of strings of class/func definitions like "def func1():\n    print('func1')\n"
+        # tries several times so if the order of dependencies are not ok the code tries
+        #  it best to automatically handle it
+        NewWrapper = self._getNewWrapper_classObject()
 
-        defsDict = {}
         for i, definition in enumerate(definitions):
-            oldLocals = set(locals().keys())
-            try:
-                exec(definition)
-            except IndentationError:
+            definitions[i] = self.removeIndents_fromCodeStringDefinition(definition)
+
+        defsDictList = []
+        remainingDefinitions = definitions.copy()
+
+        loopLimit = len(definitions) ** 2 + 2
+        limitCounter = 0
+
+        while remainingDefinitions and limitCounter <= loopLimit:
+            for i, definition in enumerate(remainingDefinitions):
+                limitCounter += 1
                 oldLocals = set(locals().keys())
-                cleanedDefinition = self._removeIndentsFromDefinition(definition)
-                exec(cleanedDefinition)
+                try:
+                    exec(definition)
+                    newLocals = {name: obj for name, obj in locals().items() if
+                                 name not in oldLocals}
+                    for delVar in ['oldLocals', '__builtins__', 'cleanedDefinition']:
+                        if delVar in newLocals.keys():
+                            del newLocals[delVar]
 
-            newLocals = {name: obj for name, obj in locals().items() if name not in oldLocals}
-            for delVar in ['oldLocals', '__builtins__', 'cleanedDefinition']:
-                if delVar in newLocals.keys():
-                    del newLocals[delVar]
+                    if len(newLocals) == 1:
+                        definitionObjectName = list(newLocals.keys())[0]
+                        defsDictList.append({definitionObjectName: definition})
+                        remainingDefinitions.remove(definition)
+                    else:
+                        errMsg = 'note u must pass definitions of different objects separately.'
+                        errMsg += f'\napparently for definition number {i} {joinListWithComma(list(newLocals.keys()))} are passed'
+                        Warn.error(errMsg)
+                        raise RuntimeError(errMsg)
+                except Exception as e:
+                    continue
 
-            if len(newLocals) == 1:
-                definitionObjectName = list(newLocals.keys())[0]
-                defsDict[definitionObjectName] = {}
-                defsDict[definitionObjectName]['code'] = definition
-                defsDict[definitionObjectName]['classObject'] = newLocals[definitionObjectName]
-            else:
-                # bugPotentialCheck1
-                #  what other possibilities are there which make len(newLocals)>1
-                #  specially in terms of 'delVar's needed depending on different machines
-                errMsg = 'note u must pass definitions of different objects separately.'
-                errMsg += f'\napparently for definition number {i} {joinListWithComma(list(newLocals.keys()))} are passed'
-                Warn.error(errMsg)
-                raise RuntimeError(errMsg)
-        return defsDict
+        for rd in remainingDefinitions:
+            defsDictList.append({self.getObjectName_fromCodeString(rd): rd})
+
+        return defsDictList
 
     @staticmethod
-    def _removeIndentsFromDefinition(definition):
+    def getObjectName_fromCodeString(code):
+        lines = code.strip().split('\n')
+        firstLineTokens = lines[0].split('(')
+
+        # Check if it is a class or function definition
+        if firstLineTokens[0].startswith('class'):
+            # Class definition
+            className = firstLineTokens[0].split()[1]
+            return className
+        elif firstLineTokens[0].startswith('def'):
+            # Function definition
+            functionName = firstLineTokens[0].split()[1]
+            return functionName
+        else:
+            # Unknown type or not a class/function definition
+            return lines[0]
+
+    @staticmethod
+    def removeIndents_fromCodeStringDefinition(definition):
         probableIndentSpaces = len(definition) - len(definition.lstrip(' '))
         definitionLines = definition.split('\n')
 
