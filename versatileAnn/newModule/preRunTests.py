@@ -7,7 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import morePreciseFloat
+from utils.vAnnGeneralUtils import morePreciseFloat, nFoldersBack
 from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
@@ -69,6 +69,7 @@ class _NewWrapper_preRunTests:
         # mustHave2
         #  check if model with this architecture doesnt exist allow to run.
         #  - add force option also
+        loggingPath = self._getLoggingPath()
 
         # goodToHave3
         #  I tried to create a feature for saving original trainDataloader, valDataloader
@@ -82,7 +83,7 @@ class _NewWrapper_preRunTests:
         self.runOverfitBatches(trainDataloader, valDataloader, **runKwargs_)
 
         runKwargs_ = self._mergeKwargsWith_runKwargs(profilerKwargs, kwargs)
-        trainer = self.runProfiler(trainDataloader, valDataloader, **runKwargs_)
+        self.runProfiler(trainDataloader, valDataloader, **runKwargs_)
 
         runKwargs_ = self._mergeKwargsWith_runKwargs(findBestLearningRateKwargs, kwargs)
         self.findBestLearningRate(trainDataloader, valDataloader,
@@ -97,7 +98,8 @@ class _NewWrapper_preRunTests:
         #  add finding best shuffle index!!. this may be very useful sometimes
 
         # message how to use tensorboard
-        self._printTensorboardPath(trainer)
+        Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
+                  f'"{loggingPath}"' + "'")
 
     @argValidator
     def runFastDevRun(self, trainDataloader: DataLoader,
@@ -167,9 +169,6 @@ class _NewWrapper_preRunTests:
         self._plKwargUpdater(kwargsApplied, kwargs)
 
         trainer = self.fit(trainDataloader, valDataloader, **kwargsApplied)
-
-        # trainer is returned to be able to print(in _printTensorboardPath) where users can use tensorboard
-        return trainer
 
     @argValidator
     def findBestLearningRate(self, trainDataloader: DataLoader,
@@ -284,13 +283,10 @@ class _NewWrapper_preRunTests:
                                                   '1st': firstEpochLoss, 'last': lastEpochLoss,
                                                   'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
 
-    @staticmethod
-    def _printTensorboardPath(trainer):
-        # the last 2 folders are not included
-        tensorboardDir = os.path.abspath(trainer.logger.log_dir)
-        tensorboardDir = os.path.split(os.path.split(tensorboardDir)[0])[0]
-        Warn.info("to see tensorboard in terminal execute: 'python -m tensorboard.main --logdir " +
-                  f'"{tensorboardDir}"' + "'")
+    def _getLoggingPath(self):
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName, name='profiler')
+        loggingPath = nFoldersBack(os.path.abspath(dummyLogger.log_dir), n=2)
+        return loggingPath
 
     def _mergeKwargsWith_runKwargs(self, runKwargs, mainKwargsOfPreRunTests):
         result = mainKwargsOfPreRunTests.copy()
