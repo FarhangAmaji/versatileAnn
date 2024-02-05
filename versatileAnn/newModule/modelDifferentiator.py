@@ -11,10 +11,6 @@ from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
 
-# kkk with initArgs create an instance of "this class" in _modelDifferentiator_sanityCheck
-# kkk does it need to change messages to use 'addDefinitionsTo_allDefinitions'
-# kkk add this to postInit
-# kkk does adding to postInit + initArgs will solve some not finding class definitions with 'globals().get(className)'
 # kkk add to preRunTests + also seed
 # kkk add to mainModelRun
 # goodToHave3
@@ -326,6 +322,10 @@ class _NewWrapper_modelDifferentiator:
                         cleanedDefinition = self.removeIndents_fromCodeStringDefinition(classCode)
                         exec(cleanedDefinition)
                         self.allDefinitions[i] = {className: cleanedDefinition}
+
+            # check does having these definitions, enable to create another instance of "this class"
+            if self._initArgs:
+                type(self)(self._initArgs, getAllNeededDefinitions=False)
 
             self.allDefinitions_sanity = True
             return True  # returning sanity of allDefinitions

@@ -4,6 +4,15 @@ import unittest
 
 from utils.vAnnGeneralUtils import getProjectDirectory
 
+# Automatically discover and load test cases
+testLoader = unittest.TestLoader()
+testSuite = testLoader.discover(os.path.dirname(__file__), pattern="*.py")
+
+if __name__ == "__main__":
+    # Run the tests
+    testRunner = unittest.TextTestRunner()
+    result = testRunner.run(testSuite)
+
 # delete model logs from tests that pollute the project files
 project_dir = getProjectDirectory()
 dirsToDelete = [["tests", "lightning_logs"], ["tests", "NNDummy"]]
@@ -15,12 +24,3 @@ for dir_ in dirsToDelete:
             shutil.rmtree(dirToDelete)
         except:
             pass
-
-# Automatically discover and load test cases
-testLoader = unittest.TestLoader()
-testSuite = testLoader.discover(os.path.dirname(__file__), pattern="*.py")
-
-if __name__ == "__main__":
-    # Run the tests
-    testRunner = unittest.TextTestRunner()
-    result = testRunner.run(testSuite)

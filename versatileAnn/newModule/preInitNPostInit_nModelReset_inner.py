@@ -139,6 +139,8 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _setInitArgs(_plSeed__, initiatedObj, kwargs):
+        # bugPotentialCheck1 #addTest1
+        #  if ._initArgs have some nn.module does it work
         kwargs_ = kwargs or {}
         initiatedObj._initArgs = kwargs_.copy()
         initiatedObj._initArgs['__plSeed__'] = _plSeed__
