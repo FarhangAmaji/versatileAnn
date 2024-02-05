@@ -71,7 +71,7 @@ class _NewWrapper_preRunTests:
         #  - add force option also
 
         # goodToHave3
-        #  I tried to create a freature for saving trainDataloader, valDataloader originals
+        #  I tried to create a feature for saving original trainDataloader, valDataloader
         #  in order to keep them untouched but it failed because doing deepcopy, maximum recursion
         #  stack overflow occurred meaning that it has some identical parts repeated in it. so may
         #  be add dataLoader reset later

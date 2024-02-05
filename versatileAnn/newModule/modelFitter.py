@@ -10,6 +10,7 @@ from utils.vAnnGeneralUtils import giveOnlyKwargsRelated_toMethod, snakeToCamel,
     _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
+
 # kkk
 #  does pl set trainer to model after training once? if so then in continuation
 #  (for i.e. after loading model) we may not use .fit of this class
@@ -51,6 +52,10 @@ class _NewWrapper_modelFitter:
         allUserKwargs = {}
         for kw in listOfKwargs:
             self._plKwargUpdater(allUserKwargs, kw)
+
+        # add default logger if no logger is passes because by default we are logging some metrics
+        if 'logger' not in allUserKwargs:
+            allUserKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
 
         appliedKwargs = self._getArgsRelated_toEachMethodSeparately(allUserKwargs)
 
