@@ -20,11 +20,12 @@ from utils.vAnnGeneralUtils import getTorchDevice, toDevice
 # ---- getDatasetFiles
 class getDatasetFilesTests(BaseTestClass):
     def test(self):
-        filepath = _getFilePathInDataStoreLocation("EPF_FR_BE_static.csv")
+        filepath = _getFilePathInDataStoreLocation("downloadDummy.csv")
         if os.path.exists(filepath):
             os.remove(filepath)
-        getDatasetFiles("EPF_FR_BE_static.csv")
+        getDatasetFiles("downloadDummy.csv")
         self.assertTrue(os.path.exists(filepath))
+        os.remove(filepath)
 
 
 # ---- epfFrBeTests

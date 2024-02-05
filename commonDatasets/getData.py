@@ -19,6 +19,7 @@ knownDatasets = {"EPF_FR_BE.csv": "demand/EPF_FR_BE.csv",
                  "EPF_FR_BE_static.csv": "demand/EPF_FR_BE_static.csv",
                  "electricity.csv": "demand/electricity.csv",
                  "stallion.csv": "demand/stallion.csv",
+                 "downloadDummy.csv": "downloadDummy.csv",
                  }
 
 
