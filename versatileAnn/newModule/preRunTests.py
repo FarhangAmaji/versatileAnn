@@ -50,6 +50,18 @@ class _NewWrapper_preRunTests:
                     batchSizesToFindBest=None,
                     fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
                     findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
+        # cccUsage
+        #  - seedSensitive: to know what is seedSensitive read _determineSeedSensitive_shouldRun docs
+        #  - force: by default if the model has run before with the same name and the same structure
+        #         its prevented to run but force forces to rerun
+        #  - customizing learning rates to search:
+        #       either should pass (lrFinderRange and lrFinderNumSteps) or lrsToFindBest
+        #  - (*RunKwargs)== fastDevRunKwargs, overfitBatchesKwargs, profilerKwargs,
+        #       findBestLearningRateKwargs, findBestBatchSizesKwargs:
+        #           - these are the kwargs which are passed to the corresponding run methods
+        #           - you can pass kwargs related to pytorch lightning trainer, trainer.fit,
+        #               and self.log
+        #  - **kwargs same as (*RunKwargs) but are passed to all run methods
 
         fastDevRunKwargs = fastDevRunKwargs or {}
         overfitBatchesKwargs = overfitBatchesKwargs or {}
