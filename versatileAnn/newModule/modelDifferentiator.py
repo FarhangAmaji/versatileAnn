@@ -87,13 +87,15 @@ class _NewWrapper_modelDifferentiator:
 
         self.allDefinitions = classDefinitions + funcDefinitions
 
+        self.visitedWarns = visitedWarns
         if not visitedWarns:
             self._modelDifferentiator_sanityCheck()
         else:
             self.allDefinitions_sanity = False
             Warn.error(
-                'as you are informed some class definitions have been failed to get included;' + \
-                '\nso the final check is not performed' + \
+                f'as you are informed {joinListWithComma(self.visitedWarns)} class definitions' + \
+                ' have been failed to get included;' + \
+                '\nso the final sanity check is not performed' + \
                 '\nuse "addDefinitionsTo_allDefinitions" to add them manually')
         return self.allDefinitions
 
@@ -340,6 +342,8 @@ class _NewWrapper_modelDifferentiator:
         # goodToHave3
         #  - later make a new warning here so if the input definitions differ
         #       from those warned at #Lwnt to be added; this warning says
+        #       'class x1,x2,... were needed but u have added class'z' also'
+        #       - for this should use self.visitedWarns
         justDefsOf_allDefinitions = [next(iter(d.values())) for d in self.allDefinitions]
         definitions_fromAllDefinitions_NDefinitions = justDefsOf_allDefinitions + definitions
 
