@@ -117,7 +117,7 @@ class _NewWrapper_preRunTests:
         # force setting 'fast_dev_run' True
         kwargsApplied['fast_dev_run'] = True
 
-        self.fit(trainDataloader, valDataloader, **kwargsApplied)
+        self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
     @argValidator
     def runOverfitBatches(self, trainDataloader: DataLoader,
@@ -154,7 +154,7 @@ class _NewWrapper_preRunTests:
         if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
             kwargsApplied['max_epochs'] = 50
 
-        self.fit(trainDataloader, valDataloader, **kwargsApplied)
+        self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
         self._printFirstNLast_valLossChanges(callbacks_)
 
@@ -207,7 +207,7 @@ class _NewWrapper_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.fit(trainDataloader, valDataloader, **kwargsAppliedCopy)
+            self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisLr)
 
@@ -253,7 +253,7 @@ class _NewWrapper_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.fit(trainDataloader, valDataloader, **kwargsAppliedCopy)
+            self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisBatchSize)
 
@@ -272,7 +272,7 @@ class _NewWrapper_preRunTests:
         # goodToHave2
         #  add ploting in tensorboard with a message that plot is in tensorboard
 
-    # ---- utils
+    # ---- runs utils
     @staticmethod
     def _collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                         mainValLossName, changingParam):
