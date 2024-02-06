@@ -1,4 +1,5 @@
 import os
+import pickle
 from typing import List, Union, Optional
 
 import pytorch_lightning as pl
@@ -8,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import morePreciseFloat, nFoldersBack
+from utils.vAnnGeneralUtils import morePreciseFloat, nFoldersBack, stringValuedDictsEqual
 from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
@@ -44,6 +45,7 @@ class _NewWrapper_preRunTests:
     def preRunTests(self, trainDataloader,
                     *, lossFuncs: List[nn.modules.loss._Loss],
                     valDataloader=None,
+                    force=False, seedSensitive=False,
                     lrFinderRange=(1e-6, 5), lrFinderNumSteps=20, lrsToFindBest=None,
                     batchSizesToFindBest=None,
                     fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
@@ -67,10 +69,16 @@ class _NewWrapper_preRunTests:
             raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
                              'preRunTests or pass them to it')
 
-        # mustHave2
-        #  check if model with this architecture doesnt exist allow to run.
-        #  - add force option also
-        loggingPath = self._getLoggingPath()
+        # cccWhat
+        #  in general check if model with this architecture doesn't exist allow to run.
+        #  note but there are some cases depending on force and seedSensitive which
+        #  also affect allowing to run. read the _determineShouldRun_preRunTests comments
+        architectureName, loggerPath, shouldRun_preRunTests = self._determineShouldRun_preRunTests(
+            force, seedSensitive)
+
+        if not shouldRun_preRunTests:
+            Warn.error()
+            return
 
         # goodToHave3
         #  I tried to create a feature for saving original trainDataloader, valDataloader
@@ -291,7 +299,156 @@ class _NewWrapper_preRunTests:
         self._plKwargUpdater(result, runKwargs)
         return result
 
+    # ---- _determineShouldRun_preRunTests
+    def _determineShouldRun_preRunTests(self, force, seedSensitive):
+        # addTest1
+        # by default these values are assumed
+        shouldRun_preRunTests = True
+        architectureName = 'arch1'
 
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName)
+        loggerPath = os.path.abspath(dummyLogger.log_dir)
+        # loggerPath is fullPath including 'modelName/preRunTests/version_0'
+
+        if os.path.exists(nFoldersBack(loggerPath, n=2)):
+            # there is a model run before with the name of this model
+            architectureDicts = self._collectArchDicts(loggerPath)
+            architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
+                architectureDicts)
+            # matchedAllDefinitions means the exact same model structure as all layers and their definitions are exactly the same
+            # note architectureDicts matches _saveArchitectureDict
+            if architectureDicts_withMatchedAllDefinitions:
+                if force:
+                    # the force is True so the user wants replace model's previous results therefore
+                    # we have to find architectureName, so to know where are the past results
+                    acw = architectureDicts_withMatchedAllDefinitions[0]
+                    filePath = acw.keys()[0]
+                    architectureName = os.path.basename(filePath)
+                else:
+                    architectureName, shouldRun_preRunTests = self._determineSeedSensitive_shouldRun(
+                        architectureDicts_withMatchedAllDefinitions, architectureName, loggerPath,
+                        seedSensitive, shouldRun_preRunTests)
+
+            else:
+                # there are models with the name of this model but with different structures
+                pass  # so default shouldRun_preRunTests and architectureName are applied
+
+        else:
+            # no model with this name in directory has never run
+            pass  # so default shouldRun_preRunTests and architectureName are applied
+
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName,
+                                                   name=architectureName,
+                                                   version='preRunTests')
+        loggerPath = os.path.abspath(dummyLogger.log_dir)
+
+        return architectureName, loggerPath, shouldRun_preRunTests
+
+    def _getArchitectureDicts_withMatchedAllDefinitions(self, architectureDicts):
+        # cccWhat
+        # this func checks the match between self.allDefinitions and allDefinitions
+        # in architectureDicts and brings back 'architectureDicts_withMatchedAllDefinitions' which
+        # is a list of architectureDicts
+        # cccWhy
+        # 1. self.allDefinitions is a list of some dicts which have 'func or class names'
+        # as key and there string definition, sth like
+        #   [{'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
+        #   {'func1': "def func1():\n    print('func1')\n"}]
+        # 2. architectureDicts is a list of dicts like
+        #   {filePath:{'allDefinitions': allDefinitions, 'seed': someNumber}}
+
+        # Convert list of dicts to a single dict
+        toDictConvertor = lambda list_: {k: v for d in list_ for k, v in d.items()}
+
+        mainAllDefinitions_dict = toDictConvertor(self.allDefinitions)
+
+        architectureDicts_withMatchedAllDefinitions = []
+
+        for archDict in architectureDicts:
+            for filePath, fileDict in archDict.items():
+                allDefinitions = toDictConvertor(fileDict['allDefinitions'])
+
+                if stringValuedDictsEqual(mainAllDefinitions_dict, allDefinitions):
+                    architectureDicts_withMatchedAllDefinitions.append(archDict)
+
+        return architectureDicts_withMatchedAllDefinitions
+
+    def _determineSeedSensitive_shouldRun(self, architectureDicts_withMatchedAllDefinitions,
+                                          architectureName, loggerPath, seedSensitive,
+                                          shouldRun_preRunTests):
+        if seedSensitive:
+            # seedSensitive True means the user wants:
+            # seedCase1:
+            #       even if there is a model with same structure but its seed
+            #       differs, so run the model with the new seed (the seed
+            #       passed to this run)
+            # seedCase2:
+            #       but if the seed passed to this run has run before so no need to run
+            foundSeedMatch = False
+            thisModelSeed = self._initArgs['seed']
+            for acw in architectureDicts_withMatchedAllDefinitions:
+                filePath = acw.keys()[0]
+                if thisModelSeed == acw[filePath]['seed']:
+                    # seedCase2
+                    foundSeedMatch = True
+                    shouldRun_preRunTests = False  # just for clarity but may change
+                    if not os.path.join(filePath, 'preRunTests').exists():
+                        # this exact model even with this seed has run before but
+                        # its 'preRunTests' has not
+                        shouldRun_preRunTests = True
+                        architectureName = os.path.basename(filePath)
+                    break
+            if not foundSeedMatch:  # seedCase1
+                # we have to find architectureName which doesn't exist,
+                # in order not to overwrite the previous results
+                architectureName = self.findAvailableArchName(
+                    nFoldersBack(loggerPath, n=1))
+        else:
+            # there are models with the name of this model
+            # also same structure, and the seed is not important factor
+            # so there is no need to run
+            shouldRun_preRunTests = False  # just for clarity but may change
+            acw = architectureDicts_withMatchedAllDefinitions[0]
+            filePath = acw.keys()[0]
+            if not os.path.join(filePath, 'preRunTests').exists():
+                # this exact model has run before but its 'preRunTests' has not
+                architectureName = os.path.basename(filePath)
+                shouldRun_preRunTests = True
+        return architectureName, shouldRun_preRunTests
+
+    def findAvailableArchName(self, folderToSearch):
+        """
+        Find the first available 'arch' folder within the specified parent folder.
+        """
+        i = 0
+        while True:
+            i += 1
+            archName = f'arch{i}'
+            folderPath = os.path.join(folderToSearch, archName)
+
+            if os.path.exists(folderPath) and os.path.isdir(folderPath):
+                continue
+            else:
+                return archName
+
+    def _collectArchDicts(self, loggerPath):
+        pickleFiles = []
+
+        path = nFoldersBack(loggerPath, n=2)
+        for file in os.listdir(path):
+            if file == 'architecture.pkl':
+                pickleFiles.append(os.path.join(path, file))
+
+        architectureDicts = []
+        for pickleFile in pickleFiles:
+            with open(pickleFile, 'rb') as f:
+                architectureDict = pickle.load(f)
+                architectureDict = {pickleFile: architectureDict}
+                architectureDicts.append(architectureDict)
+
+        return architectureDicts
+
+    # ----
     def _informTensorboardPath(self, fastDevRunKwargs, findBestBatchSizesKwargs,
                                findBestLearningRateKwargs, kwargs, overfitBatchesKwargs,
                                profilerKwargs):
