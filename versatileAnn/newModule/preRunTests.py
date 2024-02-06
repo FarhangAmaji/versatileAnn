@@ -520,7 +520,7 @@ class _NewWrapper_preRunTests:
 
     def _saveArchitectureDict(self, loggerPath):
         architectureDict = {'allDefinitions': self.allDefinitions,
-                            '__plSeed__': self._initArgs['__plSeed__']}
+                            'seed': self._initArgs['__plSeed__']}
 
         with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
             pickle.dump(architectureDict, f)
