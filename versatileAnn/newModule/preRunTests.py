@@ -92,7 +92,8 @@ class _NewWrapper_preRunTests:
         self.runOverfitBatches(trainDataloader, valDataloader, **runKwargs_)
 
         runKwargs_ = self._mergeKwargsWith_runKwargs(profilerKwargs, kwargs)
-        self.runProfiler(trainDataloader, valDataloader, **runKwargs_)
+        self.runProfiler(trainDataloader, architectureName,
+                         valDataloader, **runKwargs_)
 
         runKwargs_ = self._mergeKwargsWith_runKwargs(findBestLearningRateKwargs, kwargs)
         self.findBestLearningRate(trainDataloader, valDataloader,
@@ -169,14 +170,16 @@ class _NewWrapper_preRunTests:
         trainDataloader.shuffle = pastDataloaderShuffle
 
     @argValidator
-    def runProfiler(self, trainDataloader: DataLoader,
+    def runProfiler(self, trainDataloader: DataLoader, architectureName,
                     valDataloader: Union[DataLoader, None] = None,
                     **kwargs):
         self.printTestPrints('running profiler')
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
                          'profiler': PyTorchProfiler(),
-                         'logger': pl.loggers.TensorBoardLogger(self.modelName, name='profiler'), }
+                         'logger': pl.loggers.TensorBoardLogger(self.modelName,
+                                                                name=architectureName,
+                                                                version='preRunTests'), }
         self._plKwargUpdater(kwargsApplied, kwargs)
 
         trainer = self.fit(trainDataloader, valDataloader, **kwargsApplied)
