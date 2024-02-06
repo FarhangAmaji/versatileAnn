@@ -324,7 +324,7 @@ class _NewWrapper_modelDifferentiator:
 
             # check does having these definitions, enable to create another instance of "this class"
             if self._initArgs:
-                type(self)(**self._initArgs, getAllNeededDefinitions=False)
+                type(self)(**self._initArgs['initPassedKwargs'], getAllNeededDefinitions=False)
 
             self.allDefinitions_sanity = True
             return True  # returning sanity of allDefinitions

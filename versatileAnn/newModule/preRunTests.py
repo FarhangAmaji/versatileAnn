@@ -379,7 +379,7 @@ class _NewWrapper_preRunTests:
         #   [{'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
         #   {'func1': "def func1():\n    print('func1')\n"}]
         # 2. architectureDicts is a list of dicts like
-        #   {filePath:{'allDefinitions': allDefinitions, 'seed': someNumber}}
+        #   {filePath:{'allDefinitions': allDefinitions, '__plSeed__': someNumber}}
 
         # Convert list of dicts to a single dict
         toDictConvertor = lambda list_: {k: v for d in list_ for k, v in d.items()}
@@ -409,10 +409,10 @@ class _NewWrapper_preRunTests:
             # seedCase2:
             #       but if the seed passed to this run has run before so no need to run
             foundSeedMatch = False
-            thisModelSeed = self._initArgs['seed']
+            thisModelSeed = self._initArgs['__plSeed__']
             for acw in architectureDicts_withMatchedAllDefinitions:
                 filePath = acw.keys()[0]
-                if thisModelSeed == acw[filePath]['seed']:
+                if thisModelSeed == acw[filePath]['__plSeed__']:
                     # seedCase2
                     foundSeedMatch = True
                     shouldRun_preRunTests = False  # just for clarity but may change
@@ -520,7 +520,7 @@ class _NewWrapper_preRunTests:
 
     def _saveArchitectureDict(self, loggerPath):
         architectureDict = {'allDefinitions': self.allDefinitions,
-                            'seed': self._initArgs['__plSeed__']}
+                            '__plSeed__': self._initArgs['__plSeed__']}
 
         with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
             pickle.dump(architectureDict, f)

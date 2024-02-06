@@ -88,7 +88,7 @@ GrandChild
                            additionalArg='additionalArg', testPrints=True)
 
         del model._initArgs['__plSeed__']
-        self.assertTrue(model._initArgs, {'modelName': 'ModelKog2s',
+        self.assertTrue(model._initArgs['initPassedKwargs'], {'modelName': 'ModelKog2s',
                                           'opoc': 'opoc',
                                           'opogc': 'opogc',
                                           'additionalArg': 'additionalArg',

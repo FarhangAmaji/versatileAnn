@@ -115,7 +115,7 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
                                 allArgs, just=['_NewWrapper_optimizer'])
 
         # set initArgs, which is used for model reset
-        cls._setInitArgs(_plSeed__, initiatedObj, kwargs)
+        cls._setInitArgs(_plSeed__, initiatedObj, kwargs, cls.__name__)
 
         cls._managingClassVariableSpace(cls, initiatedObj)
 
@@ -193,8 +193,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
 
         kwargsToReset.pop('__plSeed__')
 
-        newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset)
-        newObj.__init__(**kwargsToReset)
+        newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset['initPassedKwargs'])
+        newObj.__init__(**kwargsToReset['initPassedKwargs'])# kkk why both new and __init__ are used here
 
         for atk, atkVal in attrsToKeep.items():
             setattr(newObj, atk, atkVal)

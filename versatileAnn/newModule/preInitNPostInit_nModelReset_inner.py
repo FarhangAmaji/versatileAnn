@@ -138,11 +138,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
                 #  is called manually
 
     @staticmethod
-    def _setInitArgs(_plSeed__, initiatedObj, kwargs):
+    def _setInitArgs(_plSeed__, initiatedObj, kwargs, clsTypeName):
         # bugPotentialCheck1 #addTest1
         #  if ._initArgs have some nn.module does it work
         kwargs_ = kwargs or {}
-        initiatedObj._initArgs = kwargs_.copy()
+        initiatedObj._initArgs['initPassedKwargs'] = kwargs_.copy()
+        initiatedObj._initArgs['clsTypeName'] = clsTypeName
         initiatedObj._initArgs['__plSeed__'] = _plSeed__
 
     @staticmethod
