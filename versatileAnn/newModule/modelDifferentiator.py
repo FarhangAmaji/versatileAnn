@@ -87,13 +87,13 @@ class _NewWrapper_modelDifferentiator:
 
         self.allDefinitions = classDefinitions + funcDefinitions
 
-        self.visitedWarns = visitedWarns
+        self.warnsFrom_getAllNeededDefinitions = visitedWarns
         if not visitedWarns:
             self._modelDifferentiator_sanityCheck()
         else:
             self.allDefinitions_sanity = False
             Warn.error(
-                f'as you are informed {joinListWithComma(self.visitedWarns)} class definitions' + \
+                f'as you are informed {joinListWithComma(self.warnsFrom_getAllNeededDefinitions)} class definitions' + \
                 ' have been failed to get included;' + \
                 '\nso the final sanity check is not performed' + \
                 '\nuse "addDefinitionsTo_allDefinitions" to add them manually')
@@ -314,17 +314,17 @@ class _NewWrapper_modelDifferentiator:
         #  restructure needed
         #  should tries several times so if the order of dependencies are not ok the code tries
         #  it best to automatically handle it
+        self.allDefinitions = self._cleanListOfDefinitions_fromBadIndent(self.allDefinitions)
+
         NewWrapper = self._getNewWrapper_classObject()
         try:
             for i, definition in enumerate(self.allDefinitions):
                 for className, classCode in definition.items():
-                    classCode = self.removeIndents_fromCodeStringDefinition(classCode)
-                    self.allDefinitions[i] = {className: classCode}
                     exec(classCode)
 
             # check does having these definitions, enable to create another instance of "this class"
             if self._initArgs:
-                type(self)(self._initArgs, getAllNeededDefinitions=False)
+                type(self)(**self._initArgs, getAllNeededDefinitions=False)
 
             self.allDefinitions_sanity = True
             return True  # returning sanity of allDefinitions
@@ -333,6 +333,15 @@ class _NewWrapper_modelDifferentiator:
             self.allDefinitions_sanity = False
             return False
 
+    @classmethod
+    def _cleanListOfDefinitions_fromBadIndent(cls, allDefinitions):
+        for i, definition in enumerate(allDefinitions):
+            for className, classCode in definition.items():
+                classCode = cls.removeIndents_fromCodeStringDefinition(classCode)
+                allDefinitions[i] = {className: classCode}
+
+        return allDefinitions
+
     # ---- addDefinitionsTo_allDefinitions methods
     @argValidator
     def addDefinitionsTo_allDefinitions(self, definitions: List[str]):
@@ -340,7 +349,7 @@ class _NewWrapper_modelDifferentiator:
         #  - later make a new warning here so if the input definitions differ
         #       from those warned at #Lwnt to be added; this warning says
         #       'class x1,x2,... were needed but u have added class'z' also'
-        #       - for this should use self.visitedWarns
+        #       - for this should use self.warnsFrom_getAllNeededDefinitions
         justDefsOf_allDefinitions = [next(iter(d.values())) for d in self.allDefinitions]
         definitions_fromAllDefinitions_NDefinitions = justDefsOf_allDefinitions + definitions
 
