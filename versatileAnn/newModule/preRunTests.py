@@ -88,6 +88,12 @@ class _NewWrapper_preRunTests:
         architectureName, loggerPath, shouldRun_preRunTests = self._determineShouldRun_preRunTests(
             force, seedSensitive)
 
+        # specify default_root_dir in order to specify model save path
+        # note as how runs are defined here(by default) there is no model save
+        # but in the case the user specifies it, it would be saved in the loggerPath
+        if 'default_root_dir' not in kwargs:
+            kwargs['default_root_dir'] = loggerPath
+
         if not shouldRun_preRunTests:
             return
 
@@ -96,22 +102,22 @@ class _NewWrapper_preRunTests:
         #  in order to keep them untouched but it failed because doing deepcopy, maximum recursion
         #  stack overflow occurred meaning that it has some identical parts repeated in it. so may
         #  be add dataLoader reset later
-        runKwargs_ = self._mergeKwargsWith_runKwargs(fastDevRunKwargs, kwargs)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(kwargs, fastDevRunKwargs)
         self.runFastDevRun(trainDataloader, valDataloader, **runKwargs_)
 
-        runKwargs_ = self._mergeKwargsWith_runKwargs(overfitBatchesKwargs, kwargs)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(kwargs, overfitBatchesKwargs)
         self.runOverfitBatches(trainDataloader, valDataloader, **runKwargs_)
 
-        runKwargs_ = self._mergeKwargsWith_runKwargs(profilerKwargs, kwargs)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(kwargs, profilerKwargs)
         self.runProfiler(trainDataloader, architectureName,
                          valDataloader, **runKwargs_)
 
-        runKwargs_ = self._mergeKwargsWith_runKwargs(findBestLearningRateKwargs, kwargs)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(kwargs, findBestLearningRateKwargs)
         self.findBestLearningRate(trainDataloader, valDataloader,
                                   numSteps=lrFinderNumSteps, lrRange=lrFinderRange,
                                   lrsToFindBest=lrsToFindBest, **runKwargs_)
 
-        runKwargs_ = self._mergeKwargsWith_runKwargs(findBestBatchSizesKwargs, kwargs)
+        runKwargs_ = self._mergeKwargsWith_runKwargs(kwargs, findBestBatchSizesKwargs)
         self.findBestBatchSize(trainDataloader, valDataloader,
                                batchSizesToFindBest=batchSizesToFindBest, **runKwargs_)
 
@@ -311,7 +317,7 @@ class _NewWrapper_preRunTests:
                                                   '1st': firstEpochLoss, 'last': lastEpochLoss,
                                                   'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
 
-    def _mergeKwargsWith_runKwargs(self, runKwargs, mainKwargsOfPreRunTests):
+    def _mergeKwargsWith_runKwargs(self, mainKwargsOfPreRunTests, runKwargs):
         result = mainKwargsOfPreRunTests.copy()
         self._plKwargUpdater(result, runKwargs)
         return result
@@ -513,7 +519,8 @@ class _NewWrapper_preRunTests:
     # ----
 
     def _saveArchitectureDict(self, loggerPath):
-        architectureDict = {'allDefinitions': self.allDefinitions, 'seed': self._initArgs['seed']}
+        architectureDict = {'allDefinitions': self.allDefinitions,
+                            'seed': self._initArgs['__plSeed__']}
 
         with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
             pickle.dump(architectureDict, f)
