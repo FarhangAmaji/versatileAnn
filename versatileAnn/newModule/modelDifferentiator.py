@@ -318,12 +318,9 @@ class _NewWrapper_modelDifferentiator:
         try:
             for i, definition in enumerate(self.allDefinitions):
                 for className, classCode in definition.items():
-                    try:
-                        exec(classCode, locals())
-                    except IndentationError:
-                        cleanedDefinition = self.removeIndents_fromCodeStringDefinition(classCode)
-                        exec(cleanedDefinition)
-                        self.allDefinitions[i] = {className: cleanedDefinition}
+                    classCode = self.removeIndents_fromCodeStringDefinition(classCode)
+                    self.allDefinitions[i] = {className: classCode}
+                    exec(classCode)
 
             # check does having these definitions, enable to create another instance of "this class"
             if self._initArgs:
