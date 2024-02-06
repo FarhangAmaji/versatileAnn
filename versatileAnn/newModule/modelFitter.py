@@ -33,7 +33,7 @@ class _NewWrapper_modelFitter:
     @argValidator
     def fit(self, trainDataloader: DataLoader,
             valDataloader: Union[DataLoader, None] = None,
-            listOfKwargs: List[dict] = None, **kwargs):
+            listOfKwargs: List[dict] = None, addDefaultLogger=True, **kwargs):
         # kkk support log kwargs to have phases
         # addTest1
         # cccUsage
@@ -53,8 +53,9 @@ class _NewWrapper_modelFitter:
         for kw in listOfKwargs:
             self._plKwargUpdater(allUserKwargs, kw)
 
-        # add default logger if no logger is passes because by default we are logging some metrics
-        if 'logger' not in allUserKwargs:
+        # add default logger if allowed and no logger is passes
+        # because by default we are logging some metrics
+        if addDefaultLogger and 'logger' not in allUserKwargs:
             allUserKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
 
         appliedKwargs = self._getArgsRelated_toEachMethodSeparately(allUserKwargs)
