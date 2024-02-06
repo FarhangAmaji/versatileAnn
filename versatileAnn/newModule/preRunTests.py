@@ -112,7 +112,10 @@ class _NewWrapper_preRunTests:
                                     findBestLearningRateKwargs, kwargs, overfitBatchesKwargs,
                                     profilerKwargs)
 
+        # save model architecture in a file
+        self._saveArchitectureDict(loggerPath)
 
+    # ---- runs
     @argValidator
     def runFastDevRun(self, trainDataloader: DataLoader,
                       valDataloader: Union[DataLoader, None] = None, **kwargs):
@@ -486,3 +489,11 @@ class _NewWrapper_preRunTests:
         logDir = os.path.abspath(logger.log_dir)
         if logDir not in loggingPaths:
             loggingPaths.append(logDir)
+
+    # ----
+
+    def _saveArchitectureDict(self, loggerPath):
+        architectureDict = {'allDefinitions': self.allDefinitions, 'seed': self._initArgs['seed']}
+
+        with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
+            pickle.dump(architectureDict, f)
