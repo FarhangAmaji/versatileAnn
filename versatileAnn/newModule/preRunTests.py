@@ -89,7 +89,6 @@ class _NewWrapper_preRunTests:
             force, seedSensitive)
 
         if not shouldRun_preRunTests:
-            Warn.error()
             return
 
         # goodToHave3
@@ -320,6 +319,7 @@ class _NewWrapper_preRunTests:
     # ---- _determineShouldRun_preRunTests
     def _determineShouldRun_preRunTests(self, force, seedSensitive):
         # addTest1
+
         # by default these values are assumed
         shouldRun_preRunTests = True
         architectureName = 'arch1'
@@ -415,7 +415,12 @@ class _NewWrapper_preRunTests:
                         # its 'preRunTests' has not
                         shouldRun_preRunTests = True
                         architectureName = os.path.basename(filePath)
+
+                    if not shouldRun_preRunTests:
+                        Warn.info(
+                            'skipping preRunTests: this model with same structure and same seed has run before')
                     break
+
             if not foundSeedMatch:  # seedCase1
                 # we have to find architectureName which doesn't exist,
                 # in order not to overwrite the previous results
@@ -432,6 +437,9 @@ class _NewWrapper_preRunTests:
                 # this exact model has run before but its 'preRunTests' has not
                 architectureName = os.path.basename(filePath)
                 shouldRun_preRunTests = True
+
+            if not shouldRun_preRunTests:
+                Warn.info('skipping preRunTests: this model with same structure has run before')
         return architectureName, shouldRun_preRunTests
 
     def findAvailableArchName(self, folderToSearch):
