@@ -142,9 +142,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         # bugPotentialCheck1 #addTest1
         #  if ._initArgs have some nn.module does it work
         kwargs_ = kwargs or {}
-        initiatedObj._initArgs['initPassedKwargs'] = kwargs_.copy()
-        initiatedObj._initArgs['clsTypeName'] = clsTypeName
-        initiatedObj._initArgs['__plSeed__'] = _plSeed__
+        _initArgs = {}
+
+        _initArgs['initPassedKwargs'] = kwargs_.copy()
+        _initArgs['clsTypeName'] = clsTypeName
+        _initArgs['__plSeed__'] = _plSeed__
+        initiatedObj._initArgs = _initArgs
 
     @staticmethod
     def _emptyMethod_usedForDisabling__init__s(self, **kwargs):
