@@ -72,3 +72,34 @@ class _NewWrapper_specialModes:
         #  the loss value under the key "loss". This is essential for the
         #  training process specially back propagation to function correctly.
         return loss
+
+    # ---- methods related to VAEs
+    def _unpackForwardOutputs_autoEncoder(self, forwardOutputs):
+        if self.VAEMode:
+            if len(forwardOutputs) != 3:
+                raise ImplementationError(self.VAEMode_implementationsMsg)
+            forwardOutputs, mean, logvar = forwardOutputs
+            return forwardOutputs, mean, logvar
+        else:
+            return forwardOutputs, None, None
+
+    def _addKlDivergence_toLoss(self, loss, mean, logvar):
+        if self.VAEMode:
+            return loss + self.autoEncoder_KlDivergenceFunc(mean, logvar)
+        else:
+            return loss
+
+    @staticmethod
+    def klDivergence_normalDistributionLoss(mean, logvar):
+        klLoss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
+        return klLoss
+
+    @staticmethod
+    def reparameterize(mean, logvar):
+        # cccUsage
+        #  this is not used in main commonStep but this is
+        #  defined here so the user can use it in the forward method
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mean + eps * std
+        return z
