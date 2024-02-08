@@ -63,9 +63,11 @@ class _NewWrapper_modelDifferentiator:
         _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelDifferentiator)
 
     def _getAllNeededDefinitions(self, obj):
+        # Method to get all class or func definitions in the correct order
         # goodToHave3
         #  maybe object in this func is not needed and by default it should run on self
-        # Method to get all class or func definitions in the correct order
+        # goodToHave3
+        #  maybe should do similar thing for _initArgs as some layers may be passed with args
 
         # Get class dict({className:classObject}) of classes needed to create "this class"
         classesDict, visitedClasses, _ = self._getAllNeededClasses(obj)

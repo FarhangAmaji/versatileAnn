@@ -158,6 +158,8 @@ class NpDict(DotDict):
 
 
 def equalNpDicts(npd1, npd2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+    # goodToHave1
+    #  beside this in NpDict __equal__ could have been defined
     if npd1.shape != npd2.shape:
         return False
 

@@ -41,20 +41,31 @@ class NewWrapper(pl.LightningModule,
         # force reimplementing this method
         raise NotImplementedError
 
-    def _tempCommonStep(self, batch, phase):
+    def commonStep(self, batch, phase):
+        # bugPotentialCheck1
+        #  note this method should always be similar to specialModesStep
+        #  so check specialModesStep and make similar changes here specially for the comments
+        # cccDevStruct
+        #  we don't make a baseFunc as the users would get idea of these 2 funcs separately
+        # cccUsage
+        #  note we may need to reimplement this method
+        #  so take a look at this method to get an idea how to reimplement it yourself
+        #  - also if you are using variationalAutoEncoderMode or dropoutEnsembleMode you may
+        #       want to reimplement the specialModesStep in specialModes.py
         # reset tempVarStep
         self.resetTempVar_step(phase)
 
+
         inputs, targets = batch
         # goodToHave1
-        #  later make it compatible with outputMask
+        #  later make it compatible with outputMask; also do the change on specialModesStep
         # bugPotentialCheck2
         #  also what if the batch has 1 items; may don't allow this one as almost everything depends on targets
         # goodToHave1
         #  must think about this more on how to match batchOutputs and self.forward args can get
         #  matched and related values of batchOutputs get sent to self.forward
         #  - may add targets if its is model arguments
-        forwardOutputs = self(inputs, targets)
+        forwardOutputs = self.forward(inputs, targets)
 
         # calculate loss
         # bugPotentialCheck1
@@ -64,23 +75,28 @@ class NewWrapper(pl.LightningModule,
 
         # Log losses
         self._logLosses(calculatedLosses, phase)
+        # cccUsage
+        #  Please ensure that your `training_step` method in PyTorch Lightning
+        #  returns either the loss value directly or a dictionary containing
+        #  the loss value under the key "loss". This is essential for the
+        #  training process specially back propagation to function correctly.
         return loss
 
     def training_step(self, batch, batch_idx):
         phase = self.phases.train
-        return self._tempCommonStep(batch, phase)
+        return self.commonStep(batch, phase)
 
     def validation_step(self, batch, batch_idx):
         phase = self.phases.val
-        return self._tempCommonStep(batch, phase)
+        return self.commonStep(batch, phase)
 
     def test_step(self, batch, batch_idx):
         phase = self.phases.test
-        return self._tempCommonStep(batch, phase)
+        return self.commonStep(batch, phase)
 
     def predict_step(self, batch, batch_idx):
         phase = self.phases.predict
-        return self._tempCommonStep(batch, phase)
+        return self.commonStep(batch, phase)
 
     def configure_optimizers(self):
         return self.optimizer

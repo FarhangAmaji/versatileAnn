@@ -81,9 +81,12 @@ class _NewWrapper_regularization:
         # goodToHave1
         #  now only detects if VAnnCustomLayer is the main layer in model but if
         #  VAnnCustomLayer is in a class and that class is the main layer in model
-        #  regularization won't get detected
+        #  regularization won't get detected; think about self.modules() and not self._modules
         # cccDevAlgo
         #  VAnnCustomLayers can have regularization on their layer
+        # cccDevStruct
+        #  vars(self)['_modules'](ofc not used here but may be used elsewhere) is similar to
+        #  self._modules. these contain only the direct children modules of the model
         for layerName, layer in self._modules.items():
             if isinstance(layer, VAnnCustomLayer):
                 if layer.regularization:  # Llr1

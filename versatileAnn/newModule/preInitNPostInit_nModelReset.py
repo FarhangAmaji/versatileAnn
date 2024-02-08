@@ -115,6 +115,10 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
                                 allArgs, just=['_NewWrapper_optimizer'])
 
         # set initArgs, which is used for model reset
+        # kkk
+        #  1. should I have change initArgs for some of it's attrs?!
+        #  2. or maybe have sth similar to it so that one keeps essential values; for i.e.
+        #  if the optimizer is changed the new optimizer should be in this similar variable
         cls._setInitArgs(_plSeed__, initiatedObj, kwargs, cls.__name__)
 
         cls._managingClassVariableSpace(cls, initiatedObj)
@@ -155,6 +159,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
     def resetModel(self, withPastSeed=True, attrsToKeep=None):
         # addTest1
         #  test if the model params are reset after some epochs of training
+        # kkk add modes here(if not added by default)
+
         # cccUsage
         #  this is not inplace so u have to do `self = self.resetModel()`
         # bugPotentialCheck1
