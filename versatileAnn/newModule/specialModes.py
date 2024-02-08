@@ -103,3 +103,46 @@ class _NewWrapper_specialModes:
         eps = torch.randn_like(std)
         z = mean + eps * std
         return z
+
+    # ---- methods related to dropoutEnsemble
+
+    def _activateDropouts_forEnsembleMode(self):
+        # kkk addTest1
+        # cccDevStruct
+        #  - self.modules() recursively includes all submodules, so if model has some
+        #  layers(as attributes) which are other classes inherited from nn.module
+        #  and have some nn.Dropout in them are accessed with self.modules()
+        #  - `.train()` when gets applied, only changes the behaviour of
+        #  `dropout` and `batch normalization` layers
+        if self.dropoutEnsembleMode:
+            for module in self.modules():
+                if isinstance(module, nn.Dropout):
+                    module.train()
+
+    # ---- methods related to dropoutEnsemble and VAEMode
+    def _forward_specialModes_inferencePhases(self, inputs, outputs):
+        # cccAlgo
+        #  this is used in inference phases(eval/test/predict)
+        mean, logvar = None, None
+        if self.dropoutEnsembleMode:
+            if self.VAEMode:
+                # addTest1 for when forwardOutputs is a tensor or a dict
+                forwardOutputsList = [[] for _ in range(3)]
+                for x in [inputs] * self.dropoutEnsembleNumSamples:
+                    output = self.forward(x)
+                    [forwardOutputsList[i].append(output[i]) for i in range(3)]
+                forwardOutputs, mean, logvar = tuple(
+                    torch.stack(forwardOutputsList[i]).squeeze().mean(dim=0).unsqueeze(1) for i in
+                    range(3))
+            else:
+                # addTest1 for when forwardOutputs is a tensor or a dict
+                forwardOutputs = torch.stack(
+                    tuple(
+                        map(lambda x: self.forward(x), [inputs] * self.dropoutEnsembleNumSamples)))
+                forwardOutputs = forwardOutputs.squeeze().mean(dim=0).unsqueeze(1)
+        else:
+            # addTest1 for when forwardOutputs is a tensor or a dict
+            forwardOutputs = self.forward(inputs, outputs)
+            forwardOutputs, mean, logvar = self._unpackForwardOutputs_autoEncoder(forwardOutputs)
+
+        return forwardOutputs, mean, logvar
