@@ -1,0 +1,28 @@
+[project]
+name = "versatileAnn"
+version = "0.2.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "FarhangAmaji", email = "popamaji@gmail.com"},
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "pytorch-lightning",
+    "pydantic",
+    "colorama",
+    "tensorboard",
+    "coverage",
+    "scikit-learn",
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "None"}
+
+
+[tool.pdm]
+distribution = true
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
