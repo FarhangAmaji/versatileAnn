@@ -29,17 +29,20 @@ class NewWrapper(pl.LightningModule,
                  _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator,
                  _NewWrapper_specialModes):
 
+    __version__ = '0.2'
     @argValidator
     def __init__(self, **kwargs):
         # kkk
         #  this init should take all other args which it parent classes take because the user can
         #  really check all parent classes to see what functionalities does class offer
-        self.__version__ = '0.2'
         self.printTestPrints('NewWrapper init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
 
     def forward(self, inputs, targets):
+        # cccUsage
+        #  if you want to use VAEMode must return normalForwardOutputs, mean, logvar
+
         # force reimplementing this method
         raise NotImplementedError
 
@@ -104,23 +107,35 @@ class NewWrapper(pl.LightningModule,
         return self.commonStep(batch, phase)
 
     def configure_optimizers(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         return self.optimizer
 
     # reset tempVar of phases on epoch start
     def on_train_epoch_start(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.train)
 
     def on_validation_epoch_start(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.val)
 
     def on_test_epoch_start(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.test)
 
     def on_predict_epoch_start(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.predict)
 
     # reset tempVar of all phases on run start
     def on_fit_start(self):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
         for phase in list(self.phases.keys()):
             self.resetTempVar_run(phase)
 
@@ -130,7 +145,8 @@ class NewWrapper(pl.LightningModule,
     def _isCls_NewWrapperClass(self, cls_):
         # cccDevAlgo
         #  this is a util to be used in parent classes and not get circular import error
-        return cls_ is NewWrapper
+        return type(cls_) == NewWrapper
 
-    def _getNewWrapper_classObject(self):
+    @staticmethod
+    def _getNewWrapper_classObject():
         return NewWrapper

@@ -149,7 +149,8 @@ class _NewWrapper_preInitNPostInit_nModelReset(_NewWrapper_preInitNPostInit_nMod
     def _NewWrapper_postInit(self, **kwargs):
         self.printTestPrints('_NewWrapper_postInit func', self.__class__.__name__)
 
-        # putting back originial inits
+        # putting back original inits
+        # addTest2
         for pc, pcInfo in self._parentClasses_tillNewWrapper_inits.items():
             pcInfo['classObj'].__init__ = pcInfo['originalInit']
 

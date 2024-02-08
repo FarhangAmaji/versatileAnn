@@ -29,18 +29,20 @@ class _NewWrapper_saveLoad:
         _initArgs = checkpoint['newWrapper']['_initArgs']
         warnsFrom_getAllNeededDefinitions = checkpoint['newWrapper'][
             'warnsFrom_getAllNeededDefinitions']
+        # kkk add modelDifferentiator_sanityCheck
+        # kkk return instance
 
     @classmethod
     def modelDifferentiator_sanityCheck(cls, allDefinitions, _initArgs,
                                         warnsFrom_getAllNeededDefinitions):
+        # kkk rename this
         allDefinitions_sanity = True
         initiatedObject = None
         executionOrder = []
         errors = []
 
         # clean allDefinitions
-        allDefinitions = cls._cleanListOfDefinitions_fromBadIndent(
-            allDefinitions)
+        allDefinitions = cls._cleanListOfDefinitions_fromBadIndent(allDefinitions)
 
         loopLimit = len(allDefinitions) ** 2 + 2
         limitCounter = 0
@@ -54,6 +56,11 @@ class _NewWrapper_saveLoad:
                         exec(classCode)
                         executionOrder.append(definition)
                     except:
+                        # mustHave3
+                        #  in modelDifferentiator we didnt include the classes or the funcs
+                        #  defined in project(as a part of versatileAnn) to be included so if
+                        #  the error is about them here the code should be able to detect and
+                        #  import that class or func
                         pass
 
         # run to collect errors

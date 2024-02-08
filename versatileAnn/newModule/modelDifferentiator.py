@@ -11,7 +11,6 @@ from utils.warnings import Warn
 from versatileAnn.utils import LossRegularizator
 
 
-# kkk add to preRunTests + also seed
 # kkk add to mainModelRun
 # goodToHave3
 #  this class can be a separate class of its own
@@ -22,7 +21,7 @@ class _NewWrapper_modelDifferentiator:
         1. check if the model definitions differ or not
         2. recreate model from strings(text) of definition of custom(user defined) classes or
             custom functions, so if the result of _getAllNeededDefinitions is passed else where the
-            model can be recreated wihtout having the files, and only from those definition
+            model can be recreated without having the files, and only from those definition
             which are string
 
     - _getAllNeededClasses is the main func of this class and other methods are just
@@ -50,7 +49,7 @@ class _NewWrapper_modelDifferentiator:
         case2.2:
             assume 'self.transformerClassDefinition = TransformerModule' is exists just to have
             class object and not its instance
-        3. similar to last case; assume the user includes a independent(regular func and not
+        3. similar to last case; assume the user includes an independent(regular func and not
             method of a class) func so its definitions is also gets added
 
     also does final check in order to see if can definitions executed or not
@@ -253,6 +252,17 @@ class _NewWrapper_modelDifferentiator:
         if self._isCls_NewWrapperClass(cls_):
             return None
         if cls_ in [LossRegularizator, DotDict]:
+            # goodToHave3
+            #  maybe I should not do this, as standAlone may use sth like freezing dependency; also
+            #  for funcs (if next goodToHave; few lines below is implemented)
+            # bugPotentialCheck2
+            #  think about it later
+            #  add all other classes defined in the project;
+            #  obviously we want to do it everytime here, so either we have to hard code them some
+            #  (ofc we may add some func to runAllTests.py to update them every time that is run)
+            # goodToHave2
+            #  do similar thing in _getAttributesFuncDefinitions when detects custom func and don't
+            #  allow funcs defined in the project to be included
             # prevent utility classes defined for NewWrapper
             return None
         if isCustomClass(cls_):

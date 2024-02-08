@@ -10,6 +10,8 @@ from utils.warnings import Warn
 class _NewWrapper_specialModes:
     VAEMode_implementationsMsg = "with VAEMode, the forward method " + \
                                  "must return normalForwardOutputs, mean, logvar"
+    # goodToHave2
+    #  should implement detecting if the forward returns 3 outputs
 
     @argValidator
     def __init__(self, dropoutEnsembleMode: bool = False, VAEMode: bool = False,
@@ -41,7 +43,7 @@ class _NewWrapper_specialModes:
         #  so check commonStep and make similar changes here specially for the comments
         # cccUsage
         #  note we may need to if you are using variationalEncoderModes or dropoutEnsembleMode
-        #   you may want to reimplement this method
+        #  you may want to reimplement this method
         #  so take a look at this method to get an idea how to reimplement it yourself
         # reset tempVarStep
         self.resetTempVar_step(phase)
