@@ -12,6 +12,7 @@ from versatileAnn.newModule.preRunTests import _NewWrapper_preRunTests
 from versatileAnn.newModule.properties import _NewWrapper_properties
 from versatileAnn.newModule.regularization import _NewWrapper_regularization
 from versatileAnn.newModule.saveLoad import _NewWrapper_saveLoad
+from versatileAnn.newModule.specialModes import _NewWrapper_specialModes
 from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 
 
@@ -25,7 +26,8 @@ class NewWrapper(pl.LightningModule,
                  _NewWrapper_preInitNPostInit_nModelReset, _NewWrapper_optimizer,
                  _NewWrapper_loss, _NewWrapper_regularization,
                  _NewWrapper_modelFitter, _NewWrapper_preRunTests,
-                 _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator):
+                 _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator,
+                 _NewWrapper_specialModes):
 
     @argValidator
     def __init__(self, **kwargs):
@@ -52,6 +54,9 @@ class NewWrapper(pl.LightningModule,
         #  so take a look at this method to get an idea how to reimplement it yourself
         #  - also if you are using variationalAutoEncoderMode or dropoutEnsembleMode you may
         #       want to reimplement the specialModesStep in specialModes.py
+        if self.VAEMode or self.dropoutEnsembleMode:
+            return self.specialModesStep(batch, phase)
+
         # reset tempVarStep
         self.resetTempVar_step(phase)
 
