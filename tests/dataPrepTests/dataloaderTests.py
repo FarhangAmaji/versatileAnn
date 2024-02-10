@@ -322,8 +322,11 @@ class DataloaderTests(BaseTestClass):
                   'randomSeed': self.seed}
         with self.assertRaises(TypeError) as context:
             VAnnTsDataloader(self.dataset, **kwargs)
-        self.assertEqual(str(context.exception),
-                         "DataLoader.__init__() got an unexpected keyword argument 'a'")
+        # cccDevStruct
+        #  this is changed this way (comparing to past versions) because some
+        #  machines like macOs context.exception is different
+        self.assertTrue(
+            "__init__() got an unexpected keyword argument 'a'" in str(context.exception))
 
     def testShuffledWithSeed(self):
         self.setup1()
