@@ -3,9 +3,10 @@ import pandas as pd
 from dataPrep.normalizers_baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
+from utils.dataTypeUtils.df_series import pandasGroupbyAlternative
+from utils.dataTypeUtils.dotDict_npDict import NpDict
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, _allowOnlyCreationOf_ChildrenInstances, \
-    pandasGroupbyAlternative
 from utils.warnings import Warn
 
 

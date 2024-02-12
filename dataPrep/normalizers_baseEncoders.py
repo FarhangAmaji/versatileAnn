@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
+from utils.dataTypeUtils.list import areItemsOfList1_InList2
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import areItemsOfList1_InList2
 from utils.warnings import Warn
 
 forceMsgAdvice = " you may use 'force' option to force it."

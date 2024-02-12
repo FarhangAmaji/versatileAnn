@@ -1,5 +1,4 @@
 # ---- imports
-import os
 from typing import Union
 
 import numpy as np
@@ -11,10 +10,12 @@ from dataPrep.utils_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleCo
     _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, _extend_dfIndexes
 from dataPrep.utils_innerFuncs import _splitApplyConditions
 from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
+from utils.dataTypeUtils.df_series import regularizeBoolCol, pandasGroupbyAlternative
+from utils.dataTypeUtils.dotDict_npDict import NpDict
+from utils.dataTypeUtils.npArray import npArrayBroadCast
+from utils.generalUtils import varPasser
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, npArrayBroadCast, regularizeBoolCol, varPasser, \
-    pandasGroupbyAlternative
 
 
 # ---- data split
@@ -352,6 +353,7 @@ def nonTsStartPointsFalse(df):
     # to make sure all non-True values are turned to False
     nonStartPointCondition = df[tsStartPointColName] != True
     df.loc[nonStartPointCondition, tsStartPointColName] = False
+
 
 def _applyShuffleIfSeedExists(shuffle, shuffleSeed):
     if shuffleSeed:

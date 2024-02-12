@@ -2,7 +2,7 @@ import inspect
 from typing import Union, List
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getMethodArgs
+from utils.generalUtils import getMethodArgs
 
 
 def getArgsOfClasses(classesDict, originalKwargs=None):

@@ -9,10 +9,12 @@ from dataPrep.dataCleaning import noNanOrNoneData
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, \
     rightPadIfShorter_tensor
 from utils.customErrors import InternalLogicError
+from utils.dataTypeUtils.df_series import pandasGroupbyAlternative
+from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
+from utils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded
+from utils.generalUtils import varPasser
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict, DotDict, tensor_floatDtypeChangeIfNeeded, \
-    varPasser, pandasGroupbyAlternative
 from utils.warnings import Warn
 
 
@@ -580,6 +582,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                     noNanOrNoneData(self.data[key])
         else:
             noNanOrNoneData(self.data)
+
     def _shapeWarning(self):
         if isinstance(self.data, (torch.Tensor, np.ndarray)):
             shape = self.data.shape

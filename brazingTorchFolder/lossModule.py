@@ -5,9 +5,11 @@ import torch
 import torch.nn as nn
 
 from dataPrep.dataloader import _NestedDictStruct
+from utils.dataTypeUtils.dict import isNestedDict
+from utils.dataTypeUtils.list import areItemsOfList1_InList2
+from utils.dataTypeUtils.str import snakeToCamel, joinListWithComma, spellPluralS
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import snakeToCamel, areItemsOfList1_InList2, joinListWithComma, \
-    spellPluralS, isNestedDict, _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 

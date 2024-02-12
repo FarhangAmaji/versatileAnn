@@ -20,9 +20,10 @@ from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsStdNormalizer, SingleColsLblEncoder
 from dataPrep.utils import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
     splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.generalUtils import varPasser
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import varPasser, DotDict
 
 # ----
 embedderInputSize = 369  # 369 different consumerIds #kkk where should I handle this, which is a bit more general

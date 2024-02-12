@@ -17,6 +17,7 @@ and max for them, also rightPadIfShorter=True is used in dataset
 """
 # ---- imports
 from typing import Union
+
 import pandas as pd
 import torch
 
@@ -32,8 +33,9 @@ from dataPrep.normalizers_normalizerStack import NormalizerStack
 from dataPrep.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from dataPrep.utils import _applyShuffleIfSeedExists
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.generalUtils import varPasser
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import DotDict, varPasser
 
 # ----
 dataInfo = DotDict({'timeIdx': 'timeIdx',
@@ -72,7 +74,8 @@ def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24
     normalizer = NormalizerStack(  # LStl1
         MainGroupSingleColsStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),  # LStl2
         SingleColsLblEncoder(
-            ['sku', 'agency', 'month', *dataInfo.categoricalGroupVariables['specialDays']]))  # LStl3
+            ['sku', 'agency', 'month',
+             *dataInfo.categoricalGroupVariables['specialDays']]))  # LStl3
     normalizer.fitNTransform(df)
     # cccUsage
     #  pay attention 'sku', 'agency' are mainGroups for targets in line #LStl2
@@ -144,17 +147,18 @@ class StallionTftDataset(VAnnTsDataset):
         inputs['categorical']['groups'] = {}
         for sc in self.dataInfo.categoricalSingularVariables:
             inputs['categorical']['singular'][sc] = self.getBackForeCastData(idx,
-                                                                     mode=self.castModes.fullcast,
-                                                                     colsOrIndexes=[sc],
-                                                                     rightPadIfShorter=True)
+                                                                             mode=self.castModes.fullcast,
+                                                                             colsOrIndexes=[sc],
+                                                                             rightPadIfShorter=True)
 
         for gc, gcVal in self.dataInfo.categoricalGroupVariables.items():
             inputs['categorical']['groups'][gc] = {}
             for gc1 in gcVal:
                 inputs['categorical']['groups'][gc][gc1] = self.getBackForeCastData(idx,
-                                                                    mode=self.castModes.fullcast,
-                                                                    colsOrIndexes=[gc1],
-                                                                    rightPadIfShorter=True)
+                                                                                    mode=self.castModes.fullcast,
+                                                                                    colsOrIndexes=[
+                                                                                        gc1],
+                                                                                    rightPadIfShorter=True)
 
         outputs = {}
 

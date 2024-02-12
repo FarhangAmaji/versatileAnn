@@ -2,7 +2,10 @@ import io
 import sys
 import unittest
 
-from utils.vAnnGeneralUtils import equalDfs, equalArrays, equalTensors, equalNpDicts, varPasser
+from utils.dataTypeUtils.npArray import equalArrays
+from utils.dataTypeUtils.npDict_dfMutual import equalDfs, equalNpDicts
+from utils.dataTypeUtils.tensor import equalTensors
+from utils.generalUtils import varPasser
 
 
 # ----

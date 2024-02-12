@@ -1,5 +1,7 @@
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.dataTypeUtils.tensor import getTorchDevice
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import getTorchDevice, DotDict, _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BrazingTorch_properties:

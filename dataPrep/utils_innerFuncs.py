@@ -8,7 +8,7 @@ from dataPrep.utils_innerFuncs2 import _getSetLens, _getIdxs_possibleSets, _getS
     _splitLenAssignment, _splitNpDictUsed, _addNextNPrev_tailIndexes
 from utils.globalVars import tsStartPointColName
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import morePreciseFloat
+from utils.generalUtils import morePreciseFloat
 from utils.warnings import Warn
 
 # ----

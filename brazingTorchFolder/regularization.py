@@ -5,7 +5,7 @@ from torch import nn
 
 from utils.globalVars import regularizationTypes
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
 from brazingTorchFolder.utils import LossRegularizator

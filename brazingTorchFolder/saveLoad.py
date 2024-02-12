@@ -2,7 +2,8 @@ import pickle
 
 import pytorch_lightning as pl
 
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, joinListWithComma
+from utils.dataTypeUtils.str import joinListWithComma
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 

@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from brazingTorchFolder.lossModule import _BrazingTorch_loss
 from brazingTorchFolder.modelDifferentiator import _BrazingTorch_modelDifferentiator
 from brazingTorchFolder.modelFitter import _BrazingTorch_modelFitter

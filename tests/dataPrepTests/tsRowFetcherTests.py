@@ -17,8 +17,8 @@ import torch
 
 from dataPrep.dataset import _TsRowFetcher, VAnnTsDataset
 from tests.baseTest import BaseTestClass
+from utils.dataTypeUtils.dotDict_npDict import NpDict
 from utils.globalVars import tsStartPointColName
-from utils.vAnnGeneralUtils import NpDict
 
 # ---- sample variables
 npArraySample1 = np.array([[1, 16, 32],
@@ -218,7 +218,7 @@ class TestTsRowFetcher_DfTests(BaseTestClass):
         result = self.fetcher.getRows_df(self.df['y1'], 131, lowerBoundGap=0,
                                          upperBoundGap=self.fetcher.backcastLen,
                                          colsOrIndexes='___all___')
-        self.equalArrays(result.values, pd.Series([2,3,4], dtype=np.int64))
+        self.equalArrays(result.values, pd.Series([2, 3, 4], dtype=np.int64))
 
 
 # ----        type: TestTsRowFetcher_NpArrayTests

@@ -11,8 +11,9 @@ from commonDatasets.commonDatasetsPrep.commonDatasetsPrep_innerStepNUtils import
 from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.generalUtils import varPasser
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import varPasser, DotDict
 
 # ----
 dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],
@@ -54,7 +55,8 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
     kwargs = varPasser(localArgNames=['rightPadTrain', 'trainDf', 'backcastLen', 'forecastLen'])
     trainDf = _rightPadTrain(**kwargs)
 
-    kwargs = varPasser(localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName', 'dataInfo'])
+    kwargs = varPasser(
+        localArgNames=['trainDf', 'valDf', 'testDf', 'staticDf', 'aggColName', 'dataInfo'])
     trainDf, valDf, testDf = _splitNSeries_addStaticCorrespondentRows(**kwargs)
     return trainDf, valDf, testDf, normalizer
 

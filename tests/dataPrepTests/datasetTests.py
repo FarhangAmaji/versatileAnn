@@ -1,18 +1,17 @@
 # ----
-
-import unittest
-
-from tests.baseTest import BaseTestClass
-
-# ----
 "#ccc no tests for getBackForeCastData because it only uses _IdxNdataToLook_WhileFetching and assertIdxInIndexes_dependingOnAllowance,"
 "... also getBackForeCastData_general which has it own tests on tsRowFetcherTests"
 
 "#ccc note the test for getBackForeCastData_general may not contain the type of df with useNpDictForDfs,"
 "... as the indexes and dataToLook matches the npDict type results"
+# ----
+
+import unittest
+
+from tests.baseTest import BaseTestClass
+from utils.dataTypeUtils.dotDict_npDict import NpDict
 
 from dataPrep.dataset import VAnnTsDataset
-from utils.vAnnGeneralUtils import NpDict
 from utils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np

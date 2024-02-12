@@ -1,14 +1,16 @@
 import inspect
 from typing import List
 
+from brazingTorchFolder.utils import LossRegularizator
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.dataTypeUtils.str import joinListWithComma
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
+    isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
+    setDefaultIfNone, isCustomFunction, getProjectDirectory, \
+    findClassObject_inADirectory, getClassObjectFromFile
 from utils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
-    isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
-    setDefaultIfNone, isCustomFunction, DotDict, getProjectDirectory, \
-    findClassObject_inADirectory, joinListWithComma, getClassObjectFromFile
 from utils.warnings import Warn
-from brazingTorchFolder.utils import LossRegularizator
 
 
 # kkk add to mainModelRun

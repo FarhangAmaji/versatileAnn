@@ -7,9 +7,11 @@ from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 
 from dataPrep.dataset import VAnnTsDataset
+from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.dataTypeUtils.list import isListTupleOrSet, isIterable
+from utils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded, getTorchDevice, toDevice
+from utils.generalUtils import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import DotDict, isListTupleOrSet, tensor_floatDtypeChangeIfNeeded, \
-    isIterable, validate_IsObjOfTypeX_orAListOfTypeX, shuffleData, getTorchDevice, toDevice
 from utils.warnings import Warn
 
 
@@ -61,7 +63,7 @@ knownTypesToBeTensored = DotDict({
         DotDict({'list': "<class 'list'>"}),  # depending on items ok and not
 
     'NpDict':  # indirectTensorables
-        DotDict({'NpDict': "<class 'utils.vAnnGeneralUtils.NpDict'>"}),
+        DotDict({'NpDict': "<class 'utils.dataTypeUtils.dotDict_npDict.NpDict'>"}),
     # can't directly be changed to tensor
 
     'df':  # indirectTensorables
@@ -72,7 +74,7 @@ knownTypesToBeTensored = DotDict({
         'set': "<class 'set'>", 'dict': "<class 'dict'>",
         'str': "<class 'str'>",
         'none': "<class 'NoneType'>", 'bytes': "<class 'bytes'>",
-        'DotDict': "<class 'utils.vAnnGeneralUtils.DotDict'>"})
+        'DotDict': "<class 'utils.dataTypeUtils.dotDict_npDict.DotDict'>"})
 })
 
 

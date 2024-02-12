@@ -8,10 +8,11 @@ from pytorch_lightning.profilers import PyTorchProfiler
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import morePreciseFloat, nFoldersBack, stringValuedDictsEqual
-from utils.warnings import Warn
 from brazingTorchFolder.callbacks import StoreEpochData
+from utils.dataTypeUtils.dict import stringValuedDictsEqual
+from utils.generalUtils import morePreciseFloat, nFoldersBack
+from utils.typeCheck import argValidator
+from utils.warnings import Warn
 
 
 class _BrazingTorch_preRunTests:

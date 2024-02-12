@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 

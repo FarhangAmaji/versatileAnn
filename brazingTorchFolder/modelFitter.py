@@ -5,9 +5,10 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.loggers import Logger
 from torch.utils.data import DataLoader
 
+from utils.dataTypeUtils.dict import giveOnlyKwargsRelated_toMethod
+from utils.dataTypeUtils.str import snakeToCamel
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import giveOnlyKwargsRelated_toMethod, snakeToCamel, \
-    _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 

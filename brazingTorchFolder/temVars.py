@@ -1,4 +1,5 @@
-from utils.vAnnGeneralUtils import joinListWithComma, _allowOnlyCreationOf_ChildrenInstances
+from utils.dataTypeUtils.str import joinListWithComma
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BrazingTorch_tempVars:

@@ -4,7 +4,7 @@ import subprocess
 
 import pandas as pd
 
-from utils.vAnnGeneralUtils import downloadFileAsync
+from utils.generalUtils import downloadFileAsync
 from utils.warnings import Warn
 
 datasetsRelativePath = os.path.join('data', 'datasets')

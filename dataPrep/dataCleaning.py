@@ -4,9 +4,8 @@ import numpy as np
 import pandas as pd
 import torch
 
+from utils.dataTypeUtils.dotDict_npDict import NpDict
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import NpDict
-
 
 # ---
 @argValidator

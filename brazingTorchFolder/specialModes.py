@@ -3,7 +3,7 @@ from torch import nn
 
 from utils.customErrors import ImplementationError
 from utils.typeCheck import argValidator
-from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 
