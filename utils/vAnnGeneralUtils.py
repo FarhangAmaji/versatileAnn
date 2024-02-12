@@ -103,6 +103,8 @@ class NpDict(DotDict):
                 if pd.Series(self[col]).dtype.type == np.object_:
                     # if it's object dtype(note object dtype probably is string by default in pandas)
                     res[col] = tryToConvertSeriesToDatetime(pd.Series(self[col])).tolist()
+                elif pd.Series(self[col]).dtype.type == np.datetime64:
+                    res[col] = [self[col][i] for i in range(self[col].size)]
                 else:
                     res[col] = self[col].tolist()
             return res

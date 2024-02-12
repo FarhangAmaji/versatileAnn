@@ -116,6 +116,7 @@ class epfFrBeTests(BaseTestClass):
             mainDfIndexes_whichAreInSetDf = self.mainDf[
                 self.mainDf['dateTime'].isin(set_['dateTime'].values)].index
             checkSet = self.mainDf.loc[mainDfIndexes_whichAreInSetDf]
+            checkSet = checkSet.reset_index(drop=True)
 
             # removing cols added during getEpfFrBe_processed to be able to check
             set_ = set_.drop(columns=['__startPoint__', 'market0', 'market1', 'mask'])
