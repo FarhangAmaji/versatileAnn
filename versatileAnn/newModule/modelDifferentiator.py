@@ -14,7 +14,7 @@ from versatileAnn.utils import LossRegularizator
 # kkk add to mainModelRun
 # goodToHave3
 #  this class can be a separate class of its own
-class _NewWrapper_modelDifferentiator:
+class _BrazingTorch_modelDifferentiator:
     """
     # cccWhat
     this class can be used for:
@@ -31,7 +31,7 @@ class _NewWrapper_modelDifferentiator:
     gets:
     - parent classes(case1):
             so this code detects what classes are used for creating "this class".
-            - "this class" means the class which the user has inherited from NewWrapper, and
+            - "this class" means the class which the user has inherited from BrazingTorch, and
             probably other classes
     - classes/classes of static/instance methods or functions, related to attributes or variables(case2):
             even classes which their instances were used in attributes or variables of
@@ -59,7 +59,7 @@ class _NewWrapper_modelDifferentiator:
         self.getAllNeededDefinitions = getAllNeededDefinitions
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelDifferentiator)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelDifferentiator)
 
     def _getAllNeededDefinitions(self, obj):
         # Method to get all class or func definitions in the correct order
@@ -227,8 +227,8 @@ class _NewWrapper_modelDifferentiator:
         visited = setDefaultIfNone(visited, set())
         classesDict = setDefaultIfNone(classesDict, {})
 
-        # not allowing to collect NewWrapper and it's parent definitions
-        if self._isCls_NewWrapperClass(cls_):
+        # not allowing to collect BrazingTorch and it's parent definitions
+        if self._isCls_BrazingTorchClass(cls_):
             return
         for parentClass in cls_.__bases__:
             self._getClass_ifUserDefined_ifNotGotBefore(parentClass, visited, classesDict)
@@ -249,7 +249,7 @@ class _NewWrapper_modelDifferentiator:
     def _getClass_ifUserDefined(self, cls_):
         # Helper function to check if the cls_ a custom(user defined) class
 
-        if self._isCls_NewWrapperClass(cls_):
+        if self._isCls_BrazingTorchClass(cls_):
             return None
         if cls_ in [LossRegularizator, DotDict]:
             # goodToHave3
@@ -263,7 +263,7 @@ class _NewWrapper_modelDifferentiator:
             # goodToHave2
             #  do similar thing in _getAttributesFuncDefinitions when detects custom func and don't
             #  allow funcs defined in the project to be included
-            # prevent utility classes defined for NewWrapper
+            # prevent utility classes defined for BrazingTorch
             return None
         if isCustomClass(cls_):
             return cls_
@@ -328,7 +328,7 @@ class _NewWrapper_modelDifferentiator:
         #  it best to automatically handle it
         self.allDefinitions = self._cleanListOfDefinitions_fromBadIndent(self.allDefinitions)
 
-        NewWrapper = self._getNewWrapper_classObject()
+        BrazingTorch = self._getBrazingTorch_classObject()
         try:
             for i, definition in enumerate(self.allDefinitions):
                 for className, classCode in definition.items():
@@ -378,7 +378,7 @@ class _NewWrapper_modelDifferentiator:
         #  definitions is a list of strings of class/func definitions like "def func1():\n    print('func1')\n"
         # tries several times so if the order of dependencies are not ok the code tries
         #  it best to automatically handle it
-        NewWrapper = self._getNewWrapper_classObject()
+        BrazingTorch = self._getBrazingTorch_classObject()
 
         for i, definition in enumerate(definitions):
             definitions[i] = self.removeIndents_fromCodeStringDefinition(definition)

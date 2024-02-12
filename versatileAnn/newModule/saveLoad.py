@@ -6,10 +6,10 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, joinL
 from utils.warnings import Warn
 
 
-class _NewWrapper_saveLoad:
+class _BrazingTorch_saveLoad:
     def __init__(self, **kwargs):
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_saveLoad)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_saveLoad)
 
     @staticmethod
     def modelStandALoneLoad(loadPath: str):
@@ -25,9 +25,9 @@ class _NewWrapper_saveLoad:
         with open(loadPath, 'rb') as f:
             checkpoint = pickle.load(f)
 
-        allDefinitions = checkpoint['newWrapper']['allDefinitions']
-        _initArgs = checkpoint['newWrapper']['_initArgs']
-        warnsFrom_getAllNeededDefinitions = checkpoint['newWrapper'][
+        allDefinitions = checkpoint['brazingTorch']['allDefinitions']
+        _initArgs = checkpoint['brazingTorch']['_initArgs']
+        warnsFrom_getAllNeededDefinitions = checkpoint['brazingTorch'][
             'warnsFrom_getAllNeededDefinitions']
         # kkk add modelDifferentiator_sanityCheck
         # kkk return instance
@@ -103,7 +103,7 @@ class _NewWrapper_saveLoad:
         # reimplement this method to save additional information to the checkpoint
 
         # Add additional information to the checkpoint
-        checkpoint['newWrapper'] = {
+        checkpoint['brazingTorch'] = {
             '_initArgs': self._initArgs,
             'allDefinitions': self.allDefinitions,
             'warnsFrom_getAllNeededDefinitions': self.warnsFrom_getAllNeededDefinitions,
@@ -111,7 +111,7 @@ class _NewWrapper_saveLoad:
 
     def on_load_checkpoint(self, checkpoint: dict):
         # Load additional information from the checkpoint
-        additionalInfo = checkpoint['newWrapper']
+        additionalInfo = checkpoint['brazingTorch']
 
         _initArgs = additionalInfo['_initArgs']
         pl.seed_everything(_initArgs['__plSeed__'])

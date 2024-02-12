@@ -1,7 +1,7 @@
 from utils.vAnnGeneralUtils import joinListWithComma, _allowOnlyCreationOf_ChildrenInstances
 
 
-class _NewWrapper_tempVars:
+class _BrazingTorch_tempVars:
     # addTest1 these need tests but are checked with debugging through
     def __init__(self, **kwargs):
         # cccDevAlgo
@@ -14,7 +14,7 @@ class _NewWrapper_tempVars:
         # note self.tempVarRun and tempVarRun_allPhases reset on fit start
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_tempVars)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_tempVars)
 
     def resetTempVar_step(self, phase):
         self._phaseValidator(phase)

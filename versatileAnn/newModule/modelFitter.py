@@ -15,10 +15,10 @@ from utils.warnings import Warn
 #  does pl set trainer to model after training once? if so then in continuation
 #  (for i.e. after loading model) we may not use .fit of this class
 
-class _NewWrapper_modelFitter:
+class _BrazingTorch_modelFitter:
     def __init__(self):
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_modelFitter)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelFitter)
 
     @property
     def _logOptions(self):
@@ -63,7 +63,7 @@ class _NewWrapper_modelFitter:
         notAllowedArgs = ['self', 'overfit_batches', 'name', 'value']
         # cccDevStruct
         #  - 'name','value' can be used in logging and are not allowed as the
-        #       _logLosses in _NewWrapper_loss module sets them itself
+        #       _logLosses in _BrazingTorch_loss module sets them itself
         #  - overfit_batches is not compatible with this project
         #       for more info take look at 'cccDevStruct' at runOverfitBatches
         self._removeNotAllowedArgs(allUserKwargs, appliedKwargs, notAllowedArgs)

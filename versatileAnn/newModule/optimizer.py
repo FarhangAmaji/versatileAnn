@@ -8,7 +8,7 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 
-class _NewWrapper_optimizer:
+class _BrazingTorch_optimizer:
     def __init__(self, optimizer: Optional[torch.optim.Optimizer] = None,
                  lr: Optional[float] = None, **kwargs):
 
@@ -21,7 +21,7 @@ class _NewWrapper_optimizer:
             self.lr = lr
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_optimizer)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_optimizer)
 
     @property
     def optimizer(self):

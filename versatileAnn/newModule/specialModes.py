@@ -7,7 +7,7 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 
 
-class _NewWrapper_specialModes:
+class _BrazingTorch_specialModes:
     VAEMode_implementationsMsg = "with VAEMode, the forward method " + \
                                  "must return normalForwardOutputs, mean, logvar"
     # goodToHave2
@@ -18,7 +18,7 @@ class _NewWrapper_specialModes:
                  dropoutEnsemble_samplesNum=100, **kwargs):
         # VAE stands for variationalAutoEncoder
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_specialModes)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_specialModes)
         # kkk these mode values should be used in initArgs and model save and load
 
         self.dropoutEnsembleMode = dropoutEnsembleMode

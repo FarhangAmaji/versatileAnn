@@ -4,10 +4,10 @@ from torch import nn
 
 from tests.baseTest import BaseTestClass
 from utils.initParentClasses import checkIfAClassIs_initingItsParentClasses_inItsInit
-from versatileAnn.newModule.newWrapper import NewWrapper
+from versatileAnn.newModule.brazingTorch import BrazingTorch
 
 
-class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
+class brazingTorchTests_preInitNPostInit_nModelReset(BaseTestClass):
 
     def classDefinitionsSetup(self):
         class OtherParentOfChild:
@@ -15,10 +15,10 @@ class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
                 print('OtherParentOfChild init')
                 self.opoc = opoc
 
-        class Child(NewWrapper, OtherParentOfChild):
+        class Child(BrazingTorch, OtherParentOfChild):
             def __init__(self, modelName, opoc, **kwargs):
                 print('Child;Before calling Parent __init__', self.__class__.__name__)
-                NewWrapper.__init__(self, modelName=modelName, **kwargs)
+                BrazingTorch.__init__(self, modelName=modelName, **kwargs)
                 OtherParentOfChild.__init__(self, opoc=opoc)
                 print('Child;After calling Parent __init__', self.__class__.__name__)
 
@@ -49,34 +49,34 @@ class newWrapperTests_preInitNPostInit_nModelReset(BaseTestClass):
 
             self.assertTrue(isinstance(model, GrandChild))
 
-        expectedPrint = """NewWrapper __new__ method initiated for "GrandChild" class
+        expectedPrint = """BrazingTorch __new__ method initiated for "GrandChild" class
 
- Warning: defining __init__ in subclasses of NewWrapper
+ Warning: defining __init__ in subclasses of BrazingTorch
     you have initiated parent classes in your __init__.
     "GrandChild" class is one of them.
     this may cause error because parent classes are initiated automatically.
     so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
 
- Warning: defining __init__ in subclasses of NewWrapper
+ Warning: defining __init__ in subclasses of BrazingTorch
     you have initiated parent classes in your __init__.
     "Child" class is one of them.
     this may cause error because parent classes are initiated automatically.
     so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
 
-Warning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args
-    "modelName" arg is used in the classes you have defined. and also exist in required args of NewWrapper.
-    this may cause conflict if are used for other purposes than passing to NewWrapper.you may want to change the name of this arg.
+Warning: using args in subclasses of BrazingTorch with similar argnames to BrazingTorch args
+    "modelName" arg is used in the classes you have defined. and also exist in required args of BrazingTorch.
+    this may cause conflict if are used for other purposes than passing to BrazingTorch.you may want to change the name of this arg.
 OtherParentOfChild init
 OtherParentOfGrandChild init
 Child;Before calling Parent __init__ GrandChild
-NewWrapper init
+BrazingTorch init
 emptyMethod_usedForDisabling__init__s
 Child;After calling Parent __init__ GrandChild
 GrandChild;Before calling Child __init__ GrandChild
 emptyMethod_usedForDisabling__init__s
 emptyMethod_usedForDisabling__init__s
 GrandChild __init__;After calling Child __init__ GrandChild
-_NewWrapper_postInit func
+_BrazingTorch_postInit func
 GrandChild
 """
         self.assertPrint(innerFunc, expectedPrint)
@@ -121,27 +121,27 @@ GrandChild
             newModel = model.resetModel()
             self.assertTrue(isinstance(model, GrandChild))
 
-        expectedPrint = """NewWrapper __new__ method initiated for "GrandChild" class
+        expectedPrint = """BrazingTorch __new__ method initiated for "GrandChild" class
 
- Warning: defining __init__ in subclasses of NewWrapper
+ Warning: defining __init__ in subclasses of BrazingTorch
     you have initiated parent classes in your __init__.
     "GrandChild" class is one of them.
     this may cause error because parent classes are initiated automatically.
     so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
 
- Warning: defining __init__ in subclasses of NewWrapper
+ Warning: defining __init__ in subclasses of BrazingTorch
     you have initiated parent classes in your __init__.
     "Child" class is one of them.
     this may cause error because parent classes are initiated automatically.
     so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.
 
-Warning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args
-    "modelName" arg is used in the classes you have defined. and also exist in required args of NewWrapper.
-    this may cause conflict if are used for other purposes than passing to NewWrapper.you may want to change the name of this arg.
+Warning: using args in subclasses of BrazingTorch with similar argnames to BrazingTorch args
+    "modelName" arg is used in the classes you have defined. and also exist in required args of BrazingTorch.
+    this may cause conflict if are used for other purposes than passing to BrazingTorch.you may want to change the name of this arg.
 OtherParentOfChild init
 OtherParentOfGrandChild init
 Child;Before calling Parent __init__ GrandChild
-NewWrapper init
+BrazingTorch init
 emptyMethod_usedForDisabling__init__s
 Child;After calling Parent __init__ GrandChild
 GrandChild;Before calling Child __init__ GrandChild
@@ -153,7 +153,7 @@ GrandChild __init__;After calling Child __init__ GrandChild
 
     def testInitsToOriginal(self):
         """
-        do init get back to their original after _NewWrapper_postInit
+        do init get back to their original after _BrazingTorch_postInit
         """
         Child, GrandChild, OtherParentOfChild, OtherParentOfGrandChild = self.classDefinitionsSetup()
 
@@ -167,7 +167,7 @@ GrandChild __init__;After calling Child __init__ GrandChild
         self.assertPrint(innerFunc, expectedPrint)
 
     def classDefinitionsSetup2(self):
-        class Parent2(NewWrapper):
+        class Parent2(BrazingTorch):
             def __init__(self):
                 pass
 
@@ -181,7 +181,7 @@ GrandChild __init__;After calling Child __init__ GrandChild
 
         return Parent2, ChildWithSuper
 
-    def testCreate2differentClasses_inheritedFromNewWrapper(self):
+    def testCreate2differentClasses_inheritedFromBrazingTorch(self):
         """
         the purpose is to see if creating 2 different classes would mess up or not
         """

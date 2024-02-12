@@ -9,28 +9,28 @@ from utils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_f
 from utils.warnings import Warn
 
 
-class _NewWrapper_preInitNPostInit_nModelReset_inner:
+class _BrazingTorch_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
-    def _getArgsOfParentClasses_tillNewWrapper(_NewWrapper_Obj, cls, originalKwargs, self):
-        parentClasses_tillNewWrapper = cls._findAllParentClasses_tillNewWrapper(cls,
-                                                                                _NewWrapper_Obj)
+    def _getArgsOfParentClasses_tillBrazingTorch(_BrazingTorch_Obj, cls, originalKwargs, self):
+        parentClasses_tillBrazingTorch = cls._findAllParentClasses_tillBrazingTorch(cls,
+                                                                                _BrazingTorch_Obj)
 
         # cccDevStruct
         #  beside the class object we also store its '__init__' because at the end of __new__,
-        #  init are disabled but later at _NewWrapper_postInit,
+        #  init are disabled but later at _BrazingTorch_postInit,
         #  these stored inits are going to be replaced back
-        cls._parentClasses_tillNewWrapper_inits = {
+        cls._parentClasses_tillBrazingTorch_inits = {
             clsName: {'originalInit': copy.deepcopy(classObj.__init__), 'classObj': classObj} for
-            clsName, classObj in parentClasses_tillNewWrapper.items()}
+            clsName, classObj in parentClasses_tillBrazingTorch.items()}
 
-        argsOf_parentClasses_tillNewWrapper = getArgsOfClasses(parentClasses_tillNewWrapper,
+        argsOf_parentClasses_tillBrazingTorch = getArgsOfClasses(parentClasses_tillBrazingTorch,
                                                                originalKwargs)
 
-        # *args for subclasses of NewWrapper are not applied
-        if 'args' in argsOf_parentClasses_tillNewWrapper:
-            warnMsg = '\nWarning: using *args for subclasses of NewWrapper' + \
-                      '\n    "*args" for subclasses of NewWrapper are not applied.' + \
+        # *args for subclasses of BrazingTorch are not applied
+        if 'args' in argsOf_parentClasses_tillBrazingTorch:
+            warnMsg = '\nWarning: using *args for subclasses of BrazingTorch' + \
+                      '\n    "*args" for subclasses of BrazingTorch are not applied.' + \
                       "\n    this warning is not always True, but it's better to double check" + \
                       " that you have not used *args in your __init__"
             Warn.error(warnMsg)
@@ -39,12 +39,12 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
             #  we don't make error and just give warning, because sometimes the user have not
             #  included *args in their __init__ but because of inheritance from `object`,
             #  __init__ has *args
-        argsOf_parentClasses_tillNewWrapper = exclude_selfNArgsNKwargs_fromAllArgs(
-            argsOf_parentClasses_tillNewWrapper)
-        return argsOf_parentClasses_tillNewWrapper, parentClasses_tillNewWrapper
+        argsOf_parentClasses_tillBrazingTorch = exclude_selfNArgsNKwargs_fromAllArgs(
+            argsOf_parentClasses_tillBrazingTorch)
+        return argsOf_parentClasses_tillBrazingTorch, parentClasses_tillBrazingTorch
 
     @staticmethod
-    def _findAllParentClasses_tillNewWrapper(cls_, NewWrapper_Obj, parentClasses: dict = None):
+    def _findAllParentClasses_tillBrazingTorch(cls_, BrazingTorch_Obj, parentClasses: dict = None):
         # this method is similar to findParentClasses_OfAClass_tillAnotherClass in utils/initParentClasses.py
 
         parentClasses = parentClasses or {}
@@ -53,7 +53,7 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         #  but I am not counting for that(maybe later).
         #  so for now each class is going to be captured in a dict with {class.__name__:classObj}
 
-        if str(cls_) == str(NewWrapper_Obj):
+        if str(cls_) == str(BrazingTorch_Obj):
             return parentClasses
         elif cls_ is pl.LightningModule:
             return parentClasses
@@ -63,72 +63,72 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         parentClasses.update({cls_.__name__: cls_})
         parentsOfThisClass = cls_.__bases__
         for potc in parentsOfThisClass:
-            parentClasses = _NewWrapper_preInitNPostInit_nModelReset_inner._findAllParentClasses_tillNewWrapper(
+            parentClasses = _BrazingTorch_preInitNPostInit_nModelReset_inner._findAllParentClasses_tillBrazingTorch(
                 potc,
-                NewWrapper_Obj,
+                BrazingTorch_Obj,
                 parentClasses)
         return parentClasses
 
     @staticmethod
-    def _get_parentClassesOfNewWrapper(NewWrapper_Obj, originalKwargs):
-        parentClassesOfNewWrapper = {pc.__name__: pc for pc in NewWrapper_Obj.__bases__}
-        argsOf_parentClassesOfNewWrapper = getArgsOfClasses(parentClassesOfNewWrapper,
+    def _get_parentClassesOfBrazingTorch(BrazingTorch_Obj, originalKwargs):
+        parentClassesOfBrazingTorch = {pc.__name__: pc for pc in BrazingTorch_Obj.__bases__}
+        argsOf_parentClassesOfBrazingTorch = getArgsOfClasses(parentClassesOfBrazingTorch,
                                                             originalKwargs)
-        argsOf_parentClassesOfNewWrapper = exclude_selfNArgsNKwargs_fromAllArgs(
-            argsOf_parentClassesOfNewWrapper)
+        argsOf_parentClassesOfBrazingTorch = exclude_selfNArgsNKwargs_fromAllArgs(
+            argsOf_parentClassesOfBrazingTorch)
 
         # cccDevStruct
         #  note this is only for development error detection
-        #  args of parent classes of NewWrapper must not have similar names
-        for arg, argVal in argsOf_parentClassesOfNewWrapper.items():
+        #  args of parent classes of BrazingTorch must not have similar names
+        for arg, argVal in argsOf_parentClassesOfBrazingTorch.items():
             if len(argVal['classes']) > 1:
                 raise InternalLogicError(
                     "internalError: this is for development:" +
-                    "\nparentClasses of NewWrapper must not have args with similar names in their __init__."
-                    f'\narg "{arg}" is used in more than one base classes of NewWrapper: {argVal["classes"]}.')
-        return argsOf_parentClassesOfNewWrapper, parentClassesOfNewWrapper
+                    "\nparentClasses of BrazingTorch must not have args with similar names in their __init__."
+                    f'\narg "{arg}" is used in more than one base classes of BrazingTorch: {argVal["classes"]}.')
+        return argsOf_parentClassesOfBrazingTorch, parentClassesOfBrazingTorch
 
     @staticmethod
-    def _combineArgsOfParentClasses_ofTillNewWrapper_withParentsOfNewWrapper(
-            argsOf_parentClassesOfNewWrapper, argsOf_parentClasses_tillNewWrapper, self):
-        allArgs = {**argsOf_parentClasses_tillNewWrapper}
-        for arg, argVal in argsOf_parentClassesOfNewWrapper.items():
+    def _combineArgsOfParentClasses_ofTillBrazingTorch_withParentsOfBrazingTorch(
+            argsOf_parentClassesOfBrazingTorch, argsOf_parentClasses_tillBrazingTorch, self):
+        allArgs = {**argsOf_parentClasses_tillBrazingTorch}
+        for arg, argVal in argsOf_parentClassesOfBrazingTorch.items():
             if arg not in allArgs:
                 allArgs[arg] = argVal
             else:
                 allArgs[arg]['classes'].extend(argVal['classes'])
-                warnMsg = '\nWarning: using args in subclasses of NewWrapper with similar argnames to NewWrapper args' + \
+                warnMsg = '\nWarning: using args in subclasses of BrazingTorch with similar argnames to BrazingTorch args' + \
                           f'\n    "{arg}" arg is used in the classes you have defined. ' + \
-                          'and also exist in required args of NewWrapper.' + \
-                          '\n    this may cause conflict if are used for other purposes than passing to NewWrapper.' + \
+                          'and also exist in required args of BrazingTorch.' + \
+                          '\n    this may cause conflict if are used for other purposes than passing to BrazingTorch.' + \
                           'you may want to change the name of this arg.'
                 Warn.warn(warnMsg)
                 self.printTestPrints(warnMsg)
         return allArgs
 
     @staticmethod
-    def _initParentClasses_tillNewWrapper_withDisablingTheirInits(allArgs, cls,
+    def _initParentClasses_tillBrazingTorch_withDisablingTheirInits(allArgs, cls,
                                                                   initiatedObj,
-                                                                  parentClasses_tillNewWrapper):
+                                                                  parentClasses_tillBrazingTorch):
         # parent classes which are more base(upper parents) are __init__ed first
-        parentClasses_tillNewWrapper_names_ordered = orderClassNames_soChildIsAlways_afterItsParents(
-            parentClasses_tillNewWrapper)
+        parentClasses_tillBrazingTorch_names_ordered = orderClassNames_soChildIsAlways_afterItsParents(
+            parentClasses_tillBrazingTorch)
 
-        for i, clsName in enumerate(parentClasses_tillNewWrapper_names_ordered):
+        for i, clsName in enumerate(parentClasses_tillBrazingTorch_names_ordered):
             classRelatedArgs = getArgsRelatedToAClass_fromAllArgs(clsName, allArgs)
-            clsObj = parentClasses_tillNewWrapper[clsName]
+            clsObj = parentClasses_tillBrazingTorch[clsName]
             clsObj.__init__(initiatedObj, **classRelatedArgs)
 
             # cccDevStruct
             #  - inits are disabled in order to:
             #       1. not to get inited twice
             #       2. also not to mess model's parameters (therefore optimizer's params)
-            #  - __init__s are set back to their originalInit later at _NewWrapper_postInit
+            #  - __init__s are set back to their originalInit later at _BrazingTorch_postInit
             if clsObj is not cls:
                 clsObj.__init__ = cls._emptyMethod_usedForDisabling__init__s
             else:
-                # replace lastChildOfAll's __init__ with _NewWrapper_postInit
-                clsObj.__init__ = cls._NewWrapper_postInit
+                # replace lastChildOfAll's __init__ with _BrazingTorch_postInit
+                clsObj.__init__ = cls._BrazingTorch_postInit
                 # cccDevStruct
                 #  in past I called line "clsObj.__init__(initiatedObj, **classRelatedArgs)"
                 #  in order to call postInit manually. but postInit is called automatically and
@@ -154,10 +154,10 @@ class _NewWrapper_preInitNPostInit_nModelReset_inner:
         self.printTestPrints('emptyMethod_usedForDisabling__init__s')
 
     @staticmethod
-    def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillNewWrapper, self):
-        for clsName, clsObj in parentClasses_tillNewWrapper.items():
+    def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillBrazingTorch, self):
+        for clsName, clsObj in parentClasses_tillBrazingTorch.items():
             if checkIfAClassIs_initingItsParentClasses_inItsInit(clsObj):
-                warnMsg = '\n Warning: defining __init__ in subclasses of NewWrapper' + \
+                warnMsg = '\n Warning: defining __init__ in subclasses of BrazingTorch' + \
                           '\n    you have initiated parent classes in your __init__.' + \
                           f'\n    "{clsName}" class is one of them.' + \
                           '\n    this may cause error because parent classes are initiated automatically.' + \

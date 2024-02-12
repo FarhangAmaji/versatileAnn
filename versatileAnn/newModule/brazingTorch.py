@@ -2,18 +2,18 @@ import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
-from versatileAnn.newModule.lossModule import _NewWrapper_loss
-from versatileAnn.newModule.modelDifferentiator import _NewWrapper_modelDifferentiator
-from versatileAnn.newModule.modelFitter import _NewWrapper_modelFitter
-from versatileAnn.newModule.optimizer import _NewWrapper_optimizer
+from versatileAnn.newModule.lossModule import _BrazingTorch_loss
+from versatileAnn.newModule.modelDifferentiator import _BrazingTorch_modelDifferentiator
+from versatileAnn.newModule.modelFitter import _BrazingTorch_modelFitter
+from versatileAnn.newModule.optimizer import _BrazingTorch_optimizer
 from versatileAnn.newModule.preInitNPostInit_nModelReset import \
-    _NewWrapper_preInitNPostInit_nModelReset
-from versatileAnn.newModule.preRunTests import _NewWrapper_preRunTests
-from versatileAnn.newModule.properties import _NewWrapper_properties
-from versatileAnn.newModule.regularization import _NewWrapper_regularization
-from versatileAnn.newModule.saveLoad import _NewWrapper_saveLoad
-from versatileAnn.newModule.specialModes import _NewWrapper_specialModes
-from versatileAnn.newModule.temVars import _NewWrapper_tempVars
+    _BrazingTorch_preInitNPostInit_nModelReset
+from versatileAnn.newModule.preRunTests import _BrazingTorch_preRunTests
+from versatileAnn.newModule.properties import _BrazingTorch_properties
+from versatileAnn.newModule.regularization import _BrazingTorch_regularization
+from versatileAnn.newModule.saveLoad import _BrazingTorch_saveLoad
+from versatileAnn.newModule.specialModes import _BrazingTorch_specialModes
+from versatileAnn.newModule.temVars import _BrazingTorch_tempVars
 
 
 # kkk2 think about seed later
@@ -21,13 +21,13 @@ from versatileAnn.newModule.temVars import _NewWrapper_tempVars
 # kkk1 if I use kwargsBasedOnMethod then I should check conflicts when 2 methods get some args with same name
 
 
-class NewWrapper(pl.LightningModule,
-                 _NewWrapper_properties, _NewWrapper_tempVars,
-                 _NewWrapper_preInitNPostInit_nModelReset, _NewWrapper_optimizer,
-                 _NewWrapper_loss, _NewWrapper_regularization,
-                 _NewWrapper_modelFitter, _NewWrapper_preRunTests,
-                 _NewWrapper_saveLoad, _NewWrapper_modelDifferentiator,
-                 _NewWrapper_specialModes):
+class BrazingTorch(pl.LightningModule,
+                 _BrazingTorch_properties, _BrazingTorch_tempVars,
+                 _BrazingTorch_preInitNPostInit_nModelReset, _BrazingTorch_optimizer,
+                 _BrazingTorch_loss, _BrazingTorch_regularization,
+                 _BrazingTorch_modelFitter, _BrazingTorch_preRunTests,
+                 _BrazingTorch_saveLoad, _BrazingTorch_modelDifferentiator,
+                 _BrazingTorch_specialModes):
 
     __version__ = '0.2'
     @argValidator
@@ -35,9 +35,9 @@ class NewWrapper(pl.LightningModule,
         # kkk
         #  this init should take all other args which it parent classes take because the user can
         #  really check all parent classes to see what functionalities does class offer
-        self.printTestPrints('NewWrapper init')
+        self.printTestPrints('BrazingTorch init')
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, NewWrapper)
+        _allowOnlyCreationOf_ChildrenInstances(self, BrazingTorch)
 
     def forward(self, inputs, targets):
         # cccUsage
@@ -142,11 +142,11 @@ class NewWrapper(pl.LightningModule,
         self.resetTempVarRun_allPhases()
         self._tempVarRun_allPhases_hidden = {}
 
-    def _isCls_NewWrapperClass(self, cls_):
+    def _isCls_BrazingTorchClass(self, cls_):
         # cccDevAlgo
         #  this is a util to be used in parent classes and not get circular import error
-        return cls_ is NewWrapper
+        return cls_ is BrazingTorch
 
     @staticmethod
-    def _getNewWrapper_classObject():
-        return NewWrapper
+    def _getBrazingTorch_classObject():
+        return BrazingTorch

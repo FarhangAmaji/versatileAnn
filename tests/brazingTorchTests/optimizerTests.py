@@ -4,12 +4,12 @@ import torch
 from torch import nn
 
 from tests.baseTest import BaseTestClass
-from versatileAnn.newModule.newWrapper import NewWrapper
+from versatileAnn.newModule.brazingTorch import BrazingTorch
 
 
-class newWrapperTests_optimizer(BaseTestClass):
+class brazingTorchTests_optimizer(BaseTestClass):
     def setUp(self):
-        class ChildClass(NewWrapper):
+        class ChildClass(BrazingTorch):
             def __init__(self, **kwargs):
                 self.l1 = nn.Linear(1, 1)
 
@@ -31,8 +31,8 @@ class newWrapperTests_optimizer(BaseTestClass):
             model = ChildClass(testPrints=True)
             self.assertTrue(isinstance(model.optimizer, torch.optim.Adam))
 
-        expectedPrint = """NewWrapper __new__ method initiated for "ChildClass" class
-_NewWrapper_postInit func
+        expectedPrint = """BrazingTorch __new__ method initiated for "ChildClass" class
+_BrazingTorch_postInit func
 ChildClass
 """
         self.assertPrint(innerFunc, expectedPrint)

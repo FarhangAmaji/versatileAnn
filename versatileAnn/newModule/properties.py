@@ -2,7 +2,7 @@ from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import getTorchDevice, DotDict, _allowOnlyCreationOf_ChildrenInstances
 
 
-class _NewWrapper_properties:
+class _BrazingTorch_properties:
     # kkk rename this properties doesnt make sense
     @argValidator
     def __init__(self, modelName: str = '', devMode: bool = True,
@@ -23,7 +23,7 @@ class _NewWrapper_properties:
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_properties)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_properties)
 
         if devMode:
             pass  # kkk?
@@ -32,8 +32,8 @@ class _NewWrapper_properties:
 
     def _setModelName(self, modelName):
         if not modelName:
-            if self.__class__.__name__ == 'NewWrapper':
-                raise ValueError('modelName must be provided if not inherited form NewWrapper')
+            if self.__class__.__name__ == 'BrazingTorch':
+                raise ValueError('modelName must be provided if not inherited form BrazingTorch')
             self.modelName = self.__class__.__name__
         else:
             self.modelName = modelName

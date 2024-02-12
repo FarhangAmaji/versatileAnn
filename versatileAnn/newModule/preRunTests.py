@@ -14,7 +14,7 @@ from utils.warnings import Warn
 from versatileAnn.newModule.callbacks import StoreEpochData
 
 
-class _NewWrapper_preRunTests:
+class _BrazingTorch_preRunTests:
     def __init__(self, keepLr_notReplaceWithBestLr: Optional[bool] = False,
                  keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
         self._outputsStruct = None

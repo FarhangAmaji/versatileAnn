@@ -11,7 +11,7 @@ from versatileAnn.layers.customLayers import VAnnCustomLayer
 from versatileAnn.utils import LossRegularizator
 
 
-class _NewWrapper_regularization:
+class _BrazingTorch_regularization:
     _regularizationTypes = regularizationTypes
     nullRegulator = LossRegularizator(LossRegularizator.nullDictValue)
 
@@ -20,10 +20,10 @@ class _NewWrapper_regularization:
                  **kwargs):
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _NewWrapper_regularization)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_regularization)
 
         # cccDevAlgo
-        #  - this module(NewWrapper) by default sets some features like generalRegularization
+        #  - this module(BrazingTorch) by default sets some features like generalRegularization
         #       or gradient clipping
         #  - we have generalRegularization and specific layer generalRegularization
         #  - we have generalRegularization anyway but in _setOperationalRegularizations if the layer

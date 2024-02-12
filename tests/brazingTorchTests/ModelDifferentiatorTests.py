@@ -3,10 +3,10 @@ import unittest
 from torch import nn
 
 from tests.baseTest import BaseTestClass
-from tests.newWrapperTests.ModelDifferentiatorTests_dummyClassDefs.m1 import NNDummyModule1
-from tests.newWrapperTests.ModelDifferentiatorTests_dummyClassDefs.m2 import NNDummyModule2, \
+from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m1 import NNDummyModule1
+from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m2 import NNDummyModule2, \
     NNDummyModule3, NNDummyModule4
-from versatileAnn.newModule.newWrapper import NewWrapper
+from versatileAnn.newModule.brazingTorch import BrazingTorch
 
 
 class Parent2p2p1p1:
@@ -70,7 +70,7 @@ def aFuncDefForParent1():
     print('aFuncDefForParent1')
 
 
-class Parent1(NewWrapper, Parent1p1):
+class Parent1(BrazingTorch, Parent1p1):
     def __init__(self, midLayerp1):
         self.layp11 = NNDummyModule1()
         self.layp12 = NNDummyModule2()
@@ -102,7 +102,7 @@ class class1Parent:
         self.var1 = 1
 
 
-class class1(NewWrapper, class1Parent):
+class class1(BrazingTorch, class1Parent):
     def __init__(self):
         self.var2 = 1
 
@@ -145,7 +145,7 @@ class ModelDifferentiatorTests(BaseTestClass):
             {
                 'ClassForStaticMethod_forParent2p1': "class ClassForStaticMethod_forParent2p1:\n    def __init__(self):\n        self.ke = 27\n\n    @staticmethod\n    def static_Methodp2p1():\n        print('staticmethod for Parent2p1')\n"},
             {
-                'Parent1': 'class Parent1(NewWrapper, Parent1p1):\n    def __init__(self, midLayerp1):\n        self.layp11 = NNDummyModule1()\n        self.layp12 = NNDummyModule2()\n        self.layp13 = nn.Linear(1, midLayerp1)\n        self.layp14 = nn.Linear(midLayerp1, 1)\n        self.p1FuncDef = aFuncDefForParent1\n\n    def forward(self, inputs, targets):\n        x = self.layp12(self.layp11(inputs))\n        return self.layp14(self.layp13(x))\n'},
+                'Parent1': 'class Parent1(BrazingTorch, Parent1p1):\n    def __init__(self, midLayerp1):\n        self.layp11 = NNDummyModule1()\n        self.layp12 = NNDummyModule2()\n        self.layp13 = nn.Linear(1, midLayerp1)\n        self.layp14 = nn.Linear(midLayerp1, 1)\n        self.p1FuncDef = aFuncDefForParent1\n\n    def forward(self, inputs, targets):\n        x = self.layp12(self.layp11(inputs))\n        return self.layp14(self.layp13(x))\n'},
             {
                 'Parent2p2p1': 'class Parent2p2p1(Parent2p2p1p1):\n    def __init__(self):\n        self.layp2p2p1 = 15\n'},
             {
@@ -174,7 +174,7 @@ class ModelDifferentiatorTests(BaseTestClass):
         expectedDefinitions = [{
             'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
             {'func1': "def func1():\n    print('func1')\n"}, {
-                'class1': 'class class1(NewWrapper, class1Parent):\n    def __init__(self):\n        self.var2 = 1\n\n    def forward(self, inputs, targets):\n        return\n'},
+                'class1': 'class class1(BrazingTorch, class1Parent):\n    def __init__(self):\n        self.var2 = 1\n\n    def forward(self, inputs, targets):\n        return\n'},
             {
                 'addedClassParent': 'class addedClassParent:\n    def __init__(self):\n        self.layacp1 = 7\n'},
             {

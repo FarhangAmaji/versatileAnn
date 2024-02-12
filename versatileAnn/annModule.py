@@ -7,8 +7,9 @@ import os
 import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 import concurrent.futures
-from .utils import randomIdFunc
-from .layers.customLayers import CustomLayer
+
+from utils.vAnnGeneralUtils import randomStringGenerator
+from .layers.customLayers import VAnnCustomLayer
 
 class PostInitCaller(type):
     def __call__(cls, *args, **kwargs):
@@ -155,14 +156,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
         self._device = value
         self.to(value)
     
-    @property
-    def optimizer(self):
-        return self._optimizer
 
-    @optimizer.setter
-    def optimizer(self, value):
-        assert isinstance(value, (optim.Optimizer, type(None))),f'optimizerType={type(value)} is not correct'
-        self._optimizer = value
     
     def getInitInpArgs(self):
         numOfFbacksNeeded=0
@@ -189,7 +183,14 @@ class ann(nn.Module, metaclass=PostInitCaller):
         if tensorboardPath:
             os.makedirs(os.path.dirname(tensorboardPath+'_Tensorboard'), exist_ok=True)
             self._tensorboardWriter = SummaryWriter(tensorboardPath+'_Tensorboard')
-    
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, value):
+        assert isinstance(value, (optim.Optimizer, type(None))),f'optimizerType={type(value)} is not correct'
+        self._optimizer = value
     def initOptimizer(self):
         if list(self.parameters()):
             self.optimizer = optim.Adam(self.parameters(), lr=0.00001)
@@ -315,7 +316,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
     @property
     def regularization(self):
         return [self._regularizationType, self._regularizationValue]
-    
+
     @regularization.setter
     def regularization(self, value):
         assert value[0] in [None,'l1','l2'],'regularization type should be either None , "l1", "l2"'
@@ -377,7 +378,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
     
     def addCustomLayersRegularizations(self):
         for layerName, layer in vars(self)['_modules'].items():
-            if isinstance(layer, CustomLayer):
+            if isinstance(layer, VAnnCustomLayer):
                 if layer.regularization:
                     if layerName not in self.layersRegularization.keys():
                         self.layersRegularization[layerName]={'layer':layer, 'regularization':layer.regularization}
@@ -704,7 +705,7 @@ class ann(nn.Module, metaclass=PostInitCaller):
     def trainModel(self, trainInputs, trainOutputs, valInputs, valOutputs, criterion, numEpochs, savePath, tensorboardPath='', workerNum=0, externalKwargs=None):
         self.havingOptimizerCheck()
         self.externalKwargs = externalKwargs
-        randomId=randomIdFunc()
+        randomId=randomStringGenerator()
         nameDifferentiator=''
         if self.modelNameDifferentiator:
             nameDifferentiator='_'+randomId

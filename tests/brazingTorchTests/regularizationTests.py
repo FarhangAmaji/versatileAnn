@@ -8,7 +8,7 @@ from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
 from versatileAnn.layers.customLayers import VAnnCustomLayer
-from versatileAnn.newModule.newWrapper import NewWrapper
+from versatileAnn.newModule.brazingTorch import BrazingTorch
 
 
 class RegularizationTests(BaseTestClass):
@@ -29,7 +29,7 @@ class RegularizationTests(BaseTestClass):
 
     def testWithVAnnCustomLayer(self):
         # has a VAnnCustomLayer and a normal Linear layer with no regularization
-        class NNDummy(NewWrapper):
+        class NNDummy(BrazingTorch):
             def __init__(self):
                 self.lay1 = VAnnCustomLayer(1, 7, regularization={'type': 'l1', 'value': 0.03})
                 self.lay2 = nn.Linear(7, 5)
@@ -53,7 +53,7 @@ class RegularizationTests(BaseTestClass):
     def test_addLayerRegularization_inModelDefinition(self):
         # uses addLayerRegularization in __init__ of model
         # also has a VAnnCustomLayer
-        class NNDummy(NewWrapper):
+        class NNDummy(BrazingTorch):
             def __init__(self):
                 self.lay1 = VAnnCustomLayer(1, 7, regularization={'type': 'l1', 'value': 0.03})
                 self.lay2 = nn.Linear(7, 5)
@@ -79,7 +79,7 @@ class RegularizationTests(BaseTestClass):
     def test_addLayerRegularization_outOfModelDefinition(self):
         # uses addLayerRegularization after __init__ of model
         # also has a VAnnCustomLayer
-        class NNDummy(NewWrapper):
+        class NNDummy(BrazingTorch):
             def __init__(self):
                 self.lay1 = VAnnCustomLayer(1, 7, regularization={'type': 'l1', 'value': 0.03})
                 self.lay2 = nn.Linear(7, 5)

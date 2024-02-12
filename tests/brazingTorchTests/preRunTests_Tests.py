@@ -6,7 +6,7 @@ from torch import nn
 from commonDatasets.commonDatasetsPrep.epfFrBe import getEpfFrBeDataloaders, \
     dataInfo as epfFrBeDataInfo
 from tests.baseTest import BaseTestClass
-from versatileAnn.newModule.newWrapper import NewWrapper
+from versatileAnn.newModule.brazingTorch import BrazingTorch
 
 
 class preRunTests_Tests(BaseTestClass):
@@ -29,7 +29,7 @@ class preRunTests_Tests(BaseTestClass):
         self.setup()
         pl.seed_everything(71)
 
-        class NNDummy(NewWrapper):
+        class NNDummy(BrazingTorch):
             def __init__(self, **kwargs):
                 # this just in order to see does it run of not so 1 neuron is enough
                 self.l1 = nn.Linear(4, 1)
