@@ -11,8 +11,9 @@ class _BrazingTorch_saveLoad:
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_saveLoad)
 
-    @staticmethod
-    def modelStandALoneLoad(loadPath: str):
+    @classmethod
+    def modelStandALoneLoad(cls, loadPath: str):
+        # addTest1
         # you don't need to have model code and the model gets initiated here
         # note but the dataloaders are needed
 
@@ -21,7 +22,6 @@ class _BrazingTorch_saveLoad:
         # in this project like EPF, electricity,...
         # so automatically detects them and load them
 
-        # addTest1
         with open(loadPath, 'rb') as f:
             checkpoint = pickle.load(f)
 
@@ -29,13 +29,15 @@ class _BrazingTorch_saveLoad:
         _initArgs = checkpoint['brazingTorch']['_initArgs']
         warnsFrom_getAllNeededDefinitions = checkpoint['brazingTorch'][
             'warnsFrom_getAllNeededDefinitions']
-        # kkk add modelDifferentiator_sanityCheck
-        # kkk return instance
+
+        instance = cls.createInstanceFrom_loadedDefinitions(allDefinitions, _initArgs,
+                                                            warnsFrom_getAllNeededDefinitions)
+        return instance
 
     @classmethod
-    def modelDifferentiator_sanityCheck(cls, allDefinitions, _initArgs,
-                                        warnsFrom_getAllNeededDefinitions):
-        # kkk rename this
+    def createInstanceFrom_loadedDefinitions(cls, allDefinitions, _initArgs,
+                                             warnsFrom_getAllNeededDefinitions):
+
         allDefinitions_sanity = True
         initiatedObject = None
         executionOrder = []
