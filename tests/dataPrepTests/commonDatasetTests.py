@@ -116,6 +116,7 @@ class epfFrBeTests(BaseTestClass):
             mainDfIndexes_whichAreInSetDf = self.mainDf[
                 self.mainDf['dateTime'].isin(set_['dateTime'].values)].index
             checkSet = self.mainDf.loc[mainDfIndexes_whichAreInSetDf]
+            # we have to reset it's index as even checkIndex=False in equalDfs can handle it
             checkSet = checkSet.reset_index(drop=True)
 
             # removing cols added during getEpfFrBe_processed to be able to check
@@ -230,6 +231,8 @@ class electricityTests(BaseTestClass):
             self.normalizer.inverseTransform(set_)
             dfIndexes_whichAreInSetDf = df[df['date'].isin(set_['date'].values)].index
             checkSet = df.loc[dfIndexes_whichAreInSetDf]
+            # we have to reset it's index as even checkIndex=False in equalDfs can handle it
+            checkSet = checkSet.reset_index(drop=True)
 
             # removing cols added during getElectricity_processed to be able to check
             set_ = set_.drop(columns=['sequenceIdx', '__startPoint__'])
@@ -460,6 +463,8 @@ class stallionTests(BaseTestClass):
             self.normalizer.inverseTransform(set_)
             dfIndexes_whichAreInSetDf = df[df['date'].isin(set_['date'].values)].index
             checkSet = df.loc[dfIndexes_whichAreInSetDf]
+            # we have to reset it's index as even checkIndex=False in equalDfs can handle it
+            checkSet = checkSet.reset_index(drop=True)
 
             # removing cols added during getStallion_processed to be able to check
             dropCols = set(set_.columns)-set(checkSet.columns)
