@@ -246,19 +246,33 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
         # Iterate through columns and compare them individually
         for col in df1.columns:
             if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
+                # case: the column on both dfs is numeric
                 # Check if all elements in the numeric column are close
                 if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
                     return False
             else:
+                # addTest1
                 if any([pd.api.types.is_numeric_dtype(df1[col]),
                         pd.api.types.is_numeric_dtype(df2[col])]):
-                    npd1 = NpDict(df1).getDict(True)
-                    npd2 = NpDict(df2).getDict(True)
-                    if any([pd.api.types.is_numeric_dtype(npd1[col]),
-                            pd.api.types.is_numeric_dtype(npd2[col])]):
+                    # case: the column on one of dfs is numeric, and we guess the
+                    # other one is also numeric but probably because of some problems with df column
+                    # type detection, it's not detected as numeric
+                    # so we try to make pandas redetect column types
+
+                    # try to make pandas redetect column types
+                    df1_ = dfResetDType(df1)
+                    df2_ = dfResetDType(df2)
+
+                    if not all([pd.api.types.is_numeric_dtype(df1_[col]),
+                            pd.api.types.is_numeric_dtype(df2_[col])]):
+                        # it's either redetection didn't work or the column is not numeric
                         return False
-                # If the column is non-numeric, skip the check
-                continue
+                    if not np.allclose(df1_[col], df2_[col], rtol=floatPrecision):
+                        return False
+                else:
+                    # case: the column on both dfs is not numeric
+                    if not df1[col].equals(df2[col]):
+                        return False
 
         # If all numeric columns are close, return True
         return True
