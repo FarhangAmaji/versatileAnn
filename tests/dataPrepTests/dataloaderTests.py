@@ -10,14 +10,15 @@ from dataPrep.dataloader import _ObjectToBeTensored as bstObjInit
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
 from utils.vAnnGeneralUtils import DotDict, NpDict, shuffleData, getTorchDevice, \
-    getDefaultTorchDevice_printName, \
-    toDevice
+    getDefaultTorchDevice_printName, toDevice
 
 # util
 # cccDevStruct
 #  note toDevice in vAnnGeneralUtils for mps devices, makes int64 to int32, and float64 to float32;
 #  as int64 and float64 are not supported on mps devices
-suitableDeviceForIntOnThisFile= lambda x: torch.int64 if x.device.type != 'mps' else torch.int32
+suitableDeviceForIntOnThisFile = lambda x: torch.int64 if x.device.type != 'mps' else torch.int32
+
+
 # ---- dataloader tests
 # ----     batch data tests
 class nestedDictStructTests(BaseTestClass):
