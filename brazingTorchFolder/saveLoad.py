@@ -58,7 +58,7 @@ class _BrazingTorch_saveLoad:
                     except:
                         # mustHave3
                         #  in modelDifferentiator we didnt include the classes or the funcs
-                        #  defined in project(as a part of versatileAnn) to be included so if
+                        #  defined in project(as a part of brazingTorchFolder) to be included so if
                         #  the error is about them here the code should be able to detect and
                         #  import that class or func
                         pass

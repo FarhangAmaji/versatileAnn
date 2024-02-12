@@ -8,7 +8,7 @@ from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances, isCus
     setDefaultIfNone, isCustomFunction, DotDict, getProjectDirectory, \
     findClassObject_inADirectory, joinListWithComma, getClassObjectFromFile
 from utils.warnings import Warn
-from versatileAnn.utils import LossRegularizator
+from brazingTorchFolder.utils import LossRegularizator
 
 
 # kkk add to mainModelRun

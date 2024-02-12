@@ -4,21 +4,23 @@ todos:
 
     
     - 
+    - check soleymanis errors?!?!
+    - fix ModelDifferentiatorTests.py problems
+    - add comment for equalDfs
+    - caching data for tests
     - modelStandALoneLoad
-    - project.toml
     - rename to BrazingTorch
     - split general utils
+    - default gradient clipping
     - baseFit and fit
         - think about resuming model
-    - in NewWrapper args put all args of its parents
-    - default gradient clipping
+    - in BrazingTorch args put all args of its parents
     - revise todos 
         - add `bugPotential_hardcode`
         - add `bugPotential_fixedLocation` to conventions and colorcoding todos of pycharm and vscode
           - also add it to code
     - revise commit prefixes
     - add linter for vscode
-    - check soleymanis errors?!?!
     - add to cleancode .md
         - check 'a=a or []'; must be '[] if a is None else a'
 
@@ -42,8 +44,8 @@ todos:
 
 # after current dev spring
 # major
-- universal seed in dataprep and NewWrapper; it should not mess the funcs which take seed as arg; ofc it seems easy to solve it with `if` seed as arg is None then use universal seed; maybe load should set universal seed too
-- newWrapper should be separated from the rest of the project
+- universal seed in dataprep and BrazingTorch; it should not mess the funcs which take seed as arg; ofc it seems easy to solve it with `if` seed as arg is None then use universal seed; maybe load should set universal seed too
+- brazingTorch should be separated from the rest of the project
 - related to modelDifferentiator and architectures: we may save performance of each arch of models with the same name in .csv file(ofc we have tensorboard but this one also may be useful)
 - change todo conventions: remove cccDevStruct and cccDevAlgo and add ccY(=ccWhy) and ccWhat maybe with 1,2,3; also change the
 # minor

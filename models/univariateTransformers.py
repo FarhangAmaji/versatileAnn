@@ -4,7 +4,7 @@ import sys
 import os
 parentFolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parentFolder)
-from versatileAnn import ann
+from brazingTorchFolder import ann
 import torch
 from torch import nn
 # ---- define model

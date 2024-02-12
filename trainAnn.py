@@ -1,7 +1,7 @@
 # ---- imports
 # trainAnn.py
-from versatileAnn import ann
-from versatileAnn.layers import linLReluNormDropout, linLSigmoidNormDropout
+from brazingTorchFolder import ann
+from brazingTorchFolder.layers import linLReluNormDropout, linLSigmoidNormDropout
 import torch
 import torch.optim as optim
 # ---- define model

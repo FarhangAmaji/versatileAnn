@@ -6,7 +6,7 @@ from torch import nn
 from commonDatasets.commonDatasetsPrep.epfFrBe import getEpfFrBeDataloaders, \
     dataInfo as epfFrBeDataInfo
 from tests.baseTest import BaseTestClass
-from versatileAnn.newModule.brazingTorch import BrazingTorch
+from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class preRunTests_Tests(BaseTestClass):

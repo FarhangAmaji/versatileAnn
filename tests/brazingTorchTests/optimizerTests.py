@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from tests.baseTest import BaseTestClass
-from versatileAnn.newModule.brazingTorch import BrazingTorch
+from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class brazingTorchTests_optimizer(BaseTestClass):

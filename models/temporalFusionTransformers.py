@@ -6,7 +6,7 @@ from typing import Dict, List
 import pandas as pd
 import torch
 from torch import nn
-from versatileAnn import ann
+from brazingTorchFolder import ann
 from models.temporalFusionTransformers_components import addNorm, gatedLinearUnit, gateAddNorm, gatedResidualNetwork, variableSelectionNetwork, interpretableMultiHeadAttention, multiEmbedding
 # ----
 class temporalFusionTransformerModel(ann):

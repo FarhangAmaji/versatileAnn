@@ -7,8 +7,8 @@ from torch import nn
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from versatileAnn.layers.customLayers import VAnnCustomLayer
-from versatileAnn.newModule.brazingTorch import BrazingTorch
+from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
+from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class RegularizationTests(BaseTestClass):

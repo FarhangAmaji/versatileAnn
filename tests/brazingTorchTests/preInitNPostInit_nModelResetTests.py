@@ -4,7 +4,7 @@ from torch import nn
 
 from tests.baseTest import BaseTestClass
 from utils.initParentClasses import checkIfAClassIs_initingItsParentClasses_inItsInit
-from versatileAnn.newModule.brazingTorch import BrazingTorch
+from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class brazingTorchTests_preInitNPostInit_nModelReset(BaseTestClass):

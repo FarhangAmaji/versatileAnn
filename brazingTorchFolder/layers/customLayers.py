@@ -1,10 +1,10 @@
-# versatileAnn\layers\customLayers.py
+# brazingTorchFolder\layers\customLayers.py
 from typing import Optional, Callable
 
 import torch.nn as nn
 
 from utils.typeCheck import argValidator
-from versatileAnn.utils import LossRegularizator
+from brazingTorchFolder.utils import LossRegularizator
 
 
 class VAnnCustomLayer(nn.Module):

@@ -23,7 +23,7 @@ parentFolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parentFolder)
 import pandas as pd
 import numpy as np
-from versatileAnn import ann
+from brazingTorchFolder import ann
 import torch
 import torch.nn as nn
 #kkk add own comments

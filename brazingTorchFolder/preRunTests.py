@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import morePreciseFloat, nFoldersBack, stringValuedDictsEqual
 from utils.warnings import Warn
-from versatileAnn.newModule.callbacks import StoreEpochData
+from brazingTorchFolder.callbacks import StoreEpochData
 
 
 class _BrazingTorch_preRunTests:

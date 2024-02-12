@@ -7,8 +7,8 @@ from utils.globalVars import regularizationTypes
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
-from versatileAnn.layers.customLayers import VAnnCustomLayer
-from versatileAnn.utils import LossRegularizator
+from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
+from brazingTorchFolder.utils import LossRegularizator
 
 
 class _BrazingTorch_regularization:

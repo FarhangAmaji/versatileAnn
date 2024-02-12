@@ -2,18 +2,18 @@ import pytorch_lightning as pl
 
 from utils.typeCheck import argValidator
 from utils.vAnnGeneralUtils import _allowOnlyCreationOf_ChildrenInstances
-from versatileAnn.newModule.lossModule import _BrazingTorch_loss
-from versatileAnn.newModule.modelDifferentiator import _BrazingTorch_modelDifferentiator
-from versatileAnn.newModule.modelFitter import _BrazingTorch_modelFitter
-from versatileAnn.newModule.optimizer import _BrazingTorch_optimizer
-from versatileAnn.newModule.preInitNPostInit_nModelReset import \
+from brazingTorchFolder.lossModule import _BrazingTorch_loss
+from brazingTorchFolder.modelDifferentiator import _BrazingTorch_modelDifferentiator
+from brazingTorchFolder.modelFitter import _BrazingTorch_modelFitter
+from brazingTorchFolder.optimizer import _BrazingTorch_optimizer
+from brazingTorchFolder.preInitNPostInit_nModelReset import \
     _BrazingTorch_preInitNPostInit_nModelReset
-from versatileAnn.newModule.preRunTests import _BrazingTorch_preRunTests
-from versatileAnn.newModule.properties import _BrazingTorch_properties
-from versatileAnn.newModule.regularization import _BrazingTorch_regularization
-from versatileAnn.newModule.saveLoad import _BrazingTorch_saveLoad
-from versatileAnn.newModule.specialModes import _BrazingTorch_specialModes
-from versatileAnn.newModule.temVars import _BrazingTorch_tempVars
+from brazingTorchFolder.preRunTests import _BrazingTorch_preRunTests
+from brazingTorchFolder.properties import _BrazingTorch_properties
+from brazingTorchFolder.regularization import _BrazingTorch_regularization
+from brazingTorchFolder.saveLoad import _BrazingTorch_saveLoad
+from brazingTorchFolder.specialModes import _BrazingTorch_specialModes
+from brazingTorchFolder.temVars import _BrazingTorch_tempVars
 
 
 # kkk2 think about seed later

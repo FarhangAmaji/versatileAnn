@@ -6,7 +6,7 @@ from tests.baseTest import BaseTestClass
 from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m1 import NNDummyModule1
 from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m2 import NNDummyModule2, \
     NNDummyModule3, NNDummyModule4
-from versatileAnn.newModule.brazingTorch import BrazingTorch
+from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class Parent2p2p1p1:
