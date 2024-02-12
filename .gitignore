@@ -1,13 +1,11 @@
 __pycache__/
 data/bestModels
 data/datasets
-check others/
 devDocs/tempCodeTry/
 devDocs/versetaileAnn private notes.md
-.git/info/exclude
 .coverage
 htmlcov
 coverage_html
-.idea/codeStyles/codeStyleConfig.xml
-.idea/vcs.xml
-.idea/other.xml
+.idea/
+.vscode/
+.git/info/exclude
