@@ -139,7 +139,7 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
     def testNormalizerStackInverseTransform(self):
         self.testNormalizerStackFitNTransform()
         self.normalizerStack.inverseTransform(self.df)
-        self.equalDfs(self.df, self.dfUntouched)
+        self.equalDfs(self.df, self.dfUntouched, printValuesWhenNotEqual=True)
 
 
 class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):

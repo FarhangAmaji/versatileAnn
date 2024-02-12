@@ -183,13 +183,16 @@ def tensor_floatDtypeChangeIfNeeded(tensor):
 
 
 def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-6,
-                 checkDevice=True):
+                 checkDevice=True, printValuesWhenNotEqual=False):
     tensor1_ = tensor1.clone()
     tensor2_ = tensor2.clone()
 
     dtypeEqual = True
     if checkType:
         dtypeEqual = tensor1_.dtype == tensor2_.dtype
+        if not dtypeEqual:
+            if printValuesWhenNotEqual:
+                raise ValueError(f'no equal dtypes {tensor1_.dtype} {tensor2_.dtype}')
     else:
         tensor1_ = tensor1_.to(torch.float32)
         tensor2_ = tensor2_.to(torch.float32)
@@ -205,6 +208,8 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
             tensor2_ = tensor2_.to(torch.device('cpu'))
         deviceEqual = True
     if not deviceEqual:
+        if printValuesWhenNotEqual:
+            raise ValueError(f'no equal devices {tensor1_.device} {tensor2_.device}')
         return False
 
     equalVals = True
@@ -232,14 +237,18 @@ def toDevice(tensor, device):
 
 
 # ---- dfs
-def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001, printValuesWhenNotEqual=False):
     # addTest1
     # Check if both DataFrames have the same shape
     if df1.shape != df2.shape:
+        if printValuesWhenNotEqual:
+            raise ValueError(f"Shapes are not equal: {df1.shape} != {df2.shape}")
         return False
 
     if checkIndex:
         if list(df1.index) != list(df2.index):
+            if printValuesWhenNotEqual:
+                raise ValueError(f"Indexes are not equal: {df1.index} != {df2.index}")
             return False
 
     if floatApprox:
@@ -248,6 +257,9 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
             if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
                 # Check if all elements in the numeric column are close
                 if not np.allclose(df1[col], df2[col], rtol=floatPrecision):
+                    if printValuesWhenNotEqual:
+                        raise ValueError(
+                            f"floatApprox, both are Numeric: Column '{col}' is not equal.")
                     return False
             else:
                 if any([pd.api.types.is_numeric_dtype(df1[col]),
@@ -256,6 +268,9 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
                     npd2 = NpDict(df2).getDict(True)
                     if any([pd.api.types.is_numeric_dtype(npd1[col]),
                             pd.api.types.is_numeric_dtype(npd2[col])]):
+                        if printValuesWhenNotEqual:
+                            raise ValueError(
+                                f"floatApprox, both are not Numeric at first: Column '{col}' is not equal.")
                         return False
                 # If the column is non-numeric, skip the check
                 continue
@@ -263,6 +278,10 @@ def equalDfs(df1, df2, checkIndex=True, floatApprox=False, floatPrecision=0.0001
         # If all numeric columns are close, return True
         return True
     else:
+        if not df1.equals(df2):
+            if printValuesWhenNotEqual:
+                raise ValueError(f"floatApprox is False, and the dfs are not equal")
+            return False
         return df1.equals(df2)
 
 
