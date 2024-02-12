@@ -297,7 +297,7 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
 
         testDfCheck = pd.DataFrame({
             'A': 18 * ['A1'],
-            'B': 7 * ['B1'] + 11 * ['B2'],
+            'B': 8 * ['B1'] + 10 * ['B2'],
             tsStartPointColName: [True, True, True, True, True, True, False, False, True, True,
                                   True, True, True, True, True, True, False, False],
             'y1': listRangesToList([range(49, 57), range(86, 96)])}, index=range(0, 18))

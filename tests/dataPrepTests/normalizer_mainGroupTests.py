@@ -25,7 +25,7 @@ class MainGroupBaseNormalizerTests(BaseTestClass):
             'col3': [2, 1, 0, 3, 4, 0]}, index=range(100, 106))
         self.getRowsByCombination1Res = pd.DataFrame({'A': ['A1', 'A1'],
                                                       'B': ['B1', 'B1'],
-                                                      'C': ['C1', 'C1'],
+                                                      'C': ['C1', 'C2'],
                                                       'col1': [3, 1],
                                                       'col2': [0, 0],
                                                       'col3': [2, 4]},
