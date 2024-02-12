@@ -24,7 +24,7 @@ import torch.optim as optim
 # nHitsModel.lossMode='accuracy'
 # nHitsModel.variationalAutoEncoderMode=True
 # ---- load UCI electricity dataset
-data = pd.read_csv(r'.\data\datasets\electricity.csv')
+data = pd.read_csv(r'../data/datasets/electricity.csv')
 """
 #ccc this data has ['date', 'consumerId', 'hourOfDay', 'dayOfWeek', 'powerUsage','daysFromStart', 
                'hoursFromStart', 'daysFromStartOfDf', 'month'] columns
