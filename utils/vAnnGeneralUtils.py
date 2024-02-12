@@ -98,7 +98,14 @@ class NpDict(DotDict):
 
     def getDict(self, resetDtype=False):
         if resetDtype:
-            return {col: self[col].tolist() for col in self.cols()}
+            res = {}
+            for col in self.cols():
+                if pd.Series(self[col]).dtype.type == np.object_:
+                    # if it's object dtype(note object dtype probably is string by default in pandas)
+                    res[col] = tryToConvertSeriesToDatetime(pd.Series(self[col])).tolist()
+                else:
+                    res[col] = self[col].tolist()
+            return res
         return {col: self[col] for col in self.cols()}
 
     def printDict(self):
@@ -302,20 +309,23 @@ def dfResetDType(df: pd.DataFrame):
 
 @argValidator
 def tryToConvertSeriesToDatetime(series: pd.Series):
-    if series.dtype == 'object':
+    # if all items in series are string
+    if series.apply(lambda x: isinstance(x, str)).all():
         try:
-            new_series = pd.to_datetime(series)
+            newSeries = pd.to_datetime(series)
 
             # Check if the conversion was successful
             # note it seems pd.to_datetime always converts to datetime64
-            if pd.api.types.is_datetime64_any_dtype(new_series):
-                return new_series
+            if pd.api.types.is_datetime64_any_dtype(newSeries):
+                return newSeries
             else:
                 return series
         except:
             return series
     else:
         return series
+
+
 # ---- np array
 def npArrayBroadCast(arr, shape):
     shape = tuple(shape)
