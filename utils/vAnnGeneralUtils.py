@@ -300,6 +300,22 @@ def dfResetDType(df: pd.DataFrame):
     return npd.toDf(resetDtype=True)
 
 
+@argValidator
+def tryToConvertSeriesToDatetime(series: pd.Series):
+    if series.dtype == 'object':
+        try:
+            new_series = pd.to_datetime(series)
+
+            # Check if the conversion was successful
+            # note it seems pd.to_datetime always converts to datetime64
+            if pd.api.types.is_datetime64_any_dtype(new_series):
+                return new_series
+            else:
+                return series
+        except:
+            return series
+    else:
+        return series
 # ---- np array
 def npArrayBroadCast(arr, shape):
     shape = tuple(shape)
