@@ -145,7 +145,7 @@ class NewWrapper(pl.LightningModule,
     def _isCls_NewWrapperClass(self, cls_):
         # cccDevAlgo
         #  this is a util to be used in parent classes and not get circular import error
-        return type(cls_) == NewWrapper
+        return cls_ is NewWrapper
 
     @staticmethod
     def _getNewWrapper_classObject():
