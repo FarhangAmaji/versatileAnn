@@ -14,13 +14,16 @@ def tensor_floatDtypeChangeIfNeeded(tensor):
 
 
 def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPrecision=1e-6,
-                 checkDevice=True):
+                 checkDevice=True, printValuesWhenNotEqual=False):
     tensor1_ = tensor1.clone()
     tensor2_ = tensor2.clone()
 
     dtypeEqual = True
     if checkType:
         dtypeEqual = tensor1_.dtype == tensor2_.dtype
+        if not dtypeEqual:
+            if printValuesWhenNotEqual:
+                raise ValueError(f'no equal dtypes {tensor1_.dtype} {tensor2_.dtype}')
     else:
         tensor1_ = tensor1_.to(torch.float32)
         tensor2_ = tensor2_.to(torch.float32)
@@ -36,6 +39,8 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
             tensor2_ = tensor2_.to(torch.device('cpu'))
         deviceEqual = True
     if not deviceEqual:
+        if printValuesWhenNotEqual:
+            raise ValueError(f'no equal devices {tensor1_.device} {tensor2_.device}')
         return False
 
     equalVals = True

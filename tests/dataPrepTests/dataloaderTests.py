@@ -340,7 +340,7 @@ class DataloaderTests(BaseTestClass):
         # if the device of firstBatch is mps make sure to change suitableDtype=torch.int32
         suitableDtype = suitableDeviceForIntOnThisFile(firstBatch)
         expectedFirstBatch = torch.tensor([1114, 1081, 1168, 1139, 1064], dtype=suitableDtype)
-        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
+        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False, printValuesWhenNotEqual=True)
 
     def testShuffleAllResults_1stBatch(self):
         self.setup1(batch_size=700)
@@ -349,7 +349,7 @@ class DataloaderTests(BaseTestClass):
         expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=torch.int64)
         suitableDtype = suitableDeviceForIntOnThisFile(expectedFirstBatch)
         expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=suitableDtype)
-        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
+        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False, printValuesWhenNotEqual=True)
 
     def testShuffleAllResults_2ndBatch(self):
         self.setup1(batch_size=700)
@@ -360,7 +360,7 @@ class DataloaderTests(BaseTestClass):
         expected2ndBatch = torch.tensor(expected2ndBatch, dtype=torch.int64)
         suitableDtype = suitableDeviceForIntOnThisFile(expected2ndBatch)
         expected2ndBatch = torch.tensor(expected2ndBatch, dtype=suitableDtype)
-        self.equalTensors(secondBatch, expected2ndBatch, checkDevice=False)
+        self.equalTensors(secondBatch, expected2ndBatch, checkDevice=False, printValuesWhenNotEqual=True)
 
     def testChangeShuffleBeforeGettingResultWithShuffleState(self):
         self.setup1()
@@ -374,7 +374,7 @@ class DataloaderTests(BaseTestClass):
         firstBatch = next(iter(self.dataloader))
         suitableDtype = suitableDeviceForIntOnThisFile(firstBatch)
         expectedFirstBatch = torch.tensor([1008, 1009, 1010, 1011, 1012], dtype=suitableDtype)
-        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
+        self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False, printValuesWhenNotEqual=True)
 
     def testChangeBatchSize(self):
         def print2batches(dataloader):

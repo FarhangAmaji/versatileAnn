@@ -33,9 +33,11 @@ class BaseTestClass(unittest.TestCase):
         return result
 
     def equalDfs(self, df1, df2,
-                 checkIndex=True, floatApprox=False, floatPrecision=0.0001):
+                 checkIndex=True, floatApprox=False, floatPrecision=0.0001,
+                 printValuesWhenNotEqual=False):
         kwargs_ = varPasser(
-            localArgNames=['df1', 'df2', 'checkIndex', 'floatApprox', 'floatPrecision'])
+            localArgNames=['df1', 'df2', 'checkIndex', 'floatApprox', 'floatPrecision',
+                           'printValuesWhenNotEqual'])
         self.assertTrue(equalDfs(**kwargs_))
 
     def equalArrays(self, array1, array2,
@@ -46,10 +48,10 @@ class BaseTestClass(unittest.TestCase):
 
     def equalTensors(self, tensor1, tensor2,
                      checkType=True, floatApprox=False,
-                     floatPrecision=1e-4, checkDevice=True):
+                     floatPrecision=1e-4, checkDevice=True, printValuesWhenNotEqual=False):
         kwargs_ = varPasser(
             localArgNames=['tensor1', 'tensor2', 'checkType', 'floatApprox', 'floatPrecision',
-                           'checkDevice'])
+                           'checkDevice', 'printValuesWhenNotEqual'])
         self.assertTrue(equalTensors(**kwargs_))
 
     def equalNpDicts(self, npd1, npd2,

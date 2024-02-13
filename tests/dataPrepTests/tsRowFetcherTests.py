@@ -233,14 +233,14 @@ class TestTsRowFetcher_NpArrayTests(BaseTestClass):
         result = self.fetcher.getBackForeCastData_general(self.npArray, 0, **autoKwargsByFuncName)
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (3, 2))
-        self.equalTensors(result, torch.tensor([[1, 16], [2, 17], [3, 18]], dtype=torch.int32))
+        self.equalTensors(result, torch.tensor([[1, 16], [2, 17], [3, 18]], dtype=torch.int32), printValuesWhenNotEqual=True)
 
     def test_BackcastMode_AllColIndexes_ConvTensor(self):
         autoKwargsByFuncName = giveKwargsByFuncName_npArraySample1()
         result = self.fetcher.getBackForeCastData_general(self.npArray, 1, **autoKwargsByFuncName)
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (3, 3))
-        self.equalTensors(result, torch.tensor(npArraySample1[1:4], dtype=torch.int32))
+        self.equalTensors(result, torch.tensor(npArraySample1[1:4], dtype=torch.int32), printValuesWhenNotEqual=True)
 
     def test_BackcastMode_someCols_noConvTensor(self):
         autoKwargsByFuncName = giveKwargsByFuncName_npArraySample1()
@@ -271,7 +271,7 @@ class TestTsRowFetcher_NpArrayTests(BaseTestClass):
         result = self.fetcher.getBackForeCastData_general(self.npArray, 3, **autoKwargsByFuncName)
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (2, 2))
-        self.equalTensors(result, torch.tensor([[7, 22], [8, 23]], dtype=torch.int32))
+        self.equalTensors(result, torch.tensor([[7, 22], [8, 23]], dtype=torch.int32), printValuesWhenNotEqual=True)
 
     def test_FullcastMode_someCols_ConvTensor(self):
         autoKwargsByFuncName = giveKwargsByFuncName_npArraySample1()
@@ -279,14 +279,14 @@ class TestTsRowFetcher_NpArrayTests(BaseTestClass):
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (5, 2))
         self.equalTensors(result, torch.tensor([[1, 16], [2, 17], [3, 18], [4, 19], [5, 20]],
-                                               dtype=torch.int32))
+                                               dtype=torch.int32), printValuesWhenNotEqual=True)
 
     def test_FullcastMode_AllColIndexes_ConvTensor(self):
         autoKwargsByFuncName = giveKwargsByFuncName_npArraySample1()
         result = self.fetcher.getBackForeCastData_general(self.npArray, 1, **autoKwargsByFuncName)
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (5, 3))
-        self.equalTensors(result, torch.tensor(npArraySample1[1:6], dtype=torch.int32))
+        self.equalTensors(result, torch.tensor(npArraySample1[1:6], dtype=torch.int32), printValuesWhenNotEqual=True)
 
     def test_FullcastMode_someCols_noConvTensor(self):
         autoKwargsByFuncName = giveKwargsByFuncName_npArraySample1()
@@ -317,7 +317,7 @@ class TestTsRowFetcher_NpArrayTests(BaseTestClass):
         result = self.fetcher.getBackForeCastData_general(self.npArray, 3, **autoKwargsByFuncName)
         self.assertTrue(isinstance(result, torch.Tensor))
         self.assertEqual(result.shape, (1, 2))
-        self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int32))
+        self.equalTensors(result, torch.tensor([[4, 19]], dtype=torch.int32), printValuesWhenNotEqual=True)
 
 
 # ----        type: TestTsRowFetcher_NpDictTests
