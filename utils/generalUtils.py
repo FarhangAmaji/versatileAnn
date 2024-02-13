@@ -13,27 +13,10 @@ import torch
 from utils.warnings import Warn
 
 
-# goodToHave2
-#  split it to multiple files
-
-# ---- DotDict NpDict
-
-
-# ---- tensor
-
-# ---- dfs
-
-
-# ---- np array
-
-# ---- lists
-
 # ---- floats
 def morePreciseFloat(num, precisionOrder=6):
     return round(num, precisionOrder)
 
-
-# ---- dicts
 
 # ---- methods and funcs
 def getMethodArgs(method):
@@ -302,9 +285,6 @@ def nFoldersBack(path, n=1):
 def getProjectDirectory():
     # this is supposed to bring same result from anywhere this func is called
     return nFoldersBack(os.path.abspath(__file__), n=1)
-
-
-# ---- str utils
 
 
 # ---- variable

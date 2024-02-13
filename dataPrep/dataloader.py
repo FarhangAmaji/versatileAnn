@@ -1,13 +1,16 @@
 import copy
 import math
+from types import NoneType
 from typing import Union
 
+import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 
 from dataPrep.dataset import VAnnTsDataset
-from utils.dataTypeUtils.dotDict_npDict import DotDict
+from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from utils.dataTypeUtils.list import isListTupleOrSet, isIterable
 from utils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded, getTorchDevice, toDevice
 from utils.generalUtils import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
@@ -47,34 +50,34 @@ def isTensorable(obj):
 
 knownTypesToBeTensored = DotDict({
     'directTensorables': DotDict({
-        'int': "<class 'int'>", 'float': "<class 'float'>",
-        'complex': "<class 'complex'>",
-        'tuple': "<class 'tuple'>", 'npArray': "<class 'numpy.ndarray'>",
-        'pdSeries': "<class 'pandas.core.series.Series'>",
-        'bool': "<class 'bool'>", 'bytearray': "<class 'bytearray'>"}),
+        'int': str(int), 'float': str(float),
+        'complex': str(complex),
+        'tuple': str(tuple), 'npArray': str(np.ndarray),
+        'pdSeries': str(pd.Series),
+        'bool': str(bool), 'bytearray': str(bytearray)}),
     # cccAlgo
     #  even though npArray, tuple, df, series may contain data which may be `str` and cant be converted to tensor
     #  but still we keep them in the format below, so in the case of having str, the error would be raised by pytorch
 
     'tensor':
-        DotDict({'tensor': "<class 'torch.Tensor'>"}),
+        DotDict({'tensor': str(torch.Tensor)}),
 
     'errorPrones':
-        DotDict({'list': "<class 'list'>"}),  # depending on items ok and not
+        DotDict({'list': str(list)}),  # depending on items ok and not
 
     'NpDict':  # indirectTensorables
-        DotDict({'NpDict': "<class 'utils.dataTypeUtils.dotDict_npDict.NpDict'>"}),
+        DotDict({'NpDict': str(NpDict)}),
     # can't directly be changed to tensor
 
     'df':  # indirectTensorables
-        DotDict({'df': "<class 'pandas.core.frame.DataFrame'>"}),
+        DotDict({'df': str(pd.DataFrame)}),
     # can't directly be changed to tensor
 
     'notTensorables': DotDict({  # these below can't be changed to tensor
-        'set': "<class 'set'>", 'dict': "<class 'dict'>",
-        'str': "<class 'str'>",
-        'none': "<class 'NoneType'>", 'bytes': "<class 'bytes'>",
-        'DotDict': "<class 'utils.dataTypeUtils.dotDict_npDict.DotDict'>"})
+        'set': str(set), 'dict': str(dict),
+        'str': str(str),
+        'none': str(NoneType), 'bytes': str(bytes),
+        'DotDict': str(DotDict)})
 })
 
 

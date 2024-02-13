@@ -5,16 +5,11 @@ todos:
     
     - 
     - check soleymanis errors?!?!
-    - fix ModelDifferentiatorTests.py problems
-    - add comment for equalDfs
-    - caching data for tests
-    - modelStandALoneLoad
-    - rename to BrazingTorch
-    - split general utils
+    - in BrazingTorch args put all args of its parents
     - default gradient clipping
     - baseFit and fit
         - think about resuming model
-    - in BrazingTorch args put all args of its parents
+    - caching data for tests
     - revise todos 
         - add `bugPotential_hardcode`
         - add `bugPotential_fixedLocation` to conventions and colorcoding todos of pycharm and vscode
