@@ -147,7 +147,7 @@ class _BrazingTorch_preRunTests:
         # force setting 'fast_dev_run' True
         kwargsApplied['fast_dev_run'] = True
 
-        self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
+        self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
     @argValidator
     def runOverfitBatches(self, trainDataloader: DataLoader,
@@ -184,7 +184,7 @@ class _BrazingTorch_preRunTests:
         if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
             kwargsApplied['max_epochs'] = 50
 
-        self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
+        self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
         self._printFirstNLast_valLossChanges(callbacks_)
 
@@ -203,7 +203,7 @@ class _BrazingTorch_preRunTests:
                                                                 version='preRunTests'), }
         self._plKwargUpdater(kwargsApplied, kwargs)
 
-        trainer = self.fit(trainDataloader, valDataloader, **kwargsApplied)
+        trainer = self.baseFit(trainDataloader, valDataloader, **kwargsApplied)
 
     @argValidator
     def findBestLearningRate(self, trainDataloader: DataLoader,
@@ -239,7 +239,7 @@ class _BrazingTorch_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
+            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisLr)
 
@@ -285,7 +285,7 @@ class _BrazingTorch_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.fit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
+            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisBatchSize)
 

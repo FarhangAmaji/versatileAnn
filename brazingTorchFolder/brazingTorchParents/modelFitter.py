@@ -32,7 +32,7 @@ class _BrazingTorch_modelFitter:
         self.__logOptions = value
 
     @argValidator
-    def fit(self, trainDataloader: DataLoader,
+    def baseFit(self, trainDataloader: DataLoader,
             valDataloader: Union[DataLoader, None] = None,
             listOfKwargs: List[dict] = None, addDefaultLogger=True,
             addDefault_gradientClipping=True, **kwargs):

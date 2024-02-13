@@ -6,6 +6,9 @@ import threading
 import types
 
 import aiohttp
+# bugPotentialCheck1
+#  aiohttp is not in requirements.txt but it seems to be requisite
+#  for another of the packages in requirements.txt therefore it's installed
 import numpy as np
 import pandas as pd
 import torch
