@@ -28,8 +28,8 @@ from commonDatasets.commonDatasetsPrep.commonDatasetsPrep_innerStepNUtils import
 from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.normalizers.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
-from dataPrep.normalizers.normalizers_normalizerStack import NormalizerStack
+from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from dataPrep.utils import _applyShuffleIfSeedExists
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray

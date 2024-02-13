@@ -1,7 +1,7 @@
 import pandas as pd
 
-from dataPrep.normalizers.normalizers_baseNormalizer import _BaseNormalizer
-from dataPrep.normalizers.normalizers_mainGroupNormalizers import _MainGroupBaseNormalizer
+from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
+from dataPrep.normalizers.mainGroupNormalizers import _MainGroupBaseNormalizer
 from utils.typeCheck import argValidator
 
 

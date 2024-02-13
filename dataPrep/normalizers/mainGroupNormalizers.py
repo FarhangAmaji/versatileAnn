@@ -1,6 +1,6 @@
 import pandas as pd
 
-from dataPrep.normalizers.normalizers_baseNormalizer import _BaseNormalizer
+from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
 from utils.dataTypeUtils.df_series import pandasGroupbyAlternative

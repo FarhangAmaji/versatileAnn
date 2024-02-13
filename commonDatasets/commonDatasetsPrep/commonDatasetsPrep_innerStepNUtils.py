@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from dataPrep.normalizers.normalizers_multiColNormalizer import MultiColStdNormalizer
-from dataPrep.normalizers.normalizers_normalizerStack import NormalizerStack
+from dataPrep.normalizers.multiColNormalizer import MultiColStdNormalizer
+from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer
 from dataPrep.utils import splitTrainValTest_mainGroup, _applyShuffleIfSeedExists, \
     splitTsTrainValTest_DfNNpDict, rightPadDf, splitToNSeries, addCorrespondentRow, \

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.normalizers.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColsStdNormalizer
 from tests.baseTest import BaseTestClass
 from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from utils.dataTypeUtils.str import snakeToCamel, camelToSnake
@@ -281,7 +281,7 @@ class FindClassDefinitionTests(BaseTestClass):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
                                                'MainGroupSingleColsStdNormalizer')
         expectedPath = os.path.join(getProjectDirectory(), 'dataPrep',
-                                    'normalizers_mainGroupNormalizers.py')
+                                    'mainGroupNormalizers.py')
         self.assertEqual(res['filePaths'][0], expectedPath)
         expectedDef = """class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
 
