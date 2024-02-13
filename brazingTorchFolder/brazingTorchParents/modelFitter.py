@@ -34,8 +34,8 @@ class _BrazingTorch_modelFitter:
     @argValidator
     def fit(self, trainDataloader: DataLoader,
             valDataloader: Union[DataLoader, None] = None,
-            addDefault_gradientClipping=True, **kwargs):
             listOfKwargs: List[dict] = None, addDefaultLogger=True,
+            addDefault_gradientClipping=True, **kwargs):
         # kkk support log kwargs to have phases
         # addTest1
         # cccUsage
