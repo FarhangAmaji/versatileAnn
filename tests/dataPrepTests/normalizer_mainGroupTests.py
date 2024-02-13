@@ -5,11 +5,11 @@ import unittest
 
 import pandas as pd
 
-from dataPrep.normalizers_mainGroupNormalizers import (_MainGroupBaseNormalizer,
-                                                       MainGroupSingleColsStdNormalizer,
-                                                       MainGroupSingleColsLblEncoder)
-from dataPrep.normalizers_normalizerStack import NormalizerStack
-from dataPrep.normalizers_singleColsNormalizer import SingleColsLblEncoder
+from dataPrep.normalizers.normalizers_mainGroupNormalizers import (_MainGroupBaseNormalizer,
+                                                                   MainGroupSingleColsStdNormalizer,
+                                                                   MainGroupSingleColsLblEncoder)
+from dataPrep.normalizers.normalizers_normalizerStack import NormalizerStack
+from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from tests.baseTest import BaseTestClass
 
 

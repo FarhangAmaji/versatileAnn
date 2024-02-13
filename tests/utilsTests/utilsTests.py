@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers.normalizers_mainGroupNormalizers import MainGroupSingleColsStdNormalizer
 from tests.baseTest import BaseTestClass
 from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from utils.dataTypeUtils.str import snakeToCamel, camelToSnake
