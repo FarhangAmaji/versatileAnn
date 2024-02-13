@@ -280,7 +280,7 @@ class FindClassDefinitionTests(BaseTestClass):
     def testExistingClass(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
                                                'MainGroupSingleColsStdNormalizer')
-        expectedPath = os.path.join(getProjectDirectory(), 'dataPrep',
+        expectedPath = os.path.join(getProjectDirectory(), 'dataPrep', 'normalizers',
                                     'mainGroupNormalizers.py')
         self.assertEqual(res['filePaths'][0], expectedPath)
         expectedDef = """class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):

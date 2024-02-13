@@ -5,7 +5,6 @@ todos:
     
     - 
     - check soleymanis errors?!?!
-    - in BrazingTorch args put all args of its parents
     - default gradient clipping
     - baseFit and fit
         - think about resuming model
