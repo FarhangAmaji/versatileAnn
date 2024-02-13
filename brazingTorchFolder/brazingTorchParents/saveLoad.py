@@ -1,9 +1,12 @@
+import os
 import pickle
 
 import pytorch_lightning as pl
 
+from utils.dataTypeUtils.dict import stringValuedDictsEqual
 from utils.dataTypeUtils.str import joinListWithComma
 from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.generalUtils import nFoldersBack
 from utils.warnings import Warn
 
 
@@ -121,3 +124,72 @@ class _BrazingTorch_saveLoad:
         # I guess setting seed here doesn't really make difference
         # on the most models but some models which may use some random
         # variables in their implementation, may benefit from this
+
+    # ---- methods used to determine the architectureName of the model
+    def _collectArchDicts(self, loggerPath):
+        pickleFiles = []
+
+        path = nFoldersBack(loggerPath, n=2)
+        for file in os.listdir(path):
+            if file == 'architecture.pkl':
+                pickleFiles.append(os.path.join(path, file))
+
+        architectureDicts = []
+        for pickleFile in pickleFiles:
+            with open(pickleFile, 'rb') as f:
+                architectureDict = pickle.load(f)
+                architectureDict = {pickleFile: architectureDict}
+                architectureDicts.append(architectureDict)
+
+        return architectureDicts
+
+    def _getArchitectureDicts_withMatchedAllDefinitions(self, architectureDicts):
+        # cccWhat
+        # this func checks the match between self.allDefinitions and allDefinitions
+        # in architectureDicts and brings back 'architectureDicts_withMatchedAllDefinitions' which
+        # is a list of architectureDicts
+        # cccWhy
+        # 1. self.allDefinitions is a list of some dicts which have 'func or class names'
+        # as key and there string definition, sth like
+        #   [{'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
+        #   {'func1': "def func1():\n    print('func1')\n"}]
+        # 2. architectureDicts is a list of dicts like
+        #   {filePath:{'allDefinitions': allDefinitions, '__plSeed__': someNumber}}
+
+        # Convert list of dicts to a single dict
+        toDictConvertor = lambda list_: {k: v for d in list_ for k, v in d.items()}
+
+        mainAllDefinitions_dict = toDictConvertor(self.allDefinitions)
+
+        architectureDicts_withMatchedAllDefinitions = []
+
+        for archDict in architectureDicts:
+            for filePath, fileDict in archDict.items():
+                allDefinitions = toDictConvertor(fileDict['allDefinitions'])
+
+                if stringValuedDictsEqual(mainAllDefinitions_dict, allDefinitions):
+                    architectureDicts_withMatchedAllDefinitions.append(archDict)
+
+        return architectureDicts_withMatchedAllDefinitions
+
+    def findAvailableArchName(self, folderToSearch):
+        """
+        Find the first available 'arch' folder within the specified parent folder.
+        """
+        i = 0
+        while True:
+            i += 1
+            archName = f'arch{i}'
+            folderPath = os.path.join(folderToSearch, archName)
+
+            if os.path.exists(folderPath) and os.path.isdir(folderPath):
+                continue
+            else:
+                return archName
+
+    def _saveArchitectureDict(self, loggerPath):
+        architectureDict = {'allDefinitions': self.allDefinitions,
+                            'seed': self._initArgs['__plSeed__']}
+
+        with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
+            pickle.dump(architectureDict, f)

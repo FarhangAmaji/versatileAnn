@@ -1,5 +1,4 @@
 import os
-import pickle
 from typing import List, Union, Optional
 
 import pytorch_lightning as pl
@@ -9,7 +8,6 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from brazingTorchFolder.callbacks import StoreEpochData
-from utils.dataTypeUtils.dict import stringValuedDictsEqual
 from utils.generalUtils import morePreciseFloat, nFoldersBack
 from utils.typeCheck import argValidator
 from utils.warnings import Warn
@@ -44,13 +42,14 @@ class _BrazingTorch_preRunTests:
     # ----
     @argValidator
     def preRunTests(self, trainDataloader,
+                    valDataloader: Optional[DataLoader] = None,
                     *, lossFuncs: List[nn.modules.loss._Loss],
-                    valDataloader=None,
                     force=False, seedSensitive=False,
                     lrFinderRange=(1e-6, 5), lrFinderNumSteps=20, lrsToFindBest=None,
                     batchSizesToFindBest=None,
                     fastDevRunKwargs=None, overfitBatchesKwargs=None, profilerKwargs=None,
                     findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
+
         # cccUsage
         #  - seedSensitive: to know what is seedSensitive read _determineSeedSensitive_shouldRun docs
         #  - force: by default if the model has run before with the same name and the same structure
@@ -69,18 +68,10 @@ class _BrazingTorch_preRunTests:
         profilerKwargs = profilerKwargs or {}
         findBestLearningRateKwargs = findBestLearningRateKwargs or {}
         findBestBatchSizesKwargs = findBestBatchSizesKwargs or {}
-        # mustHave3
+
+        # goodToHave3
         #  revise logging prints
-        if lossFuncs:
-            self.lossFuncs = lossFuncs
-            # cccUsage
-            #  only first loss is used for backpropagation and others are just for logging
-            # cccDevStruct
-            #  in the case outside of trainModel lossFuncs is been set, so if not passed would use them
-        # anyway self.lossFuncs must be set
-        if not self.lossFuncs:
-            raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
-                             'preRunTests or pass them to it')
+        self._setLossFuncs_ifNot(lossFuncs)
 
         # cccWhat
         #  in general check if model with this architecture doesn't exist allow to run.
@@ -239,7 +230,8 @@ class _BrazingTorch_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
+            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False,
+                         **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisLr)
 
@@ -285,7 +277,8 @@ class _BrazingTorch_preRunTests:
             callbacks_Kwargs = {'callbacks': callbacks_}
             self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
-            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsAppliedCopy)
+            self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False,
+                         **kwargsAppliedCopy)
             self._collectBestValScores_ofMetrics(callbacks_, lossRatioDecrease,
                                                  mainValLossName, thisBatchSize)
 
@@ -340,8 +333,10 @@ class _BrazingTorch_preRunTests:
             architectureDicts = self._collectArchDicts(loggerPath)
             architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
                 architectureDicts)
-            # matchedAllDefinitions means the exact same model structure as all layers and their definitions are exactly the same
+            # matchedAllDefinitions means the exact same model structure as all
+            # layers and their definitions are exactly the same
             # note architectureDicts matches _saveArchitectureDict
+
             if architectureDicts_withMatchedAllDefinitions:
                 if force:
                     # the force is True so the user wants replace model's previous results therefore
@@ -368,35 +363,6 @@ class _BrazingTorch_preRunTests:
         loggerPath = os.path.abspath(dummyLogger.log_dir)
 
         return architectureName, loggerPath, shouldRun_preRunTests
-
-    def _getArchitectureDicts_withMatchedAllDefinitions(self, architectureDicts):
-        # cccWhat
-        # this func checks the match between self.allDefinitions and allDefinitions
-        # in architectureDicts and brings back 'architectureDicts_withMatchedAllDefinitions' which
-        # is a list of architectureDicts
-        # cccWhy
-        # 1. self.allDefinitions is a list of some dicts which have 'func or class names'
-        # as key and there string definition, sth like
-        #   [{'class1Parent': 'class class1Parent:\n    def __init__(self):\n        self.var1 = 1\n'},
-        #   {'func1': "def func1():\n    print('func1')\n"}]
-        # 2. architectureDicts is a list of dicts like
-        #   {filePath:{'allDefinitions': allDefinitions, '__plSeed__': someNumber}}
-
-        # Convert list of dicts to a single dict
-        toDictConvertor = lambda list_: {k: v for d in list_ for k, v in d.items()}
-
-        mainAllDefinitions_dict = toDictConvertor(self.allDefinitions)
-
-        architectureDicts_withMatchedAllDefinitions = []
-
-        for archDict in architectureDicts:
-            for filePath, fileDict in archDict.items():
-                allDefinitions = toDictConvertor(fileDict['allDefinitions'])
-
-                if stringValuedDictsEqual(mainAllDefinitions_dict, allDefinitions):
-                    architectureDicts_withMatchedAllDefinitions.append(archDict)
-
-        return architectureDicts_withMatchedAllDefinitions
 
     def _determineSeedSensitive_shouldRun(self, architectureDicts_withMatchedAllDefinitions,
                                           architectureName, loggerPath, seedSensitive,
@@ -449,38 +415,6 @@ class _BrazingTorch_preRunTests:
                 Warn.info('skipping preRunTests: this model with same structure has run before')
         return architectureName, shouldRun_preRunTests
 
-    def findAvailableArchName(self, folderToSearch):
-        """
-        Find the first available 'arch' folder within the specified parent folder.
-        """
-        i = 0
-        while True:
-            i += 1
-            archName = f'arch{i}'
-            folderPath = os.path.join(folderToSearch, archName)
-
-            if os.path.exists(folderPath) and os.path.isdir(folderPath):
-                continue
-            else:
-                return archName
-
-    def _collectArchDicts(self, loggerPath):
-        pickleFiles = []
-
-        path = nFoldersBack(loggerPath, n=2)
-        for file in os.listdir(path):
-            if file == 'architecture.pkl':
-                pickleFiles.append(os.path.join(path, file))
-
-        architectureDicts = []
-        for pickleFile in pickleFiles:
-            with open(pickleFile, 'rb') as f:
-                architectureDict = pickle.load(f)
-                architectureDict = {pickleFile: architectureDict}
-                architectureDicts.append(architectureDict)
-
-        return architectureDicts
-
     # ----
     def _informTensorboardPath(self, fastDevRunKwargs, findBestBatchSizesKwargs,
                                findBestLearningRateKwargs, kwargs, overfitBatchesKwargs,
@@ -516,12 +450,3 @@ class _BrazingTorch_preRunTests:
         logDir = os.path.abspath(logger.log_dir)
         if logDir not in loggingPaths:
             loggingPaths.append(logDir)
-
-    # ----
-
-    def _saveArchitectureDict(self, loggerPath):
-        architectureDict = {'allDefinitions': self.allDefinitions,
-                            'seed': self._initArgs['__plSeed__']}
-
-        with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
-            pickle.dump(architectureDict, f)

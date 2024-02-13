@@ -223,3 +223,17 @@ class _BrazingTorch_loss:
 
     def _getLossName(self, phase, loss_):
         return snakeToCamel(phase + type(loss_).__name__)
+
+    # ----
+    def _setLossFuncs_ifNot(self, lossFuncs):
+        if lossFuncs:
+            self.lossFuncs = lossFuncs
+            # cccUsage
+            #  only first loss is used for backpropagation and others are just for logging
+            # cccDevStruct
+            #  in the case outside of trainModel lossFuncs is been set, so if not passed would use them
+            # anyway self.lossFuncs must be set
+
+        if not self.lossFuncs:
+            raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
+                             'preRunTests or pass them to it')
