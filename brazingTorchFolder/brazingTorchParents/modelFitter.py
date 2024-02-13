@@ -34,7 +34,8 @@ class _BrazingTorch_modelFitter:
     @argValidator
     def fit(self, trainDataloader: DataLoader,
             valDataloader: Union[DataLoader, None] = None,
-            listOfKwargs: List[dict] = None, addDefaultLogger=True, **kwargs):
+            listOfKwargs: List[dict] = None, addDefaultLogger=True,
+            addDefault_gradientClipping=True, **kwargs):
         # kkk support log kwargs to have phases
         # addTest1
         # cccUsage
@@ -58,6 +59,8 @@ class _BrazingTorch_modelFitter:
         # because by default we are logging some metrics
         if addDefaultLogger and 'logger' not in allUserKwargs:
             allUserKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
+            # bugPotentialCheck1
+            #  shouldn't this default logger have architectureName
 
         appliedKwargs = self._getArgsRelated_toEachMethodSeparately(allUserKwargs)
 
@@ -71,6 +74,16 @@ class _BrazingTorch_modelFitter:
 
         self._warnForNotUsedArgs(allUserKwargs, appliedKwargs)
 
+        # add gradient clipping by default
+        if not self.noAdditionalOptions and addDefault_gradientClipping \
+                and 'gradient_clip_val' not in appliedKwargs['trainer']:
+            appliedKwargs['trainer']['gradient_clip_val'] = 0.1
+            Warn.info('gradient_clip_val is not provided to fit;' + \
+                      ' so by default it is set to default "0.1"' + \
+                      '\nto cancel it, you may either pass noAdditionalOptions=True to model or ' + \
+                      'pass addDefault_gradientClipping=False to fit method.' + \
+                      '\nor set another value to "gradient_clip_val" in kwargs passed to fit method.')
+
         trainer = pl.Trainer(**appliedKwargs['trainer'])
 
         self._logOptions = appliedKwargs['log']
@@ -79,6 +92,9 @@ class _BrazingTorch_modelFitter:
             del appliedKwargs['trainerFit']['train_dataloaders']
         if 'val_dataloaders' in appliedKwargs['trainerFit']:
             del appliedKwargs['trainerFit']['val_dataloaders']
+
+
+
         trainer.fit(self, trainDataloader, valDataloader, **appliedKwargs['trainerFit'])
 
         self._logOptions = {}
