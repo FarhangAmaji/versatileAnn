@@ -19,7 +19,7 @@ class _BrazingTorch_properties:
         self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)
-        self.noAdditionalOptions = noAdditionalOptions
+        self.noAdditionalOptions = noAdditionalOptions  # kkk add explanation for this
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 

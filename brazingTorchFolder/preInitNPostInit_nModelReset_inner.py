@@ -14,7 +14,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
     @staticmethod
     def _getArgsOfParentClasses_tillBrazingTorch(_BrazingTorch_Obj, cls, originalKwargs, self):
         parentClasses_tillBrazingTorch = cls._findAllParentClasses_tillBrazingTorch(cls,
-                                                                                _BrazingTorch_Obj)
+                                                                                    _BrazingTorch_Obj)
 
         # cccDevStruct
         #  beside the class object we also store its '__init__' because at the end of __new__,
@@ -25,7 +25,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
             clsName, classObj in parentClasses_tillBrazingTorch.items()}
 
         argsOf_parentClasses_tillBrazingTorch = getArgsOfClasses(parentClasses_tillBrazingTorch,
-                                                               originalKwargs)
+                                                                 originalKwargs)
 
         # *args for subclasses of BrazingTorch are not applied
         if 'args' in argsOf_parentClasses_tillBrazingTorch:
@@ -73,7 +73,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
     def _get_parentClassesOfBrazingTorch(BrazingTorch_Obj, originalKwargs):
         parentClassesOfBrazingTorch = {pc.__name__: pc for pc in BrazingTorch_Obj.__bases__}
         argsOf_parentClassesOfBrazingTorch = getArgsOfClasses(parentClassesOfBrazingTorch,
-                                                            originalKwargs)
+                                                              originalKwargs)
         argsOf_parentClassesOfBrazingTorch = exclude_selfNArgsNKwargs_fromAllArgs(
             argsOf_parentClassesOfBrazingTorch)
 
@@ -81,7 +81,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
         #  note this is only for development error detection
         #  args of parent classes of BrazingTorch must not have similar names
         for arg, argVal in argsOf_parentClassesOfBrazingTorch.items():
-            if len(argVal['classes']) > 1:
+            if len(argVal['classes']) > 1:  # LBTEam1
                 raise InternalLogicError(
                     "internalError: this is for development:" +
                     "\nparentClasses of BrazingTorch must not have args with similar names in their __init__."
@@ -108,8 +108,8 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _initParentClasses_tillBrazingTorch_withDisablingTheirInits(allArgs, cls,
-                                                                  initiatedObj,
-                                                                  parentClasses_tillBrazingTorch):
+                                                                    initiatedObj,
+                                                                    parentClasses_tillBrazingTorch):
         # parent classes which are more base(upper parents) are __init__ed first
         parentClasses_tillBrazingTorch_names_ordered = orderClassNames_soChildIsAlways_afterItsParents(
             parentClasses_tillBrazingTorch)

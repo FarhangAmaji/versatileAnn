@@ -14,7 +14,7 @@ from utils.warnings import Warn
 
 
 class _BrazingTorch_loss:
-    def __init__(self, lossFuncs: Optional[List[nn.modules.loss._Loss]] = [], **kwargs):
+    def __init__(self, lossFuncs: Optional[List[nn.modules.loss._Loss]] = None, **kwargs):
         self.lossFuncs = lossFuncs or []
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_loss)

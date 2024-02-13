@@ -1,8 +1,11 @@
-import pytorch_lightning as pl
+from typing import List, Union, Optional
 
-from utils.typeCheck import argValidator
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+import pytorch_lightning as pl
+import torch
+import torch.nn as nn
+
 from brazingTorchFolder.lossModule import _BrazingTorch_loss
+from brazingTorchFolder.lossRegulator import LossRegulator
 from brazingTorchFolder.modelDifferentiator import _BrazingTorch_modelDifferentiator
 from brazingTorchFolder.modelFitter import _BrazingTorch_modelFitter
 from brazingTorchFolder.optimizer import _BrazingTorch_optimizer
@@ -14,6 +17,8 @@ from brazingTorchFolder.regularization import _BrazingTorch_regularization
 from brazingTorchFolder.saveLoad import _BrazingTorch_saveLoad
 from brazingTorchFolder.specialModes import _BrazingTorch_specialModes
 from brazingTorchFolder.temVars import _BrazingTorch_tempVars
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.typeCheck import argValidator
 
 
 # kkk2 think about seed later
@@ -22,19 +27,49 @@ from brazingTorchFolder.temVars import _BrazingTorch_tempVars
 
 
 class BrazingTorch(pl.LightningModule,
-                 _BrazingTorch_properties, _BrazingTorch_tempVars,
-                 _BrazingTorch_preInitNPostInit_nModelReset, _BrazingTorch_optimizer,
-                 _BrazingTorch_loss, _BrazingTorch_regularization,
-                 _BrazingTorch_modelFitter, _BrazingTorch_preRunTests,
-                 _BrazingTorch_saveLoad, _BrazingTorch_modelDifferentiator,
-                 _BrazingTorch_specialModes):
+                   _BrazingTorch_properties, _BrazingTorch_tempVars,
+                   _BrazingTorch_preInitNPostInit_nModelReset, _BrazingTorch_optimizer,
+                   _BrazingTorch_loss, _BrazingTorch_regularization,
+                   _BrazingTorch_modelFitter, _BrazingTorch_preRunTests,
+                   _BrazingTorch_saveLoad, _BrazingTorch_modelDifferentiator,
+                   _BrazingTorch_specialModes):
+    __version__ = '0.2.0'
 
-    __version__ = '0.2'
     @argValidator
-    def __init__(self, **kwargs):
-        # kkk
-        #  this init should take all other args which it parent classes take because the user can
-        #  really check all parent classes to see what functionalities does class offer
+    def __init__(self, modelName: str = '',
+                 noAdditionalOptions: bool = False, testPrints=False,
+                 generalRegularization: Optional[Union[LossRegulator, dict]] = None,
+                 lossFuncs: Optional[List[nn.modules.loss._Loss]] = None,
+                 keepLr_notReplaceWithBestLr: Optional[bool] = False,
+                 dropoutEnsembleMode: bool = False, VAEMode: bool = False,
+                 dropoutEnsemble_samplesNum=100,
+                 getAllNeededDefinitions=True,
+                 optimizer: Optional[torch.optim.Optimizer] = None, lr: Optional[float] = None,
+                 keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
+
+        # cccDevStruct
+        #  to know what these args are exactly are go to the original parent
+        #  class where they are defined:
+        #               _BrazingTorch_properties: modelName, noAdditionalOptions, testPrints
+        #               _BrazingTorch_modelDifferentiator: getAllNeededDefinitions
+        #               _BrazingTorch_loss: lossFuncs
+        #               _BrazingTorch_optimizer: optimizer, lr
+        #               _BrazingTorch_regularization: generalRegularization
+        #               _BrazingTorch_specialModes: dropoutEnsembleMode, VAEMode,
+        #                                   dropoutEnsemble_samplesNum
+        #               _BrazingTorch_preRunTests: keepLr_notReplaceWithBestLr,
+        #                           keepBatchSize_notReplaceWithBestBatchSize
+
+        # cccDevStruct
+        #  in order to separate concerns and duties also to make the code more readable
+        #  components of BrazingTorch are separated into different parent classes
+        #  as u see, almost all of args are not set here; these are the args used here, so the user
+        #  can really check all parent classes to see what functionalities does class offer
+        # bugPotentialCheck1
+        #  does putting all args of parent classes here, make problems with __new__ specially
+        #  _get_parentClassesOfBrazingTorch in _BrazingTorch_preInitNPostInit_nModelReset
+        #  - note # LBTEam1 part is supposed to give error if there are same args in parent classes
+
         self.printTestPrints('BrazingTorch init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, BrazingTorch)
@@ -62,7 +97,6 @@ class BrazingTorch(pl.LightningModule,
 
         # reset tempVarStep
         self.resetTempVar_step(phase)
-
 
         inputs, targets = batch
         # goodToHave1
