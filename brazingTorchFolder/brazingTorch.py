@@ -12,7 +12,7 @@ from brazingTorchFolder.brazingTorchParents.optimizer import _BrazingTorch_optim
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset import \
     _BrazingTorch_preInitNPostInit_nModelReset
 from brazingTorchFolder.brazingTorchParents.preRunTests import _BrazingTorch_preRunTests
-from brazingTorchFolder.brazingTorchParents.properties import _BrazingTorch_properties
+from brazingTorchFolder.brazingTorchParents.baseAttributes import _BrazingTorch_baseAttributes
 from brazingTorchFolder.brazingTorchParents.regularization import _BrazingTorch_regularization
 from brazingTorchFolder.brazingTorchParents.saveLoad import _BrazingTorch_saveLoad
 from brazingTorchFolder.brazingTorchParents.specialModes import _BrazingTorch_specialModes
@@ -27,7 +27,7 @@ from utils.typeCheck import argValidator
 
 
 class BrazingTorch(pl.LightningModule,
-                   _BrazingTorch_properties, _BrazingTorch_tempVars,
+                   _BrazingTorch_baseAttributes, _BrazingTorch_tempVars,
                    _BrazingTorch_preInitNPostInit_nModelReset, _BrazingTorch_optimizer,
                    _BrazingTorch_loss, _BrazingTorch_regularization,
                    _BrazingTorch_modelFitter, _BrazingTorch_preRunTests,
@@ -50,7 +50,7 @@ class BrazingTorch(pl.LightningModule,
         # cccDevStruct
         #  to know what these args are exactly are go to the original parent
         #  class where they are defined:
-        #               _BrazingTorch_properties: modelName, noAdditionalOptions, testPrints
+        #               _BrazingTorch_baseAttributes: modelName, noAdditionalOptions, testPrints
         #               _BrazingTorch_modelDifferentiator: getAllNeededDefinitions
         #               _BrazingTorch_loss: lossFuncs
         #               _BrazingTorch_optimizer: optimizer, lr

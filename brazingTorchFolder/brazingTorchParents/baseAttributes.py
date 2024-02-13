@@ -4,8 +4,7 @@ from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
 
 
-class _BrazingTorch_properties:
-    # kkk rename this properties doesnt make sense
+class _BrazingTorch_baseAttributes:
     @argValidator
     def __init__(self, modelName: str = '',
                  noAdditionalOptions: bool = False, testPrints=False):
@@ -19,12 +18,15 @@ class _BrazingTorch_properties:
         self.to(getTorchDevice().type)
         self.losses = []
         self._setModelName(modelName)
-        self.noAdditionalOptions = noAdditionalOptions  # kkk add explanation for this
+        self.noAdditionalOptions = noAdditionalOptions
+        # cccUsage
+        #  if noAdditionalOptions is True, adds gradientClipping=0.1
+        #  and generalRegularization of type "l2" and 0.001 value
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 
         # not allowing this class to have direct instance
-        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_properties)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_baseAttributes)
 
     def _setModelName(self, modelName):
         if not modelName:
