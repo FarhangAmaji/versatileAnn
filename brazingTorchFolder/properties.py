@@ -7,7 +7,7 @@ from utils.typeCheck import argValidator
 class _BrazingTorch_properties:
     # kkk rename this properties doesnt make sense
     @argValidator
-    def __init__(self, modelName: str = '', devMode: bool = True,
+    def __init__(self, modelName: str = '',
                  noAdditionalOptions: bool = False, testPrints=False):
         # bugPotentialCheck1 # goodToHave3
         #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
@@ -20,17 +20,11 @@ class _BrazingTorch_properties:
         self.losses = []
         self._setModelName(modelName)
         self.noAdditionalOptions = noAdditionalOptions
-        self.devMode = devMode  # kkk2 do I need it? if I detected has not run pretests then run them and dont need devMode
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_properties)
-
-        if devMode:
-            pass  # kkk?
-        else:
-            pass  # kkk?
 
     def _setModelName(self, modelName):
         if not modelName:
@@ -39,15 +33,6 @@ class _BrazingTorch_properties:
             self.modelName = self.__class__.__name__
         else:
             self.modelName = modelName
-
-    @property
-    def devMode(self):
-        return self._devMode
-
-    @devMode.setter
-    @argValidator
-    def devMode(self, value: bool):
-        self._devMode = value
 
     def printTestPrints(self, *args):
         # only prints for test purposes
