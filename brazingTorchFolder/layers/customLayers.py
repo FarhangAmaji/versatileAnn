@@ -4,7 +4,7 @@ from typing import Optional, Callable
 import torch.nn as nn
 
 from utils.typeCheck import argValidator
-from brazingTorchFolder.utils import LossRegularizator
+from brazingTorchFolder.lossRegulator import LossRegulator
 
 
 class VAnnCustomLayer(nn.Module):
@@ -21,10 +21,10 @@ class VAnnCustomLayer(nn.Module):
         self.dropoutRate = dropoutRate  # goodToHave2 if dropout changes also change dropout layer
 
         if regularization:
-            self.regularization = LossRegularizator(regularization)
+            self.regularization = LossRegulator(regularization)
         else:
             # cccDevAlgo
-            #  note 'LossRegularizator(None)' is not set, and 'None' is set.
+            #  note 'LossRegulator(None)' is not set, and 'None' is set.
             #  so this way is more efficient and in line #Llr1 we don't assume it has a
             #  regularization and we pass by it
             self.regularization = None

@@ -1,7 +1,7 @@
 import inspect
 from typing import List
 
-from brazingTorchFolder.utils import LossRegularizator
+from brazingTorchFolder.lossRegulator import LossRegulator
 from utils.dataTypeUtils.dotDict_npDict import DotDict
 from utils.dataTypeUtils.str import joinListWithComma
 from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
@@ -253,7 +253,7 @@ class _BrazingTorch_modelDifferentiator:
 
         if self._isCls_BrazingTorchClass(cls_):
             return None
-        if cls_ in [LossRegularizator, DotDict]:
+        if cls_ in [LossRegulator, DotDict]:
             # goodToHave3
             #  maybe I should not do this, as standAlone may use sth like freezing dependency; also
             #  for funcs (if next goodToHave; few lines below is implemented)

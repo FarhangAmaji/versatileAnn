@@ -46,9 +46,9 @@ class RegularizationTests(BaseTestClass):
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
-                         "LossRegularizator{'type': 'l1', 'value': 0.03}")
+                         "LossRegulator{'type': 'l1', 'value': 0.03}")
         self.assertEqual(str(model._operationalRegularizations['lay2']),
-                         "LossRegularizator{'type': 'l2', 'value': 0.001}")
+                         "LossRegulator{'type': 'l2', 'value': 0.001}")
 
     def test_addLayerRegularization_inModelDefinition(self):
         # uses addLayerRegularization in __init__ of model
@@ -72,9 +72,9 @@ class RegularizationTests(BaseTestClass):
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
-                         "LossRegularizator{'type': 'l1', 'value': 0.03}")
+                         "LossRegulator{'type': 'l1', 'value': 0.03}")
         self.assertEqual(str(model._operationalRegularizations['lay2']),
-                         "LossRegularizator{'type': 'l1', 'value': 0.042}")
+                         "LossRegulator{'type': 'l1', 'value': 0.042}")
 
     def test_addLayerRegularization_outOfModelDefinition(self):
         # uses addLayerRegularization after __init__ of model
@@ -98,9 +98,9 @@ class RegularizationTests(BaseTestClass):
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
-                         "LossRegularizator{'type': 'l1', 'value': 0.03}")
+                         "LossRegulator{'type': 'l1', 'value': 0.03}")
         self.assertEqual(str(model._operationalRegularizations['lay2']),
-                         "LossRegularizator{'type': 'l1', 'value': 0.042}")
+                         "LossRegulator{'type': 'l1', 'value': 0.042}")
 
 
 # ---- run test

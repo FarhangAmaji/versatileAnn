@@ -8,7 +8,7 @@ from utils.typeCheck import argValidator
 from utils.warnings import Warn
 
 
-class LossRegularizator:
+class LossRegulator:
     nullDictValue = {'type': 'None', 'value': None}
 
     @argValidator
@@ -23,7 +23,7 @@ class LossRegularizator:
 
         if 'type' not in value.keys():
             Warn.error(correctFormatMsg)
-            raise ValueError('for creating LossRegularizator object "type" key is required')
+            raise ValueError('for creating LossRegulator object "type" key is required')
         if value['type'] not in regularizationTypes:
             Warn.error(correctFormatMsg)
             raise ValueError('regularization type must be one of ' + \
@@ -50,7 +50,7 @@ class LossRegularizator:
 
     @type.setter
     def type(self, value):
-        raise AttributeError('type of LossRegularizator object is not allowed to be changed')
+        raise AttributeError('type of LossRegulator object is not allowed to be changed')
 
     @property
     def value(self):
@@ -58,7 +58,7 @@ class LossRegularizator:
 
     @value.setter
     def value(self, value):
-        raise AttributeError('value of LossRegularizator object is not allowed to be changed')
+        raise AttributeError('value of LossRegulator object is not allowed to be changed')
 
     # ----
     @argValidator
@@ -76,4 +76,4 @@ class LossRegularizator:
 
     def __str__(self):
         dict_ = {'type': self.type, 'value': self.value}
-        return f"LossRegularizator{dict_}"
+        return f"LossRegulator{dict_}"

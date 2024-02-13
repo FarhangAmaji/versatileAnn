@@ -8,15 +8,15 @@ from utils.typeCheck import argValidator
 from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.warnings import Warn
 from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
-from brazingTorchFolder.utils import LossRegularizator
+from brazingTorchFolder.lossRegulator import LossRegulator
 
 
 class _BrazingTorch_regularization:
     _regularizationTypes = regularizationTypes
-    nullRegulator = LossRegularizator(LossRegularizator.nullDictValue)
+    nullRegulator = LossRegulator(LossRegulator.nullDictValue)
 
     @argValidator
-    def __init__(self, generalRegularization: Optional[Union[LossRegularizator, dict]] = None,
+    def __init__(self, generalRegularization: Optional[Union[LossRegulator, dict]] = None,
                  **kwargs):
 
         # not allowing this class to have direct instance
@@ -51,15 +51,15 @@ class _BrazingTorch_regularization:
 
     @generalRegularization.setter
     @argValidator
-    def generalRegularization(self, value: Optional[Union[LossRegularizator, dict]]):
+    def generalRegularization(self, value: Optional[Union[LossRegulator, dict]]):
         # kkk2 if this is being set check that optimizer doesn't have any weight_decay
         # kkk2 in both check on the other one
         if isinstance(value, dict):
-            self._generalRegularization = LossRegularizator(value)
-        elif isinstance(value, LossRegularizator):
+            self._generalRegularization = LossRegulator(value)
+        elif isinstance(value, LossRegulator):
             self._generalRegularization = value
         else:  # None
-            self._generalRegularization = LossRegularizator(LossRegularizator.nullDictValue)
+            self._generalRegularization = LossRegulator(LossRegulator.nullDictValue)
 
         # it's not allowed to have weight_decay in optimizer and generalRegularization(ofc not None
         # version) together
@@ -74,7 +74,7 @@ class _BrazingTorch_regularization:
                                       "weight_decay of optimizer has been set to 0")
 
     def noGeneralRegularization(self):
-        self.generalRegularization = LossRegularizator(LossRegularizator.nullDictValue)
+        self.generalRegularization = LossRegulator(LossRegulator.nullDictValue)
 
     # ---- specific layer regularizations
     def _register_VAnnCustomLayers_regularizations(self):
@@ -102,17 +102,17 @@ class _BrazingTorch_regularization:
         # cccUsage
         #  this is for adding regularization to non-VAnnCustomLayer
         #  the format of regDict is {layer:{'type':type,'value':value}}
-        #  or {layer:RegularizatorObject}
+        #  or {layer:RegulatorObject}
         #  note this func can be used in model __init__ or even after that
         for layer, regVal in regDict.items():
             if not isinstance(layer, nn.Module):
                 raise ValueError(f'{layer} layer must be an instance of nn.Module')
 
             # check regVal has correct reg format
-            if not isinstance(regVal, LossRegularizator):
+            if not isinstance(regVal, LossRegulator):
                 # assumes it's a dict with correct format
-                regDict[layer] = LossRegularizator(regVal)
-                # if it has error the LossRegularizator constructor will raise error
+                regDict[layer] = LossRegulator(regVal)
+                # if it has error the LossRegulator constructor will raise error
 
         for layer, regVal in regDict.items():
             # check does this layer exist in modules
