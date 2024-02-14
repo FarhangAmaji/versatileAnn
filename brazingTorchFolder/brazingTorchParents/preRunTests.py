@@ -320,16 +320,18 @@ class _BrazingTorch_preRunTests:
     def _determineShouldRun_preRunTests(self, force, seedSensitive):
         # addTest1
 
-        # by default these values are assumed
+        # by default these values are assumed and will be
+        # changed depending on the case
         shouldRun_preRunTests = True
         architectureName = 'arch1'
 
         dummyLogger = pl.loggers.TensorBoardLogger(self.modelName)
         loggerPath = os.path.abspath(dummyLogger.log_dir)
-        # loggerPath is fullPath including 'modelName/preRunTests/version_0'
+        # loggerPath is fullPath including 'modelName/someName/version_0'
 
         if os.path.exists(nFoldersBack(loggerPath, n=2)):
             # there is a model run before with the name of this model
+
             architectureDicts = self._collectArchDicts(loggerPath)
             architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
                 architectureDicts)
@@ -351,7 +353,7 @@ class _BrazingTorch_preRunTests:
 
             else:
                 # there are models with the name of this model but with different structures
-                pass  # so default shouldRun_preRunTests and architectureName are applied
+                architectureName = self.findAvailableArchName(nFoldersBack(loggerPath, n=1))
 
         else:
             # no model with this name in directory has never run
@@ -367,14 +369,16 @@ class _BrazingTorch_preRunTests:
     def _determineSeedSensitive_shouldRun(self, architectureDicts_withMatchedAllDefinitions,
                                           architectureName, loggerPath, seedSensitive,
                                           shouldRun_preRunTests):
+        # note being here means an exact model with the same structure has run before
         if seedSensitive:
             # seedSensitive True means the user wants:
             # seedCase1:
-            #       even if there is a model with same structure but its seed
+            #       even if there is a model with the same structure but its seed
             #       differs, so run the model with the new seed (the seed
             #       passed to this run)
             # seedCase2:
-            #       but if the seed passed to this run has run before so no need to run
+            #       but if the seed passed to this run has run before so
+            #       no need to run, unless 'preRunTests' has not run before
             foundSeedMatch = False
             thisModelSeed = self._initArgs['__plSeed__']
             for acw in architectureDicts_withMatchedAllDefinitions:
@@ -397,12 +401,11 @@ class _BrazingTorch_preRunTests:
             if not foundSeedMatch:  # seedCase1
                 # we have to find architectureName which doesn't exist,
                 # in order not to overwrite the previous results
-                architectureName = self.findAvailableArchName(
-                    nFoldersBack(loggerPath, n=1))
+                architectureName = self.findAvailableArchName(nFoldersBack(loggerPath, n=1))
         else:
             # there are models with the name of this model
             # also same structure, and the seed is not important factor
-            # so there is no need to run
+            # so there is no need to run, unless 'preRunTests' has not run before
             shouldRun_preRunTests = False  # just for clarity but may change
             acw = architectureDicts_withMatchedAllDefinitions[0]
             filePath = acw.keys()[0]

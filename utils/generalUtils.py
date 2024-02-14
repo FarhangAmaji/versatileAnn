@@ -1,14 +1,8 @@
 import ast
 import inspect
 import os
-import platform
-import threading
 import types
 
-import aiohttp
-# bugPotentialCheck1
-#  aiohttp is not in requirements.txt but it seems to be requisite
-#  for another of the packages in requirements.txt therefore it's installed
 import numpy as np
 import pandas as pd
 import torch
@@ -241,6 +235,11 @@ def findClassObject_inADirectory(directoryPath, className, printOff=False):
 
 # ---- download
 async def downloadFileAsync(url, destination, event=None):
+    import aiohttp
+    # bugPotentialCheck1
+    #  aiohttp is not in requirements.txt but it seems to be requisite
+    #  for another of the packages in requirements.txt therefore it's installed
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
@@ -319,6 +318,7 @@ def gpuMemoryUsed():
 
 
 def varPasser(*, localArgNames=None, exclude=None, rename=None):
+    import platform
     # cccDevAlgo
     #  in order not to pass many local variables which have the same name to another
     #  func by mentioning `func1(var1=var1, var2=var2,....)` with use this func
@@ -405,6 +405,7 @@ def giveDateTimeStr():
 
 
 def inputTimeout(prompt, timeout=30):
+    import threading
     """
         Display a prompt to the user and wait for input with a specified timeout.
 
@@ -440,7 +441,6 @@ def inputTimeout(prompt, timeout=30):
 
 def nLastCallers(n=1):
     # cccAlgo this is useful for debugging
-    import inspect
     frame = inspect.currentframe().f_back
     calling_frame = frame
     print('\nnLastCallers')

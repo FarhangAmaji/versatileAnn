@@ -174,7 +174,7 @@ class _BrazingTorch_saveLoad:
 
     def findAvailableArchName(self, folderToSearch):
         """
-        Find the first available 'arch' folder within the specified parent folder.
+        Find the first available 'arch{i}' folder within the specified parent folder.
         """
         i = 0
         while True:
