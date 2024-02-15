@@ -3,11 +3,11 @@ from random import random
 
 import pytorch_lightning as pl
 
-from utils.customErrors import ImplementationError
-from utils.initParentClasses import initClasses_withAllArgs
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset_inner import \
     _BrazingTorch_preInitNPostInit_nModelReset_inner
+from utils.customErrors import ImplementationError
+from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from utils.initParentClasses import initClasses_withAllArgs
 
 
 class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_nModelReset_inner):
@@ -74,9 +74,14 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
             raise ImplementationError(f'"{cls}" class must have "forward" method reImplemented.')
 
         # we get seed to just be sure this is the same seed applied in the model
-        _plSeed__ = pl.seed_everything()
+        if 'seed' in kwargs and kwargs['seed']:
+            _plSeed__ = kwargs['seed']
+            pl.seed_everything(_plSeed__)
+        else:
+            _plSeed__ = pl.seed_everything()
 
         initiatedObj = super().__new__(cls)
+        initiatedObj.seed = _plSeed__
         # set 'testPrints' before other kwargs just to be able to use printTestPrints
         if 'testPrints' in kwargs:
             initiatedObj.testPrints = kwargs['testPrints']
@@ -84,7 +89,8 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
             initiatedObj.testPrints = False
 
         argsOf_parentClasses_tillBrazingTorch, parentClasses_tillBrazingTorch = \
-            cls._getArgsOfParentClasses_tillBrazingTorch(_BrazingTorch_Obj, cls, kwargs, initiatedObj)
+            cls._getArgsOfParentClasses_tillBrazingTorch(_BrazingTorch_Obj, cls, kwargs,
+                                                         initiatedObj)
 
         # warn/advice the users to not __init__ their parent classes in their code because it's
         # done automatically here, and may cause errors
@@ -201,7 +207,8 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         kwargsToReset.pop('__plSeed__')
 
         newObj = classOfSelf.__new__(classOfSelf, **kwargsToReset['initPassedKwargs'])
-        newObj.__init__(**kwargsToReset['initPassedKwargs'])# kkk why both new and __init__ are used here
+        newObj.__init__(
+            **kwargsToReset['initPassedKwargs'])  # kkk why both new and __init__ are used here
 
         for atk, atkVal in attrsToKeep.items():
             setattr(newObj, atk, atkVal)

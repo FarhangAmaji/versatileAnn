@@ -125,6 +125,8 @@ class _BrazingTorch_saveLoad:
         # on the most models but some models which may use some random
         # variables in their implementation, may benefit from this
 
+        #kkk does it need anything else
+
     # ---- methods used to determine the architectureName of the model
     def _collectArchDicts(self, loggerPath):
         pickleFiles = []

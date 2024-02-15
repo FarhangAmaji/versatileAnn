@@ -25,11 +25,6 @@ class _BrazingTorch_baseAttributes:
         #  if noAdditionalOptions is True, adds gradientClipping=0.1
         #  and generalRegularization of type "l2" and 0.001 value
         self.testPrints = testPrints
-        if seed:
-            self.seed = seed
-            pl.seed_everything(seed)
-        else:
-            self.seed = pl.seed_everything()
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
 
         # not allowing this class to have direct instance
