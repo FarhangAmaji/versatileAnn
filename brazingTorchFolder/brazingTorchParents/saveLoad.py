@@ -26,6 +26,10 @@ class _BrazingTorch_saveLoad:
         # in this project like EPF, electricity,...
         # so automatically detects them and load them
 
+        # cccDevStruct
+        #  doesn't need to be added to device, as with initArgs the init will run and there device
+        #  would be set
+
         with open(loadPath, 'rb') as f:
             checkpoint = pickle.load(f)
 
@@ -119,13 +123,14 @@ class _BrazingTorch_saveLoad:
         # Load additional information from the checkpoint
         additionalInfo = checkpoint['brazingTorch']
 
+        # kkk add to device
         _initArgs = additionalInfo['_initArgs']
         pl.seed_everything(_initArgs['__plSeed__'])
         # I guess setting seed here doesn't really make difference
         # on the most models but some models which may use some random
         # variables in their implementation, may benefit from this
 
-        #kkk does it need anything else
+        # kkk does it need anything else
 
     # ---- methods used to determine the architectureName of the model
     def _collectArchDicts(self, loggerPath):
