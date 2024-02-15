@@ -51,7 +51,7 @@ class _BrazingTorch_preRunTests:
                     findBestLearningRateKwargs=None, findBestBatchSizesKwargs=None, **kwargs):
 
         # cccUsage
-        #  - seedSensitive: to know what is seedSensitive read _determineSeedSensitive_shouldRun docs
+        #  - seedSensitive: to know what is seedSensitive read _shouldRun_preRunTests_seedSensitivePart docs
         #  - force: by default if the model has run before with the same name and the same structure
         #         its prevented to run but force forces to rerun
         #  - customizing learning rates to search:
@@ -355,7 +355,7 @@ class _BrazingTorch_preRunTests:
                     filePath = list(acw.keys())[0]
                     architectureName = os.path.basename(nFoldersBack(filePath, n=1))
                 else:
-                    architectureName, shouldRun_preRunTests = self._determineSeedSensitive_shouldRun(
+                    architectureName, shouldRun_preRunTests = self._shouldRun_preRunTests_seedSensitivePart(
                         architectureDicts_withMatchedAllDefinitions, architectureName, loggerPath,
                         seedSensitive, shouldRun_preRunTests)
 
@@ -374,9 +374,9 @@ class _BrazingTorch_preRunTests:
 
         return architectureName, loggerPath, shouldRun_preRunTests
 
-    def _determineSeedSensitive_shouldRun(self, architectureDicts_withMatchedAllDefinitions,
-                                          architectureName, loggerPath, seedSensitive,
-                                          shouldRun_preRunTests):
+    def _shouldRun_preRunTests_seedSensitivePart(self, architectureDicts_withMatchedAllDefinitions,
+                                                 architectureName, loggerPath, seedSensitive,
+                                                 shouldRun_preRunTests):
         # note being here means an exact model with the same structure has run before
         if seedSensitive:
             # seedSensitive True means the user wants:
@@ -387,24 +387,21 @@ class _BrazingTorch_preRunTests:
             # seedCase2:
             #       but if the seed passed to this run has run before so
             #       no need to run, unless 'preRunTests' has not run before
-            foundSeedMatch = False
+            
             thisModelSeed = self._initArgs['__plSeed__']
-            for acw in architectureDicts_withMatchedAllDefinitions:
-                filePath = list(acw.keys())[0]
-                if thisModelSeed == acw[filePath]['__plSeed__']:
-                    # seedCase2
-                    foundSeedMatch = True
-                    shouldRun_preRunTests = False  # just for clarity but may change
-                    if not os.path.join(filePath, 'preRunTests').exists():
-                        # this exact model even with this seed has run before but
-                        # its 'preRunTests' has not
-                        shouldRun_preRunTests = True
-                        architectureName = os.path.basename(nFoldersBack(filePath, n=1))
+            foundSeedMatch, filePath = self.findSeedMatch_inArchitectureDicts(architectureDicts_withMatchedAllDefinitions, thisModelSeed)
 
-                    if not shouldRun_preRunTests:
-                        Warn.info(
-                            'skipping preRunTests: this model with same structure and same seed has run before')
-                    break
+            if foundSeedMatch:
+                # seedCase2
+                shouldRun_preRunTests = False  # just for clarity but may change
+                if not os.path.join(filePath, 'preRunTests').exists():
+                    # this exact model even with this seed has run before but
+                    # its 'preRunTests' has not
+                    shouldRun_preRunTests = True
+                    architectureName = os.path.basename(nFoldersBack(filePath, n=1))
+
+                if not shouldRun_preRunTests:
+                    Warn.info('skipping preRunTests: this model with same structure and same seed has run before')
 
             if not foundSeedMatch:  # seedCase1
                 # we have to find architectureName which doesn't exist,

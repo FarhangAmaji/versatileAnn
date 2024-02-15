@@ -175,7 +175,17 @@ class _BrazingTorch_saveLoad:
 
         return architectureDicts_withMatchedAllDefinitions
 
-    def findAvailableArchName(self, folderToSearch):
+    def _findSeedMatch_inArchitectureDicts(self, architectureDicts_withMatchedAllDefinitions, seed):
+        foundSeedMatch = False
+        filePath = None
+        for acw in architectureDicts_withMatchedAllDefinitions:
+            filePath = list(acw.keys())[0]
+            if seed == acw[filePath]['__plSeed__']:
+                foundSeedMatch = True
+                break
+        return foundSeedMatch, filePath
+
+    def _findAvailableArchName(self, folderToSearch):
         """
         Find the first available 'arch{i}' folder within the specified parent folder.
         """
