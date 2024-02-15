@@ -132,9 +132,10 @@ class _BrazingTorch_saveLoad:
         pickleFiles = []
 
         path = nFoldersBack(loggerPath, n=2)
-        for file in os.listdir(path):
-            if file == 'architecture.pkl':
-                pickleFiles.append(os.path.join(path, file))
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if file == 'architecture.pkl':
+                    pickleFiles.append(os.path.join(root, file))
 
         architectureDicts = []
         for pickleFile in pickleFiles:

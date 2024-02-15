@@ -4,6 +4,7 @@ todos:
 
     
     - 
+    - _determineShouldRun_preRunTests saves architectureDict in architectureFolder and not runFolder
     - check soleymanis errors?!?!
     - baseFit and fit
         - think about resuming model

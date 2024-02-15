@@ -85,6 +85,9 @@ class _BrazingTorch_preRunTests:
         # but in the case the user specifies it, it would be saved in the loggerPath
         if 'default_root_dir' not in kwargs:
             kwargs['default_root_dir'] = loggerPath
+        else:
+            Warn.info("with specifying default_root_dir, the automatic feature of " + \
+                      "model architecture detection won't work.")
 
         if not shouldRun_preRunTests:
             return
@@ -344,8 +347,13 @@ class _BrazingTorch_preRunTests:
                     # the force is True so the user wants replace model's previous results therefore
                     # we have to find architectureName, so to know where are the past results
                     acw = architectureDicts_withMatchedAllDefinitions[0]
-                    filePath = acw.keys()[0]
-                    architectureName = os.path.basename(filePath)
+                    # cccDevStruct
+                    #  note acw looks like {filePath: architectureDict} and
+                    #  architectureDict is like {'allDefinitions': {'class1':class1Definition,
+                    #                                               'class2':class2Definition},
+                    #                           '__plSeed__': someNumber}
+                    filePath = list(acw.keys())[0]
+                    architectureName = os.path.basename(nFoldersBack(filePath, n=1))
                 else:
                     architectureName, shouldRun_preRunTests = self._determineSeedSensitive_shouldRun(
                         architectureDicts_withMatchedAllDefinitions, architectureName, loggerPath,
@@ -382,7 +390,7 @@ class _BrazingTorch_preRunTests:
             foundSeedMatch = False
             thisModelSeed = self._initArgs['__plSeed__']
             for acw in architectureDicts_withMatchedAllDefinitions:
-                filePath = acw.keys()[0]
+                filePath = list(acw.keys())[0]
                 if thisModelSeed == acw[filePath]['__plSeed__']:
                     # seedCase2
                     foundSeedMatch = True
@@ -391,7 +399,7 @@ class _BrazingTorch_preRunTests:
                         # this exact model even with this seed has run before but
                         # its 'preRunTests' has not
                         shouldRun_preRunTests = True
-                        architectureName = os.path.basename(filePath)
+                        architectureName = os.path.basename(nFoldersBack(filePath, n=1))
 
                     if not shouldRun_preRunTests:
                         Warn.info(
@@ -408,10 +416,10 @@ class _BrazingTorch_preRunTests:
             # so there is no need to run, unless 'preRunTests' has not run before
             shouldRun_preRunTests = False  # just for clarity but may change
             acw = architectureDicts_withMatchedAllDefinitions[0]
-            filePath = acw.keys()[0]
+            filePath = list(acw.keys())[0]
             if not os.path.join(filePath, 'preRunTests').exists():
                 # this exact model has run before but its 'preRunTests' has not
-                architectureName = os.path.basename(filePath)
+                architectureName = os.path.basename(nFoldersBack(filePath, n=1))
                 shouldRun_preRunTests = True
 
             if not shouldRun_preRunTests:
