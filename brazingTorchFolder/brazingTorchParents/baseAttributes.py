@@ -1,5 +1,3 @@
-import pytorch_lightning as pl
-
 from utils.dataTypeUtils.dotDict_npDict import DotDict
 from utils.dataTypeUtils.tensor import getTorchDevice
 from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
@@ -17,6 +15,9 @@ class _BrazingTorch_baseAttributes:
         # bugPotentialCheck1
         #  setting device may not be compatible, of get use the best out of pytorch lightning
         #  multiple gpu or distributed capabilities
+        #  - maybe if args related to trainer like `gpus`(maybe `gpus` is depreacated and now is
+        #  `accelarator` or `devices`; anyway) is provided then don't set the device here and warn user to do it
+        #  himself
 
         self.to(getTorchDevice().type)
         self._setModelName(modelName)

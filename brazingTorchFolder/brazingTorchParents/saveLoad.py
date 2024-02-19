@@ -111,6 +111,7 @@ class _BrazingTorch_saveLoad:
 
     def on_save_checkpoint(self, checkpoint: dict):
         # reimplement this method to save additional information to the checkpoint
+        Warn.info('11111111111111on_save_checkpoint')#kkk temp
 
         # Add additional information to the checkpoint
         checkpoint['brazingTorch'] = {
@@ -118,6 +119,7 @@ class _BrazingTorch_saveLoad:
             'allDefinitions': self.allDefinitions,
             'warnsFrom_getAllNeededDefinitions': self.warnsFrom_getAllNeededDefinitions,
         }
+        return checkpoint
 
     def on_load_checkpoint(self, checkpoint: dict):
         # Load additional information from the checkpoint
@@ -185,7 +187,7 @@ class _BrazingTorch_saveLoad:
         filePath = None
         for acw in architectureDicts_withMatchedAllDefinitions:
             filePath = list(acw.keys())[0]
-            if seed == acw[filePath]['__plSeed__']:
+            if seed == acw[filePath]['seed']:
                 foundSeedMatch = True
                 break
         return foundSeedMatch, filePath
@@ -209,5 +211,6 @@ class _BrazingTorch_saveLoad:
         architectureDict = {'allDefinitions': self.allDefinitions,
                             'seed': self._initArgs['__plSeed__']}
 
+        os.makedirs(loggerPath, exist_ok=True)
         with open(os.path.join(loggerPath, 'architecture.pkl'), 'wb') as f:
             pickle.dump(architectureDict, f)

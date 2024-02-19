@@ -323,6 +323,10 @@ class _BrazingTorch_preRunTests:
     def _determineShouldRun_preRunTests(self, force, seedSensitive):
         # addTest1
 
+        # cccDevStruct(same as _determineFitRunState)
+        #  there was a idea about ""architectureName should be figured out in postInit"" but it may
+        #  cause problems with loggerPath in preRunTests and .fit method
+
         # by default these values are assumed and will be
         # changed depending on the case
         shouldRun_preRunTests = True
@@ -361,7 +365,7 @@ class _BrazingTorch_preRunTests:
 
             else:
                 # there are models with the name of this model but with different structures
-                architectureName = self.findAvailableArchName(nFoldersBack(loggerPath, n=1))
+                architectureName = self._findAvailableArchName(nFoldersBack(loggerPath, n=1))
 
         else:
             # no model with this name in directory has never run
@@ -371,6 +375,8 @@ class _BrazingTorch_preRunTests:
                                                    name=architectureName,
                                                    version='preRunTests')
         loggerPath = os.path.abspath(dummyLogger.log_dir)
+        # bugPotentialCheck2
+        #  note each architecture regardless of seed has
 
         return architectureName, loggerPath, shouldRun_preRunTests
 
@@ -387,9 +393,10 @@ class _BrazingTorch_preRunTests:
             # seedCase2:
             #       but if the seed passed to this run has run before so
             #       no need to run, unless 'preRunTests' has not run before
-            
+
             thisModelSeed = self._initArgs['__plSeed__']
-            foundSeedMatch, filePath = self.findSeedMatch_inArchitectureDicts(architectureDicts_withMatchedAllDefinitions, thisModelSeed)
+            foundSeedMatch, filePath = self.findSeedMatch_inArchitectureDicts(
+                architectureDicts_withMatchedAllDefinitions, thisModelSeed)
 
             if foundSeedMatch:
                 # seedCase2
@@ -401,12 +408,13 @@ class _BrazingTorch_preRunTests:
                     architectureName = os.path.basename(nFoldersBack(filePath, n=1))
 
                 if not shouldRun_preRunTests:
-                    Warn.info('skipping preRunTests: this model with same structure and same seed has run before')
+                    Warn.info(
+                        'skipping preRunTests: this model with same structure and same seed has run before')
 
             if not foundSeedMatch:  # seedCase1
                 # we have to find architectureName which doesn't exist,
                 # in order not to overwrite the previous results
-                architectureName = self.findAvailableArchName(nFoldersBack(loggerPath, n=1))
+                architectureName = self._findAvailableArchName(nFoldersBack(loggerPath, n=1))
         else:
             # there are models with the name of this model
             # also same structure, and the seed is not important factor
@@ -414,9 +422,11 @@ class _BrazingTorch_preRunTests:
             shouldRun_preRunTests = False  # just for clarity but may change
             acw = architectureDicts_withMatchedAllDefinitions[0]
             filePath = list(acw.keys())[0]
-            if not os.path.join(filePath, 'preRunTests').exists():
+            architecture_folderPath = nFoldersBack(filePath, n=1)
+            preRunTests_folderPath = os.path.join(architecture_folderPath, 'preRunTests')
+            if not os.path.exists(preRunTests_folderPath):
                 # this exact model has run before but its 'preRunTests' has not
-                architectureName = os.path.basename(nFoldersBack(filePath, n=1))
+                architectureName = os.path.basename(architecture_folderPath)
                 shouldRun_preRunTests = True
 
             if not shouldRun_preRunTests:
