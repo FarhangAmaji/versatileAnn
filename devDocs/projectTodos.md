@@ -1,13 +1,45 @@
 # current
+1. determine where should architectureDict and model checkpoint to be saved(have 'seed' and preRunTests in mind)
+2. check preRunTests follows 1 correctly
+3. try save and load with .fit(without _determineFitRunState)
+4. apply checkpoints save path to .fit
+5. (***here)complete load or from begging to .fit
+6. make sure comments of determineFitRunState are correct and complete
+7. - .fit should have:
+            1. ModelCheckpoint to save best model on loss
+            2. StepLR Scheduler, ReduceLROnPlateau
+            3. EarlyStopping
+            4. log_every_n_epoch=1 (on trainer I think)
+problems:
+- on_save_checkpoint is not called
+- magic number error
+- macos errors:
+    1. requirements.txt
+    8. dtype difference
+    3. equalDf
+        2. splitTsTrainValTest_DfNNpDict
+        1. environment difference error
+    1. mpsDeviceName
 
-todos:
+- todos:
 
     
     - 
+    - 
+    - correct architecture to have seed for version and in subdir it should take preRunTests or runName
     - _determineShouldRun_preRunTests saves architectureDict in architectureFolder and not runFolder
+    - .fit should have:
+            1. ModelCheckpoint to save best model on loss
+            2. StepLR Scheduler, ReduceLROnPlateau
+            3. EarlyStopping
+            4. log_every_n_epoch=1
+    - how to model 
+    - right now default features of .fit are not customizable
+            for example, the callbacks are preset but I should have self.fit_preset_variables and from that user may modify it
     - check soleymanis errors?!?!
     - baseFit and fit
         - think about resuming model
+
     - caching data for tests
     - revise todos
         - add `bugPotential_hardcode`
