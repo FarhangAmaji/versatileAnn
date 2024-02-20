@@ -4,19 +4,20 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
+from brazingTorchFolder.brazingTorchParents.baseAttributes import _BrazingTorch_baseAttributes
 from brazingTorchFolder.brazingTorchParents.lossModule import _BrazingTorch_loss
-from brazingTorchFolder.lossRegulator import LossRegulator
-from brazingTorchFolder.brazingTorchParents.modelDifferentiator import _BrazingTorch_modelDifferentiator
+from brazingTorchFolder.brazingTorchParents.modelDifferentiator import \
+    _BrazingTorch_modelDifferentiator
 from brazingTorchFolder.brazingTorchParents.modelFitter import _BrazingTorch_modelFitter
 from brazingTorchFolder.brazingTorchParents.optimizer import _BrazingTorch_optimizer
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset import \
     _BrazingTorch_preInitNPostInit_nModelReset
 from brazingTorchFolder.brazingTorchParents.preRunTests import _BrazingTorch_preRunTests
-from brazingTorchFolder.brazingTorchParents.baseAttributes import _BrazingTorch_baseAttributes
 from brazingTorchFolder.brazingTorchParents.regularization import _BrazingTorch_regularization
 from brazingTorchFolder.brazingTorchParents.saveLoad import _BrazingTorch_saveLoad
 from brazingTorchFolder.brazingTorchParents.specialModes import _BrazingTorch_specialModes
 from brazingTorchFolder.brazingTorchParents.temVars import _BrazingTorch_tempVars
+from brazingTorchFolder.lossRegulator import LossRegulator
 from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
 from utils.typeCheck import argValidator
 
@@ -175,6 +176,12 @@ class BrazingTorch(pl.LightningModule,
 
         self.resetTempVarRun_allPhases()
         self._tempVarRun_allPhases_hidden = {}
+
+    @argValidator
+    def on_save_checkpoint(self, checkpoint: dict):
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
+        self.onSaveCheckpoint(checkpoint)
 
     def _isCls_BrazingTorchClass(self, cls_):
         # cccDevAlgo

@@ -109,9 +109,11 @@ class _BrazingTorch_saveLoad:
 
         return initiatedObject
 
-    def on_save_checkpoint(self, checkpoint: dict):
+    def onSaveCheckpoint(self, checkpoint: dict):
         # reimplement this method to save additional information to the checkpoint
-        Warn.info('11111111111111on_save_checkpoint')#kkk temp
+
+        # cccDevStruct
+        #  note this is used in on_save_checkpoint which is placed in BrazingTorch
 
         # Add additional information to the checkpoint
         checkpoint['brazingTorch'] = {
