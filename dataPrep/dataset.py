@@ -173,6 +173,9 @@ class _TsRowFetcher:
         #  maybe not needed and the query is better used at other places in data preparation or split
         #  - if query is added, these castModes have to be more flexible
 
+        # bugPotentialCheck2
+        #  the default dtype for tensor on some devices is int32 and on some is int64
+
         if mode not in self.castModes.keys():
             raise ValueError(
                 f"{mode} should be either 'backcast', 'forecast','fullcast' or 'singlePoint'")

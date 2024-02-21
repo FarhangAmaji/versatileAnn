@@ -13,14 +13,12 @@ from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from projectUtils.dataTypeUtils.df_series import regularizeBoolCol, pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 from projectUtils.dataTypeUtils.npArray import npArrayBroadCast
-from projectUtils.misc import varPasser
 from projectUtils.globalVars import tsStartPointColName
+from projectUtils.misc import varPasser
 from projectUtils.typeCheck import argValidator
 
 
 # ---- data split
-
-
 @argValidator
 def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
                                   trainRatio, valRatio,

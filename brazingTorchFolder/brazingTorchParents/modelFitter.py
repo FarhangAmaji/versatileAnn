@@ -1,13 +1,22 @@
-from typing import List, Union, Iterable, Optional
+"""
+has 2 main methods fit and baseFit
+"""
+import os
+from typing import Iterable
+from typing import List, Union, Optional
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import Logger
+from pytorch_lightning.loggers import Logger
+from torch import nn
 from torch.utils.data import DataLoader
 
+from brazingTorchFolder.callbacks import StoreEpochData
 from projectUtils.dataTypeUtils.dict import giveOnlyKwargsRelated_toMethod
 from projectUtils.dataTypeUtils.str import snakeToCamel
-from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, inputTimeout, nFoldersBack
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
@@ -264,3 +273,137 @@ class _BrazingTorch_modelFitter:
         else:
             result.append(var2)
         return result
+    def _determineFitRunState(self, seed, resume=True, seedSensitive=False):
+        # goodToHave2
+        #  this is similar to _determineShouldRun_preRunTests
+        # addTest1
+
+        # cccDevStruct(same as _determineShouldRun_preRunTests)
+        #  there was a idea about ""architectureName should be figured out in postInit"" but it may
+        #  cause problems with loggerPath in preRunTests and .fit method
+
+        # kkk when its gonna replace past results, with inputTimeout ask where to rerun or not
+
+        # by default these values are assumed and will be
+        # changed depending on the case
+        fitRunState = 'beginning'  # kkk can have these: "beginning", "resume", "don't run"
+        architectureName = 'arch1'
+
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName)
+        loggerPath = os.path.abspath(dummyLogger.log_dir)
+        # loggerPath is fullPath including 'modelName/someName/version_0'
+
+        if os.path.exists(nFoldersBack(loggerPath, n=2)):
+            # there is a model run before with the name of this model
+
+            architectureDicts = self._collectArchDicts(loggerPath)
+            architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
+                architectureDicts)
+            # matchedAllDefinitions means the exact same model structure as all
+            # layers and their definitions are exactly the same
+            # note architectureDicts matches _saveArchitectureDict
+
+            # remove "architecture.pkl" which is in the "preRunTests" folder
+            architectureDicts_withMatchedAllDefinitions = self._remove_architectureDicts_fromPreRunTestsFolder(
+                architectureDicts_withMatchedAllDefinitions)
+
+            if architectureDicts_withMatchedAllDefinitions:
+                # note being here means an exact model with the same structure has run before
+
+                # Check if there is a model with the same seed
+                # note this is gonna be used in various cases below
+                matchedSeedDict, matchedSeedDict_filePath = self._findSeedMatch_inArchitectureDicts(
+                    architectureDicts_withMatchedAllDefinitions, seed, checkForCheckPoint=True)
+
+                # cccDevStruct
+
+                if seedSensitive:
+                    if matchedSeedDict:
+                        if resume:
+                            # Case1a: Resume the model with the same seed
+                            fitRunState = 'resume'
+                            matchedSeedDict_filePath
+                            self.on_load_checkpoint(matchedSeedDict['checkpoint'])
+                        else:
+                            # 'no resume' means tend to run from beginning
+
+                            # Ask the user whether to run the model with the same
+                            # seed from beginning and replace the old save
+                            if self._askUserToReplaceModel():
+                                fitRunState = 'beginning'
+                            else:
+                                fitRunState = "don't run"
+                    else:
+                        # there is no matched seed and it's seedSensitive(meaning that
+                        # doesn't prefer to resume or start from the beginning models
+                        # saved with other seeds)
+                        # thus only option is to run from beginning
+                        fitRunState = 'beginning'
+                else:
+                    if resume:  # not seedSensitive and resume
+                        if matchedSeedDict:
+                            # Resume the model which has the same seed
+                            fitRunState = 'resume'
+                            # checkpoint = torch.load(matchedSeedDict_filePath)
+                            # kkk make sure optimizer and scheduler are also loaded
+                            # kkk must replace loaded instance with self
+
+                            loadedModel = type(self).load_from_checkpoint(matchedSeedDict_filePath)
+                            self.load_from_checkpoint(matchedSeedDict_filePath)
+                            # self.load_state_dict(torch.load(matchedSeedDict_filePath))
+                        else:
+                            # Case4: Resume any other seed
+                            fitRunState = 'resume'
+                            print("Warn.info: seed is changing")
+                    else:  # no resume and no seedSensitive
+                        # cccDevStruct
+                        #  even it's no seedSensitive if there is a model with the same seed, there
+                        #  is no option to have duplicate models with the same seed as the
+                        #  result would be the same anyway
+                        if matchedSeedDict:
+                            # Ask the user whether to run the model with the same
+                            # seed from beginning and replace the old save
+                            if self._askUserToReplaceModel():
+                                fitRunState = 'beginning'
+                            else:
+                                fitRunState = "don't run"
+                        else:  # not seedSensitive and not resume and no matchedSeedDict
+                            # here the seed differs and 'no resume' means tend to run from beginning
+                            fitRunState = 'beginning'
+            else:
+                # there are models with the name of this model but with different structures
+                architectureName = self._findAvailableArchName(nFoldersBack(loggerPath, n=1))
+
+        else:
+            # no model with this name in directory has never run
+            pass  # so default fitRunState and architectureName are applied
+
+        runName = f'mainRun_seed{seed}'
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName,
+                                                   name=architectureName,
+                                                   version=runName)
+        # kkk what should be version name
+        loggerPath = os.path.abspath(dummyLogger.log_dir)
+
+        return architectureName, loggerPath, fitRunState
+
+    def _askUserToReplaceModel(self):
+        # Use inputTimeout to ask the user whether to replace the model
+        answer = inputTimeout("Do you want to replace the model? (yes/no)", timeout=30)
+        if answer:
+            return answer.lower() == 'yes'
+        return False
+
+    def _remove_architectureDicts_fromPreRunTestsFolder(self, listOfDicts):
+        """
+        removes architectureDict which is "architectureDict" folder
+        """
+        newListOfDicts = []
+
+        for currentDict in listOfDicts:
+            for key, value in currentDict.items():
+                pathComponents = key.split(os.sep)
+                # Check if "architecture.pkl" is not in "preRunTests" folder
+                if pathComponents[-2] != "preRunTests":
+                    newListOfDicts.append(currentDict)
+        return newListOfDicts
