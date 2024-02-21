@@ -3,7 +3,7 @@ from typing import Optional, Callable
 
 import torch.nn as nn
 
-from utils.typeCheck import argValidator
+from projectUtils.typeCheck import argValidator
 from brazingTorchFolder.lossRegulator import LossRegulator
 
 

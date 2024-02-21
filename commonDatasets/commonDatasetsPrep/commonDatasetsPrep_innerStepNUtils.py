@@ -8,10 +8,10 @@ from dataPrep.utils import splitTrainValTest_mainGroup, _applyShuffleIfSeedExist
     splitTsTrainValTest_DfNNpDict, rightPadDf, splitToNSeries, addCorrespondentRow, \
     regularizeTsStartPoints
 from models.temporalFusionTransformers_components import getFastAi_empericalEmbeddingSize
-from utils.dataTypeUtils.df_series import regularizeBoolCol
-from utils.dataTypeUtils.dotDict_npDict import DotDict
-from utils.globalVars import tsStartPointColName
-from utils.warnings import Warn
+from projectUtils.dataTypeUtils.df_series import regularizeBoolCol
+from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
+from projectUtils.globalVars import tsStartPointColName
+from projectUtils.warnings import Warn
 
 
 # ---- EpfFrBe

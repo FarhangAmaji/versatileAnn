@@ -1,6 +1,6 @@
 import re
 
-from utils.typeCheck import argValidator
+from projectUtils.typeCheck import argValidator
 
 
 def camelToSnake(camelString):

@@ -3,9 +3,9 @@ from typing import Optional
 
 import torch
 
-from utils.typeCheck import argValidator
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.warnings import Warn
+from projectUtils.typeCheck import argValidator
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_optimizer:

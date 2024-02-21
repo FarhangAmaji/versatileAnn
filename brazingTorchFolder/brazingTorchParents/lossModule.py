@@ -5,12 +5,12 @@ import torch
 import torch.nn as nn
 
 from dataPrep.dataloader import _NestedDictStruct
-from utils.dataTypeUtils.dict import isNestedDict
-from utils.dataTypeUtils.list import areItemsOfList1_InList2
-from utils.dataTypeUtils.str import snakeToCamel, joinListWithComma, spellPluralS
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.typeCheck import argValidator
-from utils.warnings import Warn
+from projectUtils.dataTypeUtils.dict import isNestedDict
+from projectUtils.dataTypeUtils.list import areItemsOfList1_InList2
+from projectUtils.dataTypeUtils.str import snakeToCamel, joinListWithComma, spellPluralS
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_loss:

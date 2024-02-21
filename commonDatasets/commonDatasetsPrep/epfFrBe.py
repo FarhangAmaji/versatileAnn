@@ -11,9 +11,9 @@ from commonDatasets.commonDatasetsPrep.commonDatasetsPrep_innerStepNUtils import
 from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from utils.dataTypeUtils.dotDict_npDict import DotDict
-from utils.generalUtils import varPasser
-from utils.typeCheck import argValidator
+from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
+from projectUtils.generalUtils import varPasser
+from projectUtils.typeCheck import argValidator
 
 # ----
 dataInfo = DotDict({'futureExogenousCols': ['genForecast', 'weekDay'],

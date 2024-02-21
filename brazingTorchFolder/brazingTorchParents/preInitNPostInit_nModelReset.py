@@ -5,9 +5,9 @@ import pytorch_lightning as pl
 
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset_inner import \
     _BrazingTorch_preInitNPostInit_nModelReset_inner
-from utils.customErrors import ImplementationError
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.initParentClasses import initClasses_withAllArgs
+from projectUtils.customErrors import ImplementationError
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.initParentClasses import initClasses_withAllArgs
 
 
 class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_nModelReset_inner):
@@ -185,7 +185,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         # cccDevStruct
         #  note the __init_subclass__ and _BrazingTorch_postInit are not called; only __new__ is called
         # kkk
-        #  wherer and why prints sth like ##teamcity[testStdErr timestamp='2024-01-30T00:29:05.138' flowId='preRunTests_Tests.preRunTests_Tests.testTraining_step' locationHint='python<F:\projects\public github projects\private repos\versatileAnnModule\tests\brazingTorchTests>://preRunTests_Tests.preRunTests_Tests.testTraining_step' name='testTraining_step' nodeId='3' out='F:\projects\public github projects\private repos\versatileAnnModule\utils\warnings.py:21: CusWarn: |n|[22m|[30m|[44m generalRegularization is not provided; so it is set to default "l2 regularization" with value of 1e-3|nyou may either pass noAdditionalOptions=True to model or call .noGeneralRegularization method on model.|nor set .generalRegularization to another value for i.e. {"type":"l1","value":.02} |[0m|n  warnings.warn(warningMessage, CusWarn)|n' parentNodeId='2']
+        #  wherer and why prints sth like ##teamcity[testStdErr timestamp='2024-01-30T00:29:05.138' flowId='preRunTests_Tests.preRunTests_Tests.testTraining_step' locationHint='python<F:\projects\public github projects\private repos\versatileAnnModule\tests\brazingTorchTests>://preRunTests_Tests.preRunTests_Tests.testTraining_step' name='testTraining_step' nodeId='3' out='F:\projects\public github projects\private repos\versatileAnnModule\projectUtils\warnings.py:21: CusWarn: |n|[22m|[30m|[44m generalRegularization is not provided; so it is set to default "l2 regularization" with value of 1e-3|nyou may either pass noAdditionalOptions=True to model or call .noGeneralRegularization method on model.|nor set .generalRegularization to another value for i.e. {"type":"l1","value":.02} |[0m|n  warnings.warn(warningMessage, CusWarn)|n' parentNodeId='2']
         attrsToKeep = attrsToKeep or {}
 
         # bugPotentialCheck1

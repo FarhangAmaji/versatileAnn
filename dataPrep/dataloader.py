@@ -10,12 +10,12 @@ from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 
 from dataPrep.dataset import VAnnTsDataset
-from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
-from utils.dataTypeUtils.list import isListTupleOrSet, isIterable
-from utils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded, getTorchDevice, toDevice
-from utils.generalUtils import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
-from utils.typeCheck import argValidator
-from utils.warnings import Warn
+from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
+from projectUtils.dataTypeUtils.list import isListTupleOrSet, isIterable
+from projectUtils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded, getTorchDevice, toDevice
+from projectUtils.generalUtils import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
 
 
 # cccDevAlgo

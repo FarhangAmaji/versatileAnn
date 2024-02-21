@@ -8,12 +8,12 @@ import torch
 
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColsStdNormalizer
 from tests.baseTest import BaseTestClass
-from utils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
-from utils.dataTypeUtils.str import snakeToCamel, camelToSnake
-from utils.dataTypeUtils.tensor import equalTensors, getDefaultTorchDevice_name
-from utils.generalUtils import getProjectDirectory, findClassDefinition_inADirectory, \
+from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
+from projectUtils.dataTypeUtils.str import snakeToCamel, camelToSnake
+from projectUtils.dataTypeUtils.tensor import equalTensors, getDefaultTorchDevice_name
+from projectUtils.generalUtils import getProjectDirectory, findClassDefinition_inADirectory, \
     getClassObjectFromFile
-from utils.typeCheck import typeHintChecker_AListOfSomeType
+from projectUtils.typeCheck import typeHintChecker_AListOfSomeType
 
 
 class DotDictTests(BaseTestClass):

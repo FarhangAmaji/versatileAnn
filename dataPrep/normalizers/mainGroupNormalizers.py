@@ -3,11 +3,11 @@ import pandas as pd
 from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
 from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
     SingleColsLblEncoder
-from utils.dataTypeUtils.df_series import pandasGroupbyAlternative
-from utils.dataTypeUtils.dotDict_npDict import NpDict
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.typeCheck import argValidator
-from utils.warnings import Warn
+from projectUtils.dataTypeUtils.df_series import pandasGroupbyAlternative
+from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
 
 
 # ---- normalizers: MainGroupNormalizers

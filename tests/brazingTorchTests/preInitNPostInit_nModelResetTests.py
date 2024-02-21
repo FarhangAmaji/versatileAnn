@@ -3,7 +3,7 @@ import unittest
 from torch import nn
 
 from tests.baseTest import BaseTestClass
-from utils.initParentClasses import checkIfAClassIs_initingItsParentClasses_inItsInit
+from projectUtils.initParentClasses import checkIfAClassIs_initingItsParentClasses_inItsInit
 from brazingTorchFolder.brazingTorch import BrazingTorch
 
 

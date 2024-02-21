@@ -6,9 +6,9 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from utils.dataTypeUtils.df_series import tryToConvertSeriesToDatetime
-from utils.dataTypeUtils.list import hasThisListAnyRange, listToRanges, similarItemsString
-from utils.typeCheck import argValidator
+from projectUtils.dataTypeUtils.df_series import tryToConvertSeriesToDatetime
+from projectUtils.dataTypeUtils.list import hasThisListAnyRange, listToRanges, similarItemsString
+from projectUtils.typeCheck import argValidator
 
 
 class DotDict:

@@ -18,8 +18,8 @@ from brazingTorchFolder.brazingTorchParents.saveLoad import _BrazingTorch_saveLo
 from brazingTorchFolder.brazingTorchParents.specialModes import _BrazingTorch_specialModes
 from brazingTorchFolder.brazingTorchParents.temVars import _BrazingTorch_tempVars
 from brazingTorchFolder.lossRegulator import LossRegulator
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.typeCheck import argValidator
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.typeCheck import argValidator
 
 
 # kkk2 think about seed later

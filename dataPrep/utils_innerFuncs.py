@@ -6,10 +6,10 @@ from dataPrep.utils_innerFuncs2 import _getSetLens, _getIdxs_possibleSets, _getS
     _split_indexesNotInvolved, _assignAsMuchAs_IdxsWith1PossibleSet_loop, _sanityCheck, \
     _sortSetIndexes, _updateSetIndexes_WithMaxDemand_ofAllIdxs, _normalizeDictValues, \
     _splitLenAssignment, _splitNpDictUsed, _addNextNPrev_tailIndexes
-from utils.globalVars import tsStartPointColName
-from utils.typeCheck import argValidator
-from utils.generalUtils import morePreciseFloat
-from utils.warnings import Warn
+from projectUtils.globalVars import tsStartPointColName
+from projectUtils.typeCheck import argValidator
+from projectUtils.generalUtils import morePreciseFloat
+from projectUtils.warnings import Warn
 
 # ----
 splitDefaultCondition = f'{tsStartPointColName} == True'

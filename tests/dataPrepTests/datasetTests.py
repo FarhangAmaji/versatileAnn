@@ -9,10 +9,10 @@
 import unittest
 
 from tests.baseTest import BaseTestClass
-from utils.dataTypeUtils.dotDict_npDict import NpDict
+from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 
 from dataPrep.dataset import VAnnTsDataset
-from utils.globalVars import tsStartPointColName
+from projectUtils.globalVars import tsStartPointColName
 import pandas as pd
 import numpy as np
 

@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from utils.dataTypeUtils.dotDict_npDict import NpDict
+from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 
 
 def _split_indexesNotInvolved(indexes, isAnyConditionApplied, seqLens, setNames):

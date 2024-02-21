@@ -1,8 +1,8 @@
 import inspect
 from typing import Union, List
 
-from utils.typeCheck import argValidator
-from utils.generalUtils import getMethodArgs
+from projectUtils.typeCheck import argValidator
+from projectUtils.generalUtils import getMethodArgs
 
 
 def getArgsOfClasses(classesDict, originalKwargs=None):

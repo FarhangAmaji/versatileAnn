@@ -17,8 +17,8 @@ import torch
 
 from dataPrep.dataset import _TsRowFetcher, VAnnTsDataset
 from tests.baseTest import BaseTestClass
-from utils.dataTypeUtils.dotDict_npDict import NpDict
-from utils.globalVars import tsStartPointColName
+from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
+from projectUtils.globalVars import tsStartPointColName
 
 # ---- sample variables
 npArraySample1 = np.array([[1, 16, 32],

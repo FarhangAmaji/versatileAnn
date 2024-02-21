@@ -1,6 +1,6 @@
 import torch
 
-from utils.warnings import Warn
+from projectUtils.warnings import Warn
 
 
 def tensor_floatDtypeChangeIfNeeded(tensor):

@@ -8,9 +8,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from brazingTorchFolder.callbacks import StoreEpochData
-from utils.generalUtils import morePreciseFloat, nFoldersBack
-from utils.typeCheck import argValidator
-from utils.warnings import Warn
+from projectUtils.generalUtils import morePreciseFloat, nFoldersBack
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_preRunTests:

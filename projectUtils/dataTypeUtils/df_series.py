@@ -3,8 +3,8 @@ also check npDict_dfMutual.py
 """
 import pandas as pd
 
-from utils.dataTypeUtils.list import areItemsOfList1_InList2
-from utils.typeCheck import argValidator
+from projectUtils.dataTypeUtils.list import areItemsOfList1_InList2
+from projectUtils.typeCheck import argValidator
 
 
 def regularizeBoolCol(df, colName):

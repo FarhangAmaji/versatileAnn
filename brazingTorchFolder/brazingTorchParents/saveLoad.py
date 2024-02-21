@@ -3,11 +3,11 @@ import pickle
 
 import pytorch_lightning as pl
 
-from utils.dataTypeUtils.dict import stringValuedDictsEqual
-from utils.dataTypeUtils.str import joinListWithComma
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.generalUtils import nFoldersBack
-from utils.warnings import Warn
+from projectUtils.dataTypeUtils.dict import stringValuedDictsEqual
+from projectUtils.dataTypeUtils.str import joinListWithComma
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.generalUtils import nFoldersBack
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_saveLoad:

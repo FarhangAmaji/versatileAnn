@@ -1,10 +1,10 @@
 import torch
 from torch import nn
 
-from utils.customErrors import ImplementationError
-from utils.typeCheck import argValidator
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.warnings import Warn
+from projectUtils.customErrors import ImplementationError
+from projectUtils.typeCheck import argValidator
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_specialModes:

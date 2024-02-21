@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
-from utils.typeCheck import argValidator
+from projectUtils.typeCheck import argValidator
 
 
 class _BaseNormalizer(ABC):

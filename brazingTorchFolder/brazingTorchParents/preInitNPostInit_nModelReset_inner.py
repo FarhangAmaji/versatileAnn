@@ -2,11 +2,11 @@ import copy
 
 import pytorch_lightning as pl
 
-from utils.customErrors import InternalLogicError
-from utils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_fromAllArgs, \
+from projectUtils.customErrors import InternalLogicError
+from projectUtils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_fromAllArgs, \
     getArgsRelatedToAClass_fromAllArgs, orderClassNames_soChildIsAlways_afterItsParents, \
     checkIfAClassIs_initingItsParentClasses_inItsInit
-from utils.warnings import Warn
+from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_preInitNPostInit_nModelReset_inner:
@@ -45,7 +45,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _findAllParentClasses_tillBrazingTorch(cls_, BrazingTorch_Obj, parentClasses: dict = None):
-        # this method is similar to findParentClasses_OfAClass_tillAnotherClass in utils/initParentClasses.py
+        # this method is similar to findParentClasses_OfAClass_tillAnotherClass in projectUtils/initParentClasses.py
 
         parentClasses = parentClasses or {}
         # goodToHave3 bugPotentialCheck2

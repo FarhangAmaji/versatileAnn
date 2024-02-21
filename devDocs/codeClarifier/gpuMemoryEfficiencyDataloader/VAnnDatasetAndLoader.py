@@ -1,7 +1,7 @@
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 
-from utils.generalUtils import gpuMemoryUsed
+from projectUtils.generalUtils import gpuMemoryUsed
 
 
 class CDS(Dataset):

@@ -3,10 +3,10 @@ from typing import Optional, Union
 import torch
 from torch import nn
 
-from utils.globalVars import regularizationTypes
-from utils.typeCheck import argValidator
-from utils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from utils.warnings import Warn
+from projectUtils.globalVars import regularizationTypes
+from projectUtils.typeCheck import argValidator
+from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.warnings import Warn
 from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
 from brazingTorchFolder.lossRegulator import LossRegulator
 

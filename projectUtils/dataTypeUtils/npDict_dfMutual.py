@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from utils.dataTypeUtils.dotDict_npDict import NpDict
-from utils.typeCheck import argValidator
+from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
+from projectUtils.typeCheck import argValidator
 
 
 # ---- df utils

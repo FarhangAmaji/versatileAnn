@@ -33,9 +33,9 @@ from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblEncoder
 from dataPrep.utils import _applyShuffleIfSeedExists
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
-from utils.dataTypeUtils.dotDict_npDict import DotDict
-from utils.generalUtils import varPasser
-from utils.typeCheck import argValidator
+from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
+from projectUtils.generalUtils import varPasser
+from projectUtils.typeCheck import argValidator
 
 # ----
 dataInfo = DotDict({'timeIdx': 'timeIdx',

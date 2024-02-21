@@ -2,10 +2,10 @@ from typing import Union
 
 import torch
 
-from utils.customErrors import InternalLogicError
-from utils.globalVars import regularizationTypes
-from utils.typeCheck import argValidator
-from utils.warnings import Warn
+from projectUtils.customErrors import InternalLogicError
+from projectUtils.globalVars import regularizationTypes
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
 
 
 class LossRegulator:

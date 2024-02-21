@@ -3,7 +3,7 @@ from typing import get_type_hints
 
 from pydantic import validate_arguments
 
-from utils.customErrors import InternalLogicError
+from projectUtils.customErrors import InternalLogicError
 
 
 def isHintTypeOfAListOfSomeType(typ):

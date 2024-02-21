@@ -17,7 +17,7 @@ from commonDatasets.commonDatasetsPrep.stallion import getStallion_processed, \
 from commonDatasets.getData import getDatasetFiles, _getFilePathInDataStoreLocation
 from dataPrep.utils import combineNSeries
 from tests.baseTest import BaseTestClass
-from utils.dataTypeUtils.tensor import toDevice, getTorchDevice
+from projectUtils.dataTypeUtils.tensor import toDevice, getTorchDevice
 
 
 # ---- getDatasetFiles
