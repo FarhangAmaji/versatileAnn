@@ -340,6 +340,9 @@ class _BrazingTorch_preRunTests:
             # there is a model run before with the name of this model
 
             architectureDicts = self._collectArchDicts(loggerPath)
+            if architectureDicts:
+                loggerPath = self._updateLoggerPath_withExistingArchName(architectureDicts,
+                                                                         'preRunTests')
             architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
                 architectureDicts)
             # matchedAllDefinitions means the exact same model structure as all
@@ -365,7 +368,7 @@ class _BrazingTorch_preRunTests:
 
             else:
                 # there are models with the name of this model but with different structures
-                architectureName = self._findAvailableArchName(nFoldersBack(loggerPath, n=1))
+                architectureName = self._findAvailableArchName(nFoldersBack(loggerPath, n=2))
 
         else:
             # no model with this name in directory has never run

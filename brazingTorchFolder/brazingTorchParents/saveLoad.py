@@ -160,6 +160,15 @@ class _BrazingTorch_saveLoad:
 
         return architectureDicts
 
+    def _updateLoggerPath_withExistingArchName(self, architectureDicts, runName):
+        uniqueArchNames = set(key for ad in architectureDicts for key in ad.keys())
+        uniqueArchNames = set(uan.split(os.sep)[-3] for uan in uniqueArchNames)
+        dummyLogger = pl.loggers.TensorBoardLogger(self.modelName,
+                                                   name=list(uniqueArchNames)[0],
+                                                   version=runName)
+        loggerPath = os.path.abspath(dummyLogger.log_dir)
+        return loggerPath
+
     def _getArchitectureDicts_withMatchedAllDefinitions(self, architectureDicts):
         # cccWhat
         # this func checks the match between self.allDefinitions and allDefinitions
@@ -206,7 +215,7 @@ class _BrazingTorch_saveLoad:
                 # expectedCheckPointPath is used here so in anyCase there would
                 # be a value for it(even when the seed is not matched)
                 expectedCheckPointPath = architectureFilePath.replace('architecture.pkl',
-                                                          'BrazingTorch.ckpt')
+                                                                      'BrazingTorch.ckpt')
 
             if seed == acw[architectureFilePath]['seed']:
                 if returnCheckPointPath:
