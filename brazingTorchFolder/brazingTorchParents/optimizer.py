@@ -3,8 +3,9 @@ from typing import Optional
 
 import torch
 
-from projectUtils.typeCheck import argValidator
+from brazingTorchFolder.utils import isPytorchLightningScheduler
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
@@ -119,3 +120,17 @@ class _BrazingTorch_optimizer:
     @argValidator
     def divideLr(self, factor: float):
         self.lr = self.lr / factor
+
+    # scheduler
+    @property
+    def scheduler(self):
+        return self._scheduler
+
+    @scheduler.setter
+    def scheduler(self, value):
+        if not hasattr(self, 'optimizer'):
+            raise ValueError("you must set optimizer before setting scheduler")
+
+        if not isPytorchLightningScheduler(value):
+            raise ValueError("the scheduler must be a PyTorch Lightning scheduler")
+        self._scheduler = value
