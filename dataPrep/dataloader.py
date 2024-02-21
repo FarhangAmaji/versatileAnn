@@ -13,7 +13,7 @@ from dataPrep.dataset import VAnnTsDataset
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.list import isListTupleOrSet, isIterable
 from projectUtils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded, getTorchDevice, toDevice
-from projectUtils.generalUtils import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
+from projectUtils.misc import validate_IsObjOfTypeX_orAListOfTypeX, shuffleData
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 

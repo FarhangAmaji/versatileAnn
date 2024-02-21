@@ -34,7 +34,7 @@ from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblE
 from dataPrep.utils import _applyShuffleIfSeedExists
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 from projectUtils.typeCheck import argValidator
 
 # ----

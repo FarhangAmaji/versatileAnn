@@ -4,7 +4,7 @@ from typing import List
 from brazingTorchFolder.lossRegulator import LossRegulator
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.dataTypeUtils.str import joinListWithComma
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
     setDefaultIfNone, isCustomFunction, getProjectDirectory, \
     findClassObject_inADirectory, getClassObjectFromFile

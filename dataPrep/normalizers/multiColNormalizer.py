@@ -3,7 +3,7 @@ import pandas as pd
 from dataPrep.normalizers.baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
 from projectUtils.typeCheck import argValidator
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BaseMultiColNormalizer(_BaseNormalizer):

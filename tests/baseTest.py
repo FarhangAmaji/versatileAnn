@@ -5,7 +5,7 @@ import unittest
 from projectUtils.dataTypeUtils.npArray import equalArrays
 from projectUtils.dataTypeUtils.npDict_dfMutual import equalDfs, equalNpDicts
 from projectUtils.dataTypeUtils.tensor import equalTensors
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 
 
 # ----

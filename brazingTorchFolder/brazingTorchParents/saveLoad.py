@@ -5,8 +5,8 @@ import pytorch_lightning as pl
 
 from projectUtils.dataTypeUtils.dict import stringValuedDictsEqual
 from projectUtils.dataTypeUtils.str import joinListWithComma
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
-from projectUtils.generalUtils import nFoldersBack
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import nFoldersBack
 from projectUtils.warnings import Warn
 
 

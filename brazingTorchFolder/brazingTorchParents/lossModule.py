@@ -8,7 +8,7 @@ from dataPrep.dataloader import _NestedDictStruct
 from projectUtils.dataTypeUtils.dict import isNestedDict
 from projectUtils.dataTypeUtils.list import areItemsOfList1_InList2
 from projectUtils.dataTypeUtils.str import snakeToCamel, joinListWithComma, spellPluralS
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 

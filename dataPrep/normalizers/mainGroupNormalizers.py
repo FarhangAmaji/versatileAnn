@@ -5,7 +5,7 @@ from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdN
     SingleColsLblEncoder
 from projectUtils.dataTypeUtils.df_series import pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 

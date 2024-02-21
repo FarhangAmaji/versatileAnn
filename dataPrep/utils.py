@@ -13,7 +13,7 @@ from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
 from projectUtils.dataTypeUtils.df_series import regularizeBoolCol, pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 from projectUtils.dataTypeUtils.npArray import npArrayBroadCast
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 from projectUtils.globalVars import tsStartPointColName
 from projectUtils.typeCheck import argValidator
 

@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from projectUtils.generalUtils import getProjectDirectory
+from projectUtils.misc import getProjectDirectory
 
 # Automatically discover and load test cases
 testLoader = unittest.TestLoader()

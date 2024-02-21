@@ -12,7 +12,7 @@ from projectUtils.customErrors import InternalLogicError
 from projectUtils.dataTypeUtils.df_series import pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.tensor import tensor_floatDtypeChangeIfNeeded
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 from projectUtils.globalVars import tsStartPointColName
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn

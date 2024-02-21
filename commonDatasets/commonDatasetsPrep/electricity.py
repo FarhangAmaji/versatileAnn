@@ -21,7 +21,7 @@ from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdN
 from dataPrep.utils import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
     splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 from projectUtils.globalVars import tsStartPointColName
 from projectUtils.typeCheck import argValidator
 

@@ -9,7 +9,7 @@ import pandas as pd
 
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from projectUtils.generalUtils import gpuMemoryUsed
+from projectUtils.misc import gpuMemoryUsed
 
 
 class custDataset(VAnnTsDataset):

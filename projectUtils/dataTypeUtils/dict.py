@@ -1,5 +1,5 @@
 from projectUtils.dataTypeUtils.str import snakeToCamel
-from projectUtils.generalUtils import getMethodArgs
+from projectUtils.misc import getMethodArgs
 from projectUtils.typeCheck import argValidator
 
 

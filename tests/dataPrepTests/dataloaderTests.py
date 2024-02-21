@@ -11,7 +11,7 @@ from dataPrep.dataset import VAnnTsDataset
 from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.tensor import getTorchDevice, getDefaultTorchDevice_printName, toDevice
-from projectUtils.generalUtils import shuffleData
+from projectUtils.misc import shuffleData
 
 # util
 # cccDevStruct

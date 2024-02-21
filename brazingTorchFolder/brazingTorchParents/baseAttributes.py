@@ -1,6 +1,6 @@
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.dataTypeUtils.tensor import getTorchDevice
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 
 

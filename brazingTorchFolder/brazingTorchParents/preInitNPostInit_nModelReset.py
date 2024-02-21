@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset_inner import \
     _BrazingTorch_preInitNPostInit_nModelReset_inner
 from projectUtils.customErrors import ImplementationError
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.initParentClasses import initClasses_withAllArgs
 
 

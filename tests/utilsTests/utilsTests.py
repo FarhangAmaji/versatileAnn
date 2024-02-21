@@ -11,7 +11,7 @@ from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.str import snakeToCamel, camelToSnake
 from projectUtils.dataTypeUtils.tensor import equalTensors, getDefaultTorchDevice_name
-from projectUtils.generalUtils import getProjectDirectory, findClassDefinition_inADirectory, \
+from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
     getClassObjectFromFile
 from projectUtils.typeCheck import typeHintChecker_AListOfSomeType
 

@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from projectUtils.dataTypeUtils.dict import giveOnlyKwargsRelated_toMethod
 from projectUtils.dataTypeUtils.str import snakeToCamel
-from projectUtils.generalUtils import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 

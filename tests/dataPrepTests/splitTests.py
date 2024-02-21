@@ -13,7 +13,7 @@ from dataPrep.utils_innerFuncs import _split_splitNShuffle_startPointIndexes
 from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.list import listRangesToList
 from projectUtils.globalVars import tsStartPointColName
-from projectUtils.generalUtils import morePreciseFloat
+from projectUtils.misc import morePreciseFloat
 
 
 # ---- splitTsTrainValTest_DfNNpDict

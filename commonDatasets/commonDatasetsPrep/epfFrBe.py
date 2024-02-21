@@ -12,7 +12,7 @@ from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
-from projectUtils.generalUtils import varPasser
+from projectUtils.misc import varPasser
 from projectUtils.typeCheck import argValidator
 
 # ----
