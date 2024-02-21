@@ -144,6 +144,10 @@ class _BrazingTorch_optimizer:
     @schedulers.setter
     @argValidator
     def schedulers(self, value: list):
+        if not value:
+            self._schedulers = value
+            return
+
         if not hasattr(self, 'optimizer'):
             raise ValueError("you must set optimizer before setting schedulers")
 
