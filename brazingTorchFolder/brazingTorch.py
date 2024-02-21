@@ -45,7 +45,8 @@ class BrazingTorch(pl.LightningModule,
                  dropoutEnsembleMode: bool = False, VAEMode: bool = False,
                  dropoutEnsemble_samplesNum=100,
                  getAllNeededDefinitions=True,
-                 optimizer: Optional[torch.optim.Optimizer] = None, lr: Optional[float] = None,
+                 optimizer: Optional[torch.optim.Optimizer] = None,
+                 schedulers: Optional[list] = None, lr: Optional[float] = None,
                  keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
 
         # cccDevStruct
@@ -54,7 +55,7 @@ class BrazingTorch(pl.LightningModule,
         #               _BrazingTorch_baseAttributes: modelName, noAdditionalOptions, testPrints
         #               _BrazingTorch_modelDifferentiator: getAllNeededDefinitions
         #               _BrazingTorch_loss: lossFuncs
-        #               _BrazingTorch_optimizer: optimizer, lr
+        #               _BrazingTorch_optimizer: optimizer, schedulers, lr
         #               _BrazingTorch_regularization: generalRegularization
         #               _BrazingTorch_specialModes: dropoutEnsembleMode, VAEMode,
         #                                   dropoutEnsemble_samplesNum
@@ -144,7 +145,7 @@ class BrazingTorch(pl.LightningModule,
     def configure_optimizers(self):
         # cccDevStruct
         #  pytorch lightning expects this method to be here
-        return self.optimizer
+        return self.optimizer, self.schedulers
 
     # reset tempVar of phases on epoch start
     def on_train_epoch_start(self):

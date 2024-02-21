@@ -11,6 +11,7 @@ from projectUtils.warnings import Warn
 
 class _BrazingTorch_optimizer:
     def __init__(self, optimizer: Optional[torch.optim.Optimizer] = None,
+                 schedulers: Optional[list] = None,
                  lr: Optional[float] = None, **kwargs):
 
         if optimizer:
@@ -18,6 +19,12 @@ class _BrazingTorch_optimizer:
             if lr:
                 raise ValueError(
                     "you have passed optimizer and lr together. just pass the optimizer")
+
+        if schedulers:
+            self.schedulers = schedulers
+        else:
+            self._scheduler = []
+
         if lr is not None:
             self.lr = lr
 
@@ -43,6 +50,8 @@ class _BrazingTorch_optimizer:
     @optimizer.setter
     @argValidator
     def optimizer(self, value: torch.optim.Optimizer):
+        # mustHave3
+        #  should have 2 optimizers
         # kkk
         #  may we assert error when weight decay is True or have a number(don't know yet)
         #  but anyway either force users or don't apply weightDeccay here and apply weightDecay
@@ -121,16 +130,18 @@ class _BrazingTorch_optimizer:
     def divideLr(self, factor: float):
         self.lr = self.lr / factor
 
-    # scheduler
+    # schedulers
     @property
-    def scheduler(self):
+    def schedulers(self):
         return self._scheduler
 
-    @scheduler.setter
-    def scheduler(self, value):
+    @schedulers.setter
+    @argValidator
+    def schedulers(self, value: list):
         if not hasattr(self, 'optimizer'):
-            raise ValueError("you must set optimizer before setting scheduler")
+            raise ValueError("you must set optimizer before setting schedulers")
 
-        if not isPytorchLightningScheduler(value):
-            raise ValueError("the scheduler must be a PyTorch Lightning scheduler")
+        for scheduler in value:
+            if not isPytorchLightningScheduler(scheduler):
+                raise ValueError("the scheduler must be a PyTorch Lightning scheduler")
         self._scheduler = value

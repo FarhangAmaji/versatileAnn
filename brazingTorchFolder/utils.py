@@ -1,7 +1,9 @@
 from inspect import getmro
 
+import torch
 import torch.optim.lr_scheduler as LrScheduler
 from pytorch_lightning import LightningModule
+from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
 
 
 def isPytorchLightningScheduler(obj):
@@ -18,11 +20,12 @@ def isPytorchLightningScheduler(obj):
         True if the object is a PyTorch Lightning scheduler, False otherwise.
     """
 
-    if isinstance(obj, (LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR)):
+    if isinstance(obj, (LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
+                        LearningRateMonitor)):
         # Direct instance of PyTorch Lightning schedulers (preferred)
         return True
     elif isinstance(obj, LightningModule):
-        # Check if LightningModule has a compatible custom scheduler implementation
+        # Check if LightningModule has a compatible custom schedulers implementation
         schedulerMethods = [
             methodName for methodName in dir(obj)
             if methodName in {'onTrainEpochStart', 'onTrainBatchEnd', 'onValidationEpochStart'}
@@ -37,8 +40,8 @@ def isPytorchLightningScheduler(obj):
             # Try using getmro() for more reliable inheritance path checks
             for baseClass in getmro(obj):
                 if baseClass in (
-                LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
-                LightningModule):
+                        LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
+                        LightningModule):
                     return True
         except TypeError:  # Handle cases where getmro() might not be supported
             pass
