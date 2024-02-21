@@ -190,31 +190,35 @@ class _BrazingTorch_saveLoad:
         return architectureDicts_withMatchedAllDefinitions
 
     def _findSeedMatch_inArchitectureDicts(self, architectureDicts_withMatchedAllDefinitions, seed,
-                                           checkForCheckPoint=False):
+                                           returnCheckPointPath=False):
         # cccDevStruct
         #  this is used in _determineShouldRun_preRunTests and _determineFitRunState
         #  - main structure is suited for _determineShouldRun_preRunTests
-        #  - and the checkForCheckPoint part adapts this func for _determineFitRunState which
+        #  - and the returnCheckPointPath part adapts this func for _determineFitRunState which
         #  needs to check existence of the checkpoint named `BrazingTorch.ckpt`; besides, returns
-        #  expectedCheckPointPath as filePath
+        #  expectedCheckPointPath as for path
         foundSeedMatch = False
-        filePath = None
+        architectureFilePath = ''
+        expectedCheckPointPath = ''
         for acw in architectureDicts_withMatchedAllDefinitions:
-            filePath = list(acw.keys())[0]
-            if seed == acw[filePath]['seed']:
+            architectureFilePath = list(acw.keys())[0]
+            if returnCheckPointPath:
+                # expectedCheckPointPath is used here so in anyCase there would
+                # be a value for it(even when the seed is not matched)
+                expectedCheckPointPath = architectureFilePath.replace('architecture.pkl',
+                                                          'BrazingTorch.ckpt')
 
-                if checkForCheckPoint:
-                    expectedCheckPointPath = filePath.replace('architecture.pkl',
-                                                              'BrazingTorch.ckpt')
+            if seed == acw[architectureFilePath]['seed']:
+                if returnCheckPointPath:
                     if os.path.exists(expectedCheckPointPath):
                         foundSeedMatch = True
-                        filePath = expectedCheckPointPath
                         break
                 else:
                     foundSeedMatch = True
                     break
-
-        return foundSeedMatch, filePath
+        if returnCheckPointPath:
+            return foundSeedMatch, expectedCheckPointPath
+        return foundSeedMatch, architectureFilePath
 
     def _findAvailableArchName(self, folderToSearch):
         """
