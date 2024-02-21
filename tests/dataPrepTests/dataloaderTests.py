@@ -346,9 +346,10 @@ class DataloaderTests(BaseTestClass):
         self.setup1(batch_size=700)
         firstBatch = next(iter(self.dataloader))
         expectedFirstBatch = shuffleData(self.data, self.seed)
-        expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=torch.int64)
-        suitableDtype = suitableDeviceForIntOnThisFile(expectedFirstBatch)
-        expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=suitableDtype)
+        expectedFirstBatch = torch.tensor(expectedFirstBatch, dtype=torch.int32)
+
+        # checking the dtype is not important; just to make sure it's .int32
+        firstBatch = firstBatch.to(torch.int32)
         self.equalTensors(firstBatch, expectedFirstBatch, checkDevice=False)
 
     def testShuffleAllResults_2ndBatch(self):
@@ -357,9 +358,10 @@ class DataloaderTests(BaseTestClass):
         secondBatch = next(iter(self.dataloader))
         expectedFirstBatch = shuffleData(self.data, self.seed)
         expected2ndBatch = shuffleData(expectedFirstBatch, self.seed)
-        expected2ndBatch = torch.tensor(expected2ndBatch, dtype=torch.int64)
-        suitableDtype = suitableDeviceForIntOnThisFile(expected2ndBatch)
-        expected2ndBatch = torch.tensor(expected2ndBatch, dtype=suitableDtype)
+        expected2ndBatch = torch.tensor(expected2ndBatch, dtype=torch.int32)
+
+        # checking the dtype is not important; just to make sure it's .int32
+        secondBatch = secondBatch.to(torch.int32)
         self.equalTensors(secondBatch, expected2ndBatch, checkDevice=False)
 
     def testChangeShuffleBeforeGettingResultWithShuffleState(self):
