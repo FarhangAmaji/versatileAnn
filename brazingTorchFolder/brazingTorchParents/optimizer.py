@@ -2,6 +2,7 @@ import copy
 from typing import Optional
 
 import torch
+from torch.optim.lr_scheduler import ChainedScheduler
 
 from brazingTorchFolder.utils import isPytorchLightningScheduler
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
@@ -23,7 +24,7 @@ class _BrazingTorch_optimizer:
         if schedulers:
             self.schedulers = schedulers
         else:
-            self._scheduler = []
+            self.schedulers = []
 
         if lr is not None:
             self.lr = lr
@@ -133,7 +134,12 @@ class _BrazingTorch_optimizer:
     # schedulers
     @property
     def schedulers(self):
-        return self._scheduler
+        if len(self._schedulers) > 1:
+            # for multiple schedulers we use ChainedScheduler
+            return ChainedScheduler(self._schedulers)
+        elif len(self._schedulers) == 1:
+            return self._schedulers[0]
+        return self._schedulers
 
     @schedulers.setter
     @argValidator
@@ -144,4 +150,4 @@ class _BrazingTorch_optimizer:
         for scheduler in value:
             if not isPytorchLightningScheduler(scheduler):
                 raise ValueError("the scheduler must be a PyTorch Lightning scheduler")
-        self._scheduler = value
+        self._schedulers = value

@@ -145,7 +145,9 @@ class BrazingTorch(pl.LightningModule,
     def configure_optimizers(self):
         # cccDevStruct
         #  pytorch lightning expects this method to be here
-        return self.optimizer, self.schedulers
+        if self._schedulers:
+            return (self.optimizer, self.schedulers)# addTest2
+        return self.optimizer
 
     # reset tempVar of phases on epoch start
     def on_train_epoch_start(self):
@@ -182,7 +184,13 @@ class BrazingTorch(pl.LightningModule,
     def on_save_checkpoint(self, checkpoint: dict):
         # cccDevStruct
         #  pytorch lightning expects this method to be here
-        self.onSaveCheckpoint(checkpoint)
+        return self.onSaveCheckpoint(checkpoint)
+
+    @argValidator
+    def on_load_checkpoint(self, checkpoint: dict):  # kkk
+        # cccDevStruct
+        #  pytorch lightning expects this method to be here
+        return self.onLoadCheckpoint(checkpoint)
 
     def _isCls_BrazingTorchClass(self, cls_):
         # cccDevAlgo
