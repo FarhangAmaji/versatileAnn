@@ -435,3 +435,13 @@ class _BrazingTorch_modelFitter:
                 if pathComponents[-2] != "preRunTests":
                     newListOfDicts.append(currentDict)
         return newListOfDicts
+
+    @staticmethod
+    def _warnIf_modelIsChanged(isModelChanged):
+        if isModelChanged:
+            Warn.error("WARNING: note .fit method returns instance(or self) and also the trainer." + \
+                       "\nspecially in this case, which the instance is replaced, make sure" + \
+                       "that you are catching new instance like 'instance, trainer=instance.fit(...)'")
+            answer = inputTimeout("do you want to stop the code to follow the pattern? (yes/no)",
+                                  timeout=30)
+        return answer
