@@ -7,16 +7,16 @@ from typing import List, Union, Optional
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import Logger
 from pytorch_lightning.loggers import Logger
 from torch import nn
 from torch.utils.data import DataLoader
 
-from brazingTorchFolder.callbacks import StoreEpochData
+from brazingTorchFolder.utils import externalFit
 from projectUtils.dataTypeUtils.dict import giveOnlyKwargsRelated_toMethod
 from projectUtils.dataTypeUtils.str import snakeToCamel
-from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, inputTimeout, nFoldersBack
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, inputTimeout, nFoldersBack, \
+    varPasser
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
@@ -41,11 +41,46 @@ class _BrazingTorch_modelFitter:
         self.__logOptions = value
 
     @argValidator
+    def fit(self, trainDataloader: DataLoader,
+            valDataloader: Optional[DataLoader] = None,
+            *, lossFuncs: List[nn.modules.loss._Loss],
+            seed=None, resume=True, seedSensitive=False,
+            addDefaultLogger=True, addDefault_gradientClipping=True,
+            preRunTests_force=False, preRunTests_seedSensitive=False,
+            preRunTests_lrsToFindBest=None,
+            preRunTests_batchSizesToFindBest=None,
+            preRunTests_fastDevRunKwargs=None, preRunTests_overfitBatchesKwargs=None,
+            preRunTests_profilerKwargs=None, preRunTests_findBestLearningRateKwargs=None,
+            preRunTests_findBestBatchSizesKwargs=None,
+            **kwargs):
+
+        # cccUsage
+        #  note there are many args related to preRunTests; you may also run preRunTests separately
+
+        # cccDevStruct
+        #  note this method in some cases is loading another instance and runs on that
+        #  but changing self with methods of an instance is not possible so take a look
+        #  at devDocs\codeClarifier\replaceAnotherInstance_withSelf.py
+        #  therefore this method is implemented as an external method in brazingTorchFolder/utils.py
+
+        kwargs_ = varPasser(
+            localArgNames=['trainDataloader', 'valDataloader', 'lossFuncs', 'seed', 'resume',
+                           'seedSensitive', 'addDefaultLogger', 'addDefault_gradientClipping',
+                           'preRunTests_force', 'preRunTests_seedSensitive',
+                           'preRunTests_lrsToFindBest', 'preRunTests_batchSizesToFindBest',
+                           'preRunTests_fastDevRunKwargs', 'preRunTests_overfitBatchesKwargs',
+                           'preRunTests_profilerKwargs', 'preRunTests_findBestLearningRateKwargs',
+                           'preRunTests_findBestBatchSizesKwargs'])
+
+        return externalFit(**kwargs_, **kwargs)
+
+    @argValidator
     def baseFit(self, trainDataloader: DataLoader,
-            valDataloader: Union[DataLoader, None] = None,
-            listOfKwargs: List[dict] = None, addDefaultLogger=True,
-            addDefault_gradientClipping=True, **kwargs):
-        # kkk support log kwargs to have phases
+                valDataloader: Union[DataLoader, None] = None,
+                addDefaultLogger=True, addDefault_gradientClipping=True,
+                listOfKwargs: List[dict] = None,
+                **kwargs):
+
         # addTest1
         # cccUsage
         #  - this method accepts kwargs related to trainer, trainer.fit, and self.log and
