@@ -104,6 +104,10 @@ def externalFit(self, trainDataloader: DataLoader,
                 preRunTests_profilerKwargs=None, preRunTests_findBestLearningRateKwargs=None,
                 preRunTests_findBestBatchSizesKwargs=None,
                 **kwargs):
+    # cccDevStruct
+    #  note this is implementation for .fit method of BrazingTorch class, but implemented here
+    #  you may read why it's been implemented here in the .fit method itself
+
     if not seed:
         seed = self.seed
 
@@ -119,7 +123,7 @@ def externalFit(self, trainDataloader: DataLoader,
                   "resume=True to .fit")
         return self, None
     elif fitRunState == "resume":
-        answer = self._warnIf_modelIsChanged(isModelChanged)
+        answer = self._warnIf_modelIsChanged()
         if answer and answer.lower() == 'yes':
             return self, None
 

@@ -1,4 +1,14 @@
 # current
+.fit should have:
+            1. ModelCheckpoint to save best model on loss
+            2. StepLR Scheduler, ReduceLROnPlateau, warmUp
+            3. EarlyStopping
+            4. log_every_n_epoch=1 (on trainer I think)
+create:
+    1. new todos tagnames
+    2. new commit prefixes
+clean this file
+
 1. determine where should architectureDict and model checkpoint to be saved(have 'seed' and preRunTests in mind)
 2. check preRunTests follows 1 correctly
 3. try save and load with .fit(without _determineFitRunState)
