@@ -1,13 +1,65 @@
 # current
+1. determine where should architectureDict and model checkpoint to be saved(have 'seed' and preRunTests in mind)
+2. check preRunTests follows 1 correctly
+3. try save and load with .fit(without _determineFitRunState)
+4. apply checkpoints save path to .fit
+5. (***here)complete load or from begging to .fit
+6. loadModel should replace with self:
+    7. it's not possible so with a trick .fit should be able to load model and replace it with self
+   8. not it should have codeClarifier
+   9. make sure optimizer and schedulers are also loaded
+   10. also on_load_checkpoint should be applied
+6. make sure comments of determineFitRunState are correct and complete
+7. there should be some files saved for dummy1
+7. - .fit should have:
+            1. ModelCheckpoint to save best model on loss
+            2. StepLR Scheduler, ReduceLROnPlateau, warmUp
+            3. EarlyStopping
+            4. log_every_n_epoch=1 (on trainer I think)
+on getBackForeCastData_general if the device is mps it should check for changing int/float 64 to 32: no no no getBackForeCastData_general doesn't move to device so it's not needed
+- problems:
+- on_save_checkpoint is not called
+- magic number error
+- macos errors:
+    1. requirements.txt
+    8. dtype difference
+       9. dataloaderTests
+          10. 352
+          11. 363
+       12. tsRowFetcherTests
+           13. 243
+           14. 236
+           15. 274
+           17. 281
+           16. 289
+           18. 320
+    3. equalDf
+        2. splitTsTrainValTest_DfNNpDict
+           3. splitTests
+               4. 95
+              5. 125
+        1. environment difference error
+    1. mpsDeviceName
 
-todos:
+- todos:
 
     
     - 
+    - 
+    - correct architecture to have seed for version and in subdir it should take preRunTests or runName
     - _determineShouldRun_preRunTests saves architectureDict in architectureFolder and not runFolder
+    - .fit should have:
+            1. ModelCheckpoint to save best model on loss
+            2. StepLR Scheduler, ReduceLROnPlateau
+            3. EarlyStopping
+            4. log_every_n_epoch=1
+    - how to model 
+    - right now default features of .fit are not customizable
+            for example, the callbacks are preset but I should have self.fit_preset_variables and from that user may modify it
     - check soleymanis errors?!?!
     - baseFit and fit
         - think about resuming model
+
     - caching data for tests
     - revise todos
         - add `bugPotential_hardcode`
