@@ -131,14 +131,12 @@ class _BrazingTorch_saveLoad:
 
         additionalInfo = checkpoint['brazingTorch']
 
-        # kkk add to device
         _initArgs = additionalInfo['_initArgs']
         pl.seed_everything(_initArgs['__plSeed__'])
         # I guess setting seed here doesn't really make difference
         # on the most models but some models which may use some random
         # variables in their implementation, may benefit from this
 
-        # kkk does it need anything else
         return checkpoint
 
     # ---- methods used to determine the architectureName of the model

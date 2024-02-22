@@ -1,9 +1,53 @@
+import os
 from inspect import getmro
+from inspect import isclass
+from typing import List, Optional
 
+import pytorch_lightning as pl
 import torch
 import torch.optim.lr_scheduler as LrScheduler
 from pytorch_lightning import LightningModule
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
+from pytorch_lightning.loggers import Logger
+from torch import nn
+from torch.utils.data import DataLoader
+
+from brazingTorchFolder.callbacks import StoreEpochData
+from projectUtils.dataTypeUtils.tensor import getTorchDevice
+from projectUtils.misc import inputTimeout
+from projectUtils.typeCheck import argValidator
+from projectUtils.warnings import Warn
+
+
+def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
+    # bugPotentialCheck1
+    #  note a normal checkpoint dictionary has these keys ['epoch', 'global_step',
+    #  'pytorch-lightning_version', 'state_dict', 'loops', 'callbacks',
+    #  'optimizer_states', 'lr_schedulers']
+    #  - 'optimizer_states' and 'lr_schedulers' are used below and 'pytorch-lightning_version'
+    #  is not gonna be used but I have doubts about the rest of the keys
+
+    if not os.path.exists(checkpointPath):
+        raise ValueError(f"{checkpointPath=} doesn't exist")
+
+    # Load checkpoint
+    checkpoint = torch.load(checkpointPath)
+
+    # Load state_dict into model
+    if isclass(ModelClassOrInstance):
+        model = ModelClassOrInstance.load_from_checkpoint(checkpoint_path=checkpointPath)
+    else:
+        model = type(ModelClassOrInstance).load_from_checkpoint(
+            checkpoint_path=checkpointPath)
+
+    # Load optimizer and schedulers states
+    if 'optimizer_states' in checkpoint:
+        model.optimizer.load_state_dict(checkpoint['optimizer_states'])
+    if 'lr_schedulers' in checkpoint:
+        model.schedulers = checkpoint['lr_schedulers']
+
+    return model
 
 
 def isPytorchLightningScheduler(obj):
