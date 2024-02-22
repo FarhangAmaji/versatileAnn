@@ -284,14 +284,13 @@ class _BrazingTorch_modelFitter:
         #  there was a idea about ""architectureName should be figured out in postInit"" but it may
         #  cause problems with loggerPath in preRunTests and .fit method
 
-        # kkk when its gonna replace past results, with inputTimeout ask where to rerun or not
-
         # by default these values are assumed and will be
         # changed depending on the case
-        fitRunState = 'beginning'  # kkk can have these: "beginning", "resume", "don't run"
+        fitRunState = 'beginning'  # fitRunState can have these: "beginning", "resume", "don't run"
         architectureName = 'arch1'
         checkpointPath = ''
         runName = f'mainRun_seed{seed}'
+        isModelChanged = False
 
         dummyLogger = pl.loggers.TensorBoardLogger(self.modelName)
         loggerPath = os.path.abspath(dummyLogger.log_dir)
@@ -323,9 +322,9 @@ class _BrazingTorch_modelFitter:
                 matchedSeedDict, matchedSeedDict_filePath = self._findSeedMatch_inArchitectureDicts(
                     architectureDicts_withMatchedAllDefinitions, seed, returnCheckPointPath=True)
 
-                checkpointPath, fitRunState, runName = self._fitRunState_conditions(
+                checkpointPath, fitRunState, runName, isModelChanged = self._fitRunState_conditions(
                     checkpointPath, matchedSeedDict, matchedSeedDict_filePath, resume,
-                    runName, seedSensitive)
+                    runName, seedSensitive, isModelChanged)
             else:
                 # there are models with the name of this model but with different structures
 
@@ -339,14 +338,13 @@ class _BrazingTorch_modelFitter:
         dummyLogger = pl.loggers.TensorBoardLogger(self.modelName,
                                                    name=architectureName,
                                                    version=runName)
-        # kkk what should be version name
         loggerPath = os.path.abspath(dummyLogger.log_dir)
 
-        return architectureName, loggerPath, fitRunState, checkpointPath
+        return architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged
 
     def _fitRunState_conditions(self, checkpointPath,
                                 matchedSeedDict, matchedSeedDict_filePath,
-                                resume, runName, seedSensitive):
+                                resume, runName, seedSensitive, isModelChanged):
         # cccDevStruct
         #  - note being here means some models with the exact same
         #  structure as this model has run before
@@ -397,6 +395,8 @@ class _BrazingTorch_modelFitter:
                     #  for a model with different seed
                     checkpointPath = matchedSeedDict_filePath
                     runName = matchedSeedDict_filePath.split(os.sep)[-2]
+                    isModelChanged = True
+                    Warn.info("loading a model with another seed")
             else:  # no resume and no seedSensitive
                 # cccDevStruct
                 #  even it's no seedSensitive if there is a model with the same seed,
@@ -413,7 +413,7 @@ class _BrazingTorch_modelFitter:
                     # here the seed differs and 'no resume' means tend to run from
                     # beginning with its own seed
                     fitRunState = 'beginning'
-        return checkpointPath, fitRunState, runName
+        return checkpointPath, fitRunState, runName, isModelChanged
 
     def _askUserToReplaceModel(self):
         # Use inputTimeout to ask the user whether to replace the model

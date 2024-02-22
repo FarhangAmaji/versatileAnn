@@ -74,19 +74,19 @@ class DetermineFitRunStateTests(FitTests):
     # cccDevStruct
     #  note test func which have _matchedSeedDict have seed=71 as there is a model saved with
     #  this seed
-    # kkk on some tests '__new__' is called??!!?
 
     def test_resume_seedSensitive_matchedSeedDict(self):
         self.setup(seed=71)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=True)
         self.assertEqual(fitRunState, 'resume')
+        self.assertFalse(isModelChanged)
         self.assertEqual(checkpointPath,
                          os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
 
     def test_resume_seedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
         self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
@@ -94,7 +94,7 @@ class DetermineFitRunStateTests(FitTests):
     def test_noResume_seedSensitive_matchedSeedDict_dontReplace(self):
         self.setup(seed=71)
         with simulateInput("this is some random input"):
-            architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+            architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
                 seed=self.seed, resume=False, seedSensitive=True)
 
         self.assertEqual(fitRunState, "don't run")
@@ -102,7 +102,7 @@ class DetermineFitRunStateTests(FitTests):
     def test_noResume_seedSensitive_matchedSeedDict_replace(self):
         self.setup(seed=71)
         with simulateInput("yes"):
-            architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+            architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
                 seed=self.seed, resume=False, seedSensitive=True)
 
         self.assertEqual(fitRunState, "beginning")
@@ -112,33 +112,37 @@ class DetermineFitRunStateTests(FitTests):
         # note this one also exactly lands in the condition which
         # test_resume_seedSensitive_noMatchedSeedDict is landed and has exact same results
         self.setup(seed=81)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
         self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
 
     def test_resume_noSeedSensitive_matchedSeedDict(self):
         self.setup(seed=71)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=False)
         self.assertEqual(fitRunState, "resume")
+        self.assertFalse(isModelChanged)
         self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
         self.assertEqual(checkpointPath,
                          os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
 
     def test_resume_noSeedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=False)
         self.assertEqual(fitRunState, "resume")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)  # note it's not 81 and it's 71
+        self.assertTrue(isModelChanged)
+        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
+        # note it's not 81 and it's 71 as the model has been changed
+
         self.assertEqual(checkpointPath,
                          os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
 
     def test_noResume_noSeedSensitive_matchedSeedDict_dontReplace(self):
         self.setup(seed=71)
         with simulateInput("this is some random input"):
-            architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+            architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
                 seed=self.seed, resume=False, seedSensitive=False)
 
         self.assertEqual(fitRunState, "don't run")
@@ -146,7 +150,7 @@ class DetermineFitRunStateTests(FitTests):
     def test_noResume_noSeedSensitive_matchedSeedDict_replace(self):
         self.setup(seed=71)
         with simulateInput("yes"):
-            architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+            architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
                 seed=self.seed, resume=False, seedSensitive=False)
 
         self.assertEqual(fitRunState, "beginning")
@@ -154,7 +158,7 @@ class DetermineFitRunStateTests(FitTests):
 
     def test_noResume_noSeedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
-        architectureName, loggerPath, fitRunState, checkpointPath = self.model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=False)
         self.assertEqual(fitRunState, "beginning")
         self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
@@ -163,7 +167,7 @@ class DetermineFitRunStateTests(FitTests):
         model = NNDummy2(modelName='DetermineFitRunStateTests_mockSavedModels',
                          testPrints=True, seed=71,
                          lossFuncs=[nn.MSELoss(), nn.L1Loss()])
-        architectureName, loggerPath, fitRunState, checkpointPath = model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = model._determineFitRunState(
             seed=71, resume=False, seedSensitive=False)
         self.assertEqual(fitRunState, "beginning")
         self.assertEqual(architectureName, 'arch2')
@@ -172,7 +176,7 @@ class DetermineFitRunStateTests(FitTests):
         model = NNDummy1(modelName='NNDummy1',
                          testPrints=True, seed=71,
                          lossFuncs=[nn.MSELoss(), nn.L1Loss()])
-        architectureName, loggerPath, fitRunState, checkpointPath = model._determineFitRunState(
+        architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = model._determineFitRunState(
             seed=71)
         self.assertEqual(fitRunState, "beginning")
         self.assertEqual(loggerPath,

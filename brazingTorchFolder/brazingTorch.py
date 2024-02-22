@@ -142,6 +142,7 @@ class BrazingTorch(pl.LightningModule,
         phase = self.phases.predict
         return self.commonStep(batch, phase)
 
+    # ----
     def configure_optimizers(self):
         # cccDevStruct
         #  pytorch lightning expects this method to be here
@@ -149,7 +150,7 @@ class BrazingTorch(pl.LightningModule,
             return (self.optimizer, self.schedulers)# addTest2
         return self.optimizer
 
-    # reset tempVar of phases on epoch start
+    # ---- reset tempVar of phases on epoch start
     def on_train_epoch_start(self):
         # cccDevStruct
         #  pytorch lightning expects this method to be here
@@ -180,6 +181,7 @@ class BrazingTorch(pl.LightningModule,
         self.resetTempVarRun_allPhases()
         self._tempVarRun_allPhases_hidden = {}
 
+    # ----
     @argValidator
     def on_save_checkpoint(self, checkpoint: dict):
         # cccDevStruct
@@ -192,6 +194,7 @@ class BrazingTorch(pl.LightningModule,
         #  pytorch lightning expects this method to be here
         return self.onLoadCheckpoint(checkpoint)
 
+    # ----
     def _isCls_BrazingTorchClass(self, cls_):
         # cccDevAlgo
         #  this is a util to be used in parent classes and not get circular import error
