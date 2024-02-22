@@ -273,6 +273,8 @@ class _BrazingTorch_modelFitter:
         else:
             result.append(var2)
         return result
+
+    # ----
     def _determineFitRunState(self, seed, resume=True, seedSensitive=False):
         # goodToHave2
         #  this is similar to _determineShouldRun_preRunTests
@@ -299,7 +301,7 @@ class _BrazingTorch_modelFitter:
             # there is a model run before with the name of this model
 
             architectureDicts = self._collectArchDicts(loggerPath)
-            # update loggerPath
+            # update loggerPath with now found archDicts
             if architectureDicts:
                 loggerPath = self._updateLoggerPath_withExistingArchName(architectureDicts, runName)
             architectureDicts_withMatchedAllDefinitions = self._getArchitectureDicts_withMatchedAllDefinitions(
@@ -313,77 +315,17 @@ class _BrazingTorch_modelFitter:
                 architectureDicts_withMatchedAllDefinitions)
 
             if architectureDicts_withMatchedAllDefinitions:
-                # note being here means an exact model with the same structure has run before
+                # note being here means some models with the exact same
+                # structure as this model has run before
 
                 # Check if there is a model with the same seed
                 # note this is gonna be used in various cases below
                 matchedSeedDict, matchedSeedDict_filePath = self._findSeedMatch_inArchitectureDicts(
                     architectureDicts_withMatchedAllDefinitions, seed, returnCheckPointPath=True)
 
-                # cccDevStruct
-                #  - note there is no option to have duplicate models with the
-                #  same seed as the result would be the same anyway, so having
-                #  duplicate models with the same seed is useless
-                #  - 'no resume' means tend to run from beginning
-                if seedSensitive:
-                    if matchedSeedDict:
-                        if resume:
-                            # Resume the model with the same seed
-                            fitRunState = 'resume'
-                            checkpointPath = matchedSeedDict_filePath
-                        else:
-                            # 'no resume' means tend to run from beginning
-
-                            # Ask the user whether to run the model with the same
-                            # seed from beginning and replace the old save
-                            if self._askUserToReplaceModel():
-                                fitRunState = 'beginning'
-                            else:
-                                fitRunState = "don't run"
-                    else:
-                        # cccDevStruct
-                        #  there is no matched seed and it's seedSensitive(meaning that
-                        #  doesn't prefer to resume or start from the beginning models
-                        #  saved with other seeds)
-                        #  - thus only option is to run from the beginning
-                        fitRunState = 'beginning'
-                else:
-                    if resume:  # not seedSensitive and resume
-                        # cccDevStruct
-                        #  even it's no seedSensitive if there is a model with the same
-                        #  seed, so resumes that because it is probably more desired
-                        if matchedSeedDict:
-                            # Resume the model which has the same seed
-                            fitRunState = 'resume'
-                            checkpointPath = matchedSeedDict_filePath
-                        else:
-                            # Resumes any other seed
-                            # cccDevStruct
-                            #  note as the seeds are not the same, this option only wants to resume
-                            #  sth, later in .fit when the model(with different seed) is loaded
-                            #  there would be a warning for 'seed is changing'
-                            fitRunState = 'resume'
-                            # cccDevStruct
-                            #  note as you have guessed matchedSeedDict_filePath is checkPointPath
-                            #  for a model with different seed
-                            checkpointPath = matchedSeedDict_filePath
-                            runName = matchedSeedDict_filePath.split(os.sep)[-2]
-                    else:  # no resume and no seedSensitive
-                        # cccDevStruct
-                        #  even it's no seedSensitive if there is a model with the same seed,
-                        #  thats more prefered; also note duplicate models with same seeds
-                        #  are not allowed
-                        if matchedSeedDict:
-                            # Ask the user whether to run the model with the same
-                            # seed from beginning and replace the old save
-                            if self._askUserToReplaceModel():
-                                fitRunState = 'beginning'
-                            else:
-                                fitRunState = "don't run"
-                        else:  # not seedSensitive and not resume and no matchedSeedDict
-                            # here the seed differs and 'no resume' means tend to run from
-                            # beginning with its own seed
-                            fitRunState = 'beginning'
+                checkpointPath, fitRunState, runName = self._fitRunState_conditions(
+                    checkpointPath, matchedSeedDict, matchedSeedDict_filePath, resume,
+                    runName, seedSensitive)
             else:
                 # there are models with the name of this model but with different structures
 
@@ -401,6 +343,77 @@ class _BrazingTorch_modelFitter:
         loggerPath = os.path.abspath(dummyLogger.log_dir)
 
         return architectureName, loggerPath, fitRunState, checkpointPath
+
+    def _fitRunState_conditions(self, checkpointPath,
+                                matchedSeedDict, matchedSeedDict_filePath,
+                                resume, runName, seedSensitive):
+        # cccDevStruct
+        #  - note being here means some models with the exact same
+        #  structure as this model has run before
+        #  - note there is no option to have duplicate models with the
+        #  same seed as the result would be the same anyway, so having
+        #  duplicate models with the same seed is useless
+        #  - 'no resume' means tend to run from beginning
+        if seedSensitive:
+            if matchedSeedDict:
+                if resume:
+                    # Resume the model with the same seed
+                    fitRunState = 'resume'
+                    checkpointPath = matchedSeedDict_filePath
+                else:
+                    # 'no resume' means tend to run from beginning
+
+                    # Ask the user whether to run the model with the same
+                    # seed from beginning and replace the old save
+                    if self._askUserToReplaceModel():
+                        fitRunState = 'beginning'
+                    else:
+                        fitRunState = "don't run"
+            else:
+                # cccDevStruct
+                #  there is no matched seed and it's seedSensitive(meaning that
+                #  doesn't prefer to resume or start from the beginning models
+                #  saved with other seeds)
+                #  - thus only option is to run from the beginning
+                fitRunState = 'beginning'
+        else:
+            if resume:  # not seedSensitive and resume
+                # cccDevStruct
+                #  even it's no seedSensitive if there is a model with the same
+                #  seed, so resumes that because it is probably more desired
+                if matchedSeedDict:
+                    # Resume the model which has the same seed
+                    fitRunState = 'resume'
+                    checkpointPath = matchedSeedDict_filePath
+                else:
+                    # Resumes any other seed
+                    # cccDevStruct
+                    #  note as the seeds are not the same, this option only wants to resume
+                    #  sth, later in .fit when the model(with different seed) is loaded
+                    #  there would be a warning for 'seed is changing'
+                    fitRunState = 'resume'
+                    # cccDevStruct
+                    #  note as you have guessed matchedSeedDict_filePath is checkPointPath
+                    #  for a model with different seed
+                    checkpointPath = matchedSeedDict_filePath
+                    runName = matchedSeedDict_filePath.split(os.sep)[-2]
+            else:  # no resume and no seedSensitive
+                # cccDevStruct
+                #  even it's no seedSensitive if there is a model with the same seed,
+                #  thats more prefered; also note duplicate models with same seeds
+                #  are not allowed
+                if matchedSeedDict:
+                    # Ask the user whether to run the model with the same
+                    # seed from beginning and replace the old save
+                    if self._askUserToReplaceModel():
+                        fitRunState = 'beginning'
+                    else:
+                        fitRunState = "don't run"
+                else:  # not seedSensitive and not resume and no matchedSeedDict
+                    # here the seed differs and 'no resume' means tend to run from
+                    # beginning with its own seed
+                    fitRunState = 'beginning'
+        return checkpointPath, fitRunState, runName
 
     def _askUserToReplaceModel(self):
         # Use inputTimeout to ask the user whether to replace the model

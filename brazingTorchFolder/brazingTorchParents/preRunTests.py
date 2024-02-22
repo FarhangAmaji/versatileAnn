@@ -340,6 +340,7 @@ class _BrazingTorch_preRunTests:
             # there is a model run before with the name of this model
 
             architectureDicts = self._collectArchDicts(loggerPath)
+            # update loggerPath with now found archDicts
             if architectureDicts:
                 loggerPath = self._updateLoggerPath_withExistingArchName(architectureDicts,
                                                                          'preRunTests')
