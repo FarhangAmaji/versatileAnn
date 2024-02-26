@@ -1,6 +1,5 @@
 import copy
 import math
-from types import NoneType
 from typing import Union
 
 import numpy as np
@@ -76,7 +75,7 @@ knownTypesToBeTensored = DotDict({
     'notTensorables': DotDict({  # these below can't be changed to tensor
         'set': str(set), 'dict': str(dict),
         'str': str(str),
-        'none': str(NoneType), 'bytes': str(bytes),
+        'none': str(type(None)), 'bytes': str(bytes),
         'DotDict': str(DotDict)})
 })
 

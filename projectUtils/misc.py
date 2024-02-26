@@ -27,7 +27,7 @@ def isCustomFunction(func):
     import pkg_resources
     import types
 
-    if func is None or func is types.NoneType:
+    if func is None or func is type(None):
         return False
 
     moduleName = getattr(func, '__module__', '')
@@ -101,7 +101,7 @@ def isCustomClass(cls_):
     import builtins
     import pkg_resources
     import types
-    if cls_ is None or cls_ is types.NoneType:  # kkk
+    if cls_ is None or cls_ is type(None):  # kkk
         return False
     moduleName = getattr(cls_, '__module__', '')
     return (
