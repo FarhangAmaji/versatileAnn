@@ -75,3 +75,11 @@ class SchedulerChanger:
         self.module.schedulers = self.original_schedulers
 
 
+class ReduceLROnPlateauScheduler(pl.callbacks.lr_scheduler.ReduceLROnPlateau):
+    def __init__(self, monitor, mode='min', factor=0.1, patience=10, verbose=False,
+                 threshold=1e-4, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-8):
+        super().__init__(monitor, mode, factor, patience, verbose, threshold, threshold_mode,
+                         cooldown, min_lr, eps)
+
+    def on_validation_end(self, trainer, pl_module):
+        self._reduce_lr(trainer, pl_module)
