@@ -1,8 +1,8 @@
 # current
+NoneType had problem(type(None))
+fitTests error of loggerPath; so is not sth
+.venv in findClassDefinition_inADirectory
 .fit should have:
-            1. ModelCheckpoint to save best model on loss
-            2. StepLR Scheduler, ReduceLROnPlateau, warmUp
-            3. EarlyStopping
             4. log_every_n_epoch=1 (on trainer I think)
 create:
     1. new todos tagnames

@@ -5,16 +5,16 @@ from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
-import torch.optim.lr_scheduler as LrScheduler
 from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
 from pytorch_lightning.loggers import Logger
 from torch import nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from brazingTorchFolder.callbacks import StoreEpochData, WarmUpScheduler, \
-    ReduceLROnPlateauScheduler, SchedulerChanger
+    SchedulerChanger
 from projectUtils.dataTypeUtils.tensor import getTorchDevice
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
@@ -99,6 +99,7 @@ def externalFit(self, trainDataloader: DataLoader,
                 seed=None, resume=True, seedSensitive=False,
                 addDefaultLogger=True, addDefault_gradientClipping=True,
                 warmUp_epochNum=5, addDefault_reduceLROnPlateau=True,
+                addDefault_earlyStopping=True,
                 preRunTests_force=False, preRunTests_seedSensitive=False,
                 preRunTests_lrsToFindBest=None,
                 preRunTests_batchSizesToFindBest=None,
@@ -181,16 +182,30 @@ def externalFit(self, trainDataloader: DataLoader,
         newSchedulers = [warmUp] + self._schedulers
 
     if addDefault_reduceLROnPlateau:
-        rlrop = ReduceLROnPlateauScheduler(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
-                                           mode='min', factor=0.1, patience=15, verbose=False,
-                                           cooldown=0, min_lr=1e-8)
+        rlrop = ReduceLROnPlateau(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
+                                  mode='min', factor=0.1, patience=15, verbose=False,
+                                  cooldown=0, min_lr=1e-8)
 
         if newSchedulers:
             newSchedulers = newSchedulers + [rlrop]
         else:
             newSchedulers = self._schedulers + [rlrop]
 
-    with SchedulerChanger(self, newSchedulers=newSchedulers):
+    if addDefault_earlyStopping:
+        earlyStopping = EarlyStopping(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
+                                      patience=5, verbose=False)
+        if newSchedulers:
+            newSchedulers = newSchedulers + [earlyStopping]
+        else:
+            newSchedulers = self._schedulers + [earlyStopping]
+
+    if newSchedulers:
+        with SchedulerChanger(self, newSchedulers=newSchedulers):
+            return self, self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
+                                      addDefaultLogger=addDefaultLogger,
+                                      addDefault_gradientClipping=addDefault_gradientClipping,
+                                      listOfKwargs=[kwargsApplied], **kwargs)
+    else:
         return self, self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
                                   addDefaultLogger=addDefaultLogger,
                                   addDefault_gradientClipping=addDefault_gradientClipping,
