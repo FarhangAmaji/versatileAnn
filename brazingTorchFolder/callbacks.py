@@ -29,3 +29,24 @@ class StoreEpochData(pl.Callback):
     def on_predict_epoch_end(self, trainer, pl_module):
         phase = 'predict'
         self._metricUpdate(phase, trainer)
+
+
+class WarmUpScheduler(LambdaLR):
+    """
+    Gradual warm-up learning rate scheduler.
+
+    Args:
+        optimizer (torch.optim.Optimizer): Wrapped optimizer.
+        warmUpEpochs (int): Number of epochs for warming up.
+        last_epoch (int, optional): The index of last epoch. Default: -1.
+    """
+
+    def __init__(self, optimizer, warmUpEpochs, last_epoch=-1):
+        def lr_lambda(current_epoch):
+            if current_epoch < warmUpEpochs:
+                return float(current_epoch) / float(warmUpEpochs)
+            return 1.0
+
+        super().__init__(optimizer, lr_lambda, last_epoch=last_epoch)
+
+
