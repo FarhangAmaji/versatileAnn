@@ -36,7 +36,8 @@ def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
 
     # Load state_dict into model
     if isclass(ModelClassOrInstance):
-        model = ModelClassOrInstance.load_from_checkpoint(checkpoint_path=checkpointPath)
+        model = ModelClassOrInstance.load_from_checkpoint(
+            checkpoint_path=checkpointPath)
     else:
         model = type(ModelClassOrInstance).load_from_checkpoint(
             checkpoint_path=checkpointPath)
@@ -122,7 +123,7 @@ def externalFit(self, trainDataloader: DataLoader,
         seedSensitive=seedSensitive)
 
     if fitRunState == "don't run":
-        Warn.info("as you decided, the model is not replaced, if you want to resume, pass " + \
+        Warn.info("as you decided, the model is not replaced, if you want to resume, pass " +
                   "resume=True to .fit")
         return self, None
     elif fitRunState == "resume":
@@ -176,37 +177,38 @@ def externalFit(self, trainDataloader: DataLoader,
                                                version=runName),
         'callbacks': callbacks_, }
 
-    newSchedulers = []
+    newSchedulers = _addDefaultSchedulers(self, addDefault_earlyStopping,
+                                          addDefault_reduceLROnPlateau, warmUp_epochNum)
+
+    doBaseFit = lambda: self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
+                                     addDefaultLogger=addDefaultLogger,
+                                     addDefault_gradientClipping=addDefault_gradientClipping,
+                                     listOfKwargs=[kwargsApplied], **kwargs)
+
+    if newSchedulers:
+        with SchedulerChanger(self, newSchedulers=newSchedulers):
+            return self, doBaseFit()
+    else:
+        return self, doBaseFit()
+
+
+def _addDefaultSchedulers(self, addDefault_earlyStopping, addDefault_reduceLROnPlateau,
+                          warmUp_epochNum):
+
+    newSchedulers = self._schedulers
     if warmUp_epochNum:
         warmUp = WarmUpScheduler(self.optimizer, warmUpEpochs=warmUp_epochNum)
-        newSchedulers = [warmUp] + self._schedulers
+        newSchedulers = [warmUp] + newSchedulers
 
     if addDefault_reduceLROnPlateau:
         rlrop = ReduceLROnPlateau(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
                                   mode='min', factor=0.1, patience=15, verbose=False,
                                   cooldown=0, min_lr=1e-8)
 
-        if newSchedulers:
-            newSchedulers = newSchedulers + [rlrop]
-        else:
-            newSchedulers = self._schedulers + [rlrop]
+        newSchedulers = newSchedulers + [rlrop]
 
     if addDefault_earlyStopping:
         earlyStopping = EarlyStopping(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
                                       patience=5, verbose=False)
-        if newSchedulers:
-            newSchedulers = newSchedulers + [earlyStopping]
-        else:
-            newSchedulers = self._schedulers + [earlyStopping]
-
-    if newSchedulers:
-        with SchedulerChanger(self, newSchedulers=newSchedulers):
-            return self, self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
-                                      addDefaultLogger=addDefaultLogger,
-                                      addDefault_gradientClipping=addDefault_gradientClipping,
-                                      listOfKwargs=[kwargsApplied], **kwargs)
-    else:
-        return self, self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
-                                  addDefaultLogger=addDefaultLogger,
-                                  addDefault_gradientClipping=addDefault_gradientClipping,
-                                  listOfKwargs=[kwargsApplied], **kwargs)
+        newSchedulers = newSchedulers + [earlyStopping]
+    return newSchedulers
