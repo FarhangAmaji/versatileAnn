@@ -46,6 +46,7 @@ class _BrazingTorch_modelFitter:
             *, lossFuncs: List[nn.modules.loss._Loss],
             seed=None, resume=True, seedSensitive=False,
             addDefaultLogger=True, addDefault_gradientClipping=True,
+            warmUp_epochNum=5, addDefault_reduceLROnPlateau=True,
             preRunTests_force=False, preRunTests_seedSensitive=False,
             preRunTests_lrsToFindBest=None,
             preRunTests_batchSizesToFindBest=None,
@@ -66,6 +67,7 @@ class _BrazingTorch_modelFitter:
         kwargs_ = varPasser(
             localArgNames=['trainDataloader', 'valDataloader', 'lossFuncs', 'seed', 'resume',
                            'seedSensitive', 'addDefaultLogger', 'addDefault_gradientClipping',
+                           'warmUp_epochNum', 'addDefault_reduceLROnPlateau',
                            'preRunTests_force', 'preRunTests_seedSensitive',
                            'preRunTests_lrsToFindBest', 'preRunTests_batchSizesToFindBest',
                            'preRunTests_fastDevRunKwargs', 'preRunTests_overfitBatchesKwargs',

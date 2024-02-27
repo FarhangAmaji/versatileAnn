@@ -58,21 +58,20 @@ class SchedulerChanger:
 
     Args:
         module (LightningModule): The PyTorch Lightning module instance.
-        new_schedulers (list): The new list of schedulers to use within the context.
+        newSchedulers (list): The new list of schedulers to use within the context.
     """
 
-    def __init__(self, module, new_schedulers):
+    def __init__(self, module, newSchedulers):
         self.module = module
-        self.original_schedulers = copy.deepcopy(module.schedulers)  # Deep copy
-        self.new_schedulers = module.from_schedulers(new_schedulers) if hasattr(module,
-                                                                                'from_schedulers') else new_schedulers
+        self.originalSchedulers = copy.deepcopy(module.schedulers)
+        self.newSchedulers = newSchedulers
 
     def __enter__(self):
-        self.module.schedulers = self.new_schedulers
+        self.module.schedulers = self.newSchedulers
         return self.module
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.module.schedulers = self.original_schedulers
+        self.module.schedulers = self.originalSchedulers
 
 
 class ReduceLROnPlateauScheduler(pl.callbacks.lr_scheduler.ReduceLROnPlateau):
