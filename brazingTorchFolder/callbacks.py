@@ -1,4 +1,7 @@
+import copy
+
 import pytorch_lightning as pl
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class StoreEpochData(pl.Callback):
@@ -48,5 +51,27 @@ class WarmUpScheduler(LambdaLR):
             return 1.0
 
         super().__init__(optimizer, lr_lambda, last_epoch=last_epoch)
+
+
+class SchedulerChanger:
+    """Context manager to temporarily change PyTorch Lightning module's schedulers.
+
+    Args:
+        module (LightningModule): The PyTorch Lightning module instance.
+        new_schedulers (list): The new list of schedulers to use within the context.
+    """
+
+    def __init__(self, module, new_schedulers):
+        self.module = module
+        self.original_schedulers = copy.deepcopy(module.schedulers)  # Deep copy
+        self.new_schedulers = module.from_schedulers(new_schedulers) if hasattr(module,
+                                                                                'from_schedulers') else new_schedulers
+
+    def __enter__(self):
+        self.module.schedulers = self.new_schedulers
+        return self.module
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.module.schedulers = self.original_schedulers
 
 
