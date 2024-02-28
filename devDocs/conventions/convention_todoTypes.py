@@ -1,11 +1,13 @@
-# bugs
-# bugCriticalUnknown
-# bugKnown1
-# bugKnown2
-# bugPotentialCheck1
-# bugPotentialCheck2
-# addTest1
-# addTest2
+# general tag to check later
+# kkk
+
+# explanation comments
+# ccc1
+# ccc2
+# ccc3
+# ccc4
+# cccDev
+# cccUsage
 
 # features to be added
 # mustHave1
@@ -15,18 +17,21 @@
 # goodToHave2
 # goodToHave3
 
-# comments
-# - devComments
-# cccDevStruct
-# cccDevAlgo
+# bugs
+# bug1
+# bug2
+# bug3
+# bugPotn1
+# bugPotn2
+# bugPotn3
 
-# - userComments
-# cccAlgo
-# cccUsage
+# need for tests
+# addTest1
+# addTest2
+# addTest3
 
-# question
+# temporary doubt questions
 # qqq
 
-# styles
-# style1
-# style2
+# styling comments
+# style
