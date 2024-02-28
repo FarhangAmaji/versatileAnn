@@ -97,8 +97,8 @@
     - this should be used for `temporary` purposes and should `not exist` in `final`
 
     1.  does this line of code works or not(this is most likely is going to occur when the is not following `test driven development`)
-       - note if the doubt probably is not temporarily, the `bugPotn` should be used instead
-    2. not sure about `compatibility` with the other parts of the code
+        - note if the doubt probably is not temporarily, the `bugPotn` should be used instead
+    2.  not sure about `compatibility` with the other parts of the code
 
   - color `FF2A64`
 
@@ -303,32 +303,3 @@ the formatting is done with a formatter in `vscode` with following `settings.jso
   ]
 }
 ```
-
-# commits prefix conventions
-
-- note again numbering goes from `1` the most important to `4` the ordinary
-
-- ---
-
-  `feat` 1~4 : new feature is added
-
-- `improve` 1~4 : existing feature is improved
-
-- `change` 1~4 : existing feature is changed
-
-- `restruct`: the big part of changed, and which makes other parts also to be changed
-
-- `refactor` 1~4 : refactoring
-
-  - examples:
-    - changing the orders of arguments in a function
-    - renaming some variable
-    - putting some block of code to a function
-
-- `test`
-
-- `docs`
-
-- `style`
-
-- `chore`
