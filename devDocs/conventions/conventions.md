@@ -1,21 +1,3 @@
-## formatting convention
-
-#mustHave1 the formatting config of `pycharm` must be added to conventions
-
-the formatting is done with a formatter in `vscode` with following `settings.json`
-
-```
-"[python]": {
-  "python.formatting.autopep8Args": [
-    "--max-line-length=100",
-    "--indent-size=4",
-    "--indent-after-paren=1",
-    "--aggressive",
-    "--max-args=3"
-  ]
-}
-```
-
 ## comments convention
 
 ---
@@ -123,6 +105,37 @@ the formatting is done with a formatter in `vscode` with following `settings.jso
 - style `9696FF`
 
 ---
+
+# commits prefix conventions
+
+- note again numbering goes from `1` the most important to `4` the ordinary
+
+- ---
+
+  `feat` 1~4 : new feature is added
+
+- `improve` 1~4 : existing feature is improved
+
+- `change` 1~4 : existing feature is changed
+
+- `restruct`: the big part of changed, and which makes other parts also to be changed
+
+- `refactor` 1~4 : refactoring
+
+  - examples:
+    - changing the orders of arguments in a function
+    - renaming some variable
+    - putting some block of code to a function
+
+- `test`
+
+- `docs`
+
+- `style`
+
+- `chore`
+
+## set comments/todos in vscode
 
 in `vscode` the comments use `better comments` extension with these added style to `settings.json`
 
@@ -251,7 +264,7 @@ in `vscode` the comments use `better comments` extension with these added style 
   ],
 ```
 
-## formatting convention
+## naming convention
 
 - safety:
   - naming `func` on what `exactly` they `are doing`
@@ -272,6 +285,24 @@ in `vscode` the comments use `better comments` extension with these added style 
   7. verb for func names
   8. dont use abbreviations; some times context tricks u this abbreviation is ok
   9. `PascalCase` for `classes
+
+## formatting in vscode
+
+#mustHave1 the formatting config of `pycharm` must be added to conventions
+
+the formatting is done with a formatter in `vscode` with following `settings.json`
+
+```
+"[python]": {
+  "python.formatting.autopep8Args": [
+    "--max-line-length=100",
+    "--indent-size=4",
+    "--indent-after-paren=1",
+    "--aggressive",
+    "--max-args=3"
+  ]
+}
+```
 
 # commits prefix conventions
 
