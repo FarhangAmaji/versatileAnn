@@ -1,80 +1,32 @@
 # current
-clean this file
+1. clean this file
 2. readMe
-    3. explain private and public func/class names `_`
-   4. reading comments due to importance(if u add color codding devDocs/conventions/convention_todoTypes.py)
-3. refactor:
+   3. explain private and public func/class names `_`
+   4. reading comments due to importance/scale of scope affecting(if u add color codding devDocs/conventions/convention_todoTypes.py)
+5. merge to development and master
+6. refactor:
    3. add docstring and moduleStrings
    4. change old todos
    5. add addtests comment
    6. add tests for the ones needed the most
-4. machine learning models and optimizer
-5. deep reinforcement learning
-6. hyperparam opt with optuna
-7. conformal prediction
-
-1. determine where should architectureDict and model checkpoint to be saved(have 'seed' and preRunTests in mind)
-2. check preRunTests follows 1 correctly
-3. try save and load with .fit(without _determineFitRunState)
-4. apply checkpoints save path to .fit
-5. (***here)complete load or from begging to .fit
-6. loadModel should replace with self:
-    7. it's not possible so with a trick .fit should be able to load model and replace it with self
-   8. not it should have codeClarifier
-   9. make sure optimizer and schedulers are also loaded
-   10. also on_load_checkpoint should be applied
-6. make sure comments of determineFitRunState are correct and complete
-7. there should be some files saved for dummy1
-7. - .fit should have:
-            1. ModelCheckpoint to save best model on loss
-            2. StepLR Scheduler, ReduceLROnPlateau, warmUp
-            3. EarlyStopping
-            4. log_every_n_epoch=1 (on trainer I think)
-on getBackForeCastData_general if the device is mps it should check for changing int/float 64 to 32: no no no getBackForeCastData_general doesn't move to device so it's not needed
-- problems:
-- on_save_checkpoint is not called
-- magic number error
-- macos errors:
-    1. requirements.txt
-    8. dtype difference
-       9. dataloaderTests
-          10. 352
-          11. 363
-       12. tsRowFetcherTests
-           13. 243
-           14. 236
-           15. 274
-           17. 281
-           16. 289
-           18. 320
-    3. equalDf
-        2. splitTsTrainValTest_DfNNpDict
-           3. splitTests
+       - caching data for tests
+11. solve macOs errors
+        1. splitTsTrainValTest_DfNNpDict
+            1. splitTests
                4. 95
-              5. 125
-        1. environment difference error
-    1. mpsDeviceName
+               5. 125
+        2. mpsDeviceName
+16. machine learning models and optimizer
+17. adapt models to new wrapper
+18. user examples
+
 
 - todos:
-
-    
     - 
-    - 
-    - correct architecture to have seed for version and in subdir it should take preRunTests or runName
-    - _determineShouldRun_preRunTests saves architectureDict in architectureFolder and not runFolder
-    - .fit should have:
-            1. ModelCheckpoint to save best model on loss
-            2. StepLR Scheduler, ReduceLROnPlateau
-            3. EarlyStopping
-            4. log_every_n_epoch=1
-    - how to model 
     - right now default features of .fit are not customizable
             for example, the callbacks are preset but I should have self.fit_preset_variables and from that user may modify it
-    - check soleymanis errors?!?!
-    - baseFit and fit
-        - think about resuming model
 
-    - caching data for tests
+    
     - revise todos
         - add `bugPotential_hardcode`
         - add `bugPotential_fixedLocation` to conventions and colorcoding todos of pycharm and vscode
@@ -102,7 +54,7 @@ on getBackForeCastData_general if the device is mps it should check for changing
     - make sure specialModesStep and commonStep are similar
     - add restructureNeeded to todos
 
-# after current dev spring
+# after current dev sprint
 # major
 - universal seed in dataprep and BrazingTorch; it should not mess the funcs which take seed as arg; ofc it seems easy to solve it with `if` seed as arg is None then use universal seed; maybe load should set universal seed too
 - brazingTorch should be separated from the rest of the project
@@ -115,3 +67,18 @@ on getBackForeCastData_general if the device is mps it should check for changing
 - make formatter for vscode(currently is not working)
 - export formatter options of pycharm(put it in devDocs)
 - export comments style of pycharm and put it in devDocs
+# big steps
+mustHave:
+1. adapt models to new wrapper
+2. user examples
+goodTohave:
+3. machine learning models and optimizer
+4. models:
+    4. deep reinforcement learning
+    7. lamaish
+   8. diffusion
+   9. gan
+5. hyperparam opt with optuna
+6. conformal prediction
+7. data downloader(easier)
+8. trading pipeline(maybe utilize ready made packages)

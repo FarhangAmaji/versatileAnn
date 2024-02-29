@@ -24,6 +24,7 @@
 # bugPotn1
 # bugPotn2
 # bugPotn3
+# bugPotn_hardcoded
 
 # need for tests
 # addTest1
@@ -56,6 +57,7 @@
 # bugPotn1  FF0064
 # bugPotn2  FF2A64
 # bugPotn3  FF5464
+# bugPotn_hardcoded FF2A64
 # addTest1 FF0000
 # addTest2 FF2A00
 # addTest3 FF5400

@@ -33,6 +33,7 @@
       2. expalin why a block is doing sth:
 
          - the code preferably should have tagLines like # Lmwf, so the user can search that in the whole project(ctrl+shift+F) and find where that line is
+         - note for more complex explanations, it's better to create a codeClarifier file in devDocs\codeClarifier
          - explain why, 1. some details on the other parts 2. what feature was intended to be designed: have pushed the developer to do the code this way
 
     - colors:
@@ -78,11 +79,12 @@
     - cases:
       - during the development we are not sure does a line works or not
       - is this section compatible with the other parts of the code
-    - `bugPotn 1~3`
+    - `bugPotn 1~3` also `bugPotn_hardcoded`
     - colors:
       - `bugPotn1`  `FF0064`
       - `bugPotn2`  `FF2A64`
       - `bugPotn3`  `FF5464`
+      - `bugPotn_hardcoded` `FF2A64`
 
 - places which need tests
 
@@ -235,6 +237,11 @@ in `vscode` the comments use `better comments` extension with these added style 
       "name": "bugPotn3",
       "description": "Potential Bug 3",
       "foreground": "#FF5464"
+    },
+    {
+      "name": "bugPotn_hardcoded",
+      "description": "bugPotn where sth is hardcoded",
+      "foreground": "#FF2A64"
     },
     {
       "name": "addTest1",
