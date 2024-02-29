@@ -52,7 +52,7 @@ class _TsRowFetcher:
         # qqq does this idx match with getItem of dataset
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        # bugPotentialCheck2
+        # bugPotn2
         #  in past this code had 'if idx + shiftForward not in df.index:' then raise ValueError but found it
         #  not needed and self._assertIdx_NShiftInIndexes
         #  recheck later and if not found any it needed again remove this msg
@@ -129,7 +129,7 @@ class _TsRowFetcher:
         if idx + shiftForward < 0:
             raise ValueError(_TsRowFetcher.errMsgs['non-negStartingPointNpArray'])
 
-        # cccDevAlgo
+        # ccc1
         #  for np arrays [-1]results a value so we have to make assertion;
         #  no matter it wont give [-1:1] values,
         #  but then again even in this case it doesnt assert
@@ -160,7 +160,7 @@ class _TsRowFetcher:
                                     canHaveShorterLength=False,
                                     rightPadIfShorter=False):
 
-        # cccDevAlgo
+        # ccc1
         #  obviously in timeseries data we want to get next rows of data.
         #  for i.e. with data=[1, 2, 3, 4, 5, 6] and with seqLen=4, only 1, 2, 3 can provide data with seqLen with want.
         #  otherwise data will be shorter than seqLen, so having shorter data is banned by default unless you allow
@@ -173,7 +173,7 @@ class _TsRowFetcher:
         #  maybe not needed and the query is better used at other places in data preparation or split
         #  - if query is added, these castModes have to be more flexible
 
-        # bugPotentialCheck2
+        # bugPotn2
         #  the default dtype for tensor on some devices is int32 and on some is int64
 
         if mode not in self.castModes.keys():
@@ -184,7 +184,7 @@ class _TsRowFetcher:
                 "u should either pass '___all___' for all feature cols or a list of their columns or indexes")
 
         self._assertIdx_NShiftInIndexes(idx, shiftForward, canBeOutOfStartIndex)
-        # cccAlgo idx+shiftForward also should be in data indexes
+        # ccc1 idx+shiftForward also should be in data indexes
         varDicts = varPasser(localArgNames=['data', 'idx', 'mode', 'colsOrIndexes', 'shiftForward',
                                             'canHaveShorterLength', 'rightPadIfShorter'])
         res = self._getBackForeCastData_general_byDataType_NCastMode(**varDicts)
@@ -226,7 +226,7 @@ class _TsRowFetcher:
                        shiftForward, canHaveShorterLength,
                        rightPadIfShorter):
         canBeOutOfStartIndex = True
-        # cccDevStruct canBeOutOfStartIndex=True is in order not to check it again
+        # ccc1 canBeOutOfStartIndex=True is in order not to check it again
         varDicts = varPasser(
             localArgNames=['idx', 'colsOrIndexes', 'shiftForward', 'canHaveShorterLength',
                            'rightPadIfShorter', 'canBeOutOfStartIndex'])
@@ -305,7 +305,7 @@ class _TsRowFetcher:
                 else:
                     raise ValueError('only pd.DataFrame,pd.Series, Np array and tensor are allowed')
             else:
-                # cccAlgo
+                # ccc1
                 #  this part returns result which is shorter than regular(depending on back and forecastLens);
                 #  ofc if its allowed
                 self._assertCanHaveShorterLength_dependingOnAllowance(
@@ -329,7 +329,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     #  dataloader
     # mustHave2 model should check device, backcastLen, forecastLen with this
 
-    # cccAlgo
+    # ccc1
     #  VAnnTsDataset provides datachecking with some flexibilities.
     #  its also works with grouped(Nseries) data, to prevent data scrambling between groups data.
     #  ____
@@ -360,7 +360,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                          backcastLen, forecastLen)
 
         self.mainGroups = mainGroups or []
-        # cccAlgo these Idxs are explained at _makeMainGroupsIndexes
+        # ccc1 these Idxs are explained at _makeMainGroupsIndexes
         self.mainGroupsGeneralIdxs = {}
         self.mainGroupsRelIdxs = {}
         self._assignData_NMainGroupsIdxs(data, mainGroups, useNpDictForDfs)
@@ -370,7 +370,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
         self._shapeWarning()
         self._noNanOrNoneDataAssertion()
-        # for key, value in kwargs.items():# bugPotentialCheck1 this seems to be wrong
+        # for key, value in kwargs.items():# bugPotn1 this seems to be wrong
         #     setattr(self, key, value)
 
     def getBackForeCastData(self, idx, mode='backcast',
@@ -397,7 +397,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
         return len(self.indexes)
 
     def __getitem__(self, idx):
-        # bugPotentialCheck1
+        # bugPotn1
         #  these has problem with dataloader commonCollate_fn:
         #           TypeError: default_collate: batch must contain tensors, numpy arrays, numbers,
         #           dicts or lists; found object
@@ -430,7 +430,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     # ---- Private methods
     def _IdxNdataToLook_WhileFetching(self, idx):
         self._assertIdxInIndexes(idx, False)
-        # goodToHave3 its was better a cccAlgo was written, to know which if parts handles what situations
+        # goodToHave3 its was better a ccc1 was written, to know which if parts handles what situations
         if self.mainGroups:
             groupName = self._findIdxIn_mainGroupsRelIdxs(idx)
             dataToLook = self.data[groupName]
@@ -447,14 +447,14 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
     def _setIndexes(self, data, indexes, useNpDictForDfs,
                     backcastLen, forecastLen):
 
-        # cccAlgo
+        # ccc1
         #   - indexes serves 3 purposes:
         #   1. showing only allowed indexes to sampler and therefore dataloader
         #   2. indicator to fetch rows from data: so we either need df.index or df.loc
         #   or when the data is NpDict and was originally pd.DataFrame which was converted to NpDict
         #   3. ability to disallow getting data through getBackForeCastData and __getitem__
 
-        # cccAlgo note the NpDict is used by default to speed up data fetching process, because the df.loc is so much slow.
+        # ccc1 note the NpDict is used by default to speed up data fetching process, because the df.loc is so much slow.
 
         if indexes is None:
             noBackNForeLenCond = backcastLen == 0 and forecastLen == 0
@@ -469,7 +469,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
                 raise ValueError(VAnnTsDataset.noIndexesAssertionMsg)
 
             if noBackNForeLenCond and not (dfWithSP or ndWithSP):
-                # cccAlgo this is no npArray or tensors which have not provided indexes but dont want TS(backLen=foreLen=0)
+                # ccc1 this is no npArray or tensors which have not provided indexes but dont want TS(backLen=foreLen=0)
                 indexes = [i for i in range(len(data))]
 
             elif dfWithSP and not useNpDictForDfs:
@@ -483,7 +483,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
                 indexes = npDict.__index__[npDict['__startPoint__'] == True]
                 indexes = [list(npDict.__index__).index(i) for i in indexes]
-                # cccAlgo note the indexes are relative df.indexes. for i.e. if the df.indexes was [130,131,132,...]
+                # ccc1 note the indexes are relative df.indexes. for i.e. if the df.indexes was [130,131,132,...]
                 # and 130 and 132 have __startPoint__==True, indexes would be [0,2,...]
             else:
                 raise InternalLogicError('_setIndexes: internal logic error')
@@ -524,7 +524,7 @@ class VAnnTsDataset(Dataset, _TsRowFetcher):
 
     def _makeMainGroupsIndexes(self, data, mainGroups,
                                npDictData=False, convGroupData_ToNpDict=False):
-        # cccAlgo
+        # ccc1
         #  if the data passed to init
         #     1. is pd.df, mainGroupsGeneralIdxs and mainGroupsRelIdxs are indexes of df.index
         #     2. if pd.df with useNpDictForDfs==True, assume we have df.index==[130,131,...,135],

@@ -17,7 +17,7 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
-# cccDevAlgo
+# ccc1
 #  the code below was designed to serve these purposes:
 #   1. making gpu memory usage more efficient:
 #       - so instead of common thing which is moving tensors to gpu in dataset, which wastes gpu
@@ -54,7 +54,7 @@ knownTypesToBeTensored = DotDict({
         'tuple': str(tuple), 'npArray': str(np.ndarray),
         'pdSeries': str(pd.Series),
         'bool': str(bool), 'bytearray': str(bytearray)}),
-    # cccAlgo
+    # ccc1
     #  even though npArray, tuple, df, series may contain data which may be `str` and cant be converted to tensor
     #  but still we keep them in the format below, so in the case of having str, the error would be raised by pytorch
 
@@ -113,7 +113,7 @@ class TensorStacker:
 
 
 class _ObjectToBeTensored(TensorStacker):
-    # cccAlgo
+    # ccc1
     #  this is gonna be used in _NestedDictStruct.
     #  this is gonna wrap non dict objects and contains value, type
     #  and "func which can be used to convert that object to tensor"
@@ -154,7 +154,7 @@ class _NestedDictStruct:
     def __init__(self, wrappedObj, giveFilledStruct=False):
         # goodToHave3
         #  later may make giveFilledStruct=True by default
-        # cccAlgo
+        # ccc1
         #  an object of this class can get wrapped around other objects(wrappedObj)
         #  it differentiates between if wrappedObj is `dict` or from other types of data
         #  for dicts it maps their structure.
@@ -190,7 +190,7 @@ class _NestedDictStruct:
 
     # ---- fill with data
     def fillWithData(self, itemToAdd, path=None):
-        # cccAlgo
+        # ccc1
         #  in giveEmptyStruct the structure has been created but without values and here is filled up with data
         if path is None:
             path = []
@@ -210,7 +210,7 @@ class _NestedDictStruct:
 
     @staticmethod
     def fillSingleOrMultiple_WithItemData(nestedDictStructs, itemsToAdd):
-        # cccAlgo
+        # ccc1
         #  if nestedDictStructs is type of `_NestedDictStruct` is called `single`
         #  and if is `a list of _NestedDictStructs` is called `multiple`
         validate_IsObjOfTypeX_orAListOfTypeX(_NestedDictStruct)(nestedDictStructs)
@@ -249,7 +249,7 @@ class _NestedDictStruct:
         return returnDict
 
     def toList(self):
-        # cccAlgo
+        # ccc1
         #  Loops through self.struct and adds the values to a list
         result = []
 
@@ -292,7 +292,7 @@ class _NestedDictStruct:
 
     @staticmethod
     def getDataAsGpuTensors_singleNMultiple(nestedDictStructs):
-        # bugPotentialCheck1(same for fillSingleOrMultiple_WithItemData and getData_singleNMultiple)
+        # bugPotn1(same for fillSingleOrMultiple_WithItemData and getData_singleNMultiple)
         #  in the past(how its tests are written), it hadn't @staticmethod and probably
         #  nestedDictStructs was assumed to be `self` but after adding @staticmethod worked as before
         return _NestedDictStruct.getData_singleNMultiple(
@@ -306,7 +306,7 @@ class _NestedDictStruct:
 @argValidator
 def alterAValue_InANestedDictPath(inputDictStyle: Union[dict, DotDict, _NestedDictStruct],
                                   path, value, extendIfPossible=False):
-    # cccAlgo
+    # ccc1
     #  for i.e. in a nested dict like {'a':{'b':{'c':[]}},'a2'} with path like ['a','b','c'] goes
     #  through the nested path and append/extends the value to that list
     current = inputDictStyle
@@ -349,7 +349,7 @@ def extendValueIfPossible_ToNestedDictPath(
 
 # ---- SamplerFor_vAnnTsDataset
 class SamplerFor_vAnnTsDataset(Sampler):
-    # cccDevAlgo
+    # ccc1
     #  this is created, because neither default dataloader or vAnnDataloader didnt respect indexes of the vAnnDataset
 
     @argValidator
@@ -395,7 +395,7 @@ class SamplerFor_vAnnTsDataset(Sampler):
 
     def _shuffleIndexes(self):
         self.indexes = shuffleData(self.indexes, self.seed)
-        # cccAlgo
+        # ccc1
         #  note indexes by getting shuffled result get changed inplace
         #  and there is way back even by making shuffle False
         #  note this is gonna work only when shuffleFirst=False is applied
@@ -452,7 +452,7 @@ class VAnnTsDataloader(DataLoader):
         # dataloaderName
         self._setNameNPhase(dataset, name, phase)
 
-        # cccDevAlgo
+        # ccc1
         #  the naming format is in library is camelCase; but the pytorch uses snake_case,
         #  so if the user has passed `batchSize` it would work correctly. also `batchSize` has priority over 'batch_size'
         if 'batchSize' in kwargs.keys():
@@ -481,7 +481,7 @@ class VAnnTsDataloader(DataLoader):
                           'collate_fn': collate_fn, 'randomSeed': randomSeed, 'kwargs': kwargs}
 
     def findBatchStruct(self, batch):
-        # cccAlgo
+        # ccc1
         #  .batchStruct is a `_NestedDictStruct` object(by convention, called singleType of _NestedDictStruct) or `a list of '_NestedDictStruct's`(multiple type)
         if isListTupleOrSet(batch):
             batchStructOfBatch = []
@@ -492,13 +492,13 @@ class VAnnTsDataloader(DataLoader):
             self.batchStruct = _NestedDictStruct(batch)
 
     def commonCollate_fn(self, batch):
-        # cccDevAlgo
+        # ccc1
         #  for understanding gpu memory efficiency provided here take a look at devDocs\codeClarifier\gpuMemoryEfficiencyDataloader
-        # bugPotentialCheck1
+        # bugPotn1
         #  dicts can't directly passed to the default_collate
-        # bugPotentialCheck1
+        # bugPotn1
         #  TypeError: default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found object(note this was caused with dtype being object)
-        # cccDevAlgo
+        # ccc1
         #  (how default_collate works):
         #   example1:
         #       converts 32lists of 2tuples which each one is a dict of 5 keys, each key has tensor of shape(7)

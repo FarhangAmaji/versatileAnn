@@ -26,7 +26,7 @@ class _BrazingTorch_saveLoad:
         # in this project like EPF, electricity,...
         # so automatically detects them and load them
 
-        # cccDevStruct
+        # ccc1
         #  doesn't need to be added to device, as with initArgs the init will run and there device
         #  would be set
 
@@ -112,7 +112,7 @@ class _BrazingTorch_saveLoad:
     def onSaveCheckpoint(self, checkpoint: dict):
         # reimplement this method to save additional information to the checkpoint
 
-        # cccDevStruct
+        # ccc1
         #  note this is used in on_save_checkpoint which is placed in BrazingTorch
 
         # Add additional information to the checkpoint
@@ -126,7 +126,7 @@ class _BrazingTorch_saveLoad:
     def onLoadCheckpoint(self, checkpoint: dict):
         # Load additional information from the checkpoint
 
-        # cccDevStruct
+        # ccc1
         #  note this is used in on_load_checkpoint which is placed in BrazingTorch
 
         additionalInfo = checkpoint['brazingTorch']
@@ -198,7 +198,7 @@ class _BrazingTorch_saveLoad:
 
     def _findSeedMatch_inArchitectureDicts(self, architectureDicts_withMatchedAllDefinitions, seed,
                                            returnCheckPointPath=False):
-        # cccDevStruct
+        # ccc1
         #  this is used in _determineShouldRun_preRunTests and _determineFitRunState
         #  - main structure is suited for _determineShouldRun_preRunTests
         #  - and the returnCheckPointPath part adapts this func for _determineFitRunState which

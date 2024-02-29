@@ -116,7 +116,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     def _warnToInverseTransform_mainGroups(self, df):
         # addTest2 maybe for other functionalities which use this
-        # cccAlgo
+        # ccc1
         #  methods in this class need data of mainGroups as they were initialized,
         #  usually when mainGroups themselves also transformed, to use methods of this class u need
         #  to inverseTransform mainGroups and retransform after utilizing method wanted
@@ -124,7 +124,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
         #  maybe as possible this class may had taken stackNormalizer and had done inverseTransform
         #  and retransform it, automatically
         #  note check for danger of multiple flow between this class and stackNormalizer
-        # cccDevAlgo #  addTest1 add test for this
+        # ccc1 #  addTest1 add test for this
         #  this is an old note on this problem
         #  """normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
         #  normalizer.fitNTransform(df)"""
@@ -215,7 +215,7 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
     @argValidator
     def setMeanNStd_ofMainGroups(self, df: pd.DataFrame):
         self._warnToInverseTransform_mainGroups(df)
-        # cccAlgo
+        # ccc1
         #  for each col, makes f'{col}Mean' and f'{col}Std'
         #  note setMeanNStd_ofMainGroups needs to have unTransformed mainGroups. so if needed,
         #  inverseTransform them and transform them again after applying this func
@@ -234,7 +234,7 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
 
 
 class MainGroupSingleColsLblEncoder(_MainGroupSingleColsNormalizer):
-    # cccAlgo this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used
+    # ccc1 this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used
 
     def __init__(self, df, mainGroupColNames, colNames: list):
         super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)

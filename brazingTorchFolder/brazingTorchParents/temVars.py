@@ -5,7 +5,7 @@ from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 class _BrazingTorch_tempVars:
     # addTest1 these need tests but are checked with debugging through
     def __init__(self, **kwargs):
-        # cccDevAlgo
+        # ccc1
         #  can keep temp variables in step/epoch/run for each phase
         self.tempVarStep = {"train": {}, "val": {}, "test": {}, "predict": {}}
         self.tempVarEpoch = {"train": {}, "val": {}, "test": {}, "predict": {}}

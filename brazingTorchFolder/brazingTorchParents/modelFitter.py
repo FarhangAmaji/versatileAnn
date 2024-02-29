@@ -59,7 +59,7 @@ class _BrazingTorch_modelFitter:
         # cccUsage
         #  note there are many args related to preRunTests; you may also run preRunTests separately
 
-        # cccDevStruct
+        # ccc1
         #  note this method in some cases is loading another instance and runs on that
         #  but changing self with methods of an instance is not possible so take a look
         #  at devDocs\codeClarifier\replaceAnotherInstance_withSelf.py
@@ -107,17 +107,17 @@ class _BrazingTorch_modelFitter:
         # because by default we are logging some metrics
         if addDefaultLogger and 'logger' not in allUserKwargs:
             allUserKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
-            # bugPotentialCheck1
+            # bugPotn1
             #  shouldn't this default logger have architectureName
 
         appliedKwargs = self._getArgsRelated_toEachMethodSeparately(allUserKwargs)
 
         notAllowedArgs = ['self', 'overfit_batches', 'name', 'value']
-        # cccDevStruct
+        # ccc1
         #  - 'name','value' can be used in logging and are not allowed as the
         #       _logLosses in _BrazingTorch_loss module sets them itself
         #  - overfit_batches is not compatible with this project
-        #       for more info take look at 'cccDevStruct' at runOverfitBatches
+        #       for more info take look at 'ccc1' at runOverfitBatches
         self._removeNotAllowedArgs(allUserKwargs, appliedKwargs, notAllowedArgs)
 
         self._warnForNotUsedArgs(allUserKwargs, appliedKwargs)
@@ -149,7 +149,7 @@ class _BrazingTorch_modelFitter:
         appliedKwargs = {}
         for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
                                   ['trainer', 'trainerFit', 'log']):
-            # cccDevAlgo
+            # ccc1
             #  - note I have checked these 3 methods and they don't have args with mutual names
             #           except pl.Trainer and pl.LightningModule.log which take 'logger' arg
             #           which is ok, even though logger in self.log is just a bool or None but in
@@ -204,7 +204,7 @@ class _BrazingTorch_modelFitter:
 
     # ---- _plKwargUpdater and inners
     def _plKwargUpdater(self, allUserKwargs, kw):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning for some args may get different type
         #  this methods makes sure those options are correctly applied
         #  for i.e. logger can be a Logger object or a list/
@@ -229,7 +229,7 @@ class _BrazingTorch_modelFitter:
                                var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
             -> Union[Logger, List[Logger], None, bool]:
         # addTest2
-        # cccDevALgo
+        # ccc1
         #  - each pytorch lightning arg may get a Logger object or a list of Logger
         #       objects or None Or bool
         #  - note have higher importance in setting Logger, Iterable[Logger] than None or bool
@@ -262,7 +262,7 @@ class _BrazingTorch_modelFitter:
             # Check if all elements of var1 are Logger
             if not all(isinstance(logger, Logger) for logger in var1):
                 raise ValueError('var1 has some elements which are not Logger objects')
-            # bugPotentialCheck1
+            # bugPotn1
             #  I checked and found that list(here result) can extend tuples and sets as well
             #  but I don't know what happens for other iterables
             result.extend(var1)
@@ -283,7 +283,7 @@ class _BrazingTorch_modelFitter:
                                  var1: Optional[Union[List[Callback], Callback]],
                                  var2: Optional[Union[List[Callback], Callback]]) \
             -> Union[Callback, List[Callback], None]:
-        # cccDevALgo
+        # ccc1
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
         #  - note have higher importance in setting Callback, Iterable[Callback] than None
 
@@ -298,7 +298,7 @@ class _BrazingTorch_modelFitter:
             # goodToHave3 like above
             if not all(isinstance(callback, Callback) for callback in var1):
                 raise ValueError('var1 has some elements which are not Callback objects')
-            # bugPotentialCheck1 like above
+            # bugPotn1 like above
             result.extend(var1)
         else:
             result.append(var1)
@@ -307,7 +307,7 @@ class _BrazingTorch_modelFitter:
             # goodToHave3 like above
             if not all(isinstance(callback, Callback) for callback in var2):
                 raise ValueError('var2 has some elements which are not Callback objects')
-            # bugPotentialCheck1 like above
+            # bugPotn1 like above
             result.extend(var2)
         else:
             result.append(var2)
@@ -319,7 +319,7 @@ class _BrazingTorch_modelFitter:
         #  this is similar to _determineShouldRun_preRunTests
         # addTest1
 
-        # cccDevStruct(same as _determineShouldRun_preRunTests)
+        # ccc1(same as _determineShouldRun_preRunTests)
         #  there was a idea about ""architectureName should be figured out in postInit"" but it may
         #  cause problems with loggerPath in preRunTests and .fit method
 
@@ -384,7 +384,7 @@ class _BrazingTorch_modelFitter:
     def _fitRunState_conditions(self, checkpointPath,
                                 matchedSeedDict, matchedSeedDict_filePath,
                                 resume, runName, seedSensitive, isModelChanged):
-        # cccDevStruct
+        # ccc1
         #  - note being here means some models with the exact same
         #  structure as this model has run before
         #  - note there is no option to have duplicate models with the
@@ -407,7 +407,7 @@ class _BrazingTorch_modelFitter:
                     else:
                         fitRunState = "don't run"
             else:
-                # cccDevStruct
+                # ccc1
                 #  there is no matched seed and it's seedSensitive(meaning that
                 #  doesn't prefer to resume or start from the beginning models
                 #  saved with other seeds)
@@ -415,7 +415,7 @@ class _BrazingTorch_modelFitter:
                 fitRunState = 'beginning'
         else:
             if resume:  # not seedSensitive and resume
-                # cccDevStruct
+                # ccc1
                 #  even it's no seedSensitive if there is a model with the same
                 #  seed, so resumes that because it is probably more desired
                 if matchedSeedDict:
@@ -424,12 +424,12 @@ class _BrazingTorch_modelFitter:
                     checkpointPath = matchedSeedDict_filePath
                 else:
                     # Resumes any other seed
-                    # cccDevStruct
+                    # ccc1
                     #  note as the seeds are not the same, this option only wants to resume
                     #  sth, later in .fit when the model(with different seed) is loaded
                     #  there would be a warning for 'seed is changing'
                     fitRunState = 'resume'
-                    # cccDevStruct
+                    # ccc1
                     #  note as you have guessed matchedSeedDict_filePath is checkPointPath
                     #  for a model with different seed
                     checkpointPath = matchedSeedDict_filePath
@@ -437,7 +437,7 @@ class _BrazingTorch_modelFitter:
                     isModelChanged = True
                     Warn.info("loading a model with another seed")
             else:  # no resume and no seedSensitive
-                # cccDevStruct
+                # ccc1
                 #  even it's no seedSensitive if there is a model with the same seed,
                 #  thats more prefered; also note duplicate models with same seeds
                 #  are not allowed

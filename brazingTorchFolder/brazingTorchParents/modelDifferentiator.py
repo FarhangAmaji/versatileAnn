@@ -184,7 +184,7 @@ class _BrazingTorch_modelDifferentiator:
                     foundClasses = findClassObject_inADirectory(getProjectDirectory(),
                                                                 classNameOf_staticOrInstanceMethod,
                                                                 printOff=self.testPrints)
-                    # bugPotentialCheck1
+                    # bugPotn1
                     #  passing getProjectDirectory() to findClassObject_inADirectory has a similar
                     #  potential error which should only search for files in some folders and
                     #  not all folders; for i.e. if the user has .venv folder in it's project, this
@@ -234,7 +234,7 @@ class _BrazingTorch_modelDifferentiator:
 
     def _getParentClasses(self, cls_, visited=None, classesDict=None):
         # Helper function to get definitions of parent classes recursively
-        # bugPotentialCheck2
+        # bugPotn2
         #  is possible to get in to infinite loop
 
         visited = setDefaultIfNone(visited, set())
@@ -268,7 +268,7 @@ class _BrazingTorch_modelDifferentiator:
             # goodToHave3
             #  maybe I should not do this, as standAlone may use sth like freezing dependency; also
             #  for funcs (if next goodToHave; few lines below is implemented)
-            # bugPotentialCheck2
+            # bugPotn2
             #  think about it later
             #  add all other classes defined in the project;
             #  obviously we want to do it everytime here, so either we have to hard code them some
@@ -284,7 +284,7 @@ class _BrazingTorch_modelDifferentiator:
 
     # ---- case3 methods
     def _getAttributesFuncDefinitions(self, obj, visitedFuncs=None, funcDefinitions=None):
-        # cccDevAlgo
+        # ccc1
         #  case3
         #  this is a rare case but it's involved
         visitedFuncs = setDefaultIfNone(visitedFuncs, set())

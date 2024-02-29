@@ -44,10 +44,10 @@ class NormalizerStack:
             nrm.fitNTransform(df)
 
     def _baseTransformCol(self, funcName, df: pd.DataFrame, col: str):
-        # mustHave2 # bugPotentialCheck2 addTest1 needs tests
+        # mustHave2 # bugPotn2 addTest1 needs tests
         #  later when ability to have a key in 2,... uniqueNormalizers is added; pay attention
         #  so the order of applying transform and invTransforming of them is ok
-        # bugPotentialCheck2
+        # bugPotn2
         #  if duplicate cols is applied `self._normalizers[col]` is gonna be a list of different normalizers
         if col not in self.normalizers.keys():
             raise ValueError(f'{col} is not in normalizers cols')
@@ -66,18 +66,18 @@ class NormalizerStack:
 
     @argValidator
     def inverseTransform(self, df: pd.DataFrame):
-        # bugPotentialCheck2
+        # bugPotn2
         #  in the past this loop was applied reversed; but later I found no meaningful difference; have this mind later if a bug occurred.
         mainGroupsInverseTransformedNow = []
         for col in list(self.normalizers.keys()):
-            # cccAlgo
+            # ccc1
             #  for inversing cols which have maingroups, the mainGroups should inversed first
             if isinstance(self.normalizers[col], _MainGroupBaseNormalizer):
                 for mainGroup in self.normalizers[col].mainGroupColNames:
                     if mainGroup in self.normalizers.keys():
                         df[mainGroup] = self.inverseTransformCol(df, mainGroup)
                         mainGroupsInverseTransformedNow.append(mainGroup)
-            # cccAlgo
+            # ccc1
             #  because only _LblEncoder amongst baseEncoders has the ability to skip inverseTransforms,
             #  in the case that maingroup may not be _LblEncoder we skip those maingroups already
             #  inverseTransformed here in line #LSkmg1

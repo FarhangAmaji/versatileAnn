@@ -23,7 +23,7 @@ class VAnnCustomLayer(nn.Module):
         if regularization:
             self.regularization = LossRegulator(regularization)
         else:
-            # cccDevAlgo
+            # ccc1
             #  note 'LossRegulator(None)' is not set, and 'None' is set.
             #  so this way is more efficient and in line #Llr1 we don't assume it has a
             #  regularization and we pass by it

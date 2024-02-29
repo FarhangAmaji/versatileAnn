@@ -33,9 +33,9 @@ class getDatasetFilesTests(BaseTestClass):
 
 # ---- epfFrBeTests
 class epfFrBeTests(BaseTestClass):
-    # bugPotentialCheck1
+    # bugPotn1
     #  recheck values are the ones supposed to be
-    # cccDevStruct hard written values is chosen because other ways had to just follow the same procedure done int the getEpfFrBe_processed
+    # ccc1 hard written values is chosen because other ways had to just follow the same procedure done int the getEpfFrBe_processed
     def setup(self):
         self.devTestMode = True
         self.backcastLen = 7
@@ -109,7 +109,7 @@ class epfFrBeTests(BaseTestClass):
         self.processedSetup()
         for set1 in [self.trainDf, self.valDf, self.testDf]:
             set_ = combineNSeries(set1, self.aggColName)
-            # cccAlgo
+            # ccc1
             #  in real use case the zero pad rows are not inverse transformed so for purpose of
             #  checking if invTransfrom work we can delete them
             setIndsWith0dateCond = set_[set_['dateTime'] == 0].index
@@ -165,7 +165,7 @@ class epfFrBeTests(BaseTestClass):
                               floatApprox=True)
 
 class electricityTests(BaseTestClass):
-    # bugPotentialCheck1
+    # bugPotn1
     #  recheck values are the ones supposed to be
     def setup(self):
         self.backcastLen = 4
@@ -292,7 +292,7 @@ class electricityTests(BaseTestClass):
                           floatApprox=True, checkType=False)
 
 class stallionTests(BaseTestClass):
-    # bugPotentialCheck1
+    # bugPotn1
     #  recheck values are the ones supposed to be
     def setup(self):
         self.maxEncoderLength = 4

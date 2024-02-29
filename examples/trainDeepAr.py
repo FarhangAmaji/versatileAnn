@@ -1,6 +1,6 @@
 # ---- imports
 # trainDeepAr.py
-# bugPotentialCheck1 check this file and correct kkks
+# bugPotn1 check this file and correct kkks
 
 from models.deepAr import deepArModel
 import numpy as np

@@ -49,7 +49,7 @@ class BrazingTorch(pl.LightningModule,
                  schedulers: Optional[list] = None, lr: Optional[float] = None,
                  keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
 
-        # cccDevStruct
+        # ccc1
         #  to know what these args are exactly are go to the original parent
         #  class where they are defined:
         #               _BrazingTorch_baseAttributes: modelName, noAdditionalOptions, testPrints
@@ -62,12 +62,12 @@ class BrazingTorch(pl.LightningModule,
         #               _BrazingTorch_preRunTests: keepLr_notReplaceWithBestLr,
         #                           keepBatchSize_notReplaceWithBestBatchSize
 
-        # cccDevStruct
+        # ccc1
         #  in order to separate concerns and duties also to make the code more readable
         #  components of BrazingTorch are separated into different parent classes
         #  as u see, almost all of args are not set here; these are the args used here, so the user
         #  can really check all parent classes to see what functionalities does class offer
-        # bugPotentialCheck1
+        # bugPotn1
         #  does putting all args of parent classes here, make problems with __new__ specially
         #  _get_parentClassesOfBrazingTorch in _BrazingTorch_preInitNPostInit_nModelReset
         #  - note # LBTEam1 part is supposed to give error if there are same args in parent classes
@@ -84,10 +84,10 @@ class BrazingTorch(pl.LightningModule,
         raise NotImplementedError
 
     def commonStep(self, batch, phase):
-        # bugPotentialCheck1
+        # bugPotn1
         #  note this method should always be similar to specialModesStep
         #  so check specialModesStep and make similar changes here specially for the comments
-        # cccDevStruct
+        # ccc1
         #  we don't make a baseFunc as the users would get idea of these 2 funcs separately
         # cccUsage
         #  note we may need to reimplement this method
@@ -103,7 +103,7 @@ class BrazingTorch(pl.LightningModule,
         inputs, targets = batch
         # goodToHave1
         #  later make it compatible with outputMask; also do the change on specialModesStep
-        # bugPotentialCheck2
+        # bugPotn2
         #  also what if the batch has 1 items; may don't allow this one as almost everything depends on targets
         # goodToHave1
         #  must think about this more on how to match batchOutputs and self.forward args can get
@@ -112,7 +112,7 @@ class BrazingTorch(pl.LightningModule,
         forwardOutputs = self.forward(inputs, targets)
 
         # calculate loss
-        # bugPotentialCheck1
+        # bugPotn1
         #  if the loss is not returned from _calculatedLosses because of
         #  not having self.lossFuncs would it make error
         loss, calculatedLosses = self._calculateLosses(forwardOutputs, targets)
@@ -144,7 +144,7 @@ class BrazingTorch(pl.LightningModule,
 
     # ----
     def configure_optimizers(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         if self._schedulers:
             return (self.optimizer, self.schedulers)# addTest2
@@ -152,28 +152,28 @@ class BrazingTorch(pl.LightningModule,
 
     # ---- reset tempVar of phases on epoch start
     def on_train_epoch_start(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.train)
 
     def on_validation_epoch_start(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.val)
 
     def on_test_epoch_start(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.test)
 
     def on_predict_epoch_start(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         self.resetTempVar_epoch(self.phases.predict)
 
     # reset tempVar of all phases on run start
     def on_fit_start(self):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         for phase in list(self.phases.keys()):
             self.resetTempVar_run(phase)
@@ -184,19 +184,19 @@ class BrazingTorch(pl.LightningModule,
     # ----
     @argValidator
     def on_save_checkpoint(self, checkpoint: dict):
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         return self.onSaveCheckpoint(checkpoint)
 
     @argValidator
     def on_load_checkpoint(self, checkpoint: dict):  # kkk
-        # cccDevStruct
+        # ccc1
         #  pytorch lightning expects this method to be here
         return self.onLoadCheckpoint(checkpoint)
 
     # ----
     def _isCls_BrazingTorchClass(self, cls_):
-        # cccDevAlgo
+        # ccc1
         #  this is a util to be used in parent classes and not get circular import error
         return cls_ is BrazingTorch
 

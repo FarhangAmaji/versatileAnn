@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 #  note in few lines later I would explain why it's important to call this file from the root;
 #  but it's important to know that this file is called from the root
 # kkk for windows/linux/mac, add how to run this file in order to be called from the root folder
-# cccDevStruct
+# ccc1
 #  note tests/brazingTorchTests/fitTests.py uses a func which uses pytorchLogger from
 #  pytorch lightning, and the path of that logger is dependent on where this code is called so
 #  by default this project is designed to be called from root folder

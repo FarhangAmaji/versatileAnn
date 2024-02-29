@@ -69,7 +69,7 @@ def _splitApplyConditions(conditions, dfCopy):
     isAnyConditionApplied = False
     doQuery = lambda df, con: (df.query(con), True)
     for condition in conditions:
-        # cccAlgo
+        # ccc1
         #  the splitDefaultCondition is applied when no conditions passed.
         #  if `__startPoint__` is not in df cols, nothing is gonna be applied,
         #  otherwise splitDefaultCondition is applies `__startPoint__`
@@ -85,14 +85,14 @@ def _splitApplyConditions(conditions, dfCopy):
 
 def _split_splitNShuffle_startPointIndexes(df, isAnyConditionApplied, ratios, seqLens,
                                            shuffle, shuffleSeed, setNames):
-    # cccDevAlgo
+    # ccc1
     #  this is a very complex problem take a look _split_splitNShuffleIndexes_Tests
-    # cccAlgo
+    # ccc1
     #  split is done in a way that, to the most full tails(not shorter), also use all points for
     #  start points. therefore prevents that each set(train/val/test)+its seqLen exceeds from
     #  last Index of set indexes
 
-    # bugPotentialCheck2
+    # bugPotn2
     #  multiple indexes are not considered for sorting
     indexes = list(df.sort_index().index)
     indexesCopyForLoggingPossibleErrors = indexes[:]
@@ -155,7 +155,7 @@ def _assignAsMuchAs_idxsToRegroup_With1PossibleSet(expectedSetLens, setIdxExclus
 def _includeIdxsWith2_3possibleSets(expectedSetLens, indexes, setNames, setsIndexes):
     setsDemandRatios = _normalizeDictValues(
         _getSetsDemand(expectedSetLens, setNames, setsIndexes))
-    # cccAlgo
+    # ccc1
     #  setsIndexesWith2_3possibleSets (rest remained Idxs) but may(more likely) not gonna follow
     #  setIdxExclusions which needs to be fixed by having idxsToRegroup
     setsIndexesWith2_3possibleSets = _simpleSplit(indexes, setsDemandRatios, setNames)
@@ -189,7 +189,7 @@ def _makeSetDfWith_TailDataFrom_indexesNTailIndexes(df, filteredDf, seqLens, set
         sequenceTailData = df.loc[sequenceTailIndexes]
     except:
         if tailIndexesAsPossible:
-            # cccAlgo
+            # ccc1
             #  having tailIndexes_evenShorter makes it possible for datasets to fetch sequences
             #  with inEqual length, some being shorter than their expected len
             dfIndexes = df.index

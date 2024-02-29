@@ -26,7 +26,7 @@ class DotDictTests(BaseTestClass):
         self.assertEqual(self.dotDict._data, self.dictData)
 
     def testGettingAttribute(self):
-        # cccAlgo Getting means not using .get
+        # ccc1 Getting means not using .get
         self.assertEqual(self.dotDict.a, 1)
         self.assertEqual(self.dotDict.b, 2)
 
@@ -59,7 +59,7 @@ class DotDictTests(BaseTestClass):
 
     # ---- .get
     def testGetExistingKey_withGet(self):
-        # cccAlgo testGet is for .get
+        # ccc1 testGet is for .get
         value_a = self.dotDict.get('a', 0)
         self.assertEqual(value_a, 1)
 
@@ -299,7 +299,7 @@ class FindClassDefinitionTests(BaseTestClass):
 
         self._warnToInverseTransform_mainGroups(df)
 
-        # cccAlgo
+        # ccc1
 
         #  for each col, makes f'{col}Mean' and f'{col}Std'
 

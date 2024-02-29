@@ -236,7 +236,7 @@ def findClassObject_inADirectory(directoryPath, className, printOff=False):
 # ---- download
 async def downloadFileAsync(url, destination, event=None):
     import aiohttp
-    # bugPotentialCheck1
+    # bugPotn1
     #  aiohttp is not in requirements.txt but it seems to be requisite
     #  for another of the packages in requirements.txt therefore it's installed
 
@@ -254,7 +254,7 @@ async def downloadFileAsync(url, destination, event=None):
 
 # ---- os utils
 def filePathToDirectoryPath(path):
-    # cccDevStruct
+    # ccc1
     #  doesn't work with no file extension paths
     if os.path.exists(path):
         if os.path.isfile(path):
@@ -319,7 +319,7 @@ def gpuMemoryUsed():
 
 def varPasser(*, localArgNames=None, exclude=None, rename=None):
     import platform
-    # cccDevAlgo
+    # ccc1
     #  in order not to pass many local variables which have the same name to another
     #  func by mentioning `func1(var1=var1, var2=var2,....)` with use this func
     #  and put local variables to a dictionary and in a more clean way with pass that dict as kwargs
@@ -338,7 +338,7 @@ def varPasser(*, localArgNames=None, exclude=None, rename=None):
 
     # goodToHave3
     #  think about removing this; because it's not the case
-    # bugPotentialCheck1
+    # bugPotn1
     #  this has a big bug pontential in macOs maybe other non windows Oses when the
     #  localArgNames is None
     if platform.system() != 'Windows' and localArgNames is None:
@@ -383,7 +383,7 @@ def _allowOnlyCreationOf_ChildrenInstances(self, cls):
 
 
 def validate_IsObjOfTypeX_orAListOfTypeX(typeX):
-    # cccAlgo
+    # ccc1
     #  currently argValidator decorator with use of hints like List[typeX] or List[Union[typeX, int]]
     #  does this sort of validation
     def func(obj, errMsg=''):
@@ -440,7 +440,7 @@ def inputTimeout(prompt, timeout=30):
 
 
 def nLastCallers(n=1):
-    # cccAlgo this is useful for debugging
+    # ccc1 this is useful for debugging
     frame = inspect.currentframe().f_back
     calling_frame = frame
     print('\nnLastCallers')

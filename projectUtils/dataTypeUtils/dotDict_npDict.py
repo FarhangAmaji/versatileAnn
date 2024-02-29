@@ -102,7 +102,7 @@ class NpDict(DotDict):
         return {col: self[col] for col in self.cols()}
 
     def printDict(self):
-        # cccAlgo
+        # ccc1
         #  this is super useful to make a very more readable str version of df
         #  example: prints df like `{'__startPoint__': 6 * [True] + 10 * [False] + 6 * [True] + 10 * [False] ,}`
         print('{', end='')
@@ -115,7 +115,7 @@ class NpDict(DotDict):
         print('}')
 
     def toDf(self, resetDtype=False):
-        # cccAlgo
+        # ccc1
         #  assume col data consists 1 string and 3 int data like ['s',1,2,3]; the nparray has
         #  determined the dtype==object but in the case we have removed the first string data('s'),
         #  the dtype is not going to be changed and remains `object`, but with `resetDtype=True`,

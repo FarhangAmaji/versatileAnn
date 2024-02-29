@@ -6,7 +6,7 @@ from projectUtils.misc import getMethodArgs
 
 
 def getArgsOfClasses(classesDict, originalKwargs=None):
-    # cccDevStruct
+    # ccc1
     #  classesDict is a dict with {'className':classObj}
     _assertClassesDictStruct(classesDict)
 
@@ -45,7 +45,7 @@ def getArgsRelatedToAClass_fromAllArgs(className: str, allArgs):
 def initClasses_withAllArgs(obj, classes, allArgs,
                             exceptions: Union[List[str], None] = None,
                             just: Union[List[str], None] = None):
-    # cccDevStruct
+    # ccc1
     #  this func gets all args and classes and initiates them with their related args
     exceptions = exceptions or []
     just = just or []
@@ -66,7 +66,7 @@ def initClasses_withAllArgs(obj, classes, allArgs,
 
 
 def orderClassNames_soChildIsAlways_afterItsParents(classesDict: dict):
-    # bugPotentialCheck2
+    # bugPotn2
     #  is it possible for this func to have error
     #  I assume that as the classes should be one way and have some order so this code cannot be wrong
 
@@ -109,7 +109,7 @@ def findParentClasses_OfAClass_tillAnotherClass(cls_, classTillThatIsWanted,
                                                 parentClasses: dict = None):
     # this is similar to
     parentClasses = parentClasses or {}
-    # goodToHave3 bugPotentialCheck2
+    # goodToHave3 bugPotn2
     #  some classes may have same .__name__ but are actually different classes
     #  but I am not counting for that(maybe later).
     #  so for now each class is going to be captured in a dict with {class.__name__:classObj}

@@ -98,10 +98,10 @@ def _addingSomeOtherFeatures(dataInfo, df):
     df["avgVolumeBySku"] = df.groupby(["timeIdx", "sku"], observed=True).volume.transform("mean")
     df["avgVolumeByAgency"] = df.groupby(["timeIdx", "agency"], observed=True).volume.transform(
         "mean")
-    # cccAlgo
+    # ccc1
     #  relativeTimeIdx in dataset creates "range(-encoderLength, decoderLength)" sequence for each point
     df['relativeTimeIdx'] = 0
-    # cccAlgo
+    # ccc1
     #  encoderLength is not fixed and is different for each point
     df['encoderLength'] = 0
     dataInfo.timeVarying_knownReals += ['relativeTimeIdx']
@@ -109,7 +109,7 @@ def _addingSomeOtherFeatures(dataInfo, df):
 
 
 def _addTargetMeanNStd(dataInfo, df, normalizer):
-    # cccAlgo
+    # ccc1
     #  setMeanNStd_ofMainGroups needs to have unTransformed mainGroups so we inverseTransform them
     #  and transform them again
     for col in dataInfo.mainGroups:
@@ -154,7 +154,7 @@ def _addAllReals(dataInfo):
 
 
 def _normalizingAllReals(dataInfo, df, normalizer):
-    # cccAlgo
+    # ccc1
     #  allReals is added to normalizers here(separate from line #LStl1 in stallion.py) because
     #  allReals needs to have staticReals and in line #LStl2 _addTargetMeanNStd 'volumeMean' and
     #  'volumeStd' get added to staticReals
@@ -165,7 +165,7 @@ def _normalizingAllReals(dataInfo, df, normalizer):
 def _getFullOrNotConditions(dataInfo, df, maxEncoderLength, maxPredictionLength, minEncoderLength,
                             minPredictionLength, normalizer):
     df[dataInfo.timeIdx] = normalizer.inverseTransformCol(df, dataInfo.timeIdx)
-    # cccAlgo
+    # ccc1
     #  timeIdxDiffWith_maxTimeIdx_ofMainGroup needs untransformed timeIdx so we inverseTransform
     #  it and transform it again
     maxTimeIdx_ofMainGroup = df.groupby(dataInfo.mainGroups)[dataInfo.timeIdx].transform('max')
@@ -205,7 +205,7 @@ def _splitFullN_nonFullEqually(dataInfo, df, maxEncoderLength, maxPredictionLeng
     setsDf = {}
     for set_ in ['train', 'val', 'test']:
         concatDf = pd.concat([fullLenDfSets[set_], nonFullLenDfSets[set_]])
-        # cccAlgo to understand lines below take look at devDocs\codeClarifier\commonDatasets #LStl3
+        # ccc1 to understand lines below take look at devDocs\codeClarifier\commonDatasets #LStl3
         concatDf[tsStartPointColName] = concatDf.groupby(concatDf.index)[
             tsStartPointColName].transform('any')
         concatDf = concatDf[~concatDf.index.duplicated(keep='first')]

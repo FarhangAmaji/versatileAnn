@@ -72,7 +72,7 @@ class stdNormalizerTests(BaseTestClass):
         self.equalDfs(self.dfToDoTest, self.transformedDf, floatApprox=True)
 
     def testFitAgain(self):
-        # cccDevStruct this is example of checking expectedPrints in tests
+        # ccc1 this is example of checking expectedPrints in tests
 
         def innerFunc():
             self.transformSetUp()

@@ -1,13 +1,17 @@
 # current
-NoneType had problem(type(None))
-fitTests error of loggerPath; so is not sth
-.venv in findClassDefinition_inADirectory
-.fit should have:
-            4. log_every_n_epoch=1 (on trainer I think)
-create:
-    1. new todos tagnames
-    2. new commit prefixes
 clean this file
+2. readMe
+    3. explain private and public func/class names `_`
+   4. reading comments due to importance(if u add color codding devDocs/conventions/convention_todoTypes.py)
+3. refactor:
+   3. add docstring and moduleStrings
+   4. change old todos
+   5. add addtests comment
+   6. add tests for the ones needed the most
+4. machine learning models and optimizer
+5. deep reinforcement learning
+6. hyperparam opt with optuna
+7. conformal prediction
 
 1. determine where should architectureDict and model checkpoint to be saved(have 'seed' and preRunTests in mind)
 2. check preRunTests follows 1 correctly
@@ -103,7 +107,7 @@ on getBackForeCastData_general if the device is mps it should check for changing
 - universal seed in dataprep and BrazingTorch; it should not mess the funcs which take seed as arg; ofc it seems easy to solve it with `if` seed as arg is None then use universal seed; maybe load should set universal seed too
 - brazingTorch should be separated from the rest of the project
 - related to modelDifferentiator and architectures: we may save performance of each arch of models with the same name in .csv file(ofc we have tensorboard but this one also may be useful)
-- change todo conventions: remove cccDevStruct and cccDevAlgo and add ccY(=ccWhy) and ccWhat maybe with 1,2,3; also change the
+- change todo conventions: remove ccc1 and ccc1 and add ccY(=ccWhy) and ccWhat maybe with 1,2,3; also change the
 # minor
 - is it possible to cache some data for tests? for i.e. creating some dataloaders takes so much time, and theyre used in many tests
 - (not needed because we want to provide a package like pandas which should work on any machine)add .dockerfile(but how docker is going to be useful, we are not running some commands and we are providing a frame work and libraries)

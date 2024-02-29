@@ -16,7 +16,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
         parentClasses_tillBrazingTorch = cls._findAllParentClasses_tillBrazingTorch(cls,
                                                                                     _BrazingTorch_Obj)
 
-        # cccDevStruct
+        # ccc1
         #  beside the class object we also store its '__init__' because at the end of __new__,
         #  init are disabled but later at _BrazingTorch_postInit,
         #  these stored inits are going to be replaced back
@@ -35,7 +35,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
                       " that you have not used *args in your __init__"
             Warn.error(warnMsg)
             self.printTestPrints(warnMsg)
-            # cccDevStruct
+            # ccc1
             #  we don't make error and just give warning, because sometimes the user have not
             #  included *args in their __init__ but because of inheritance from `object`,
             #  __init__ has *args
@@ -48,7 +48,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
         # this method is similar to findParentClasses_OfAClass_tillAnotherClass in projectUtils/initParentClasses.py
 
         parentClasses = parentClasses or {}
-        # goodToHave3 bugPotentialCheck2
+        # goodToHave3 bugPotn2
         #  some classes may have same .__name__ but are actually different classes
         #  but I am not counting for that(maybe later).
         #  so for now each class is going to be captured in a dict with {class.__name__:classObj}
@@ -77,7 +77,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
         argsOf_parentClassesOfBrazingTorch = exclude_selfNArgsNKwargs_fromAllArgs(
             argsOf_parentClassesOfBrazingTorch)
 
-        # cccDevStruct
+        # ccc1
         #  note this is only for development error detection
         #  args of parent classes of BrazingTorch must not have similar names
         for arg, argVal in argsOf_parentClassesOfBrazingTorch.items():
@@ -119,7 +119,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
             clsObj = parentClasses_tillBrazingTorch[clsName]
             clsObj.__init__(initiatedObj, **classRelatedArgs)
 
-            # cccDevStruct
+            # ccc1
             #  - inits are disabled in order to:
             #       1. not to get inited twice
             #       2. also not to mess model's parameters (therefore optimizer's params)
@@ -129,7 +129,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
             else:
                 # replace lastChildOfAll's __init__ with _BrazingTorch_postInit
                 clsObj.__init__ = cls._BrazingTorch_postInit
-                # cccDevStruct
+                # ccc1
                 #  in past I called line "clsObj.__init__(initiatedObj, **classRelatedArgs)"
                 #  in order to call postInit manually. but postInit is called automatically and
                 #  must not be called manually because it would mess model's parameters
@@ -139,7 +139,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _setInitArgs(_plSeed__, initiatedObj, kwargs, clsTypeName):
-        # bugPotentialCheck1 #addTest1
+        # bugPotn1 #addTest1
         #  if ._initArgs have some nn.module does it work
         kwargs_ = kwargs or {}
         _initArgs = {}

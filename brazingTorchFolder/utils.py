@@ -21,7 +21,7 @@ from projectUtils.warnings import Warn
 
 
 def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
-    # bugPotentialCheck1
+    # bugPotn1
     #  note a normal checkpoint dictionary has these keys ['epoch', 'global_step',
     #  'pytorch-lightning_version', 'state_dict', 'loops', 'callbacks',
     #  'optimizer_states', 'lr_schedulers']
@@ -108,7 +108,7 @@ def externalFit(self, trainDataloader: DataLoader,
                 preRunTests_profilerKwargs=None, preRunTests_findBestLearningRateKwargs=None,
                 preRunTests_findBestBatchSizesKwargs=None,
                 **kwargs):
-    # cccDevStruct
+    # ccc1
     #  note this is implementation for .fit method of BrazingTorch class, but implemented here
     #  you may read why it's been implemented here in the .fit method itself
 

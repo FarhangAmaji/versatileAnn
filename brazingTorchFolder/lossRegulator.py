@@ -43,7 +43,7 @@ class LossRegulator:
         self._type = value['type']
         self._value = value['value']
 
-    # cccDevAlgo disable changing type and value
+    # ccc1 disable changing type and value
     @property
     def type(self):
         return self._type
@@ -63,7 +63,7 @@ class LossRegulator:
     # ----
     @argValidator
     def addRegularizationToParam(self, param: torch.nn.parameter.Parameter):
-        # bugPotentialCheck3
+        # bugPotn3
         #  these need to device?
         if self.type == 'None':
             return torch.tensor(0)

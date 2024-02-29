@@ -8,11 +8,11 @@ class _BrazingTorch_baseAttributes:
     @argValidator
     def __init__(self, modelName: str = '',
                  noAdditionalOptions: bool = False, testPrints=False, seed=None):
-        # bugPotentialCheck1 # goodToHave3
+        # bugPotn1 # goodToHave3
         #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
         #  pytorch lightning precision is 64 then should lower that to 32
 
-        # bugPotentialCheck1
+        # bugPotn1
         #  setting device may not be compatible, of get use the best out of pytorch lightning
         #  multiple gpu or distributed capabilities
         #  - maybe if args related to trainer like `gpus`(maybe `gpus` is depreacated and now is

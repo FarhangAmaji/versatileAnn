@@ -57,7 +57,7 @@ class _BrazingTorch_optimizer:
         #  may we assert error when weight decay is True or have a number(don't know yet)
         #  but anyway either force users or don't apply weightDeccay here and apply weightDecay
         #  with our implementation of Regularizations
-        # cccDevStruct
+        # ccc1
         #  this part is designed in order to be able to resetOptimizer but the args passed when
         #  setting it
         # cccWhy
@@ -95,7 +95,7 @@ class _BrazingTorch_optimizer:
     def resetOptimizer(self, keepLr=True):
         # cccUsage
         #  this is inplace and no need to set, but also compatible with setting
-        # cccDevAlgo
+        # ccc1
         #  this is designed in order to be sure that past accumulated
         #  params like momentum have got reset
         argsToReinit = self._optimizerInitArgs['args'].copy()

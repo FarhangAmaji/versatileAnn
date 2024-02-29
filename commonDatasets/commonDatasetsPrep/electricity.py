@@ -80,7 +80,7 @@ def getElectricity_data(*, backcastLen, forecastLen, devTestMode):
 # ----
 class Electricity_deepArDataset(VAnnTsDataset):
     def __getitem__(self, idx):
-        # bugPotentialCheck2 check this part
+        # bugPotn2 check this part
         inputs = {}
         inputs['consumerId'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
                                                         colsOrIndexes=self.dataInfo.consumerId)
@@ -104,7 +104,7 @@ def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192
                               shuffleSeed=None, devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
-    # cccAlgo forecastLen==1 is for shifting
+    # ccc1 forecastLen==1 is for shifting
     kwargs = varPasser(
         localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'shuffle',
                        'shuffleSeed', 'devTestMode', 'dataInfo'])

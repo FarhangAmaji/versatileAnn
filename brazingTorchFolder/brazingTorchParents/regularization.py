@@ -22,7 +22,7 @@ class _BrazingTorch_regularization:
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_regularization)
 
-        # cccDevAlgo
+        # ccc1
         #  - this module(BrazingTorch) by default sets some features like generalRegularization
         #       or gradient clipping
         #  - we have generalRegularization and specific layer generalRegularization
@@ -82,9 +82,9 @@ class _BrazingTorch_regularization:
         #  now only detects if VAnnCustomLayer is the main layer in model but if
         #  VAnnCustomLayer is in a class and that class is the main layer in model
         #  regularization won't get detected; think about self.modules() and not self._modules
-        # cccDevAlgo
+        # ccc1
         #  VAnnCustomLayers can have regularization on their layer
-        # cccDevStruct
+        # ccc1
         #  vars(self)['_modules'](ofc not used here but may be used elsewhere) is similar to
         #  self._modules. these contain only the direct children modules of the model
         for layerName, layer in self._modules.items():
