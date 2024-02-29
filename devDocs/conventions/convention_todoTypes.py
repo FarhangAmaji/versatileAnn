@@ -16,6 +16,7 @@
 # goodToHave1
 # goodToHave2
 # goodToHave3
+# restructureNeeded
 
 # bugs
 # bug1
@@ -51,6 +52,7 @@
 # goodToHave1 2828FF
 # goodToHave2 5050FF
 # goodToHave3 7878FF
+# restructureNeeded 5050FF
 # bug1 FF0000
 # bug2 FF2A00
 # bug3 FF5400

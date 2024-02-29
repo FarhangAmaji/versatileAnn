@@ -66,6 +66,7 @@
     - goodToHave1 2828FF
     - goodToHave2 5050FF
     - goodToHave3 7878FF
+    - restructureNeeded 5050FF
 
 - bugs
 
@@ -207,6 +208,11 @@ in `vscode` the comments use `better comments` extension with these added style 
       "name": "goodToHave3",
       "description": "Good to Have for nicer interface",
       "foreground": "#7878FF"
+    },
+    {
+      "name": "restructureNeeded",
+      "description": "Good to restructure the code",
+      "foreground": "#5050FF"
     },
     {
       "name": "bug1",
