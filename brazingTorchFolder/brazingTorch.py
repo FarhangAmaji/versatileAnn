@@ -38,7 +38,7 @@ class BrazingTorch(pl.LightningModule,
 
     @argValidator
     def __init__(self, modelName: str = '',
-                 noAdditionalOptions: bool = False, testPrints=False,
+                 noAdditionalOptions: bool = False,
                  generalRegularization: Optional[Union[LossRegulator, dict]] = None,
                  lossFuncs: Optional[List[nn.modules.loss._Loss]] = None,
                  keepLr_notReplaceWithBestLr: Optional[bool] = False,
@@ -47,7 +47,8 @@ class BrazingTorch(pl.LightningModule,
                  getAllNeededDefinitions=True,
                  optimizer: Optional[torch.optim.Optimizer] = None,
                  schedulers: Optional[list] = None, lr: Optional[float] = None,
-                 keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False, **kwargs):
+                 keepBatchSize_notReplaceWithBestBatchSize: Optional[bool] = False,
+                 testPrints=False, **kwargs):
 
         # ccc1
         #  to know what these args are exactly are go to the original parent

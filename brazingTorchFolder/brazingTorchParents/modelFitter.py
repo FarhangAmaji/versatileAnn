@@ -57,7 +57,9 @@ class _BrazingTorch_modelFitter:
             **kwargs):
 
         # cccUsage
-        #  note there are many args related to preRunTests; you may also run preRunTests separately
+        #  - **kwargs are any argument related to pytorch lightning trainer, trainer.fit,
+        #       and self.log
+        #  - note there are many args related to preRunTests; you may also run preRunTests separately
 
         # ccc1
         #  note this method in some cases is loading another instance and runs on that
@@ -87,8 +89,8 @@ class _BrazingTorch_modelFitter:
 
         # addTest1
         # cccUsage
-        #  - this method accepts kwargs related to trainer, trainer.fit, and self.log and
-        #  pass them accordingly
+        #  - **kwargs or listOfKwargs are any argument related to pytorch lightning trainer, trainer.fit,
+        #       and self.log
         #  - the order in listOfKwargs is important
         #  - _logOptions phase based values feature:
         #           - args related to self.log may be a dict with these keys 'train', 'val', 'test',

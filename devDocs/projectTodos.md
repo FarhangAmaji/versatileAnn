@@ -1,8 +1,11 @@
 # current
-1. clean this file
+move private methods to inner classes
 2. readMe
-   3. explain private and public func/class names `_`
+   3. explain folders in root folder
+       4. where to look at code, for dive in it more
+   4. explain private and public func/class names `_`
    4. reading comments due to importance/scale of scope affecting(if u add color codding devDocs/conventions/convention_todoTypes.py)
+   5. readme for each folder
 5. brazingTorch should be separated from the rest of the project
    2. readMe
 6. merge to development and master
@@ -12,6 +15,7 @@
    5. add addtests comment
    6. add tests for the ones needed the most
        - caching data for tests
+       - check regularization check optimizer when it's been set on optimizer or reversed
 11. solve macOs errors
         1. splitTsTrainValTest_DfNNpDict
             1. splitTests
@@ -66,12 +70,12 @@ user examples
 
 goodTohave:
 1. machine learning models and optimizer
+2. conformal prediction
 2. models:
        4. deep reinforcement learning
        7. lamaish
       8. diffusion
       9. gan
 hyperparam opt with optuna
-conformal prediction
 data downloader(easier)
 trading pipeline(maybe utilize ready made packages)

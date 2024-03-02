@@ -10,7 +10,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
 from pytorch_lightning.loggers import Logger
 from torch import nn
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LRScheduler
 from torch.utils.data import DataLoader
 
 from brazingTorchFolder.callbacks import StoreEpochData, WarmUpScheduler, \
@@ -76,8 +76,8 @@ def isPytorchLightningScheduler(obj):
             if methodName in {'onTrainEpochStart', 'onTrainBatchEnd', 'onValidationEpochStart'}
         ]
         customSchedulerMethodFound = len(schedulerMethods) > 0
-        lightningModuleHasScheduler = hasattr(obj,
-                                              'lrScheduler') or 'optimizer.lrScheduler' in obj.__dict__
+        lightningModuleHasScheduler = hasattr(obj, 'lrScheduler') or \
+                                      'optimizer.lrScheduler' in obj.__dict__
         return customSchedulerMethodFound and lightningModuleHasScheduler
     else:
         # Check if obj is a subclass of a supported base class
