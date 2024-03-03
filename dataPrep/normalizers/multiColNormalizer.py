@@ -74,7 +74,8 @@ class MultiColStdNormalizer(_BaseMultiColNormalizer):
         return 'std:' + '_'.join(self.colNames)
 
     def __repr__(self):
-        return f"MultiColStdNormalizer:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(self.colNames)}"
 
 
 class MultiColLblEncoder(_BaseMultiColNormalizer):
@@ -125,4 +126,5 @@ class MultiColLblEncoder(_BaseMultiColNormalizer):
         return 'lbl:' + '_'.join(self.colNames)
 
     def __repr__(self):
-        return f"MultiColLblEncoder:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(self.colNames)}"

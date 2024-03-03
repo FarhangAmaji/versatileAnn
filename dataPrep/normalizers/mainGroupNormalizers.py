@@ -230,7 +230,8 @@ class MainGroupSingleColStdNormalizer(_MainGroupSingleColNormalizer):
                 df.loc[inds, f'{col}Std'] = comboStd
 
     def __repr__(self):
-        return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
 
 class MainGroupSingleColLblEncoder(_MainGroupSingleColNormalizer):
@@ -240,4 +241,5 @@ class MainGroupSingleColLblEncoder(_MainGroupSingleColNormalizer):
         super().__init__(SingleColLblEncoder, df, mainGroupColNames, colNames)
 
     def __repr__(self):
-        return f"MainGroupSingleColsLblEncoder:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
