@@ -1,3 +1,11 @@
+# Who this project is for
+
+This project has some sections and "who this project is for" depends on what section you may use.
+
+- anyone who uses pytorch(`brazingTorch` section)
+- for people who want to use ready forecasting models
+- forecasting AI researchers
+
 # what versatileAnn is
 
 While developing machine learning models can be time-consuming, even the smallest typos in programming can derail months of hard work, rendering unreliable results. Utilizing `well-tested tools` can significantly improve the experience of both using and developing models.
@@ -176,12 +184,6 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 - also reading tests in `\tests` folder can be useful in order to understand the project more.
 
-### 
-
-# use cases
-
-kkk use cases or how to get started
-
 # How to get started
 
 in order to know to get started, I should know what do yo want to do and what uses cases of this project do you want to use?!
@@ -229,7 +231,7 @@ in order to know to get started, I should know what do yo want to do and what us
 
 4. **examples:**
 
-   - there are examples on how to define models which use prepared data of `\commonDatasets\commonDatasetsPrep` or some examples have random data. then either use the models in `\models` or create a `custom model`.
+   - there are examples on how to define models which use prepared data of `\commonDatassets\commonDatasetsPrep` or some examples have random data. then either use the models in `\models` or create a `custom model`.
 
 5. **machineLearning:**
 
@@ -238,3 +240,8 @@ in order to know to get started, I should know what do yo want to do and what us
    - complementary functions are at `\projectUtils`
    - you may look at files at `\projectUtils\dataTypeUtils` and also `projectUtils/misc.py`
 
+---
+
+- note currently `\models` don't work as their not yet changed to work with newer version of brazingTorch
+- examples are not workings
+- machineLearning has not been committed
