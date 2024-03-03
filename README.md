@@ -16,7 +16,7 @@ This project is quite extensive, with over 15,000 lines of code. While this summ
 
 ### brazingTorch
 
-`brazingTorch` was developed here in this project, but as it offers valuable functionalities for the broader deep learning community, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
+`brazingTorch` was developed here in this project, but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
 it can be found at `/brazingTorchFolder`.
 
@@ -106,7 +106,7 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 - **Powerful Tools for Time Series Data Preparation**
 
-  - There are lots of useful functions in `\dataPrep\utils.py` which help to transform raw data and do data preparation operations.
+  - There are lots of useful functions in `\dataPrep\preprocessing.py` which help to transform raw data and do data preparation operations.
 
 - **Time Series Splitting:**
 
@@ -147,8 +147,6 @@ brazingTorch is designed as a **framework**, following a common approach for bui
     - **Cast modes:** The function supports various modes for generating sequences, including backcast, forecast, fullcast, and singlePoint.
     - **Faster than pandas:** Compared to using pandas DataFrames directly, `getBackForeCastData` is specifically designed to utilize a wrapper around pandas dataframe but making it faster to fetch data.
     - **Accuracy:**  So many errors that can occur during the sequence generation process but it helps mitigate those errors, resulting to save time and effort.
-    - **Lots of other options:**
-      - 
 
   - **Efficient Data Handling with nested dictionaries:**
 
@@ -160,7 +158,7 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 ---
 
-### project additional infos
+### Project additional infos
 
 - This project prioritizes `code clarity` and maintainability by adhering to best practices for `clean code`. A clear `naming convention` is implemented for `public and private functions`, methods, and classes. Private elements, denoted by leading underscores (`_`), are not intended for direct user interaction. While technically usable, it's advisable to exercise caution when utilizing them. This naming convention simplifies project navigation, allowing you to readily `identify` the `primary functionalities` and guiding you towards the appropriate functions, methods, or classes to get started.
 
@@ -168,9 +166,9 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 - To further enrich your coding experience, consider incorporating `colored comments` into your development environment. The project provides references for these color-coding conventions:
 
-  - PyCharm: `\devDocs\conventions\convention_todoTypes.py`
+  - **PyCharm**: `\devDocs\conventions\convention_todoTypes.py`
 
-  - VSCode: `\devDocs\conventions\conventions.md`
+  - **VSCode** better comments extension *settings.json*: `\devDocs\conventions\conventions.md`
 
 - Also on different comments it's been indicated that in more comprehensive explains exist in `\devDocs\codeClarifier` files.
 
@@ -178,7 +176,65 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 - also reading tests in `\tests` folder can be useful in order to understand the project more.
 
+### 
+
 # use cases
 
 kkk use cases or how to get started
+
+# How to get started
+
+in order to know to get started, I should know what do yo want to do and what uses cases of this project do you want to use?!
+
+1. **use for timeseries data preparation:**
+
+   - note depending on how you understand and learn new things, you may go from 1 to 5 in list below, or you may only start at 5 (commonDatasetsPrep) which utilizes the first four.
+
+   1. take a deep look at public functions in `\dataPrep\preprocessing.py` which are main functions for core data preprocessing operations to manipulate the raw data. getting familiar with these functions would help you a lot, so you will never do recreate those helper functions.
+
+   2. `\dataPrep\dataset.py`
+
+      for beginning and also for most cases you may only need to know:
+
+      1. how to inherit from `VAnnTsDataset` and override its `__getitem__` method to create a simple dataset.
+      2. for easier sequence generation you need get to know `getBackForeCastData` method and its options
+      3. `getBackForeCastData_general` is also available which gives a bit of more freedom comparing to getBackForeCastData
+
+   3. `\dataPrep\dataloader.py`
+
+      - mostly there is nothing to do here by you and all things are handled automatically and you need to create an instance of it with dataset and of course may use its other options.
+
+   4. located at `\dataPrep\normalizers`, as mentioned above there are 3 sets of normalizers:
+
+      - note as these 6 normalizers share some similar responsibilities they share some `Interfaces` with each other.
+
+      1. `SingleColStdNormalizer` and `SingleColLblEncoder` at `singleColNormalizer.py`
+      2. `MultiColStdNormalizer` and `MultiColLblEncoder` at `multiColNormalizer.py`
+      3. `MainGroupSingleColStdNormalizer` and `MainGroupSingleColLblEncoder` at `mainGroupNormalizers.py`
+
+   5. take a look at files at `\commonDatasets\commonDatasetsPrep`, there are several files each doing data preprocesses on raw data of some famous datasets also providing their dataset and dataloaders. note this understanding these files means you understand whole of the `dataPrep` section.
+
+2. **use BrazingTorch:**
+
+   - it's a better alternative for pytorch and pytorch lightning and you may need:
+     1. take a look at arguments at `\brazingTorchFolder\brazingTorch.py`
+        - note there it's been addressed where implementation of each arguments is.
+        - note for better `separation of concerns`, most of their implementations are at files in `\brazingTorchFolder\brazingTorchParents`. so reading these files would help understand how exactly this package works.
+        - also there are some custom layers at `\brazingTorchFolder\layers\customLayers.py`
+        - and custom callbacks at `\brazingTorchFolder\callbacks.py`
+
+3. **models:**
+
+   - If you want get familiar to some latest `state of the art` models in forecasting you may take a look at `\models`. it contains the code of those models with compatibility with BrazingTorch.
+
+4. **examples:**
+
+   - there are examples on how to define models which use prepared data of `\commonDatasets\commonDatasetsPrep` or some examples have random data. then either use the models in `\models` or create a `custom model`.
+
+5. **machineLearning:**
+
+6. **projectUtils:**
+
+   - complementary functions are at `\projectUtils`
+   - you may look at files at `\projectUtils\dataTypeUtils` and also `projectUtils/misc.py`
 
