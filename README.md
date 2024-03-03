@@ -4,23 +4,21 @@ While developing machine learning models can be time-consuming, even the smalles
 
 This project aims to provide utility tools that streamline the development of models, particularly those in the realm of deep learning. As the name `"VersatileAnn"` suggests, the project strives to be beneficial across different deep learning subfields, including natural language processing (NLP), computer vision, forecasting, and other more general use cases. Not only can it be useful for people to `simply try out some models`, but it's designated to be especially handy for `AI researchers` who require a robust and efficient development environment.
 
-The project comprises 5 distinct sections: `dataPrep`, `commonDatasets`, `brazingTorch`, `models`, and `machineLearning`. `BrazingTorch` and `machineLearning` offer valuable resources for individuals aspiring to delve into development and utilizing deep learning and machine learning approaches, respectively.
+The project comprises 5 distinct sections: `dataPrep`, `commonDatasets`, `brazingTorch`, `models` and `machineLearning`. `BrazingTorch` and `machineLearning` offer valuable resources for individuals aspiring to delve into development and utilizing deep learning and machine learning approaches, respectively.
 
 However, the `models`, `dataPrep` and `commonDatasets` sections are currently `specialized` for `forecasting`. `models` contains many of forecasting `state of the art` models. It's worth noting that NLP falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows VersatileAnn to be particularly useful for `NLP models`. The project holds potential for incorporating novel ideas similar to the existing ones, but these are yet to be implemented for other subfields.
 
-kkk this project has really some cool unique features which don't exist elsewhere.
-
 Additionally, VersatileAnn aims to provide an easy-to-use tool for testing various machine learning models with different hyperparameters. This functionality can significantly save development time and effort by streamlining the process of identifying the optimal configuration for a specific model.
 
-## sections
+This project is quite extensive, with over 15,000 lines of code. While this summary highlights some key features, there are many `more unique functionalities and options` available.  These features are not only `well-tested` with more than 300 unit tests, but also designed to `save` you significant `development time`.  By incorporating these functionalities, you can `avoid errors` through the built-in error handling mechanisms. For a deeper dive, `each section` within the project has its own dedicated **readme.md** file explaining these features in detail.  Additionally, these `sections` are designed to `work together` seamlessly, leveraging each other's functionalities.
 
-Note each section has its own **readme.md**.
+## sections
 
 ### brazingTorch
 
 `brazingTorch` was developed here in this project, but as it offers valuable functionalities for the broader deep learning community, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
-it can be found at `/brazingTorchFolder` .
+it can be found at `/brazingTorchFolder`.
 
 #### Cool features:
 
@@ -162,17 +160,25 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 ---
 
-kkk brazingTorch is a framework but dataprep libray making it not a blackbox ; as AI researcher really need to know what exactly is going on on the data preprocessing steps, or model
+### project additional infos
 
-kkk good clean code practices focusing on readability. kkk public and private mthod/class naming
+- This project prioritizes `code clarity` and maintainability by adhering to best practices for `clean code`. A clear `naming convention` is implemented for `public and private functions`, methods, and classes. Private elements, denoted by leading underscores (`_`), are not intended for direct user interaction. While technically usable, it's advisable to exercise caution when utilizing them. This naming convention simplifies project navigation, allowing you to readily `identify` the `primary functionalities` and guiding you towards the appropriate functions, methods, or classes to get started.
 
-kkk cccUsage
+- This project utilizes comments extensively to enhance code readability and understanding. Comments tagged with `cccUsage` offer specific guidance on how to `leverage` the project's `functionalities`. Additionally, comments numbered `ccc1` to `ccc4` indicate their relative `importance` or the `scope they influence`, aiding in navigation.
 
-kkk good detailed comments with numerating them by importance; add colors
+- To further enrich your coding experience, consider incorporating `colored comments` into your development environment. The project provides references for these color-coding conventions:
 
-kkk this is a big project more than 15,000 lines of code. so please be patient to get familiar with this project. but it can be guessed with cool features and features to prevent errors, it really worth it to invest some time to it.
+  - PyCharm: `\devDocs\conventions\convention_todoTypes.py`
 
+  - VSCode: `\devDocs\conventions\conventions.md`
 
+- Also on different comments it's been indicated that in more comprehensive explains exist in `\devDocs\codeClarifier` files.
 
+- to have same settings specially the formatter used in development of this project, in `pycharm` import `\devDocs\versatileAnn_pycharmFormatter.editorconfig`.
 
+- also reading tests in `\tests` folder can be useful in order to understand the project more.
+
+# use cases
+
+kkk use cases or how to get started
 
