@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from dataPrep.utils_innerFuncs2 import _getSetLens, _getIdxs_possibleSets, _getSetsDemand, \
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs2 import _getSetLens, _getIdxs_possibleSets, _getSetsDemand, \
     _getIdxsAssigned_ToGroupDontBelongTo, _assign_IdxsToRegroup_ToSetWithMaxDemand_orRandom, \
     _split_indexesNotInvolved, _assignAsMuchAs_IdxsWith1PossibleSet_loop, _sanityCheck, \
     _sortSetIndexes, _updateSetIndexes_WithMaxDemand_ofAllIdxs, _normalizeDictValues, \

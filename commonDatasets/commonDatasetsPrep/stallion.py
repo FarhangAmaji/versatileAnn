@@ -31,8 +31,8 @@ from dataPrep.dataset import VAnnTsDataset
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.singleColNormalizer import SingleColLblEncoder
-from dataPrep.utils import _applyShuffleIfSeedExists
-from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
+from dataPrep.preprocessing import _applyShuffleIfSeedExists
+from dataPrep.preprocessing import rightPadIfShorter_df, rightPadIfShorter_npArray
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.misc import varPasser
 from projectUtils.typeCheck import argValidator

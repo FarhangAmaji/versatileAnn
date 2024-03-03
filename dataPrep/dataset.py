@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import Dataset
 
 from dataPrep.dataCleaning import noNanOrNoneData
-from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray, \
+from dataPrep.preprocessing import rightPadIfShorter_df, rightPadIfShorter_npArray, \
     rightPadIfShorter_tensor
 from projectUtils.customErrors import InternalLogicError
 from projectUtils.dataTypeUtils.df_series import pandasGroupbyAlternative

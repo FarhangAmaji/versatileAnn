@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.utils_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleColWarn, \
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleColWarn, \
     _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
     _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, _extend_dfIndexes
-from dataPrep.utils_innerFuncs import _splitApplyConditions
-from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _splitApplyConditions
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs2 import _addNextNPrev_tailIndexes
 from projectUtils.dataTypeUtils.df_series import regularizeBoolCol, pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 from projectUtils.dataTypeUtils.npArray import npArrayBroadCast

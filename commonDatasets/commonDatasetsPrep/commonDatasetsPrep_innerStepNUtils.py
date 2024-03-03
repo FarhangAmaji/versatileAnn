@@ -4,7 +4,7 @@ import pandas as pd
 from dataPrep.normalizers.multiColNormalizer import MultiColStdNormalizer
 from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer
-from dataPrep.utils import splitTrainValTest_mainGroup, _applyShuffleIfSeedExists, \
+from dataPrep.preprocessing import splitTrainValTest_mainGroup, _applyShuffleIfSeedExists, \
     splitTsTrainValTest_DfNNpDict, rightPadDf, splitToNSeries, addCorrespondentRow, \
     regularizeTsStartPoints
 from models.temporalFusionTransformers_components import getFastAi_empericalEmbeddingSize

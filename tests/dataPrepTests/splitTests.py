@@ -6,10 +6,10 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_mainGroup, \
+from dataPrep.preprocessing import splitTsTrainValTest_DfNNpDict, splitTrainValTest_mainGroup, \
     combineNSeries, \
     splitToNSeries
-from dataPrep.utils_innerFuncs import _split_splitNShuffle_startPointIndexes
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _split_splitNShuffle_startPointIndexes
 from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.list import listRangesToList
 from projectUtils.globalVars import tsStartPointColName

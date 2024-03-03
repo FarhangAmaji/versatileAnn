@@ -18,7 +18,7 @@ from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.normalizers.normalizerStack import NormalizerStack
 from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer, SingleColLblEncoder
-from dataPrep.utils import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
+from dataPrep.preprocessing import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
     splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.misc import varPasser
