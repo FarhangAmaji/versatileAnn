@@ -17,7 +17,7 @@ from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, SingleColsLblEncoder
+from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer, SingleColLblEncoder
 from dataPrep.utils import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
     splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
@@ -58,10 +58,10 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
                                        resultColName=tsStartPointColName)
 
     normalizer = NormalizerStack(
-        SingleColsStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
-        SingleColsLblEncoder(dataInfo.mainGroups))
+        SingleColStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
+        SingleColLblEncoder(dataInfo.mainGroups))
     # cccUsage
-    #  dont get SingleColsLblEncoder mixed up with MainGroupNormalizers,
+    #  dont get SingleColLblEncoder mixed up with MainGroupNormalizers,
     #  this line just wants to convert mainGroup to 'int categories'
     normalizer.fitNTransform(df)
     kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'shuffle', 'shuffleSeed'])

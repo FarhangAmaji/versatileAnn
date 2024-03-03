@@ -9,8 +9,8 @@ import pydantic
 from dataPrep.normalizers.baseEncoders import _StdScaler, _LblEncoder, _IntLabelsString
 from dataPrep.normalizers.multiColNormalizer import MultiColStdNormalizer, MultiColLblEncoder
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
-    SingleColsLblEncoder, _BaseSingleColsNormalizer
+from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer, \
+    SingleColLblEncoder, _BaseSingleColNormalizer
 from tests.baseTest import BaseTestClass
 
 
@@ -20,8 +20,8 @@ class stdNormalizerTests(BaseTestClass):
         super(stdNormalizerTests, self).__init__(*args, **kwargs)
         self.expectedPrint = {}
         self.expectedPrint[
-            'testFitAgain'] = "SingleColsStdNormalizer:col1_col2 col1 is already fitted\n" \
-                              "SingleColsStdNormalizer:col1_col2 col2 is already fitted\n" \
+            'testFitAgain'] = "SingleColStdNormalizer:col1_col2 col1 is already fitted\n" \
+                              "SingleColStdNormalizer:col1_col2 col2 is already fitted\n" \
                               "MultiColStdNormalizer:col3_col4 is already fitted\n"
 
     def transformSetUp(self):
@@ -33,7 +33,7 @@ class stdNormalizerTests(BaseTestClass):
         self.dfToDoTest = self.dfUntouched.copy()
         self.dfAssertDummy = self.dfUntouched.copy()
         self.normalizerStack = NormalizerStack(
-            SingleColsStdNormalizer(['col1', 'col2']),
+            SingleColStdNormalizer(['col1', 'col2']),
             MultiColStdNormalizer(['col3', 'col4']))
         self.transformedDf = pd.DataFrame({'col1': [-1.58113883, -1.26491106,
                                                     -0.9486833, -0.63245553,
@@ -96,8 +96,8 @@ class LblEncoderTest(stdNormalizerTests):
         super(LblEncoderTest, self).__init__(*args, **kwargs)
         self.expectedPrint = {}
         self.expectedPrint[
-            'testFitAgain'] = "SingleColsLblEncoder:col1_col2 col1 is already fitted\n" \
-                              "SingleColsLblEncoder:col1_col2 col2 is already fitted\n" \
+            'testFitAgain'] = "SingleColLblEncoder:col1_col2 col1 is already fitted\n" \
+                              "SingleColLblEncoder:col1_col2 col2 is already fitted\n" \
                               "MultiColLblEncoder:col3_col4 is already fitted\n"
 
         self.expectedPrint['testTransformAgain'] = 'LblEncoder applied transform on lbl:col1\n' \
@@ -127,7 +127,7 @@ class LblEncoderTest(stdNormalizerTests):
         self.dfAssertDummy = self.dfUntouched.copy()
 
         self.normalizerStack = NormalizerStack(
-            SingleColsLblEncoder(['col1', 'col2']),
+            SingleColLblEncoder(['col1', 'col2']),
             MultiColLblEncoder(['col3', 'col4']))
         self.transformedDf = pd.DataFrame({'col1': [0, 1, 2, 3, 0],
                                            'col2': [2, 1, 1, 0, 0],
@@ -176,7 +176,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
                                           index=range(100, 106))
 
         self.normalizerStack = NormalizerStack(
-            SingleColsLblEncoder(['col1']),
+            SingleColLblEncoder(['col1']),
             MultiColLblEncoder(['col2', 'col3']))
 
     def inverseTransformSetUp(self):
@@ -189,7 +189,7 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
     def testNotAllInts_raiseValueError_withNormalizer(self):
         df = pd.DataFrame({'col1': [3, 3.1, 0, 0, 1, 4]},
                           index=range(100, 106))
-        normalizerStack = NormalizerStack(SingleColsLblEncoder(['col1']))
+        normalizerStack = NormalizerStack(SingleColLblEncoder(['col1']))
         with self.assertRaises(ValueError) as context:
             normalizerStack.fitNTransform(df)
         self.assertEqual(str(context.exception), _LblEncoder.floatDetectedErrorMsg)
@@ -204,9 +204,9 @@ class lblEncoderWithIntLabelsStringTests(BaseTestClass):
 class otherTests(BaseTestClass):
     def testNormalizerStack_addNormalizer(self):
         self.normalizerStack = NormalizerStack(
-            SingleColsLblEncoder(['col1']),
+            SingleColLblEncoder(['col1']),
             MultiColLblEncoder(['col2', 'col3']))
-        self.normalizerStack.addNormalizer(SingleColsLblEncoder(['col4']))
+        self.normalizerStack.addNormalizer(SingleColLblEncoder(['col4']))
         # kkk print or assert sth
 
     def testNonDfOrSeries_pydanticAssertion(self):
@@ -242,9 +242,9 @@ class otherTests(BaseTestClass):
 
     def testNotInstanceOf_BaseSingleColsNormalizer(self):
         with self.assertRaises(RuntimeError) as context:
-            _BaseSingleColsNormalizer()
+            _BaseSingleColNormalizer()
         self.assertEqual(str(context.exception),
-                         'Instances of _BaseSingleColsNormalizer are not allowed')
+                         'Instances of _BaseSingleColNormalizer are not allowed')
 
 
 # ---- run test

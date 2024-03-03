@@ -3,7 +3,7 @@ import pandas as pd
 
 from dataPrep.normalizers.multiColNormalizer import MultiColStdNormalizer
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer
+from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer
 from dataPrep.utils import splitTrainValTest_mainGroup, _applyShuffleIfSeedExists, \
     splitTsTrainValTest_DfNNpDict, rightPadDf, splitToNSeries, addCorrespondentRow, \
     regularizeTsStartPoints
@@ -27,10 +27,10 @@ def _shuffleNRightpad_Compatibility(rightPadTrain, shuffle, shuffleSeed):
 def _normalizerFit_split(mainDf, dataInfo, backcastLen, forecastLen, trainRatio=.7,
                          valRatio=.2, shuffle=False, shuffleSeed=None):
     normalizer = NormalizerStack(
-        SingleColsStdNormalizer([*dataInfo.futureExogenousCols,
-                                 *dataInfo.historyExogenousCols]),
+        SingleColStdNormalizer([*dataInfo.futureExogenousCols,
+                                *dataInfo.historyExogenousCols]),
         MultiColStdNormalizer(dataInfo.targets))
-    # cccUsage SingleColsStdNormalizer normalize data of each col separately
+    # cccUsage SingleColStdNormalizer normalize data of each col separately
     # cccUsage MultiColStdNormalizer normalize data of multiple cols based on all of those cols
     # cccUsage here we use MultiColStdNormalizer for targets('priceFr', 'priceBe'), which have same unit(Euro€)
     mainDf['mask'] = True
@@ -158,7 +158,7 @@ def _normalizingAllReals(dataInfo, df, normalizer):
     #  allReals is added to normalizers here(separate from line #LStl1 in stallion.py) because
     #  allReals needs to have staticReals and in line #LStl2 _addTargetMeanNStd 'volumeMean' and
     #  'volumeStd' get added to staticReals
-    normalizer.addNormalizer(SingleColsStdNormalizer(dataInfo['allReals']))
+    normalizer.addNormalizer(SingleColStdNormalizer(dataInfo['allReals']))
     normalizer.uniqueNormalizers[-1].fitNTransform(df)
 
 

@@ -100,6 +100,9 @@ def splitTrainValTest_mainGroup(df, mainGroups, *, trainRatio, valRatio, seqLen=
     if shuffleSeed:
         shuffle = True
     # ccc1
+    #  NSeries is called to the data recognized as different timeseries
+    #  but existing in a single dataframe.
+    # ccc1
     #  ensures that tailIndexes are also from the same mainGroup,
     #  and different mainGroups data dont get mixed up
     # addTest1

@@ -302,7 +302,7 @@ class _NestedDictStruct:
         return str(self.struct)
 
 
-# ---- util funcs
+# ---- nestedDicts funcs
 @argValidator
 def alterAValue_InANestedDictPath(inputDictStyle: Union[dict, DotDict, _NestedDictStruct],
                                   path, value, extendIfPossible=False):

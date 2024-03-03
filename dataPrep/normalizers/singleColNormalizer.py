@@ -6,9 +6,9 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 
 
-class _BaseSingleColsNormalizer(_BaseNormalizer):
+class _BaseSingleColNormalizer(_BaseNormalizer):
     def __init__(self):
-        _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColsNormalizer)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColNormalizer)
 
         super().__init__()
         self.encoders = {}
@@ -70,7 +70,7 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
             df[col] = self.inverseTransformCol(df, col)
 
 
-class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
+class SingleColStdNormalizer(_BaseSingleColNormalizer):
     def __init__(self, colNames: list):
         super().__init__()
         self.encoders = {col: _StdScaler(f'std{col}') for col in colNames}
@@ -87,7 +87,7 @@ class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
         return f"SingleColsStdNormalizer:{'_'.join(self.colNames)}"
 
 
-class SingleColsLblEncoder(_BaseSingleColsNormalizer):
+class SingleColLblEncoder(_BaseSingleColNormalizer):
     @argValidator
     def __init__(self, colNames: list):
         super().__init__()

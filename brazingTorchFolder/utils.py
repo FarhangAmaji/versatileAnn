@@ -64,9 +64,8 @@ def isPytorchLightningScheduler(obj):
     Returns:
         True if the object is a PyTorch Lightning scheduler, False otherwise.
     """
-
-    if isinstance(obj, (LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
-                        LearningRateMonitor)):
+    if isinstance(obj, (LRScheduler._LRScheduler, LRScheduler.LambdaLR,
+                        LRScheduler.OneCycleLR, LearningRateMonitor)):
         # Direct instance of PyTorch Lightning schedulers (preferred)
         return True
     elif isinstance(obj, LightningModule):
@@ -84,9 +83,8 @@ def isPytorchLightningScheduler(obj):
         try:
             # Try using getmro() for more reliable inheritance path checks
             for baseClass in getmro(obj):
-                if baseClass in (
-                        LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
-                        LightningModule):
+                if baseClass in (LRScheduler._LRScheduler, LRScheduler.LambdaLR,
+                                 LRScheduler.OneCycleLR, LightningModule):
                     return True
         except TypeError:  # Handle cases where getmro() might not be supported
             pass
@@ -194,7 +192,6 @@ def externalFit(self, trainDataloader: DataLoader,
 
 def _addDefaultSchedulers(self, addDefault_earlyStopping, addDefault_reduceLROnPlateau,
                           warmUp_epochNum):
-
     newSchedulers = self._schedulers
     if warmUp_epochNum:
         warmUp = WarmUpScheduler(self.optimizer, warmUpEpochs=warmUp_epochNum)

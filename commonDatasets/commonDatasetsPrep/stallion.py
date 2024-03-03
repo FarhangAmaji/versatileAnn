@@ -28,9 +28,9 @@ from commonDatasets.commonDatasetsPrep.commonDatasetsPrep_innerStepNUtils import
 from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
-from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblEncoder
+from dataPrep.normalizers.singleColNormalizer import SingleColLblEncoder
 from dataPrep.utils import _applyShuffleIfSeedExists
 from dataPrep.utils import rightPadIfShorter_df, rightPadIfShorter_npArray
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
@@ -72,8 +72,8 @@ def getStallion_processed(*, dataInfo: Union[DotDict, dict], maxEncoderLength=24
 
     df = df.sort_values(dataInfo.mainGroups + [dataInfo.timeIdx]).reset_index(drop=True)
     normalizer = NormalizerStack(  # LStl1
-        MainGroupSingleColsStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),  # LStl2
-        SingleColsLblEncoder(
+        MainGroupSingleColStdNormalizer(df, dataInfo.mainGroups, dataInfo.targets),  # LStl2
+        SingleColLblEncoder(
             ['sku', 'agency', 'month',
              *dataInfo.categoricalGroupVariables['specialDays']]))  # LStl3
     normalizer.fitNTransform(df)
