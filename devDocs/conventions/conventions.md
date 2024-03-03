@@ -132,6 +132,8 @@
 
 - `test`
 
+- `testUpdate`
+
 - `docs`
 
 - `style`

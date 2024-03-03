@@ -2,8 +2,8 @@ import pandas as pd
 
 from dataPrep.normalizers.baseEncoders import _LblEncoder, _StdScaler, _IntLabelsString
 from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
-from projectUtils.typeCheck import argValidator
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
+from projectUtils.typeCheck import argValidator
 
 
 class _BaseSingleColNormalizer(_BaseNormalizer):
@@ -84,7 +84,8 @@ class SingleColStdNormalizer(_BaseSingleColNormalizer):
         return self.encoders[col].transform(df[col])
 
     def __repr__(self):
-        return f"SingleColsStdNormalizer:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(self.colNames)}"
 
 
 class SingleColLblEncoder(_BaseSingleColNormalizer):
@@ -138,4 +139,5 @@ class SingleColLblEncoder(_BaseSingleColNormalizer):
         return {col: enc.encoder.classes_ for col, enc in self.encoders.items()}
 
     def __repr__(self):
-        return f"SingleColsLblEncoder:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+        return f"{className}:{'_'.join(self.colNames)}"
