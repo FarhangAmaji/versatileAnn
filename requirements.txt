@@ -5,17 +5,4 @@ colorama
 tensorboard
 coverage
 scikit-learn
-
-# for CUDA 11.8 torch on Windows
---index-url https://download.pytorch.org/whl/cu118; sys_platform == "win32"
-torch; sys_platform == "win32"
-pytorch-lightning; sys_platform == "win32"
-
-# for CUDA 11.8 torch on Linux
---index-url https://download.pytorch.org/whl/cu118; sys_platform == "linux"
-torch; sys_platform == "linux"
-pytorch-lightning; sys_platform == "linux"
-
-# for MPS accelerated torch on Mac
-torch; sys_platform == "darwin"
-pytorch-lightning; sys_platform == "darwin"
+pytorch-lightning

@@ -1,6 +1,8 @@
 import copy
 import math
-from types import NoneType
+
+NoneType = type(None)
+
 from typing import Union
 
 import numpy as np

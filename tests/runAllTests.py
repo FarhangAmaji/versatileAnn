@@ -1,8 +1,10 @@
 import os
-import shutil
-import unittest
+import sys  # noqa
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # noqa
 
 from projectUtils.misc import getProjectDirectory
+import shutil
+import unittest
 
 # Automatically discover and load test cases
 testLoader = unittest.TestLoader()

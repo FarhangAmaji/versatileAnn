@@ -101,6 +101,8 @@ def isCustomClass(cls_):
     import builtins
     import pkg_resources
     import types
+    types.NoneType = type(None)
+
     if cls_ is None or cls_ is types.NoneType:  # kkk
         return False
     moduleName = getattr(cls_, '__module__', '')
@@ -166,16 +168,16 @@ def findClassDefinition_inADirectory(directoryPath, className, printOff=False):
     classDefinitions = []
 
     for root, dirs, files in os.walk(directoryPath):
-        for file in files:
-            if file.endswith('.py'):
-                filePath = os.path.join(root, file)
-                fileClassDefinitions = findClassDefinition_inAFile(filePath, className, printOff)
-                if fileClassDefinitions:
-                    filePathsHavingTheDefinitionOfClass.append(filePath)
-                    classDefinitions.extend(fileClassDefinitions)
+        if '.venv' not in root and '.venv' not in dirs:
+            for file in files:
+                if file.endswith('.py'):
+                    filePath = os.path.join(root, file)
+                    fileClassDefinitions = findClassDefinition_inAFile(filePath, className, printOff)
+                    if fileClassDefinitions:
+                        filePathsHavingTheDefinitionOfClass.append(filePath)
+                        classDefinitions.extend(fileClassDefinitions)
 
-    return {'className': className, 'Definitions': classDefinitions,
-            'filePaths': filePathsHavingTheDefinitionOfClass}
+    return {'className': className, 'Definitions': classDefinitions, 'filePaths': filePathsHavingTheDefinitionOfClass}
 
 
 def getClassObjectFromFile(className, filePath, printOff=False):
