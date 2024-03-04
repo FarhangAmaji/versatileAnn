@@ -5,5 +5,14 @@
 windows Run docker-desktop, other system skip this step.
 in project folder in cli:
 docker build -t ann .
-docker run -it -v D:/Projects/versatileAnn:/app ann
+
+* windows cli:
+
+docker run -it --rm -v %cd%:/app ann
+
+* other systems:
+
+docker run --rm -it -v ${PWD}:/app ann
+docker run --rm -it -v $(pwd):/app ann
+
 
