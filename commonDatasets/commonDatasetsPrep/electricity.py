@@ -17,8 +17,8 @@ from commonDatasets.getData import getDatasetFiles
 from dataPrep.dataloader import VAnnTsDataloader
 from dataPrep.dataset import VAnnTsDataset
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, SingleColsLblEncoder
-from dataPrep.utils import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
+from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer, SingleColLblEncoder
+from dataPrep.preprocessing import diffColValuesFromItsMin_mainGroups, setExclusionFlag_seqEnd_mainGroups, \
     splitTrainValTest_mainGroup, _applyShuffleIfSeedExists
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.misc import varPasser
@@ -58,10 +58,10 @@ def getElectricity_processed(*, dataInfo: Union[DotDict, dict], backcastLen=192,
                                        resultColName=tsStartPointColName)
 
     normalizer = NormalizerStack(
-        SingleColsStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
-        SingleColsLblEncoder(dataInfo.mainGroups))
+        SingleColStdNormalizer(['powerUsage', 'daysFromStart', 'hoursFromStart', 'dayOfMonth']),
+        SingleColLblEncoder(dataInfo.mainGroups))
     # cccUsage
-    #  dont get SingleColsLblEncoder mixed up with MainGroupNormalizers,
+    #  dont get SingleColLblEncoder mixed up with MainGroupNormalizers,
     #  this line just wants to convert mainGroup to 'int categories'
     normalizer.fitNTransform(df)
     kwargs = varPasser(localArgNames=['trainRatio', 'valRatio', 'shuffle', 'shuffleSeed'])
@@ -80,7 +80,7 @@ def getElectricity_data(*, backcastLen, forecastLen, devTestMode):
 # ----
 class Electricity_deepArDataset(VAnnTsDataset):
     def __getitem__(self, idx):
-        # bugPotentialCheck2 check this part
+        # bugPotn2 check this part
         inputs = {}
         inputs['consumerId'] = self.getBackForeCastData(idx, mode=self.castModes.singlePoint,
                                                         colsOrIndexes=self.dataInfo.consumerId)
@@ -104,7 +104,7 @@ def getElectricityDataloaders(*, dataInfo: Union[DotDict, dict], backcastLen=192
                               shuffleSeed=None, devTestMode=False):
     dataInfo = _dataInfoAssert(dataInfo, necessaryKeys)
     shuffle = _applyShuffleIfSeedExists(shuffle, shuffleSeed)
-    # cccAlgo forecastLen==1 is for shifting
+    # ccc1 forecastLen==1 is for shifting
     kwargs = varPasser(
         localArgNames=['backcastLen', 'forecastLen', 'trainRatio', 'valRatio', 'shuffle',
                        'shuffleSeed', 'devTestMode', 'dataInfo'])

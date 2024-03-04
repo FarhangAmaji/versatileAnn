@@ -26,7 +26,7 @@ class _BrazingTorch_loss:
     @lossFuncs.setter
     @argValidator
     def lossFuncs(self, value: List[nn.modules.loss._Loss]):
-        # bugPotentialCheck1
+        # bugPotn1
         #  when we pass [] doesn't give error
         self._lossFuncs = value
 
@@ -44,7 +44,7 @@ class _BrazingTorch_loss:
     @argValidator
     def _calculateLosses(self, forwardOutputs: Union[torch.Tensor, dict],
                          targets: Union[torch.Tensor, dict]):
-        # bugPotentialCheck1 addTest1
+        # bugPotn1 addTest1
         #  gives error without setting lossFuncs;
         #  should think is having lossFuncs is a must or I can make it optional
         calculatedLosses = []
@@ -56,13 +56,13 @@ class _BrazingTorch_loss:
 
             # warn or error that targets and forwardOutputs based on their dict keys
             self._warnIf_forwardOutputsNTargets_haveNoSamePattern(forwardOutputs, targets)
-            # cccDevStruct
+            # ccc1
             #  this is making a structure for nestedDicts(also works with other types of data);
             #  so later in _getFlattedData we can fill it with data
-            # cccDevStruct
+            # ccc1
             #  to get _outputsStruct only once in order not to
             #  slow down the code by doing same thing every time
-            # cccDevAlgo
+            # ccc1
             #  note the self._outputsStruct is built upon forwardOutputs and not targets
             #  as we also let users not to use all of the keys in the targets of dataloader
             #  and leave some unused
@@ -77,12 +77,12 @@ class _BrazingTorch_loss:
 
             calculatedLosses.append(lossRes)
 
-            # cccDevAlgo
+            # ccc1
             #  only results of first loss function is returned; therefore, backprop is done on those
             if i == 0:
                 returnedLoss = calculatedLosses[0]
                 # add regularizations to loss
-                # cccDevAlgo
+                # ccc1
                 #  the regularization is not just added in 'train' phase. even though in
                 #  other phases it might slow down but in order to have same scale of losses
                 #  in all phases, it's better to add regularizations to loss in all phases
@@ -100,14 +100,14 @@ class _BrazingTorch_loss:
         return returnedLoss, calculatedLosses
 
     def _flattenTargetsNOutputs_data(self, forwardOutputs, targets):
-        # cccDevStruct
+        # ccc1
         #  because _NestedDictStruct also used here doesn't make it obligatory
         #  to have VAnnTsDataloader. and works with any dataloader
 
         try:
             outputsFlatData = self._getFlattedData(forwardOutputs)
         except:
-            # cccDevAlgo
+            # ccc1
             #  in rare cases there is a possibility that the structure of forwardOutputs get
             #  changed. even though it slows down the code, I think its better to to keep it safe.
             #  so if it fails to fillData to _outputsStruct we try to remake _outputsStruct
@@ -116,7 +116,7 @@ class _BrazingTorch_loss:
             outputsFlatData = self._getFlattedData(forwardOutputs)
 
         if isinstance(forwardOutputs, dict):
-            # cccDevAlgo
+            # ccc1
             #  this is for the feature of letting user not to use all keys of targets of dataloader
             # only keep keys which are in outputs
             targets = {key: targets[key] for key in forwardOutputs.keys()}
@@ -133,7 +133,7 @@ class _BrazingTorch_loss:
         return outputsFlatData
 
     def _warnIf_forwardOutputsNTargets_haveNoSamePattern(self, forwardOutputs, targets):
-        # cccDevStruct
+        # ccc1
         #  note this is called only when _outputsStruct is getting set
         if isinstance(targets, dict):
             if not isinstance(forwardOutputs, dict):
@@ -182,14 +182,14 @@ class _BrazingTorch_loss:
         # addTest2 for phaseBased_logOptions
         # kkk
         #  take care of unsatisfaction with logs of preRunTests here
-        # cccDevAlgo
+        # ccc1
         #  on_step=True for low important runs is not necessary but its important
         #  for main runs: but I avoid complexity and put on_step one for train
         logOptions = {"on_step": True if phase == 'train' else False,
                       'on_epoch': True, 'prog_bar': True}
         if hasattr(self, '_logOptions'):
             # pass _logOptions with phaseBased _logOptions format
-            # cccDevAlgo
+            # ccc1
             #  for more info about phaseBased _logOptions take a look at modelFitter
             for akl, aklV in self._logOptions.items():
                 if isinstance(aklV, dict):
@@ -230,7 +230,7 @@ class _BrazingTorch_loss:
             self.lossFuncs = lossFuncs
             # cccUsage
             #  only first loss is used for backpropagation and others are just for logging
-            # cccDevStruct
+            # ccc1
             #  in the case outside of trainModel lossFuncs is been set, so if not passed would use them
             # anyway self.lossFuncs must be set
 

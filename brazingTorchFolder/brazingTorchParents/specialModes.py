@@ -35,10 +35,10 @@ class _BrazingTorch_specialModes:
 
     def specialModesStep(self, batch, phase):
         # addTest1
-        # cccAlgo
+        # ccc1
         #  this is a method for train/val/test/predict steps when special modes
         #  like VAEMode, dropoutEnsembleMode are applied
-        # bugPotentialCheck1
+        # bugPotn1
         #  note this method should always be similar to commonStep
         #  so check commonStep and make similar changes here specially for the comments
         # cccUsage
@@ -60,7 +60,7 @@ class _BrazingTorch_specialModes:
                                                                                       targets)
 
         # calculate loss
-        # bugPotentialCheck1
+        # bugPotn1
         #  if the loss is not returned from _calculatedLosses because of
         #  not having self.lossFuncs would it make error
         loss, calculatedLosses = self._calculateLosses(forwardOutputs, targets)
@@ -110,7 +110,7 @@ class _BrazingTorch_specialModes:
 
     def _activateDropouts_forEnsembleMode(self):
         # kkk addTest1
-        # cccDevStruct
+        # ccc1
         #  - self.modules() recursively includes all submodules, so if model has some
         #  layers(as attributes) which are other classes inherited from nn.module
         #  and have some nn.Dropout in them are accessed with self.modules()
@@ -123,7 +123,7 @@ class _BrazingTorch_specialModes:
 
     # ---- methods related to dropoutEnsemble and VAEMode
     def _forward_specialModes_inferencePhases(self, inputs, outputs):
-        # cccAlgo
+        # ccc1
         #  this is used in inference phases(eval/test/predict)
         mean, logvar = None, None
         if self.dropoutEnsembleMode:

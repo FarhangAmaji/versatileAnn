@@ -4,11 +4,11 @@ from typing import List
 from brazingTorchFolder.lossRegulator import LossRegulator
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.dataTypeUtils.str import joinListWithComma
+from projectUtils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, isCustomClass, \
     isFunctionOrMethod, _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc, \
     setDefaultIfNone, isCustomFunction, getProjectDirectory, \
     findClassObject_inADirectory, getClassObjectFromFile
-from projectUtils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
@@ -184,6 +184,17 @@ class _BrazingTorch_modelDifferentiator:
                     foundClasses = findClassObject_inADirectory(getProjectDirectory(),
                                                                 classNameOf_staticOrInstanceMethod,
                                                                 printOff=self.testPrints)
+                    # bugPotn1
+                    #  passing getProjectDirectory() to findClassObject_inADirectory has a similar
+                    #  potential error which should only search for files in some folders and
+                    #  not all folders; for i.e. if the user has .venv folder in it's project, this
+                    #  code would loop over files and folders in '.venv' and make this code slower,
+                    #  or even break the code
+                    #  - so solution comes to my mind is that I should make folder names sth between hardcoded and
+                    #  automatic(I mean to hardcode folders in getProjectDirectory(), which are
+                    #  allowed to loop through|note I also want to allow users to make some folders
+                    #  for themselves to run their projects). note this solution maybe also solution
+                    #  to #LMDCC
 
                     if len(foundClasses['classObjects']) == 1:
                         self._getClassAndItsParentsDefinitions(foundClasses['classObjects'][0],
@@ -223,7 +234,7 @@ class _BrazingTorch_modelDifferentiator:
 
     def _getParentClasses(self, cls_, visited=None, classesDict=None):
         # Helper function to get definitions of parent classes recursively
-        # bugPotentialCheck2
+        # bugPotn2
         #  is possible to get in to infinite loop
 
         visited = setDefaultIfNone(visited, set())
@@ -253,11 +264,11 @@ class _BrazingTorch_modelDifferentiator:
 
         if self._isCls_BrazingTorchClass(cls_):
             return None
-        if cls_ in [LossRegulator, DotDict]:
+        if cls_ in [LossRegulator, DotDict]:  # LMDCC
             # goodToHave3
             #  maybe I should not do this, as standAlone may use sth like freezing dependency; also
             #  for funcs (if next goodToHave; few lines below is implemented)
-            # bugPotentialCheck2
+            # bugPotn2
             #  think about it later
             #  add all other classes defined in the project;
             #  obviously we want to do it everytime here, so either we have to hard code them some
@@ -273,7 +284,7 @@ class _BrazingTorch_modelDifferentiator:
 
     # ---- case3 methods
     def _getAttributesFuncDefinitions(self, obj, visitedFuncs=None, funcDefinitions=None):
-        # cccDevAlgo
+        # ccc1
         #  case3
         #  this is a rare case but it's involved
         visitedFuncs = setDefaultIfNone(visitedFuncs, set())

@@ -45,7 +45,7 @@ class FitTests(BaseTestClass):
         self.trainDataloader, self.valDataloader, self.testDataloader, self.normalizer = getEpfFrBeDataloaders(
             backcastLen=backcastLen, forecastLen=forecastLen,
             batchSize=batchSize, shuffle=shuffle, dataInfo=dataInfo, devTestMode=devTestMode)
-        # bugPotentialCheck1
+        # bugPotn1
         #  gives 'train is empty. the trainSeqLen seems to be high'; check is it giving warn
         #  with correct reason or not
 
@@ -71,7 +71,7 @@ class DetermineFitRunStateTests(FitTests):
 
     # mustHave1
     #  for some of these cases also add matchedSeedDict (should )
-    # cccDevStruct
+    # ccc1
     #  note test func which have _matchedSeedDict have seed=71 as there is a model saved with
     #  this seed
 

@@ -6,7 +6,7 @@ from projectUtils.typeCheck import argValidator
 
 
 class _BaseNormalizer(ABC):
-    # cccDevStruct
+    # ccc1
     #  note the command pattern cant be applied here as the users do transforms on each col when they want.
     #  so there is nothing which can be tracked centralized
     def __init__(self):

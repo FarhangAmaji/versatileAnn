@@ -6,10 +6,10 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from dataPrep.utils import splitTsTrainValTest_DfNNpDict, splitTrainValTest_mainGroup, \
+from dataPrep.preprocessing import splitTsTrainValTest_DfNNpDict, splitTrainValTest_mainGroup, \
     combineNSeries, \
     splitToNSeries
-from dataPrep.utils_innerFuncs import _split_splitNShuffle_startPointIndexes
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _split_splitNShuffle_startPointIndexes
 from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.list import listRangesToList
 from projectUtils.globalVars import tsStartPointColName
@@ -355,7 +355,7 @@ class TestSplitTrainValTest_NSeries(BaseTestClass):
 
 
 class _split_splitNShuffleIndexes_Tests(BaseTestClass):
-    # cccDevAlgo
+    # ccc1
     #  - this code is really complex; and its obvious some case are not at all possible(harsher conditions)
     #       than allConditions here; note these are in common in practical use but just for
     #       the case of hypothetical perfection
@@ -383,7 +383,7 @@ class _split_splitNShuffleIndexes_Tests(BaseTestClass):
         for ppfs in possiblePlusForSet:
             seqLens2 = seqLens.copy()
             # 100 is len of df, hardcoded here
-            # cccDevAlgo
+            # ccc1
             #  note seqLens are not necessarily less than len required('morePreciseFloat(ar[sn])')
             #  and they can be even more
             if ar[sn] != 0 and morePreciseFloat(ar[sn]) * 100 > ppfs:
@@ -509,7 +509,7 @@ class _split_splitNShuffleIndexes_Tests(BaseTestClass):
     #  to understand which configs are really should be asserted in order to provide immunity
     #  to change in the code; anyway here are some good candidates
     def testConfig_NotFromAllConfigs1_shuffle(self):
-        # bugPotentialCheck1
+        # bugPotn1
         #  super important: what does this config has which my allConfigs does not
         #  note none of testAllconfigs with Shuffle on or off didnt return setsIndexes from
         #  'if not len(indexes)' just after '_assignAsMuchAs_IdxsWith1PossibleSet'

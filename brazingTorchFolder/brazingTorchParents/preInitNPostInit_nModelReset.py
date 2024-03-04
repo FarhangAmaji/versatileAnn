@@ -17,7 +17,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         in brazingTorchTests_preInitNPostInit_nModelReset, in classDefinitionsSetup,
         the GrandChild is the 'last child of all'
     """
-    # cccDevStruct
+    # ccc1
     #  this is called even before __init_subclass__
     classesCalledBy_init_subclass_ = []
 
@@ -26,11 +26,11 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_preInitNPostInit_nModelReset)
 
     def __init_subclass__(cls, **kwargs):
-        # cccDevAlgo
+        # ccc1
         #  in _findAllParentClasses_tillBrazingTorch we need BrazingTorch class object.
         #  so along some other classes, we store BrazingTorch class object here.
 
-        # cccDevStruct
+        # ccc1
         #  this method is keep only to pass BrazingTorchObj to __new__
         #  note this is called even before 'last child of all'
         #  note this is even called for BrazingTorch itself, and its the first one to be called;
@@ -48,7 +48,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
                 raise ImplementationError(f'"{cls}" class is not allowed to have __new__ method.')
 
     def __new__(cls, **kwargs):
-        # cccDevStruct
+        # ccc1
         #  - __new__ acts as `preInit` step, also enables to have `postInit`.
         #    this is for a more clean setup. so users don't need to init parent classes themselves.
         #    even adviced to not do so. and user can just define their model related things
@@ -105,7 +105,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         allArgs = cls._combineArgsOfParentClasses_ofTillBrazingTorch_withParentsOfBrazingTorch(
             argsOf_parentClassesOfBrazingTorch, argsOf_parentClasses_tillBrazingTorch, initiatedObj)
 
-        # cccDevStruct
+        # ccc1
         #  init parent classes of `last child of all` upto BrazingTorch except _BrazingTorch_optimizer
         #  _BrazingTorch_optimizer is initiated few lines later, after initing parent classes till BrazingTorch
         #  because after those, the neural network layer are defined and as the optimizer needs
@@ -133,7 +133,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
 
     @staticmethod
     def _managingClassVariableSpace(cls, initiatedObj):
-        # cccDevStruct
+        # ccc1
         #  moving classesCalledBy_init_subclass_ from _BrazingTorch_preInitNPostInit_nModelReset to
         #  cls. it's ok that classesCalledBy_init_subclass_ exist in cls, as it's definition is
         #  fixed, but as the _BrazingTorch_preInitNPostInit_nModelReset can be used in other classes,
@@ -144,7 +144,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
             _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_ = [
                 _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]]
 
-        # cccDevStruct
+        # ccc1
         #  now we have the object, so we move cls._parentClasses_tillBrazingTorch_inits to
         #  initiatedObj, to clean class variable space.
         #  note in _getArgsOfParentClasses_tillBrazingTorch we temporarily put
@@ -170,7 +170,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
 
         # cccUsage
         #  this is not inplace so u have to do `self = self.resetModel()`
-        # bugPotentialCheck1
+        # bugPotn1
         #  this is a major feature but very prone to bugs, specially the attributes which are set
         #  after __init__ may be lost
         # mustHave1
@@ -182,13 +182,13 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         # mustHave2
         #  also add warning that [attr1, attr2, ...] are not kept in the same state as they are
         #  - timeOut message can be useful here
-        # cccDevStruct
+        # ccc1
         #  note the __init_subclass__ and _BrazingTorch_postInit are not called; only __new__ is called
         # kkk
         #  wherer and why prints sth like ##teamcity[testStdErr timestamp='2024-01-30T00:29:05.138' flowId='preRunTests_Tests.preRunTests_Tests.testTraining_step' locationHint='python<F:\projects\public github projects\private repos\versatileAnnModule\tests\brazingTorchTests>://preRunTests_Tests.preRunTests_Tests.testTraining_step' name='testTraining_step' nodeId='3' out='F:\projects\public github projects\private repos\versatileAnnModule\projectUtils\warnings.py:21: CusWarn: |n|[22m|[30m|[44m generalRegularization is not provided; so it is set to default "l2 regularization" with value of 1e-3|nyou may either pass noAdditionalOptions=True to model or call .noGeneralRegularization method on model.|nor set .generalRegularization to another value for i.e. {"type":"l1","value":.02} |[0m|n  warnings.warn(warningMessage, CusWarn)|n' parentNodeId='2']
         attrsToKeep = attrsToKeep or {}
 
-        # bugPotentialCheck1
+        # bugPotn1
         #  in past we didn't have optimizer and _optimizerInitArgs in attrsKeptByDefault_names but
         #  worked fine but now it doesn't. so had to add them to it
         attrsKeptByDefault_names = ['lossFuncs', 'optimizer', '_optimizerInitArgs']

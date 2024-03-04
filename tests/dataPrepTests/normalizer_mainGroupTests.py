@@ -6,10 +6,10 @@ import unittest
 import pandas as pd
 
 from dataPrep.normalizers.mainGroupNormalizers import (_MainGroupBaseNormalizer,
-                                                       MainGroupSingleColsStdNormalizer,
-                                                       MainGroupSingleColsLblEncoder)
+                                                       MainGroupSingleColStdNormalizer,
+                                                       MainGroupSingleColLblEncoder)
 from dataPrep.normalizers.normalizerStack import NormalizerStack
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsLblEncoder
+from dataPrep.normalizers.singleColNormalizer import SingleColLblEncoder
 from tests.baseTest import BaseTestClass
 
 
@@ -120,13 +120,13 @@ class MainGroupSingleColsStdNormalizerTests(BaseTestClass):
 
     def normalizerStackSetUp(self):
         self.normalizerStack = NormalizerStack(
-            MainGroupSingleColsStdNormalizer(self.df, ['A', 'B'], ['col1', 'col2']))
+            MainGroupSingleColStdNormalizer(self.df, ['A', 'B'], ['col1', 'col2']))
 
     def testDirectFitNTransform(self):
         # direct means without stackNormalizer
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupSingleColsStdNormalizer(self.df, ['A', 'B'],
-                                                                    ['col1', 'col2'])
+        MainGroupBaseNormalizer_ = MainGroupSingleColStdNormalizer(self.df, ['A', 'B'],
+                                                                   ['col1', 'col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform)
 
@@ -171,20 +171,20 @@ class MainGroupSingleColsLblEncoderTests(MainGroupSingleColsStdNormalizerTests):
 
     def normalizerStackSetUp(self):
         self.normalizerStack = NormalizerStack(
-            MainGroupSingleColsLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
+            MainGroupSingleColLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
 
     def testDirectFitNTransform(self):
         self.setUp()
-        MainGroupBaseNormalizer_ = MainGroupSingleColsLblEncoder(self.df, ['A', 'B'],
-                                                                 ['col1', 'col2'])
+        MainGroupBaseNormalizer_ = MainGroupSingleColLblEncoder(self.df, ['A', 'B'],
+                                                                ['col1', 'col2'])
         MainGroupBaseNormalizer_.fitNTransform(self.df)
         self.equalDfs(self.df, self.dfFitNTransform, floatApprox=True)
 
     def test_warnToInverseTransform_mainGroups(self):
         self.setUp()
         normalizerStack = NormalizerStack(
-            SingleColsLblEncoder(['A']),
-            MainGroupSingleColsLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
+            SingleColLblEncoder(['A']),
+            MainGroupSingleColLblEncoder(self.df, ['A', 'B'], ['col1', 'col2']))
         with self.assertRaises(RuntimeError) as context:
             normalizerStack.fitNTransform(self.df)
         self.assertEqual(str(context.exception),

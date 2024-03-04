@@ -131,7 +131,7 @@ class _BrazingTorch_preRunTests:
     @argValidator
     def runFastDevRun(self, trainDataloader: DataLoader,
                       valDataloader: Union[DataLoader, None] = None, **kwargs):
-        # cccDevAlgo
+        # ccc1
         #  ensures whole pipeline is working correctly by running couple of epochs on a batch
         self.printTestPrints('running fastDevRun')
 
@@ -149,7 +149,7 @@ class _BrazingTorch_preRunTests:
                           **kwargs):
         self.printTestPrints('running overfitBatches')
 
-        # cccDevStruct # bugPotentialCheck1
+        # ccc1 # bugPotn1
         #  with including 'overfit_batches' option, when the trainer is ran, "make sure you have
         #  set, VAnnTsDataset.indexes to .indexes of sampler". this is an indication of that the
         #  pytorchLighning tries to re__init__ the dataLoader.
@@ -160,7 +160,7 @@ class _BrazingTorch_preRunTests:
         #  been replaced completely. so it's better to not include 'overfit_batches' option and try
         #  to replicate it. so decided to use 'limit_train_batches' option instead. ofc with setting
         #  dataloader shuffle to False temporarily then turn it back to its original
-        # bugPotentialCheck1
+        # bugPotn1
         #  the amount which decreases the loss over 200 epochs is not really sth to be called
         #  overfitting
         #  https://stackoverflow.com/questions/77854815/replicating-overfit-batches-functionality-of-pytorch-lightning
@@ -323,7 +323,7 @@ class _BrazingTorch_preRunTests:
     def _determineShouldRun_preRunTests(self, force, seedSensitive):
         # addTest1
 
-        # cccDevStruct(same as _determineFitRunState)
+        # ccc1(same as _determineFitRunState)
         #  there was a idea about ""architectureName should be figured out in postInit"" but it may
         #  cause problems with loggerPath in preRunTests and .fit method
 
@@ -355,7 +355,7 @@ class _BrazingTorch_preRunTests:
                     # the force is True so the user wants replace model's previous results therefore
                     # we have to find architectureName, so to know where are the past results
                     acw = architectureDicts_withMatchedAllDefinitions[0]
-                    # cccDevStruct
+                    # ccc1
                     #  note acw looks like {filePath: architectureDict} and
                     #  architectureDict is like {'allDefinitions': {'class1':class1Definition,
                     #                                               'class2':class2Definition},
@@ -379,7 +379,7 @@ class _BrazingTorch_preRunTests:
                                                    name=architectureName,
                                                    version='preRunTests')
         loggerPath = os.path.abspath(dummyLogger.log_dir)
-        # bugPotentialCheck2
+        # bugPotn2
         #  note each architecture regardless of seed has
 
         return architectureName, loggerPath, shouldRun_preRunTests

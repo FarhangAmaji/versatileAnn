@@ -36,7 +36,7 @@ def getDatasetFiles(fileName: str, dateTimeCols=None, sortCols=None, try_=0):
             raise Exception(f"File {fileName} does not exist in the data/datasets folder")
 
     if isFileIn_gitlfsFormat(filePath):
-        # cccDevStruct
+        # ccc1
         #  the files bigger than 100Mb are uploaded in github repos with gitlens
         #  but this url pattern `https://raw.githubusercontent.com/FarhangAmaji/Datasets/main/...`
         #  don't have csv data, instead they have sth like `version https://git-lfs.github.com/...`
@@ -66,7 +66,7 @@ def _getFilePathInDataStoreLocation(fileName):
 
 
 def _downloadMissingKnownDataset(fileName):
-    # cccDevStruct
+    # ccc1
     #  this how we call an async function from a sync function
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -136,7 +136,7 @@ async def _downloadFileWithCurl_async(url, filePath, event=None):
 
 def _downloadFileWithCurl(fileName, filePath):
     url = f'https://github.com/FarhangAmaji/Datasets/raw/main/demand/{fileName}'
-    # goodToHave2 # bugPotentialCheck1
+    # goodToHave2 # bugPotn1
     #  this loop gets closed and gives error below at end of program
     #  it's not a really important error but keeps the loop open till the program is running
     #  error:

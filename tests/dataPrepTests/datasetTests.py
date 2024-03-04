@@ -187,7 +187,7 @@ class VAnnTsDataset_indexesSetting_NSeriesTests(BaseTestClass):
         self.setUp()
         dataset = VAnnTsDataset(self.df, useNpDictForDfs=False, **self.kwargs)
         self.assertEqual(dataset.indexes, list(self.df[self.df['__startPoint__'] == True].index))
-        # bugPotentialCheck2 # goodToHave3
+        # bugPotn2 # goodToHave3
         #  this is not an important one (because doesn't affect the correctness of code or even
         #  user behavior at any level), but dataset.mainGroupsGeneralIdxs was checked in another
         #  computer which was macbook and the dataset.mainGroupsGeneralIdxs was

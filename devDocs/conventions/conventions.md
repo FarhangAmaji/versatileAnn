@@ -1,188 +1,286 @@
-## formatting convention
-
-#mustHave1 the formatting config of `pycharm` must be added to conventions
-
-the formatting is done with a formatter in `vscode` with following `settings.json`
-
-```
-"[python]": {
-  "python.formatting.autopep8Args": [
-    "--max-line-length=100",
-    "--indent-size=4",
-    "--indent-after-paren=1",
-    "--aggressive",
-    "--max-args=3"
-  ]
-}
-```
-
-## comment convention
+## comments convention
 
 ---
 
-todos
+- the numbering in the comments goes from `1` the most important to `4` the ordinary; this is up to the developer judgement
 
-- not corrected todo tag
-  - kkk FF0000
-- bugs
-  - bugCriticalUnknown FF0000
-  - bugKnown1 FF0000
-  - bugKnown2 FF8C00
-  - bugPotentialCheck1 FF5000
-  - bugPotentialCheck2 FF8C00
-  - addTest1 FF0000
-  - addTest2 FF8C00
+  - note probably the `scope` which the code `affects` is also a factor in determining the importance of comment
+
+- ----
+
+  #mustHave explanations for `mustHave`s, `goodToHave`s, `bug`s and `bugPotn`s
+
+- general tag to check later:
+
+  - `kkk`
+  - color: `FF0000`
+
+- explanation comments:
+
+  - `ccc`
+
+    - cases:
+
+      1. the comments in general `should not` explain `what` a line is doing, `unless`(except in the cases):
+
+         - note it should be preferred `not to have comment` for `what is doing` `unless` the comment `really helps`
+         - note the `blocks` are primarily preferred to have a `function(with a detailed named)` for them
+
+         1. the line syntax is not commonly known, for i.e. it's a rare syntax which is not widely used
+         2. can explain `few simple lines` in just `one look`
+         3. complex lines
+
+      2. expalin why a block is doing sth:
+
+         - the code preferably should have tagLines like # Lmwf, so the user can search that in the whole project(ctrl+shift+F) and find where that line is
+         - note for more complex explanations, it's better to create a codeClarifier file in devDocs\codeClarifier
+         - explain why, 1. some details on the other parts 2. what feature was intended to be designed: have pushed the developer to do the code this way
+
+    - colors:
+
+      - `ccc1` `FFFF00`
+      - `ccc2` `FFFF2A`
+      - `ccc3` `FFFF54`
+      - `ccc4` `FFFF7E`
+
+  - `cccUsage`
+
+    - to explain for `users` to how use the feature of the code
+    - cases:
+      1. what type of args should be passed to funcs
+    - color: `FF00FF`
+
+  - `cccDev`
+
+    - usually explains high level overview on why the code is intended to be structured this way, and why other approaches are not utilized
+    - note this is intended to be used rarely and the most of the algorithm or programming related explanations would fit into `ccc`
+      - color: `FFFF54`
+
 - features to be added
+
   - mustHave
     - mustHave1 00FF00
-    - mustHave2 32FF32
-    - mustHave3 64FF64
+    - mustHave2 28FF28
+    - mustHave3 50FF50
   - goodToHave
-    - goodToHave1 3232FF
-    - goodToHave2 6464FF
-    - goodToHave3 9696FF
-  - styles
-    - style1 00FF00
-    - style2 9696FF
-- questions
-  - qqq
-- comments
-  - devComments
-    - cccDevStruct FFFF00
-    - cccDevAlgo FFFF00
-  - userComments
-    - cccAlgo FF00FF
-    - cccUsage FF00FF
+    - goodToHave1 2828FF
+    - goodToHave2 5050FF
+    - goodToHave3 7878FF
+    - restructureNeeded 5050FF
+
+- bugs
+
+  - bugs known:
+    - `bug 1~3`
+    - colors:
+      - `bug1` `FF0000`
+      - `bug2` `FF2A00`
+      - `bug3` `FF5400`
+  - bugs potential:
+    - cases:
+      - during the development we are not sure does a line works or not
+      - is this section compatible with the other parts of the code
+    - `bugPotn 1~3` also `bugPotn_hardcoded`
+    - colors:
+      - `bugPotn1`  `FF0064`
+      - `bugPotn2`  `FF2A64`
+      - `bugPotn3`  `FF5464`
+      - `bugPotn_hardcoded` `FF2A64`
+
+- places which need tests
+
+  - `addTest1` `FF0000`
+  - `addTest2` `FF2A00`
+  - `addTest3` `FF5400`
+
+- qqq
+
+  - in development there may be some doubts, for example on:
+
+    - this should be used for `temporary` purposes and should `not exist` in `final`
+
+    1.  does this line of code works or not(this is most likely is going to occur when the is not following `test driven development`)
+        - note if the doubt probably is not temporarily, the `bugPotn` should be used instead
+    2.  not sure about `compatibility` with the other parts of the code
+
+  - color `FF2A64`
+
+- style `9696FF`
 
 ---
 
-the devs should not be included in `master branch`
+# commits prefix conventions
 
----
+- note again numbering goes from `1` the most important to `4` the ordinary
 
-- cccDevStruct:
+- ---
 
-  explains coding parts, for i.e. if some abstract class is needed or how objects should be, etc
+  `feat` 1~4 : new feature is added
 
-- normal comments:
+- `improve` 1~4 : existing feature is improved
 
-  - explains what the code is doing for few next lines, or less important (depending of scope of impact of lines) why its done this way
+- `change` 1~4 : existing feature is changed
 
-- cccAlgo:
+- `restruct`: the big part of changed, and which makes other parts also to be changed
 
-  - explains what the code is doing for users. and the scope of importance is bigger
+- `refactor` 1~4 : refactoring
 
-- cccDevAlgo :
+  - examples:
+    - changing the orders of arguments in a function
+    - renaming some variable
+    - putting some block of code to a function
 
-  - similar to `normal comments` but with more importance or scope
+- `test`
 
-- cccUsage:
+- `docs`
 
-  - usually is about what type of args should be passed to funcs
+- `style`
 
----
+- `chore`
 
-the comments use `better comments` extention with these added style to `settings.json`
+## set comments/todos in vscode
+
+in `vscode` the comments use `better comments` extension with these added style to `settings.json`
 
 ```
-"better-comments.styles": [
-    /*    # bugs */
-        {
-            "text": "bugCriticalUnknown",
-            "color": "#FF0000"
-        },
-        {
-            "text": "bugKnown1",
-            "color": "#FF0000"
-        },
-        {
-            "text": "bugKnown2",
-            "color": "#FF8C00"
-        },
-        {
-            "text": "bugPotentialCheck1",
-            "color": "#FF5000"
-        },
-        {
-            "text": "bugPotentialCheck2",
-            "color": "#FFDC00"
-        },
-        {
-            "text": "addTest1",
-            "color": "#FF0000"
-        },
-        ,
-        {
-            "text": "addTest2",
-            "color": "#FF8C00"
-        },
-    /*    # features to be added */
-    /*    # - mustHave */
-        {
-            "text": "mustHave1",
-            "color": "#00FF00"
-        },
-        {
-            "text": "mustHave2",
-            "color": "#32FF32"
-        },
-        {
-            "text": "mustHave3",
-            "color": "#64FF64"
-        },
-    /*    # - goodToHave */
-        {
-            "text": "goodToHave1",
-            "color": "#3232FF"
-        },
-        {
-            "text": "goodToHave2",
-            "color": "#6464FF"
-        },
-        {
-            "text": "goodToHave3",
-            "color": "#9696FF"
-        },
-    /*    # - styles */
-        {
-            "text": "style1",
-            "color": "#00FF00"
-        },
-        {
-            "text": "style2",
-            "color": "#9696FF"
-        },
-    /*    # comments */
-    /*	# - devComments */
-        {
-            "text": "cccDevStruct",
-            "color": "#FFFF00"
-        },
-        {
-            "text": "cccDevAlgo",
-            "color": "#FFFF00"
-        },
-    /*	# - userComments */
-        {
-            "text": "cccAlgo",
-            "color": "#FF00FF"
-        },
-        {
-            "text": "cccUsage",
-            "color": "#FF00FF"
-        },
-    /*	# questions */
-        {
-            "text": "qqq",
-            "color": "#9696FF"
-        }
-    ],
+"better-comments.tags": [
+    {
+      "name": "kkk",
+      "description": "Follow-up required",
+      "foreground": "#FF0000"
+    },
+    {
+      "name": "ccc1",
+      "description": "most important comments probably with bigger scope",
+      "foreground": "#FFFF00"
+    },
+    {
+      "name": "ccc2",
+      "description": "important comments",
+      "foreground": "#FFFF2A"
+    },
+    {
+      "name": "ccc3",
+      "description": "normal comments",
+      "foreground": "#FFFF54"
+    },
+    {
+      "name": "ccc4",
+      "description": "trivial comments",
+      "foreground": "#FFFF7E"
+    },
+    {
+      "name": "cccUsage",
+      "description": "how to use for users",
+      "foreground": "#FF00FF"
+    },
+    {
+      "name": "cccDev",
+      "description": "high level overview explanation for Developers",
+      "foreground": "#FFFF54"
+    },
+    {
+      "name": "mustHave1",
+      "description": "Must Have important",
+      "foreground": "#00FF00"
+    },
+    {
+      "name": "mustHave2",
+      "description": "Must Have quite important",
+      "foreground": "#28FF28"
+    },
+    {
+      "name": "mustHave3",
+      "description": "Must Have but not as first priority",
+      "foreground": "#50FF50"
+    },
+    {
+      "name": "goodToHave1",
+      "description": "Good to Have a cool feature",
+      "foreground": "#2828FF"
+    },
+    {
+      "name": "goodToHave2",
+      "description": "Good to Have a feature which can be useful",
+      "foreground": "#5050FF"
+    },
+    {
+      "name": "goodToHave3",
+      "description": "Good to Have for nicer interface",
+      "foreground": "#7878FF"
+    },
+    {
+      "name": "restructureNeeded",
+      "description": "Good to restructure the code",
+      "foreground": "#5050FF"
+    },
+    {
+      "name": "bug1",
+      "description": "Bug known critical/urgent",
+      "foreground": "#FF0000"
+    },
+    {
+      "name": "bug2",
+      "description": "Bug known",
+      "foreground": "#FF2A00"
+    },
+    {
+      "name": "bug3",
+      "description": "Bug known but doesn't make problem which fails",
+      "foreground": "#FF5400"
+    },
+    {
+      "name": "bugPotn1",
+      "description": "Potential Bug 1",
+      "foreground": "#FF0064"
+    },
+    {
+      "name": "bugPotn2",
+      "description": "Potential Bug 2",
+      "foreground": "#FF2A64"
+    },
+    {
+      "name": "bugPotn3",
+      "description": "Potential Bug 3",
+      "foreground": "#FF5464"
+    },
+    {
+      "name": "bugPotn_hardcoded",
+      "description": "bugPotn where sth is hardcoded",
+      "foreground": "#FF2A64"
+    },
+    {
+      "name": "addTest1",
+      "description": "Additional Test 1",
+      "foreground": "#FF0000"
+    },
+    {
+      "name": "addTest2",
+      "description": "Additional Test 2",
+      "foreground": "#FF2A00"
+    },
+    {
+      "name": "addTest3",
+      "description": "Additional Test 3",
+      "foreground": "#FF5400"
+    },
+    {
+      "name": "qqq",
+      "description": "temporary doubt questions",
+      "foreground": "#2A64FF"
+    },
+    {
+      "name": "style",
+      "description": "styling comments",
+      "foreground": "#9696FF"
+    }
+  ],
 ```
 
-## formatting convention
+## naming convention
 
 - safety:
-  - naming `func` on what `exactly` they `is doing`
+  - naming `func` on what `exactly` they `are doing`
   - name private funcs starting with `_` or `__`(its important we define what funcs are meant to be used by user and what funcs are intended to be used internally)
   - add units like miliseconds to var or func names
 - cleanness:
@@ -200,3 +298,21 @@ the comments use `better comments` extention with these added style to `settings
   7. verb for func names
   8. dont use abbreviations; some times context tricks u this abbreviation is ok
   9. `PascalCase` for `classes
+
+## formatting in vscode
+
+#mustHave1 the formatting config of `pycharm` must be added to conventions
+
+the formatting is done with a formatter in `vscode` with following `settings.json`
+
+```
+"[python]": {
+  "python.formatting.autopep8Args": [
+    "--max-line-length=100",
+    "--indent-size=4",
+    "--indent-after-paren=1",
+    "--aggressive",
+    "--max-args=3"
+  ]
+}
+```

@@ -8,7 +8,7 @@ from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 def _split_indexesNotInvolved(indexes, isAnyConditionApplied, seqLens, setNames):
     setIdxExclusions = {sn: [] for sn in setNames}
 
-    # cccAlgo
+    # ccc1
     #  passing conditions means the user have considered not surpassing last indexes of indexes
     if not isAnyConditionApplied:
 
@@ -31,7 +31,7 @@ def _split_indexesNotInvolved(indexes, isAnyConditionApplied, seqLens, setNames)
 
 def _assignAsMuchAs_IdxsWith1PossibleSet_loop(idxs_possibleSets, indexes, setsIndexes,
                                               setIdxExclusions, expectedSetLens, setNames):
-    # cccAlgo
+    # ccc1
     #  repeatedly assignIdxsWith1PossibleSet then update idxs_possibleSets based on
     #  new doesSetHaveDemand until idxs_possibleSets is stabilized
     idxs_possibleSets_past = idxs_possibleSets.copy()
@@ -119,13 +119,13 @@ def _assign_IdxsToRegroup_ToSetWithMaxDemand_orRandom(expectedSetLens, idxsToReg
             if len(setsPossibleWith_maxSetsDemand) == 1:
                 setsIndexes[setsPossibleWith_maxSetsDemand[0]].append(intr_gch)
             else:
-                # bugPotentialCheck2
+                # bugPotn2
                 #  does it need to have seed assigned?!
                 random.seed(65)
                 randomSn = random.choice(setsPossibleWith_maxSetsDemand)
                 setsIndexes[randomSn].append(intr_gch)
         else:
-            # cccAlgo
+            # ccc1
             #  this is where the sets which intr_gch(idx) is not in their setIdxExclusions don't need
             #  more data as they have reached their expectedLen, but in order not let this data point
             #  wasted. we assign it to one of possible sets
@@ -243,7 +243,7 @@ def _updateSetIndexes_WithMaxDemand_ofAllIdxs(expectedSetLens, idxs_possibleSets
         maxSetDemand_OfAllIdxs = _getMaxSetDemand_OfAllIdxs(expectedSetLens, idxs_possibleSets,
                                                             indexes, setNames, setsIndexes)
         setToAssign = maxSetDemand_OfAllIdxs['set']
-        # cccAlgo
+        # ccc1
         #  when maxSetDemand_OfAllIdxs['value'] is 0, set which is not possible for idx may have returned
         #  note this is when idx possibleSets are already filled with their demand
         if maxSetDemand_OfAllIdxs['value'] == 0:

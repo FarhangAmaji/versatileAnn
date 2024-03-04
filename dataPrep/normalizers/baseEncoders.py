@@ -83,7 +83,7 @@ class _LblEncoder(_BaseEncoder):
     def __init__(self, name=None):
         self.name = name
         self.encoder = LabelEncoder()
-        # cccDevAlgo
+        # ccc1
         #  note the LabelEncoder sorts its 'classes_' items(things fitted on);
         #  have this in mind in order to prevent potential bugs
 
@@ -96,7 +96,7 @@ class _LblEncoder(_BaseEncoder):
     @argValidator
     def fit(self, data: Union[pd.DataFrame, pd.Series]):
         if not self._isFitted:
-            # cccAlgo
+            # ccc1
             #  'sklearn.LabelEncoder' fits both int, float alongside with strings.
             #  in order not to accidentally retransfrom already transformed data,
             #  in this project if there are `int`s which are meant to be `categories`, there is a need to utilize _IntLabelsString before.
@@ -110,7 +110,7 @@ class _LblEncoder(_BaseEncoder):
             print(f'LblEncoder {self.name} is already fitted')
 
     def _doesDataSeemToBe_AlreadyTransformed(self, data):
-        # bugPotentialCheck2 is it possible if the data is str and numeric together makes problem with 'list(range(len(self.encoder.classes_)))'
+        # bugPotn2 is it possible if the data is str and numeric together makes problem with 'list(range(len(self.encoder.classes_)))'
         return areItemsOfList1_InList2(np.unique(data), list(range(len(self.encoder.classes_))))
 
     def _doesdataToBeInverseTransformed_SeemToBeAlreadyDone(self, data):
@@ -149,7 +149,7 @@ class _LblEncoder(_BaseEncoder):
 
 
 class _IntLabelsString(_BaseEncoder):
-    # cccAlgo same explanations of fit in _LblEncoder
+    # ccc1 same explanations of fit in _LblEncoder
     def __init__(self, name):
         self.name = name
         self.isFitted = False

@@ -6,9 +6,9 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 
 
-class _BaseSingleColsNormalizer(_BaseNormalizer):
+class _BaseSingleColNormalizer(_BaseNormalizer):
     def __init__(self):
-        _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColsNormalizer)
+        _allowOnlyCreationOf_ChildrenInstances(self, _BaseSingleColNormalizer)
 
         super().__init__()
         self.encoders = {}
@@ -70,7 +70,7 @@ class _BaseSingleColsNormalizer(_BaseNormalizer):
             df[col] = self.inverseTransformCol(df, col)
 
 
-class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
+class SingleColStdNormalizer(_BaseSingleColNormalizer):
     def __init__(self, colNames: list):
         super().__init__()
         self.encoders = {col: _StdScaler(f'std{col}') for col in colNames}
@@ -87,7 +87,7 @@ class SingleColsStdNormalizer(_BaseSingleColsNormalizer):
         return f"SingleColsStdNormalizer:{'_'.join(self.colNames)}"
 
 
-class SingleColsLblEncoder(_BaseSingleColsNormalizer):
+class SingleColLblEncoder(_BaseSingleColNormalizer):
     @argValidator
     def __init__(self, colNames: list):
         super().__init__()
@@ -97,7 +97,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
 
     @argValidator
     def fitCol(self, df: pd.DataFrame, col):
-        # cccAlgo
+        # ccc1
         #  note the code tries to fit _LblEncoder but in the case that some `int` is supposed to be a `categorical`
         #  an error would raised by _LblEncoder. after that some _IntLabelsString would be wrapped and applied before fitting
         try:
@@ -117,7 +117,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
         self._assertColNameInDf(df, col)
         if not self._isFittedPlusPrint_col(col, printNotFitted=True):
             return df[col]
-        # cccAlgo
+        # ccc1
         #  intLabelsStrings transforms apply before the encoder transform
         if col in self.intLabelsStrings.keys():
             data_ = self.intLabelsStrings[col].transform(df[col])
@@ -128,7 +128,7 @@ class SingleColsLblEncoder(_BaseSingleColsNormalizer):
     @argValidator
     def inverseTransformCol(self, df: pd.DataFrame, col):
         data_ = super().inverseTransformCol(df, col)
-        # cccAlgo
+        # ccc1
         #  intLabelsStrings inverseTransform apply after the encoder inverseTransform
         if col in self.intLabelsStrings.keys():
             data_ = self.intLabelsStrings[col].inverseTransform(data_)

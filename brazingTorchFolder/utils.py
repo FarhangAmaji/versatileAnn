@@ -5,22 +5,23 @@ from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
-import torch.optim.lr_scheduler as LrScheduler
 from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
 from pytorch_lightning.loggers import Logger
 from torch import nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LRScheduler
 from torch.utils.data import DataLoader
 
-from brazingTorchFolder.callbacks import StoreEpochData
+from brazingTorchFolder.callbacks import StoreEpochData, WarmUpScheduler, \
+    SchedulerChanger
 from projectUtils.dataTypeUtils.tensor import getTorchDevice
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
 def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
-    # bugPotentialCheck1
+    # bugPotn1
     #  note a normal checkpoint dictionary has these keys ['epoch', 'global_step',
     #  'pytorch-lightning_version', 'state_dict', 'loops', 'callbacks',
     #  'optimizer_states', 'lr_schedulers']
@@ -35,7 +36,8 @@ def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
 
     # Load state_dict into model
     if isclass(ModelClassOrInstance):
-        model = ModelClassOrInstance.load_from_checkpoint(checkpoint_path=checkpointPath)
+        model = ModelClassOrInstance.load_from_checkpoint(
+            checkpoint_path=checkpointPath)
     else:
         model = type(ModelClassOrInstance).load_from_checkpoint(
             checkpoint_path=checkpointPath)
@@ -62,9 +64,8 @@ def isPytorchLightningScheduler(obj):
     Returns:
         True if the object is a PyTorch Lightning scheduler, False otherwise.
     """
-
-    if isinstance(obj, (LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
-                        LearningRateMonitor)):
+    if isinstance(obj, (LRScheduler._LRScheduler, LRScheduler.LambdaLR,
+                        LRScheduler.OneCycleLR, LearningRateMonitor)):
         # Direct instance of PyTorch Lightning schedulers (preferred)
         return True
     elif isinstance(obj, LightningModule):
@@ -74,17 +75,16 @@ def isPytorchLightningScheduler(obj):
             if methodName in {'onTrainEpochStart', 'onTrainBatchEnd', 'onValidationEpochStart'}
         ]
         customSchedulerMethodFound = len(schedulerMethods) > 0
-        lightningModuleHasScheduler = hasattr(obj,
-                                              'lrScheduler') or 'optimizer.lrScheduler' in obj.__dict__
+        lightningModuleHasScheduler = hasattr(obj, 'lrScheduler') or \
+                                      'optimizer.lrScheduler' in obj.__dict__
         return customSchedulerMethodFound and lightningModuleHasScheduler
     else:
         # Check if obj is a subclass of a supported base class
         try:
             # Try using getmro() for more reliable inheritance path checks
             for baseClass in getmro(obj):
-                if baseClass in (
-                        LrScheduler._LRScheduler, LrScheduler.LambdaLR, LrScheduler.OneCycleLR,
-                        LightningModule):
+                if baseClass in (LRScheduler._LRScheduler, LRScheduler.LambdaLR,
+                                 LRScheduler.OneCycleLR, LightningModule):
                     return True
         except TypeError:  # Handle cases where getmro() might not be supported
             pass
@@ -97,6 +97,8 @@ def externalFit(self, trainDataloader: DataLoader,
                 *, lossFuncs: List[nn.modules.loss._Loss],
                 seed=None, resume=True, seedSensitive=False,
                 addDefaultLogger=True, addDefault_gradientClipping=True,
+                warmUp_epochNum=5, addDefault_reduceLROnPlateau=True,
+                addDefault_earlyStopping=True,
                 preRunTests_force=False, preRunTests_seedSensitive=False,
                 preRunTests_lrsToFindBest=None,
                 preRunTests_batchSizesToFindBest=None,
@@ -104,7 +106,7 @@ def externalFit(self, trainDataloader: DataLoader,
                 preRunTests_profilerKwargs=None, preRunTests_findBestLearningRateKwargs=None,
                 preRunTests_findBestBatchSizesKwargs=None,
                 **kwargs):
-    # cccDevStruct
+    # ccc1
     #  note this is implementation for .fit method of BrazingTorch class, but implemented here
     #  you may read why it's been implemented here in the .fit method itself
 
@@ -119,7 +121,7 @@ def externalFit(self, trainDataloader: DataLoader,
         seedSensitive=seedSensitive)
 
     if fitRunState == "don't run":
-        Warn.info("as you decided, the model is not replaced, if you want to resume, pass " + \
+        Warn.info("as you decided, the model is not replaced, if you want to resume, pass " +
                   "resume=True to .fit")
         return self, None
     elif fitRunState == "resume":
@@ -173,7 +175,37 @@ def externalFit(self, trainDataloader: DataLoader,
                                                version=runName),
         'callbacks': callbacks_, }
 
-    return self, self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
-                              addDefaultLogger=addDefaultLogger,
-                              addDefault_gradientClipping=addDefault_gradientClipping,
-                              listOfKwargs=[kwargsApplied], **kwargs)
+    newSchedulers = _addDefaultSchedulers(self, addDefault_earlyStopping,
+                                          addDefault_reduceLROnPlateau, warmUp_epochNum)
+
+    doBaseFit = lambda: self.baseFit(trainDataloader=trainDataloader, valDataloader=valDataloader,
+                                     addDefaultLogger=addDefaultLogger,
+                                     addDefault_gradientClipping=addDefault_gradientClipping,
+                                     listOfKwargs=[kwargsApplied], **kwargs)
+
+    if len(newSchedulers) != len(self._schedulers):
+        with SchedulerChanger(self, newSchedulers=newSchedulers):
+            return self, doBaseFit()
+    else:
+        return self, doBaseFit()
+
+
+def _addDefaultSchedulers(self, addDefault_earlyStopping, addDefault_reduceLROnPlateau,
+                          warmUp_epochNum):
+    newSchedulers = self._schedulers
+    if warmUp_epochNum:
+        warmUp = WarmUpScheduler(self.optimizer, warmUpEpochs=warmUp_epochNum)
+        newSchedulers = [warmUp] + newSchedulers
+
+    if addDefault_reduceLROnPlateau:
+        rlrop = ReduceLROnPlateau(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
+                                  mode='min', factor=0.1, patience=15, verbose=False,
+                                  cooldown=0, min_lr=1e-8)
+
+        newSchedulers = newSchedulers + [rlrop]
+
+    if addDefault_earlyStopping:
+        earlyStopping = EarlyStopping(monitor=f"{self._getLossName('val', self.lossFuncs[0])}",
+                                      patience=5, verbose=False)
+        newSchedulers = newSchedulers + [earlyStopping]
+    return newSchedulers

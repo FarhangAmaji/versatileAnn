@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.utils_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleColWarn, \
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _exclude_mainGroupsWarn, _exclude_singleColWarn, \
     _split_splitNShuffle_startPointIndexes, _splitMakeWarning, _simpleSplit, \
     _makeSetDfWith_TailDataFrom_indexesNTailIndexes, _splitDataPrep, _extend_dfIndexes
-from dataPrep.utils_innerFuncs import _splitApplyConditions
-from dataPrep.utils_innerFuncs2 import _addNextNPrev_tailIndexes
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs import _splitApplyConditions
+from dataPrep.privateInnerFuncs.preprocessing_innerFuncs2 import _addNextNPrev_tailIndexes
 from projectUtils.dataTypeUtils.df_series import regularizeBoolCol, pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 from projectUtils.dataTypeUtils.npArray import npArrayBroadCast
@@ -49,7 +49,7 @@ def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
     #  - tailIndexes_evenShorter: allows to have shorter sequences
     #  - returnIndexes: by default dfs(or NpDicts of them) are returned but indexes may
     #       returned by this option
-    # cccAlgo
+    # ccc1
     #  tails: points which are not startPoints are named as tails here. note tail for a sequence, if
     #  the starting point is not enough backer in sequence, may has to be shorter.
     #  set: is one of 'train', 'val' and 'test' sets
@@ -80,17 +80,17 @@ def splitTsTrainValTest_DfNNpDict(df: Union[pd.DataFrame, NpDict],
 
 def addNextNPrev_tailIndexes(indexes, seqLenWithSequents=0,
                              seqLenWithAntecedents=0):
-    # cccDevStruct due not to get circular import the code is done this way
+    # ccc1 due not to get circular import the code is done this way
     return _addNextNPrev_tailIndexes(indexes, seqLenWithAntecedents, seqLenWithSequents)
 
 
 def simpleSplit(data, ratios, setNames):
-    # cccDevStruct due not to get circular import the code is done this way
+    # ccc1 due not to get circular import the code is done this way
     return _simpleSplit(data, ratios, setNames)
 
 
 # ---- mainGroup
-# bugPotentialCheck2
+# bugPotn2
 #  its doubtful what the difference between mainGroups and NSeries, sometimes they are the same,
 #  rename the `_mainGroup` suffixes of funcs below
 def splitTrainValTest_mainGroup(df, mainGroups, *, trainRatio, valRatio, seqLen=0,
@@ -99,7 +99,10 @@ def splitTrainValTest_mainGroup(df, mainGroups, *, trainRatio, valRatio, seqLen=
                                 tailIndexes_evenShorter=False):
     if shuffleSeed:
         shuffle = True
-    # cccAlgo
+    # ccc1
+    #  NSeries is called to the data recognized as different timeseries
+    #  but existing in a single dataframe.
+    # ccc1
     #  ensures that tailIndexes are also from the same mainGroup,
     #  and different mainGroups data dont get mixed up
     # addTest1
@@ -229,7 +232,7 @@ def rightPadSeries(series, padLen, pad=0):
 
 @argValidator
 def rightPadDfBaseFunc(func, dfOrSeries: Union[pd.DataFrame, pd.Series], padLen, pad=0):
-    # cccDevAlgo dont refactor unless its fully tested
+    # ccc1 dont refactor unless its fully tested
     # goodToHave2 do similar for left, and reduce all to another base func
     # goodToHave3 could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     'also works with series'
@@ -263,7 +266,7 @@ def rightPadDf(dfOrSeries, padLen, pad=0):
 
 # ----      np array
 def rightPadNpArrayBaseFunc(arr, padLen, pad=0):
-    # cccDevAlgo dont refactor unless its fully tested
+    # ccc1 dont refactor unless its fully tested
     # goodToHave2 do similar for left, and reduce all to another base func
     # goodToHave3 could have added colPad for each col, and if the specificColPad doesnt exist the 'pad'(which default would have used)
     if padLen <= 0:

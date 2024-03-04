@@ -48,7 +48,7 @@ def equalTensors(tensor1, tensor2, checkType=True, floatApprox=False, floatPreci
 
 
 def toDevice(tensor, device):
-    # cccDevAlgo
+    # ccc1
     #  'mps' device doesn't support float64 and int64
     # check if the device.type is 'mps' and it's float64 or int64; first change
     # dtype to float32 or int32, after that change device
@@ -64,7 +64,7 @@ def toDevice(tensor, device):
 
 # ---- torch utils
 def getTorchDevice():
-    # bugPotentialCheck1
+    # bugPotn1
     #  this func may still not work with macbooks; ofc in general they don't work with 'cuda' but
     #  may also not work with Mps
     # Check if CUDA is available
@@ -95,7 +95,7 @@ def getDefaultTorchDevice_name():
         deviceName = f'{device_.type}'
     elif device_.type == 'cpu':
         deviceName = 'cpu'
-    # bugPotentialCheck2
+    # bugPotn2
     #  not sure about xla devices
 
     return deviceName
@@ -109,7 +109,7 @@ def getDefaultTorchDevice_printName():
         devicePrintName = f", device='{deviceName}'"
     elif 'cpu' in deviceName:
         devicePrintName = ''
-    # bugPotentialCheck2
+    # bugPotn2
     #  not sure about xla devices
 
     return devicePrintName

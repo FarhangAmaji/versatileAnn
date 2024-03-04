@@ -7,7 +7,7 @@ from projectUtils.customErrors import InternalLogicError
 
 
 def isHintTypeOfAListOfSomeType(typ):
-    # cccAlgo
+    # ccc1
     #  detects these patterns: `typing.List[str]`, `typing.List[int]`,
     #  `typing.List[Union[str,tuple]]` or even `typing.List[customType]`
     if isinstance(typ, typing._GenericAlias) and typ.__origin__ is list:

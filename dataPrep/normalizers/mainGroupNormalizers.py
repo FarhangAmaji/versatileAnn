@@ -1,8 +1,8 @@
 import pandas as pd
 
 from dataPrep.normalizers.baseNormalizer import _BaseNormalizer
-from dataPrep.normalizers.normalizers_singleColsNormalizer import SingleColsStdNormalizer, \
-    SingleColsLblEncoder
+from dataPrep.normalizers.singleColNormalizer import SingleColStdNormalizer, \
+    SingleColLblEncoder
 from projectUtils.dataTypeUtils.df_series import pandasGroupbyAlternative
 from projectUtils.dataTypeUtils.dotDict_npDict import NpDict
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
@@ -33,7 +33,7 @@ class _Combo:
 class _MainGroupBaseNormalizer:
     def __init__(self, df, mainGroupColNames, internalCall=False):
         if not internalCall:
-            _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
+            _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColNormalizer)
         self.mainGroupColNames = mainGroupColNames
         self.uniqueCombos = self._getUniqueCombinations(df)
         self._getMainGroupUniqueVals(df, mainGroupColNames)
@@ -93,11 +93,11 @@ class _MainGroupBaseNormalizer:
         return tempDf
 
 
-# ---- _MainGroupSingleColsNormalizer
-class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
-                                     _BaseNormalizer):
+# ---- _MainGroupSingleColNormalizer
+class _MainGroupSingleColNormalizer(_MainGroupBaseNormalizer,
+                                    _BaseNormalizer):
     def __init__(self, classType, df, mainGroupColNames, colNames: list):
-        _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColsNormalizer)
+        _allowOnlyCreationOf_ChildrenInstances(self, _MainGroupSingleColNormalizer)
         _MainGroupBaseNormalizer.__init__(self, df, mainGroupColNames, internalCall=True)
         self.colNames = colNames
         self.container = {}
@@ -116,7 +116,7 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
 
     def _warnToInverseTransform_mainGroups(self, df):
         # addTest2 maybe for other functionalities which use this
-        # cccAlgo
+        # ccc1
         #  methods in this class need data of mainGroups as they were initialized,
         #  usually when mainGroups themselves also transformed, to use methods of this class u need
         #  to inverseTransform mainGroups and retransform after utilizing method wanted
@@ -124,13 +124,13 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
         #  maybe as possible this class may had taken stackNormalizer and had done inverseTransform
         #  and retransform it, automatically
         #  note check for danger of multiple flow between this class and stackNormalizer
-        # cccDevAlgo #  addTest1 add test for this
+        # ccc1 #  addTest1 add test for this
         #  this is an old note on this problem
-        #  """normalizer=NormalizerStack(SingleColsLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColsStdNormalizer(df, mainGroups, target))
+        #  """normalizer=NormalizerStack(SingleColLblEncoder(['sku', 'month', 'agency', *specialDays]), MainGroupSingleColStdNormalizer(df, mainGroups, target))
         #  normalizer.fitNTransform(df)"""
-        #  this wont work because the unqiueCombos in MainGroupSingleColsStdNormalizer are determined first and after fitNTransform
-        #  of SingleColsLblEncoder, values of mainGroups are changed
-        #  kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColsStdNormalizer(df, mainGroups, target), SingleColsLblEncoder(['sku', 'agency', 'month', *specialDays]))
+        #  this wont work because the unqiueCombos in MainGroupSingleColStdNormalizer are determined first and after fitNTransform
+        #  of SingleColLblEncoder, values of mainGroups are changed
+        #  kinda correct way right now: normalizer=NormalizerStack(MainGroupSingleColStdNormalizer(df, mainGroups, target), SingleColLblEncoder(['sku', 'agency', 'month', *specialDays]))
         #  - for this problem initing all normalizers in init of NormalizerStack doesnt seem to be a good solution
         #  - (should think about it much more) a good solution is that in fitNTransform of normalStack I do fit then transform and if the next uniqueNormalizer has this col in its _colNames or groupNames, undo and redo again
         mainGroupsNeededToInverseTransformed = []
@@ -207,15 +207,15 @@ class _MainGroupSingleColsNormalizer(_MainGroupBaseNormalizer,
             df[col] = self.inverseTransformCol(df, col)
 
 
-class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
+class MainGroupSingleColStdNormalizer(_MainGroupSingleColNormalizer):
     def __init__(self, df, mainGroupColNames, colNames: list):
-        super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
+        super().__init__(SingleColStdNormalizer, df, mainGroupColNames,
                          colNames)
 
     @argValidator
     def setMeanNStd_ofMainGroups(self, df: pd.DataFrame):
         self._warnToInverseTransform_mainGroups(df)
-        # cccAlgo
+        # ccc1
         #  for each col, makes f'{col}Mean' and f'{col}Std'
         #  note setMeanNStd_ofMainGroups needs to have unTransformed mainGroups. so if needed,
         #  inverseTransform them and transform them again after applying this func
@@ -233,11 +233,11 @@ class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
         return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 
 
-class MainGroupSingleColsLblEncoder(_MainGroupSingleColsNormalizer):
-    # cccAlgo this the lblEncoder version of MainGroupSingleColsStdNormalizer; its rarely useful, but in some case maybe used
+class MainGroupSingleColLblEncoder(_MainGroupSingleColNormalizer):
+    # ccc1 this the lblEncoder version of MainGroupSingleColStdNormalizer; its rarely useful, but in some case maybe used
 
     def __init__(self, df, mainGroupColNames, colNames: list):
-        super().__init__(SingleColsLblEncoder, df, mainGroupColNames, colNames)
+        super().__init__(SingleColLblEncoder, df, mainGroupColNames, colNames)
 
     def __repr__(self):
         return f"MainGroupSingleColsLblEncoder:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"

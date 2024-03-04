@@ -38,7 +38,7 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
     kwargs = varPasser(localArgNames=['mainDf', 'backcastLen', 'forecastLen', 'valRatio', 'shuffle',
                                       'shuffleSeed', 'dataInfo'])
     if rightPadTrain:
-        # cccAlgo
+        # ccc1
         #  note if we have rightPadTrain==True, we want to get this order, 'testDf, valDf, trainDf',
         #  therefore have to pass trainRatio=1-(trainRatio+valRatio). so the last indexes of mainDf are dedicated
         #  to trainDf and the paddings are after them.
@@ -48,7 +48,7 @@ def getEpfFrBe_processed(*, dataInfo: Union[DotDict, dict], backcastLen=110, for
     else:
         trainDf, valDf, testDf, normalizer = _normalizerFit_split(
             trainRatio=trainRatio, **kwargs)
-        # bugPotentialCheck2
+        # bugPotn2
         #  this may be a bug for splitTsTrainValTest_DfNNpDict, with trainRatio=.7 and valRatio=.2
         #  with 13 points to have as startpoint returns empty testDf
 

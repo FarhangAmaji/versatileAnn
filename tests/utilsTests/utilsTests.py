@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColsStdNormalizer
+from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.str import snakeToCamel, camelToSnake
@@ -26,7 +26,7 @@ class DotDictTests(BaseTestClass):
         self.assertEqual(self.dotDict._data, self.dictData)
 
     def testGettingAttribute(self):
-        # cccAlgo Getting means not using .get
+        # ccc1 Getting means not using .get
         self.assertEqual(self.dotDict.a, 1)
         self.assertEqual(self.dotDict.b, 2)
 
@@ -59,7 +59,7 @@ class DotDictTests(BaseTestClass):
 
     # ---- .get
     def testGetExistingKey_withGet(self):
-        # cccAlgo testGet is for .get
+        # ccc1 testGet is for .get
         value_a = self.dotDict.get('a', 0)
         self.assertEqual(value_a, 1)
 
@@ -279,15 +279,15 @@ class CaseChangeTests(BaseTestClass):
 class FindClassDefinitionTests(BaseTestClass):
     def testExistingClass(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
-                                               'MainGroupSingleColsStdNormalizer')
+                                               'MainGroupSingleColStdNormalizer')
         expectedPath = os.path.join(getProjectDirectory(), 'dataPrep', 'normalizers',
                                     'mainGroupNormalizers.py')
         self.assertEqual(res['filePaths'][0], expectedPath)
-        expectedDef = """class MainGroupSingleColsStdNormalizer(_MainGroupSingleColsNormalizer):
+        expectedDef = """class MainGroupSingleColStdNormalizer(_MainGroupSingleColNormalizer):
 
     def __init__(self, df, mainGroupColNames, colNames: list):
 
-        super().__init__(SingleColsStdNormalizer, df, mainGroupColNames,
+        super().__init__(SingleColStdNormalizer, df, mainGroupColNames,
 
                          colNames)
 
@@ -299,7 +299,7 @@ class FindClassDefinitionTests(BaseTestClass):
 
         self._warnToInverseTransform_mainGroups(df)
 
-        # cccAlgo
+        # ccc1
 
         #  for each col, makes f'{col}Mean' and f'{col}Std'
 
@@ -329,7 +329,7 @@ class FindClassDefinitionTests(BaseTestClass):
 
     def __repr__(self):
 
-        return f"MainGroupSingleColsStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
+        return f"MainGroupSingleColStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 """
         self.assertEqual(res['Definitions'][0], expectedDef)
 
@@ -353,11 +353,11 @@ class FindClassDefinitionTests(BaseTestClass):
 class getClassObjectFromFileTest(BaseTestClass):
     def test(self):
         res = findClassDefinition_inADirectory(getProjectDirectory(),
-                                               'MainGroupSingleColsStdNormalizer')
-        classObj = getClassObjectFromFile('MainGroupSingleColsStdNormalizer', res['filePaths'][0])
+                                               'MainGroupSingleColStdNormalizer')
+        classObj = getClassObjectFromFile('MainGroupSingleColStdNormalizer', res['filePaths'][0])
 
-        self.assertEqual(classObj.__name__, MainGroupSingleColsStdNormalizer.__name__)
-        self.assertEqual(dir(classObj), dir(MainGroupSingleColsStdNormalizer))
+        self.assertEqual(classObj.__name__, MainGroupSingleColStdNormalizer.__name__)
+        self.assertEqual(dir(classObj), dir(MainGroupSingleColStdNormalizer))
 
 
 # ---- run test

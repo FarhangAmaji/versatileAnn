@@ -14,7 +14,7 @@ from projectUtils.dataTypeUtils.tensor import getTorchDevice, getDefaultTorchDev
 from projectUtils.misc import shuffleData
 
 # util
-# cccDevStruct
+# ccc1
 #  note toDevice in projectUtils/dataTypeUtils for mps devices, makes int64 to int32, and float64 to float32;
 #  as int64 and float64 are not supported on mps devices
 suitableDeviceForIntOnThisFile = lambda x: torch.int64 if x.device.type != 'mps' else torch.int32
@@ -304,7 +304,7 @@ class DataloaderTests(BaseTestClass):
         self.assertEqual(self.dataloader.name, 'custom1DataloaderTest')
 
     def testKwargsPassed_noError1(self):
-        # cccDevStruct
+        # ccc1
         #  this tests that kwargs which are related to VAnnTsDataloader like(randomSeed)
         #  are passed to the dataloader don't make conflict when **kwargs is passed to the
         #  pytorch dataloader
@@ -319,7 +319,7 @@ class DataloaderTests(BaseTestClass):
         dataloader = VAnnTsDataloader(self.dataset, **kwargs)
 
     def testKwargsPassed_error(self):
-        # cccDevStruct
+        # ccc1
         #  this tests that kwargs which are related to VAnnTsDataloader like(randomSeed)
         #  are passed to the dataloader don't make conflict when **kwargs is passed to the
         #  pytorch dataloader
@@ -328,7 +328,7 @@ class DataloaderTests(BaseTestClass):
                   'randomSeed': self.seed}
         with self.assertRaises(TypeError) as context:
             VAnnTsDataloader(self.dataset, **kwargs)
-        # cccDevStruct
+        # ccc1
         #  this is changed this way (comparing to past versions) because some
         #  machines like macOs context.exception is different
         self.assertTrue(
@@ -368,7 +368,7 @@ class DataloaderTests(BaseTestClass):
         self.setup1()
         self.dataloader = VAnnTsDataloader(self.dataset, phase='train', batch_size=5,
                                            shuffle=True, randomSeed=self.seed, shuffleFirst=False)
-        # cccAlgo(same as _shuffleIndexes)
+        # ccc1(same as _shuffleIndexes)
         #  note indexes by getting shuffled result get changed inplace
         #  and there is way back even by making shuffle False
         #  note this is gonna work only when shuffleFirst=False is applied
@@ -397,7 +397,7 @@ class DataloaderTests(BaseTestClass):
             print('with batchSize=3')
             print2batches(dataloader)
 
-        # bugPotentialcheck1
+        # bugPotn1
         #  not sure about print device name
         devicePrintName = getDefaultTorchDevice_printName()
         expectedPrint = f"""tensor([1114, 1081]{devicePrintName})
