@@ -329,7 +329,9 @@ class FindClassDefinitionTests(BaseTestClass):
 
     def __repr__(self):
 
-        return f"MainGroupSingleColStdNormalizer:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
+        className = type(self).__name__
+
+        return f"{className}:{'_'.join(list(map(str, self.uniqueCombos)))}:{'_'.join(self.colNames)}"
 """
         self.assertEqual(res['Definitions'][0], expectedDef)
 
