@@ -1,6 +1,24 @@
-# Who this project is for
+## Table of Contents
 
-This project has some sections and "who this project is for" depends on what section you may use.
+- [**Who this project is for**](#whoThisProjectIsFor)**
+    - [what is forecasting](#whatIsForecasting)
+- [**What versatileAnn is**](#whatVersatileAnnIs)
+- [**sections features**](#sectionsFeatures)
+  - [brazingTorch](#brazingTorchFeatures)
+  - [dataPrep & commonDatasets](#dataPrepNCommonDatasetsFeatures)
+- [**Project additional infos**](#additionalInfos)
+- [**How to get started**](#HowToGetStarted)
+  1. [use for timeseries data preparation](#useForTsDataPrep)
+  2. [use BrazingTorch](#useBrazingTorch)
+  3. [models](#models)
+  4. [examples](#examples)
+
+  5. [machineLearning](#machineLearning)
+
+  6. [projectUtils](#projectUtils)
+# Who this project is for?!<a id='whoThisProjectIsFor'></a>
+
+This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 
 - anyone who uses pytorch (`brazingTorch` section)
 - for people who want to use ready forecasting models (whole project)
