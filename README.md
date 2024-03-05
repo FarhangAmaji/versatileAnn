@@ -80,20 +80,50 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 
 ---
 
+# What versatileAnn is<a id='whatVersatileAnnIs'></a>
 
-This project aims to provide utility tools that streamline the development of models, particularly those in the realm of deep learning. As the name `"VersatileAnn"` suggests, the project strives to be beneficial across different deep learning subfields, including natural language processing (NLP), computer vision, forecasting, and other more general use cases. Not only can it be useful for people to `simply try out some models`, but it's designated to be especially handy for `AI researchers` who require a robust and efficient development environment.
+This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`. 
 
-The project comprises 5 distinct sections: `dataPrep`, `commonDatasets`, `brazingTorch`, `models` and `machineLearning`. `BrazingTorch` and `machineLearning` offer valuable resources for individuals aspiring to delve into development and utilizing deep learning and machine learning approaches, respectively.
+This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique functionalities and options` available.
 
-However, the `models`, `dataPrep` and `commonDatasets` sections are currently `specialized` for `forecasting`. `models` contains many of forecasting `state of the art` models. It's worth noting that NLP falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows VersatileAnn to be particularly useful for `NLP models`. The project holds potential for incorporating novel ideas similar to the existing ones, but these are yet to be implemented for other subfields.
+These features are not only `well-tested`, with more than 300 unit tests, but also designed to `save` you significant amount of `development time`. 
 
-Additionally, VersatileAnn aims to provide an easy-to-use tool for testing various machine learning models with different hyperparameters. This functionality can significantly save development time and effort by streamlining the process of identifying the optimal configuration for a specific model.
+Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
 
-This project is quite extensive, with over 15,000 lines of code. While this summary highlights some key features, there are many `more unique functionalities and options` available.  These features are not only `well-tested` with more than 300 unit tests, but also designed to `save` you significant `development time`.  By incorporating these functionalities, you can `avoid errors` through the built-in error handling mechanisms. For a deeper dive, `each section` within the project has its own dedicated **readme.md** file explaining these features in detail.  Additionally, these `sections` are designed to `work together` seamlessly, leveraging each other's functionalities.
+- **Project Features**<a id='projectFeatures'></a>
 
-## sections
+  - **Enhances Code Reliability:** 
 
-### brazingTorch
+    In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
+
+  - **Simplifies Complex Processes:**
+
+    `Bundles` `commonly used functionalities`, `streamlining` complex processes into a `single function call` while maintaining `customizability`.
+
+  - **Reduces Development Time:** 
+
+    `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & Using Experiences`.
+
+  - **Elevates Code Quality:**
+
+    The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
+
+  - **Error Detection and Prevention:**
+
+    It also `raises errors` and `warnings` to `prevent many potential errors`; this is especially `very needed` when `working` with `Python` and Python packages.
+
+  - **Enhances Future Development:**
+
+    From the perspective of further developing this project, it's been built with `clean code principles` and a tidy `structure`, simplifying `future developments `. Additionally, it's adorned with `detailed internal comments` for easy understanding and modification.
+
+  - **Compatible Integration with Popular Libraries:**
+
+    Compatibility with pandas, numpy, scikit-learn, PyTorch, and PyTorch Lightning `allows` for `integrating` of `your existing works` into this project with low effort.
+
+  - **Exciting Features and Cool Ideas:**
+  
+    This project is packed with lots of fresh features and awesome ideas, sparking creativity and innovation.
+
 
 `brazingTorch` was developed here in this project, but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
