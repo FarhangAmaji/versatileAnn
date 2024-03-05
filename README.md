@@ -1,3 +1,24 @@
+<div style="background-color: #E0F2FE; padding: 20px;">
+
+## Table of Contents
+- [**Who this project is for**](#whoThisProjectIsFor)
+    - [what is forecasting](#whatIsForecasting)
+- [**What versatileAnn is**](#whatVersatileAnnIs)
+- [**Project Features**](#projectFeatures)
+    - [**Sections**](#sections)
+        - [brazingTorch](#brazingTorchFeatures)
+        - [dataPrep & commonDatasets](#dataPrepNCommonDatasetsFeatures)
+        - [Machine Learning](#machineLearning)
+- [**Project additional infos**](#additionalInfos)
+- [**How to get started**](#HowToGetStarted)
+  1. [use for timeseries data preparation](#useForTsDataPrep)
+  2. [use BrazingTorch](#useBrazingTorch)
+  3. [models](#models)
+  4. [examples](#examples)
+  5. [machineLearning](#machineLearning)
+  6. [projectUtils](#projectUtils)
+
+</div>
 ## Table of Contents
 
 - [**Who this project is for**](#whoThisProjectIsFor)**

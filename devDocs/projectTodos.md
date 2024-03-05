@@ -1,12 +1,26 @@
 # current
-move private methods to inner classes
+- readme
+    - omid points
+    - add title to paragraphs
+    - add more `highlight`
+    - add table of content
+- move private methods to inner files
+- think about autodoc python
+    sphnix autodoc
+    pdoc3
+    reportlab
 2. readMe
    3. explain folders in root folder
        4. where to look at code, for dive in it more
    4. explain private and public func/class names `_`
    4. reading comments due to importance/scale of scope affecting(if u add color codding devDocs/conventions/convention_todoTypes.py)
    5. readme for each folder
-5. brazingTorch should be separated from the rest of the project
+3. readMe for
+    4. brazingTorch
+   5. dataPrep
+       6. short for commonDatasets
+   6. 
+6. brazingTorch should be separated from the rest of the project
    2. readMe
 6. merge to development and master
 6. refactor:
