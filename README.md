@@ -40,14 +40,46 @@
 # Who this project is for?!<a id='whoThisProjectIsFor'></a>
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
+- `anyone who uses pytorch` ([`brazingTorch` section](#brazingTorch))
+  - provides:
+    - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
+    - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
+    - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
+    - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
+    - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
+    - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
+- for people who want to use `ready forecasting models` (whole project)
+  - **latest `state of the art` models in `forecasting`**
+  - **ready processed datasets:** ready processed data for some famous timeseries datasets.
+- `forecasting AI researchers` (whole project)
+  - **Rich and Versatile Data Processing and Analysis Library**
+    - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
+    - Helps to `avoid errors`.
+    - supports `variety of data types` including exogenous in processing and model components
+    - Has some `unmatched unique features`, which provide greater flexibility for your workflow.
+- **Developers Interested in Innovative Projects**
 
-- anyone who uses pytorch (`brazingTorch` section)
-- for people who want to use ready forecasting models (whole project)
-- forecasting AI researchers (whole project)
+##### what is forecasting<a id='whatIsForecasting'></a>
 
-# what versatileAnn is
+Forecasting leverages `statistical`, `machine learning`, and `deep learning` techniques to analyze past **quantitative** data and predict future values. 
 
-While developing machine learning models can be time-consuming, even the smallest typos in programming can derail months of hard work, rendering unreliable results. Utilizing `well-tested tools` can significantly improve the experience of both using and developing models.
+- Time series forecasting is ubiquitous in various domains, such as retail, finance, manufacturing, healthcare and natural sciences, with roughly detailed examples below, you may get a better picture.
+
+  - **Engineering**: 
+
+    `Predicting` forces and movement (`forces`, `momentum`, `displacement`, and `velocity`) for designing structures and machines.
+
+  - **Supply Chain Management & Demand Forecasting**: 
+
+    `Estimating` `store sales` or `demands` for `optimized inventory management` can involve predicting both electricity demand and precipitation for efficient planning and `resource allocation`.
+
+  - **Market Analysis:**
+
+    While valuable for informed decision-making, it's crucial to remember the inherent uncertainty of the future, especially in areas like **stock market predictions**.
+
+
+---
+
 
 This project aims to provide utility tools that streamline the development of models, particularly those in the realm of deep learning. As the name `"VersatileAnn"` suggests, the project strives to be beneficial across different deep learning subfields, including natural language processing (NLP), computer vision, forecasting, and other more general use cases. Not only can it be useful for people to `simply try out some models`, but it's designated to be especially handy for `AI researchers` who require a robust and efficient development environment.
 
