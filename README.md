@@ -275,7 +275,7 @@ brazingTorch is designed as a **framework**, following a common approach for bui
 
 - To further enrich your coding experience, consider incorporating `colored comments` into your development environment. The project provides references for these color-coding conventions:
 
-  - **PyCharm**: `\devDocs\conventions\convention_todoTypes.py`
+    - **Better know what Functions to use:** this naming convention allows you to readily `identify` the `primary functionalities` and guiding you towards the appropriate functions, methods, or classes to get started. Also simplifies project navigation.
 
   - **VSCode** better comments extension *settings.json*: `\devDocs\conventions\conventions.md`
 
