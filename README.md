@@ -20,14 +20,25 @@
 
 ## How to read this!?!?
 
-This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` `only read` `highlights` and **bold texts** and `avoid additional infos`. They can help you to understand what's going on in the project.
+This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
+
+- `only read` `highlights` and **bold texts** and just get familiar with features this project has.
+
+- `avoid additional infos`. They can help you to understand what's going on in the project.
 
 - Also take a look at "**super quick glimpse at files**" in "**How to get started**".
 
 # Who this project is for?!<a id='whoThisProjectIsFor'></a>
 
+This project firstly is for `AI enthusiasts`, if `Forecasting` and `NLP`(natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
+
+- [in the case you don't know what forecasting is, click here](#whatIsForecasting)
+
+
+
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
-- `anyone who uses pytorch` ([`brazingTorch` section](#brazingTorch))
+
+- `anyone who uses Pytorch (AI deep learning library)` ([`brazingTorch` section](#brazingTorch))
   - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
   - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
@@ -35,11 +46,9 @@ This project has some sections and `"who this project is for"` `depends` on what
   - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
   - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
 - for people who want to use `ready forecasting models` (whole project)
-  - [in the case you don't know what forecasting is, click here](#whatIsForecasting)
   - **latest `state of the art` models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
-
-- `forecasting AI researchers` (whole project)
+- `sequential data (Forecasting & NLP) AI researchers` (whole project)
   - **Rich and Versatile Data Processing and Analysis Library**
   - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
   - Helps to `avoid errors`.
@@ -372,6 +381,8 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
   - **Market Analysis:**
 
     While valuable for informed decision-making, it's crucial to remember the inherent uncertainty of the future, especially in areas like **stock market predictions**.
+  
+  [go back to "Who this project is for?!"](#whoThisProjectIsFor)
 
 ---
 
@@ -398,3 +409,5 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 - kkk add explanation to this readMe about examples
 
 - kkk doesn't show table of content div color
+
+- kkk fill brazingTorch repo with this readMe
