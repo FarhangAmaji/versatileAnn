@@ -1,8 +1,5 @@
-<div style="background-color: #E0F2FE; padding: 20px;">
-
 ## Table of Contents
 - [**Who this project is for**](#whoThisProjectIsFor)
-    - [what is forecasting](#whatIsForecasting)
 - [**What versatileAnn is**](#whatVersatileAnnIs)
 - [**Project Features**](#projectFeatures)
     - [**Sections**](#sections)
@@ -17,12 +14,13 @@
   4. [examples](#examples)
   5. [machineLearning](#machineLearning)
   6. [projectUtils](#projectUtils)
+- Appendix
+    - [what is forecasting](#whatIsForecasting)
 
-</div>
 
 ## How to read this!?!?
 
-This is a `quite big project`, and this readMe is `a bit long`, so `recommended` to for the `first time` `only read` `highlights` and **bold texts** and `avoid additional infos`. They can help you to understand what's going on in the project.
+This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` `only read` `highlights` and **bold texts** and `avoid additional infos`. They can help you to understand what's going on in the project.
 
 - Also take a look at "**super quick glimpse at files**" in "**How to get started**".
 
@@ -30,41 +28,24 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 - `anyone who uses pytorch` ([`brazingTorch` section](#brazingTorch))
-  - provides:
-    - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
-    - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
-    - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
-    - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
-    - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
-    - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
+  - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
+  - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
+  - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
+  - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
+  - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
+  - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
 - for people who want to use `ready forecasting models` (whole project)
+  - [in the case you don't know what forecasting is, click here](#whatIsForecasting)
   - **latest `state of the art` models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
+
 - `forecasting AI researchers` (whole project)
   - **Rich and Versatile Data Processing and Analysis Library**
-    - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
-    - Helps to `avoid errors`.
-    - supports `variety of data types` including exogenous in processing and model components
-    - Has some `unmatched unique features`, which provide greater flexibility for your workflow.
+  - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
+  - Helps to `avoid errors`.
+  - supports `variety of data types` including exogenous in processing and model components
+  - Has some `unmatched unique features`, which provide greater flexibility for your workflow.
 - **Developers Interested in Innovative Projects**
-
-##### what is forecasting<a id='whatIsForecasting'></a>
-
-Forecasting leverages `statistical`, `machine learning`, and `deep learning` techniques to analyze past **quantitative** data and predict future values. 
-
-- Time series forecasting is ubiquitous in various domains, such as retail, finance, manufacturing, healthcare and natural sciences, with roughly detailed examples below, you may get a better picture.
-
-  - **Engineering**: 
-
-    `Predicting` forces and movement (`forces`, `momentum`, `displacement`, and `velocity`) for designing structures and machines.
-
-  - **Supply Chain Management & Demand Forecasting**: 
-
-    `Estimating` `store sales` or `demands` for `optimized inventory management` can involve predicting both electricity demand and precipitation for efficient planning and `resource allocation`.
-
-  - **Market Analysis:**
-
-    While valuable for informed decision-making, it's crucial to remember the inherent uncertainty of the future, especially in areas like **stock market predictions**.
 
 
 ---
@@ -117,13 +98,13 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 **sections:** The project comprises 5 distinct sections: `dataPrep`, `commonDatasets`, `brazingTorch`, `models` and `machineLearning`.
 
-- **`BrazingTorch` and `machineLearning`:** Offer valuable resources for individuals aspiring to delve into `development` and utilizing `deep learning` and `machine learning` approaches, respectively. and are `suitable` for `majority of machine learning community` and can be `used by anyone who uses pytorch` or `deals with machine learning models`.
+- **`BrazingTorch` and `machineLearning` sections:** Offer valuable resources for individuals aspiring to delve into `development` and utilizing `deep learning` and `machine learning` approaches, respectively. and are `suitable` for `majority of machine learning community` and can be `used by anyone who uses pytorch` or `deals with machine learning models`.
 
-- **`models`, `dataPrep` and `commonDatasets`:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
+- **`models`, `dataPrep` and `commonDatasets` sections:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
   
   - **These sections currently support only Forecasing and NLP but they have Potential for Broader Application:**
   
-    While the current implementation `focuses primarily` on `forecasting` and `NLP`, the project `exhibits` the `potential` to `extend its capabilities` to `other subfields`. `Novel features` within the project `lay` the `groundwork for future` integration of functionalities `tailored` for data preparation in `NLP` and `computer vision`, as well as the potential for developing models specific to computer vision tasks.
+    While the current implementation `focuses primarily` on `forecasting` and `NLP`, the project `exhibits` the `potential` to `extend its capabilities` to `other subfields`. `Novel features` within the project `lay` the `groundwork for future` integration of functionalities `tailored` for data preparation in `NLP` and `computer vision`, as well as the potential for developing `models` specific to `computer vision` tasks.
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
@@ -131,7 +112,7 @@ brazingTorch is a `high level wrapper` around `pytorch lightning`, which itself 
 
 `brazingTorch` was developed here in this project, but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
-it can be found at `/brazingTorchFolder`.
+it can be found at `\brazingTorchFolder`.
 
 #### Cool features:
 
@@ -140,7 +121,7 @@ it can be found at `/brazingTorchFolder`.
 1. **Streamlined Deep Learning Pipeline:**
 
    - BrazingTorch `simplifies` model development by providing a `customizable pipeline`.
-   - In `most cases` for simple architectures, you may only need to define the `forward method` and call the `fit` method, making it remarkably user-friendly.
+   - In `most cases` for simple architectures, you may `only` need to `define` the `forward method` and call the `fit` method, making it remarkably user-friendly.
    - For further `customization`, the `commonStep` method can be `overridden` to suit specific needs.
 
 2. **Automatic Model Differentiation and Tracking:** 
@@ -163,10 +144,10 @@ it can be found at `/brazingTorchFolder`.
 4. **preRunTests**
 
    - preRunTests is a  default `set of` models runs, to provide useful `sanity checks` and `optimizations` and `details providing runs`. If preRunTests hasen't been executed already, is going to be executed automatically before the `.fit` method.
-   - 1. **FastDevRun:** This runs the entire pipeline, `checking` for any `errors` that might cause the `whole process` to fail. This allows you to start the training, walk away, and come back later without worrying about unexpected failures.
-     2. **overfitBatches:** This test trains the entire model on a single batch, a popular technique for quick `sanity checks` and shows model's ability to provide good result.
+   - 1. **FastDevRun:** This runs the entire pipeline, `checking` for any `errors` that might cause the `whole process` to fail. This `allows` you to start the training, `walk away`, and come back later `without worrying` about unexpected failures.
+     2. **overfitBatches:** This run trains the entire model on a single batch, a popular technique for quick `sanity checks` and shows model's ability to provide good result.
      3. **Profiler:** This run helps identify `potential bottlenecks` in the training pipeline. It provides a `TensorBoard visual chart` showing the time consumption of each step. While it's usually hard for people to make a this chart, but in this project is provided `effortlessly`.
-     4. **Learning Rate & Batch Size Optimization:** This set of tests automatically finds the optimal learning rate and batch size for your data loader, improving training efficiency.
+     4. **Learning Rate & Batch Size Optimization:** Automatically finds the optimal learning rate and batch size for your data loader, improving training efficiency.
 
 5. **Simplified experience with smart defaults**:
 
@@ -372,6 +353,28 @@ in order to know to get started, you should know what do yo want to do and what 
 
 ---
 
+# Appendix
+
+#### what is forecasting<a id='whatIsForecasting'></a>
+
+Forecasting leverages `statistical`, `machine learning`, and `deep learning` techniques to analyze past **quantitative** data and `predict future values`. 
+
+- Time series forecasting is ubiquitous in various domains, such as retail, finance, manufacturing, healthcare and natural sciences, with roughly detailed examples below, you may get a better picture.
+
+  - **Engineering**: 
+
+    `Predicting` forces and movement (`forces`, `momentum`, `displacement`, and `velocity`) for designing structures and machines.
+
+  - **Supply Chain Management & Demand Forecasting**: 
+
+    `Estimating` `store sales` or `demands` for `optimized inventory management` can involve predicting both electricity demand and precipitation for efficient planning and `resource allocation`.
+
+  - **Market Analysis:**
+
+    While valuable for informed decision-making, it's crucial to remember the inherent uncertainty of the future, especially in areas like **stock market predictions**.
+
+---
+
 - note currently `\models` don't work as they re not yet changed to work with newer version of brazingTorch
 
 - examples are not workings, need to be updated
@@ -393,3 +396,5 @@ in order to know to get started, you should know what do yo want to do and what 
 - kkk add picture from predictions
 
 - kkk add explanation to this readMe about examples
+
+- kkk doesn't show table of content div color

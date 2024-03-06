@@ -162,6 +162,8 @@ def findClassDefinition_inAFile(filePath, className, printOff=False):
 
 
 def findClassDefinition_inADirectory(directoryPath, className, printOff=False):
+    # bugPotn2
+    #  once had stackoverflow(recursive mutliple calls)
     filePathsHavingTheDefinitionOfClass = []
     classDefinitions = []
 
