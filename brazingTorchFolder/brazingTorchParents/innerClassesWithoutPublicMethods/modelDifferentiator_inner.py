@@ -55,7 +55,7 @@ class _BrazingTorch_modelDifferentiator_inner:
     also does final check in order to see if can definitions executed or not
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self):
 
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelDifferentiator_inner)

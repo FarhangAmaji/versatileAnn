@@ -9,6 +9,7 @@ class _BrazingTorch_baseAttributes:
     @argValidator
     def __init__(self, modelName: str = '',
                  noAdditionalOptions: bool = False, testPrints=False, seed=None):
+        # kkk why seed is not used
         # bugPotn1 # goodToHave3
         #  the 'mps' torch device used for macbooks is not working with precision=64; so if the
         #  pytorch lightning precision is 64 then should lower that to 32

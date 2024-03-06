@@ -10,7 +10,7 @@ class _BrazingTorch_regularization_inner:
     nullRegulator = LossRegulator(LossRegulator.nullDictValue)
 
     @argValidator
-    def __init__(self, **kwargs):
+    def __init__(self):
 
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_regularization_inner)

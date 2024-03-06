@@ -11,7 +11,7 @@ class _BrazingTorch_specialModes_inner:
                                  "must return normalForwardOutputs, mean, logvar"
 
     @argValidator
-    def __init__(self, **kwargs):
+    def __init__(self):
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_specialModes_inner)
 
