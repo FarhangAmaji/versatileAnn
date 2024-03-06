@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from brazingTorchFolder.brazingTorchParents.innerClassesWithoutPublicMethods.preRunTests_inner import \
     _BrazingTorch_preRunTests_inner
-from brazingTorchFolder.callbacks import StoreEpochData
+from brazingTorchFolder.utilsFolder.callbacks import StoreEpochData
 from projectUtils.misc import morePreciseFloat, _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn

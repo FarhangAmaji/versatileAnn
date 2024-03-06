@@ -4,7 +4,7 @@ from typing import Optional, Callable
 import torch.nn as nn
 
 from projectUtils.typeCheck import argValidator
-from brazingTorchFolder.lossRegulator import LossRegulator
+from brazingTorchFolder.utilsFolder.lossRegulator import LossRegulator
 
 
 class VAnnCustomLayer(nn.Module):

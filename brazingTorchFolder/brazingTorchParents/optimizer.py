@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 from torch.optim.lr_scheduler import ChainedScheduler
 
-from brazingTorchFolder.utils import isPytorchLightningScheduler
+from brazingTorchFolder.utilsFolder.utils import isPytorchLightningScheduler
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn

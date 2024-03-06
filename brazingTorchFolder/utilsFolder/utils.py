@@ -13,7 +13,7 @@ from torch import nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LRScheduler
 from torch.utils.data import DataLoader
 
-from brazingTorchFolder.callbacks import StoreEpochData, WarmUpScheduler, \
+from brazingTorchFolder.utilsFolder.callbacks import StoreEpochData, WarmUpScheduler, \
     SchedulerChanger
 from projectUtils.dataTypeUtils.tensor import getTorchDevice
 from projectUtils.typeCheck import argValidator
@@ -131,6 +131,8 @@ def externalFit(self, trainDataloader: DataLoader,
 
         self = loadFromCheckpointPath(checkpointPath, self)
         self.to(getTorchDevice().type)
+        # bugPotn1
+        #  why the pycharm coloring, still shows `self` as it is the `self from input arguments`
 
     self._saveArchitectureDict(loggerPath)
 

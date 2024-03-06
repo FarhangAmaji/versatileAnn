@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from brazingTorchFolder.brazingTorchParents.innerClassesWithoutPublicMethods.modelFitter_inner import \
     _BrazingTorch_modelFitter_inner
-from brazingTorchFolder.utils import externalFit
+from brazingTorchFolder.utilsFolder.utils import externalFit
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances, varPasser
 from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn

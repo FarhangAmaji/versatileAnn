@@ -1,5 +1,5 @@
 from brazingTorchFolder.layers.customLayers import VAnnCustomLayer
-from brazingTorchFolder.lossRegulator import LossRegulator
+from brazingTorchFolder.utilsFolder.lossRegulator import LossRegulator
 from projectUtils.globalVars import regularizationTypes
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator

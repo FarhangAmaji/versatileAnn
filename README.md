@@ -40,7 +40,7 @@ This project has some sections and `"who this project is for"` `depends` on what
 
 - `anyone who uses Pytorch (AI deep learning library)` or `anyone uses any deep learning framework` ([`brazingTorch` section](#brazingTorch)):
   
-  if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **brazingTorch** at `least once`.
+  if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
   - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
   - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
@@ -312,7 +312,9 @@ in order to know to get started, you should know what do yo want to do and what 
 
 1. **use for timeseries data preparation:**<a id='useForTsDataPrep'></a>
 
-   - note depending on how you understand and learn new things, you may go from 1 to 5 in list below, or you may only start at 5 (commonDatasetsPrep) which utilizes the first four.
+   - note depending on how you understand and learn new things:
+     1. you may go from 1 to 5 in list below.
+     2. or you may only start at 5 (commonDatasetsPrep) which utilizes the first four.
 
    1. take a deep look at public functions in `\dataPrep\preprocessing.py` which are main functions for core data preprocessing operations to manipulate the raw data. getting familiar with these functions would help you a lot, so you will never do recreate those helper functions.
 
@@ -413,3 +415,11 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 - kkk doesn't show table of content div color
 
 - kkk fill brazingTorch repo with this readMe
+
+- kkk add models names "**Models currently supported**"
+
+- kkk I think this project seems to be more suited for ai development comparing to other similar packages
+
+- kkk add install requirements
+
+- kkk add voice sequence

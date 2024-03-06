@@ -5,7 +5,7 @@ from torch import nn
 
 from brazingTorchFolder.brazingTorchParents.innerClassesWithoutPublicMethods.regularization_inner import \
     _BrazingTorch_regularization_inner
-from brazingTorchFolder.lossRegulator import LossRegulator
+from brazingTorchFolder.utilsFolder.lossRegulator import LossRegulator
 from projectUtils.globalVars import regularizationTypes
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator

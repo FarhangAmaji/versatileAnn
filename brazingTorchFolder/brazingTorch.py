@@ -17,7 +17,7 @@ from brazingTorchFolder.brazingTorchParents.regularization import _BrazingTorch_
 from brazingTorchFolder.brazingTorchParents.saveLoad import _BrazingTorch_saveLoad
 from brazingTorchFolder.brazingTorchParents.specialModes import _BrazingTorch_specialModes
 from brazingTorchFolder.brazingTorchParents.temVars import _BrazingTorch_tempVars
-from brazingTorchFolder.lossRegulator import LossRegulator
+from brazingTorchFolder.utilsFolder.lossRegulator import LossRegulator
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.typeCheck import argValidator
 

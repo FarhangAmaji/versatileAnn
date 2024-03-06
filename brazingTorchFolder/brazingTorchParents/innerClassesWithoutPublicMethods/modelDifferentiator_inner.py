@@ -1,6 +1,6 @@
 import inspect
 
-from brazingTorchFolder.lossRegulator import LossRegulator
+from brazingTorchFolder.utilsFolder.lossRegulator import LossRegulator
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.dataTypeUtils.str import joinListWithComma
 from projectUtils.initParentClasses import orderClassNames_soChildIsAlways_afterItsParents
