@@ -46,7 +46,7 @@ This project has some sections and `"who this project is for"` `depends` on what
   - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
   - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
 - for people who want to use `ready forecasting models` (whole project)
-  - **latest `state of the art` models in `forecasting`**
+  - **latest `state of the art`(`models have shown best results`) models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
 - `sequential data (Forecasting & NLP) AI researchers` (whole project)
   - **Rich and Versatile Data Processing and Analysis Library**
@@ -110,16 +110,12 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 - **`BrazingTorch` and `machineLearning` sections:** Offer valuable resources for individuals aspiring to delve into `development` and utilizing `deep learning` and `machine learning` approaches, respectively. and are `suitable` for `majority of machine learning community` and can be `used by anyone who uses pytorch` or `deals with machine learning models`.
 
 - **`models`, `dataPrep` and `commonDatasets` sections:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
-  
-  - **These sections currently support only Forecasing and NLP but they have Potential for Broader Application:**
-  
-    While the current implementation `focuses primarily` on `forecasting` and `NLP`, the project `exhibits` the `potential` to `extend its capabilities` to `other subfields`. `Novel features` within the project `lay` the `groundwork for future` integration of functionalities `tailored` for data preparation in `NLP` and `computer vision`, as well as the potential for developing `models` specific to `computer vision` tasks.
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
 brazingTorch is a `high level wrapper` around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
 
-`brazingTorch` was developed here in this project, but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
+`brazingTorch` was developed here in this project(versatileAnn), but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
 it can be found at `\brazingTorchFolder`.
 
@@ -273,6 +269,9 @@ it can be found at `\brazingTorchFolder`.
 - As the name `"VersatileAnn"` suggests, the project was intended to be beneficial across different deep learning **subfields**, including natural language processing (**NLP**), **computer vision**, **forecasting**, and other more **general use cases.** But `models`, `dataPrep` and `commonDatasets` sections are currently only `specialized` for `forecasting` and some NLP use cases.
 - `sections` are designed to `work together` seamlessly, leveraging and `support` `each other's` `functionalities`.
 - For a deeper dive, `each section` within the project has its own dedicated **readme.md** file explaining these features in detail.  
+- **kkk These sections currently support only Forecasing and NLP but they have Potential for Broader Application:**
+
+  While the current implementation `focuses primarily` on `forecasting` and `NLP`, the project `exhibits` the `potential` to `extend its capabilities` to `other subfields`. `Novel features` within the project `lay` the `groundwork for future` integration of functionalities `tailored` for data preparation in `NLP` and `computer vision`, as well as the potential for developing `models` specific to `computer vision` tasks.
 - **clean code & clean structure:**
   - This project prioritizes `code clarity & readability` and maintainability by adhering to best practices for `clean code`. 
   - **Public and Private Functions Naming Convention:** A clear `naming convention` is implemented for `public and private functions`, methods, and classes. `Private elements`, names start with '`_`', are `not intended` for `direct user use`. 
