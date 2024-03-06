@@ -82,7 +82,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
 
         initiatedObj = super().__new__(cls)
         initiatedObj.seed = _plSeed__
-        # set 'testPrints' before other kwargs just to be able to use printTestPrints
+        # set 'testPrints' before other kwargs just to be able to use _printTestPrints
         if 'testPrints' in kwargs:
             initiatedObj.testPrints = kwargs['testPrints']
         else:
@@ -153,7 +153,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         del cls._parentClasses_tillBrazingTorch_inits
 
     def _BrazingTorch_postInit(self, **kwargs):
-        self.printTestPrints('_BrazingTorch_postInit func', self.__class__.__name__)
+        self._printTestPrints('_BrazingTorch_postInit func', self.__class__.__name__)
 
         # putting back original inits
         # addTest2

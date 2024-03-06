@@ -133,7 +133,7 @@ class _BrazingTorch_preRunTests:
                       valDataloader: Union[DataLoader, None] = None, **kwargs):
         # ccc1
         #  ensures whole pipeline is working correctly by running couple of epochs on a batch
-        self.printTestPrints('running fastDevRun')
+        self._printTestPrints('running fastDevRun')
 
         kwargsApplied = {'logger': False, }
         self._plKwargUpdater(kwargsApplied, kwargs)
@@ -147,7 +147,7 @@ class _BrazingTorch_preRunTests:
     def runOverfitBatches(self, trainDataloader: DataLoader,
                           valDataloader: Union[DataLoader, None] = None,
                           **kwargs):
-        self.printTestPrints('running overfitBatches')
+        self._printTestPrints('running overfitBatches')
 
         # ccc1 # bugPotn1
         #  with including 'overfit_batches' option, when the trainer is ran, "make sure you have
@@ -188,7 +188,7 @@ class _BrazingTorch_preRunTests:
     def runProfiler(self, trainDataloader: DataLoader, architectureName,
                     valDataloader: Union[DataLoader, None] = None,
                     **kwargs):
-        self.printTestPrints('running profiler')
+        self._printTestPrints('running profiler')
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
                          'profiler': PyTorchProfiler(),

@@ -34,7 +34,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
                       "\n    this warning is not always True, but it's better to double check" + \
                       " that you have not used *args in your __init__"
             Warn.error(warnMsg)
-            self.printTestPrints(warnMsg)
+            self._printTestPrints(warnMsg)
             # ccc1
             #  we don't make error and just give warning, because sometimes the user have not
             #  included *args in their __init__ but because of inheritance from `object`,
@@ -103,7 +103,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
                           '\n    this may cause conflict if are used for other purposes than passing to BrazingTorch.' + \
                           'you may want to change the name of this arg.'
                 Warn.warn(warnMsg)
-                self.printTestPrints(warnMsg)
+                self._printTestPrints(warnMsg)
         return allArgs
 
     @staticmethod
@@ -151,7 +151,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
 
     @staticmethod
     def _emptyMethod_usedForDisabling__init__s(self, **kwargs):
-        self.printTestPrints('emptyMethod_usedForDisabling__init__s')
+        self._printTestPrints('emptyMethod_usedForDisabling__init__s')
 
     @staticmethod
     def _warnUsersAgainstExplicitParentInitialization(parentClasses_tillBrazingTorch, self):
@@ -163,4 +163,4 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
                           '\n    this may cause error because parent classes are initiated automatically.' + \
                           '\n    so you may want to remove the __init__ of parent classes (even using "super()") from your __init__.'
                 Warn.warn(warnMsg)
-                self.printTestPrints(warnMsg)
+                self._printTestPrints(warnMsg)

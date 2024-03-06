@@ -42,8 +42,8 @@ class _BrazingTorch_optimizer:
 
                 infoMsg = f'no optimizer was set, a default Adam optimizer with lr={lr} was set'
                 # note we check some tests with the things printed but Warn.info is not on prints
-                # so we do self.printTestPrints(infoMsg)
-                self.printTestPrints(infoMsg)
+                # so we do self._printTestPrints(infoMsg)
+                self._printTestPrints(infoMsg)
                 Warn.info(infoMsg)
 
         return self._optimizer

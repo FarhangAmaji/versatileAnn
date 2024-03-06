@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
-from brazingTorchFolder.brazingTorchParents.baseAttributes import _BrazingTorch_baseAttributes
+from brazingTorchFolder.brazingTorchParents.innerClassesWithoutPublicMethods.baseAttributes import _BrazingTorch_baseAttributes
 from brazingTorchFolder.brazingTorchParents.lossModule import _BrazingTorch_loss
 from brazingTorchFolder.brazingTorchParents.modelDifferentiator import \
     _BrazingTorch_modelDifferentiator
@@ -73,7 +73,7 @@ class BrazingTorch(pl.LightningModule,
         #  _get_parentClassesOfBrazingTorch in _BrazingTorch_preInitNPostInit_nModelReset
         #  - note # LBTEam1 part is supposed to give error if there are same args in parent classes
 
-        self.printTestPrints('BrazingTorch init')
+        self._printTestPrints('BrazingTorch init')
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, BrazingTorch)
 

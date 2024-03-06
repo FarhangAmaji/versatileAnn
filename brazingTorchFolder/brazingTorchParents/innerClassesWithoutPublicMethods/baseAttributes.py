@@ -39,7 +39,7 @@ class _BrazingTorch_baseAttributes:
         else:
             self.modelName = modelName
 
-    def printTestPrints(self, *args):
+    def _printTestPrints(self, *args):
         # only prints for test purposes
         if self.testPrints:
             for arg in args:
