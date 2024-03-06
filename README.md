@@ -30,7 +30,7 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 # Who this project is for?!<a id='whoThisProjectIsFor'></a>
 
-This project firstly is for `AI enthusiasts`, if `Forecasting` and `NLP`(natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
+This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, but `Forecasting` and `NLP` (natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
 
 - [in the case you don't know what forecasting is, click here](#whatIsForecasting)
 

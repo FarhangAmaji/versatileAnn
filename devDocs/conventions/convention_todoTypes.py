@@ -38,7 +38,7 @@
 # styling comments
 # style
 
-# ---- color coding to set in IDEs
+# ---- color coding values to set in IDEs
 # kkk FF0000
 # ccc1 FFFF00
 # ccc2 FFFF2A
