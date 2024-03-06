@@ -6,8 +6,8 @@ import pytorch_lightning as pl
 from brazingTorchFolder.brazingTorchParents.preInitNPostInit_nModelReset_inner import \
     _BrazingTorch_preInitNPostInit_nModelReset_inner
 from projectUtils.customErrors import ImplementationError
-from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.initParentClasses import initClasses_withAllArgs
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 
 
 class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_nModelReset_inner):
@@ -17,35 +17,10 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         in brazingTorchTests_preInitNPostInit_nModelReset, in classDefinitionsSetup,
         the GrandChild is the 'last child of all'
     """
-    # ccc1
-    #  this is called even before __init_subclass__
-    classesCalledBy_init_subclass_ = []
 
     def __init__(self):
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_preInitNPostInit_nModelReset)
-
-    def __init_subclass__(cls, **kwargs):
-        # ccc1
-        #  in _findAllParentClasses_tillBrazingTorch we need BrazingTorch class object.
-        #  so along some other classes, we store BrazingTorch class object here.
-
-        # ccc1
-        #  this method is keep only to pass BrazingTorchObj to __new__
-        #  note this is called even before 'last child of all'
-        #  note this is even called for BrazingTorch itself, and its the first one to be called;
-        #  but it's super important that BrazingTorch is apparently is called only for the first
-        #  time!!! and not in next calls. therefore in _managingClassVariableSpace when releasing
-        #  classesCalledBy_init_subclass_ we still keeping its first element(BrazingTorch)
-
-        _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_.append(cls)
-
-        # give error if the user defined classes have their __new__ method
-        if len(_BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_) > 1:
-            _BrazingTorch_Obj = \
-                _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]
-            if cls.__new__ is not _BrazingTorch_Obj.__new__:
-                raise ImplementationError(f'"{cls}" class is not allowed to have __new__ method.')
 
     def __new__(cls, **kwargs):
         # ccc1
@@ -67,11 +42,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         print(f'BrazingTorch __new__ method initiated for "{cls.__name__}" class')
 
         # we know the first item in .classesCalledBy_init_subclass_ is the BrazingTorch class object
-        _BrazingTorch_Obj = cls.classesCalledBy_init_subclass_[0]
-
-        # check if the user has defined forward method or not
-        if cls.forward is _BrazingTorch_Obj.forward:
-            raise ImplementationError(f'"{cls}" class must have "forward" method reImplemented.')
+        # _BrazingTorch_Obj = cls.classesCalledBy_init_subclass_[0]#kkk
 
         # we get seed to just be sure this is the same seed applied in the model
         if 'seed' in kwargs and kwargs['seed']:
@@ -82,6 +53,12 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
 
         initiatedObj = super().__new__(cls)
         initiatedObj.seed = _plSeed__
+
+        _BrazingTorch_Obj = initiatedObj._getBrazingTorch_classObject()
+        # check if the user has defined forward method or not
+        if cls.forward is _BrazingTorch_Obj.forward:
+            raise ImplementationError(f'"{cls}" class must have "forward" method reImplemented.')
+
         # set 'testPrints' before other kwargs just to be able to use _printTestPrints
         if 'testPrints' in kwargs:
             initiatedObj.testPrints = kwargs['testPrints']
@@ -127,30 +104,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset(_BrazingTorch_preInitNPostInit_
         #  if the optimizer is changed the new optimizer should be in this similar variable
         cls._setInitArgs(_plSeed__, initiatedObj, kwargs, cls.__name__)
 
-        cls._managingClassVariableSpace(cls, initiatedObj)
-
         return initiatedObj
-
-    @staticmethod
-    def _managingClassVariableSpace(cls, initiatedObj):
-        # ccc1
-        #  moving classesCalledBy_init_subclass_ from _BrazingTorch_preInitNPostInit_nModelReset to
-        #  cls. it's ok that classesCalledBy_init_subclass_ exist in cls, as it's definition is
-        #  fixed, but as the _BrazingTorch_preInitNPostInit_nModelReset can be used in other classes,
-        #  so it must be cleaned
-        #  note also read comments of __init_subclass__
-        if _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_:
-            cls.classesCalledBy_init_subclass_ = _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_
-            _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_ = [
-                _BrazingTorch_preInitNPostInit_nModelReset.classesCalledBy_init_subclass_[0]]
-
-        # ccc1
-        #  now we have the object, so we move cls._parentClasses_tillBrazingTorch_inits to
-        #  initiatedObj, to clean class variable space.
-        #  note in _getArgsOfParentClasses_tillBrazingTorch we temporarily put
-        #  _parentClasses_tillBrazingTorch_inits in cls, because at that moment we don't have initiatedObj
-        initiatedObj._parentClasses_tillBrazingTorch_inits = cls._parentClasses_tillBrazingTorch_inits
-        del cls._parentClasses_tillBrazingTorch_inits
 
     def _BrazingTorch_postInit(self, **kwargs):
         self._printTestPrints('_BrazingTorch_postInit func', self.__class__.__name__)

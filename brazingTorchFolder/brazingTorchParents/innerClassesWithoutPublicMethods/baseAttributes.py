@@ -1,3 +1,4 @@
+from projectUtils.customErrors import ImplementationError
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict
 from projectUtils.dataTypeUtils.tensor import getTorchDevice
 from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
@@ -27,6 +28,14 @@ class _BrazingTorch_baseAttributes:
         #  and generalRegularization of type "l2" and 0.001 value
         self.testPrints = testPrints
         self.phases = DotDict({key: key for key in ['train', 'val', 'test', 'predict']})
+
+        # ccc3 cccDev
+        #  this one is related to _BrazingTorch_preInitNPostInit_nModelReset
+        #  the user must not have defined __new__ method
+        _BrazingTorch_Obj = self._getBrazingTorch_classObject()
+        if type(self).__new__ is not _BrazingTorch_Obj.__new__:
+            raise ImplementationError(
+                f'"{type(self)}" class is not allowed to have __new__ method.')
 
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_baseAttributes)

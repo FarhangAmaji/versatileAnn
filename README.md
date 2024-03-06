@@ -38,7 +38,10 @@ This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, b
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 
-- `anyone who uses Pytorch (AI deep learning library)` ([`brazingTorch` section](#brazingTorch))
+- `anyone who uses Pytorch (AI deep learning library)` or `anyone uses any deep learning framework` ([`brazingTorch` section](#brazingTorch)):
+  
+  if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **brazingTorch** at `least once`.
+  
   - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
   - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
@@ -269,7 +272,7 @@ it can be found at `\brazingTorchFolder`.
 - As the name `"VersatileAnn"` suggests, the project was intended to be beneficial across different deep learning **subfields**, including natural language processing (**NLP**), **computer vision**, **forecasting**, and other more **general use cases.** But `models`, `dataPrep` and `commonDatasets` sections are currently only `specialized` for `forecasting` and some NLP use cases.
 - `sections` are designed to `work together` seamlessly, leveraging and `support` `each other's` `functionalities`.
 - For a deeper dive, `each section` within the project has its own dedicated **readme.md** file explaining these features in detail.  
-- **kkk These sections currently support only Forecasing and NLP but they have Potential for Broader Application:**
+- **`models`, `dataPrep` and `commonDatasets` sections currently support only Forecasting and NLP but they have Potential for Broader Application:**
 
   While the current implementation `focuses primarily` on `forecasting` and `NLP`, the project `exhibits` the `potential` to `extend its capabilities` to `other subfields`. `Novel features` within the project `lay` the `groundwork for future` integration of functionalities `tailored` for data preparation in `NLP` and `computer vision`, as well as the potential for developing `models` specific to `computer vision` tasks.
 - **clean code & clean structure:**
