@@ -6,10 +6,15 @@ from projectUtils.customErrors import InternalLogicError
 from projectUtils.initParentClasses import getArgsOfClasses, exclude_selfNArgsNKwargs_fromAllArgs, \
     getArgsRelatedToAClass_fromAllArgs, orderClassNames_soChildIsAlways_afterItsParents, \
     checkIfAClassIs_initingItsParentClasses_inItsInit
+from projectUtils.misc import _allowOnlyCreationOf_ChildrenInstances
 from projectUtils.warnings import Warn
 
 
-class _BrazingTorch_preInitNPostInit_nModelReset_inner:
+class _BrazingTorch_preInitNPostInit_nModelReset_inner2:
+    def __init__(self):
+        # not allowing this class to have direct instance
+        _allowOnlyCreationOf_ChildrenInstances(self,
+                                               _BrazingTorch_preInitNPostInit_nModelReset_inner2)
 
     @staticmethod
     def _getArgsOfParentClasses_tillBrazingTorch(_BrazingTorch_Obj, cls, originalKwargs, self):
@@ -63,7 +68,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner:
         parentClasses.update({cls_.__name__: cls_})
         parentsOfThisClass = cls_.__bases__
         for potc in parentsOfThisClass:
-            parentClasses = _BrazingTorch_preInitNPostInit_nModelReset_inner._findAllParentClasses_tillBrazingTorch(
+            parentClasses = _BrazingTorch_preInitNPostInit_nModelReset_inner2._findAllParentClasses_tillBrazingTorch(
                 potc,
                 BrazingTorch_Obj,
                 parentClasses)
