@@ -4,6 +4,7 @@
 - [**Project Features**](#projectFeatures)
     - [**Sections**](#sections)
         - [brazingTorch](#brazingTorchFeatures)
+        - ["models" currently supported](#modelsCurrentlySupported)
         - [dataPrep & commonDatasets](#dataPrepNCommonDatasetsFeatures)
         - [Machine Learning](#machineLearning)
 - [**Project additional infos**](#additionalInfos)
@@ -51,7 +52,8 @@ This project has some sections and `"who this project is for"` `depends` on what
 - for people who want to use `ready forecasting models` (whole project)
   - **latest `state of the art`(`models have shown best results`) models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
-- `sequential data (Forecasting & NLP) AI researchers` (whole project)
+- `sequential data (Forecasting & NLP & audio) AI researchers` (whole project)
+  
   - **Rich and Versatile Data Processing and Analysis Library**
   - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
   - Helps to `avoid errors`.
@@ -64,7 +66,7 @@ This project has some sections and `"who this project is for"` `depends` on what
 
 # What versatileAnn is<a id='whatVersatileAnnIs'></a>
 
-This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`. 
+This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making it well-suited for AI development compared to other similar packages.
 
 This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique functionalities and options` available.
 
@@ -112,7 +114,7 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 - **`BrazingTorch` and `machineLearning` sections:** Offer valuable resources for individuals aspiring to delve into `development` and utilizing `deep learning` and `machine learning` approaches, respectively. and are `suitable` for `majority of machine learning community` and can be `used by anyone who uses pytorch` or `deals with machine learning models`.
 
-- **`models`, `dataPrep` and `commonDatasets` sections:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
+- **`models`, `dataPrep` and `commonDatasets` sections:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP` and `AI audio applications`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
@@ -193,6 +195,15 @@ it can be found at `\brazingTorchFolder`.
 
 
 ---
+
+### "models" currently supported<a id='modelsCurrentlySupported'></a>
+
+- Temporal Fusion Transformers
+- n-hits
+- n-beats
+- deepAr
+- Multivariate Transformers
+- Univariate Transformers
 
 ### dataPrep & commonDatasets<a id='dataPrepNCommonDatasetsFeatures'></a>
 
@@ -308,6 +319,10 @@ it can be found at `\brazingTorchFolder`.
     - `\dataPrep` specially  `\dataPrep\normalizers`
     - `\projectUtils\dataTypeUtils` and `projectUtils\misc.py`
 
+definitely the first thing is to clone the project with `git clone https://github.com/FarhangAmaji/versatileAnn`
+
+then install requirements with `pip install -r requirements.txt`
+
 in order to know to get started, you should know what do yo want to do and what uses cases of this project do you want to use?!
 
 1. **use for timeseries data preparation:**<a id='useForTsDataPrep'></a>
@@ -402,7 +417,7 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 
 - kkk there is no difference between **bold** and `highlights`, so there is no logic going on
 
-- kkk GPU Memory Efficient Tensor Conversion should be benchmarked
+- kkk GPU Memory Efficient Tensor Conversion should be benchmarked(wait wait does benchmark may any sense, it just need to be tested)
 
 - kkk complete machine learning section features
 
@@ -412,14 +427,4 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 
 - kkk add explanation to this readMe about examples
 
-- kkk doesn't show table of content div color
-
 - kkk fill brazingTorch repo with this readMe
-
-- kkk add models names "**Models currently supported**"
-
-- kkk I think this project seems to be more suited for ai development comparing to other similar packages
-
-- kkk add install requirements
-
-- kkk add voice sequence
