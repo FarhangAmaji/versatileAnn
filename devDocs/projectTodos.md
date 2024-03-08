@@ -1,4 +1,8 @@
 # current
+- tomorrow:
+    - add points to versatilleAnn in resume
+        - 15000 lines and 300 tests
+        - 
 - readme
     - omid points
     - add title to paragraphs
