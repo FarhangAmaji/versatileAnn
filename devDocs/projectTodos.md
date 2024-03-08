@@ -1,4 +1,14 @@
 # current
+- tomorrow:
+- change color 
+    - add points to versatilleAnn in resume
+        - 15000 lines and 300 tests
+        - lots of cool unmatched features
+    - sop
+        - from github is obvious how hard working I am
+        - being innovative is obvious from project
+        - could not publish but the big project where on contracts with other people
+        - say some of soft skills can be figured if you take a look at my projects
 - readme
     - omid points
     - add title to paragraphs
