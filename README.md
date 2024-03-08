@@ -4,7 +4,7 @@
 - [**Project Features**](#projectFeatures)
     - [**Sections**](#sections)
         - [brazingTorch](#brazingTorchFeatures)
-        - ["models" currently supported](#modelsCurrentlySupported)
+        - [models](#modelsCurrentlySupported)
         - [dataPrep & commonDatasets](#dataPrepNCommonDatasetsFeatures)
         - [Machine Learning](#machineLearning)
 - [**Project additional infos**](#additionalInfos)
@@ -18,7 +18,6 @@
 - Appendix
     - [what is forecasting](#whatIsForecasting)
 
-
 ## How to read this!?!?
 
 This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
@@ -27,7 +26,7 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 - `avoid additional infos`. They can help you to understand what's going on in the project.
 
-- Also take a look at "**super quick glimpse at files**" in "**How to get started**".
+- Also take a look at "**super quick glimpse at files**" in ["**How to get started**"](#HowToGetStarted).
 
 # Who this project is for?!<a id='whoThisProjectIsFor'></a>
 
@@ -39,18 +38,18 @@ This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, b
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 
-- `anyone who uses Pytorch (AI deep learning library)` or `anyone uses any deep learning framework` ([`brazingTorch` section](#brazingTorch)):
+- `anyone who uses Pytorch (AI deep learning library)` or `any other deep learning framework` ([`brazingTorch` section](#brazingTorch)):
   
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
-  - **very powerful, unique features:** offers unmatched `powerful`, `unique` features compared to traditional libraries like PyTorch, PyTorch Lightning, etc
+  - **very powerful, unique features:** offers `unmatched powerful`, `unique features` compared to traditional libraries like PyTorch, PyTorch Lightning, etc
   - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
   - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
   - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
 - for people who want to use `ready forecasting models` (whole project)
-  - **latest `state of the art`(`models have shown best results`) models in `forecasting`**
+  - **Code of latest `state of the art` (`cutting edge models of AI, publicly published in journals, achieving the best results`) models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
 - `sequential data (Forecasting & NLP & audio) AI researchers` (whole project)
   
@@ -74,39 +73,41 @@ These features are not only `well-tested`, with more than 300 unit tests, but al
 
 Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
 
-- **Project Features**<a id='projectFeatures'></a>
+# **Project Features**<a id='projectFeatures'></a>
 
-  - **Enhances Code Reliability:** 
+- **Enhances Code Reliability:** 
 
-    In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
+  In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
 
-  - **Simplifies Complex Processes:**
+- **Simplifies Complex Processes:**
 
-    `Bundles` `commonly used functionalities`, `streamlining` complex processes into a `single function call` while maintaining `customizability`.
+  `Bundles` `commonly used functionalities`, `streamlining` complex processes into a `single function call` while maintaining `customizability`.
 
-  - **Reduces Development Time:** 
+- **Reduces Development Time:** 
 
-    `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & Using Experiences`.
+  `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & Using Experiences`.
 
-  - **Elevates Code Quality:**
+- **Elevates Code Quality:**
 
-    The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
+  The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
 
-  - **Error Detection and Prevention:**
+- **Error Detection and Prevention:**
 
-    It also `raises errors` and `warnings` to `prevent many potential errors`; this is especially `very needed` when `working` with `Python` and Python packages.
+  It also `raises errors` and `warnings` to `prevent many potential errors`; this is especially `very needed` when `working` with `Python` and Python packages.
 
-  - **Enhances Future Development:**
+- **Enhances Future Development:**
 
-    From the perspective of further developing this project, it's been built with `clean code principles` and a tidy `structure`, simplifying `future developments `. Additionally, it's adorned with `detailed internal comments` for easy understanding and modification.
+  From the perspective of further developing this project, it's been built with `clean code principles` and a tidy `structure`, simplifying `future developments `. Additionally, it's adorned with `detailed internal comments` for easy understanding and modification.
 
-  - **Compatible Integration with Popular Libraries:**
+- **Compatible Integration with Popular Libraries:**
 
-    Compatibility with pandas, numpy, scikit-learn, PyTorch, and PyTorch Lightning `allows` for `integrating` of `your existing works` into this project with low effort.
+  Compatibility with pandas, numpy, scikit-learn, PyTorch, and PyTorch Lightning `allows` for `integrating` of `your existing works` into this project with low effort.
 
-  - **Exciting Features and Cool Ideas:**
-  
-    This project is packed with lots of fresh features and awesome ideas, sparking creativity and innovation.
+- **Exciting Features and Cool Ideas:**
+
+  This project is packed with lots of fresh features and awesome ideas, sparking creativity and innovation.
+
+
 
 ## Sections<a id='sections'></a>
 
@@ -115,6 +116,8 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 - **`BrazingTorch` and `machineLearning` sections:** Offer valuable resources for individuals aspiring to delve into `development` and utilizing `deep learning` and `machine learning` approaches, respectively. and are `suitable` for `majority of machine learning community` and can be `used by anyone who uses pytorch` or `deals with machine learning models`.
 
 - **`models`, `dataPrep` and `commonDatasets` sections:** But these sections are currently `specialized` for `forecasting`. `models` contains many of `forecasting` `state of the art models`. It's worth noting that `NLP` and `AI audio applications`, `alognside forecasting`, falls under the category of models dealing with `sequential data`, where information is processed in a specific order. This alignment allows versatileAnn to be also useful for `NLP models`. 
+
+
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
@@ -196,7 +199,11 @@ it can be found at `\brazingTorchFolder`.
 
 ---
 
-### "models" currently supported<a id='modelsCurrentlySupported'></a>
+
+
+### models<a id='modelsCurrentlySupported'></a>
+
+models currently supported:
 
 - **Temporal Fusion Transformers**
 - **n-hits**
@@ -204,6 +211,8 @@ it can be found at `\brazingTorchFolder`.
 - **deepAr**
 - **Multivariate Transformers**
 - **Univariate Transformers**
+
+could be found at `\models`
 
 ### dataPrep & commonDatasets<a id='dataPrepNCommonDatasetsFeatures'></a>
 
@@ -278,6 +287,12 @@ it can be found at `\brazingTorchFolder`.
 
 ---
 
+# Important Message
+
+**The project has not officially been launched:** Many sections of the project have been completed, but not all sections, especially the `\examples` and `\models` sections, need to be updated with the latest reconstruction of `brazingTorch`.
+
+- note the past code exist but not guaranteed to work perfectly.
+
 ### Project additional infos<a id='additionalInfos'></a>
 
 - As the name `"VersatileAnn"` suggests, the project was intended to be beneficial across different deep learning **subfields**, including natural language processing (**NLP**), **computer vision**, **forecasting**, and other more **general use cases.** But `models`, `dataPrep` and `commonDatasets` sections are currently only `specialized` for `forecasting` and some NLP use cases.
@@ -319,9 +334,11 @@ it can be found at `\brazingTorchFolder`.
     - `\dataPrep` specially  `\dataPrep\normalizers`
     - `\projectUtils\dataTypeUtils` and `projectUtils\misc.py`
 
-definitely the first thing is to clone the project with `git clone https://github.com/FarhangAmaji/versatileAnn`
+---
 
-then install requirements with `pip install -r requirements.txt`
+- Definitely the **first thing to do** is to **clone** the project with `git clone https://github.com/FarhangAmaji/versatileAnn`
+
+- then install requirements with `pip install -r requirements.txt`
 
 in order to know to get started, you should know what do yo want to do and what uses cases of this project do you want to use?!
 
@@ -385,7 +402,7 @@ in order to know to get started, you should know what do yo want to do and what 
 
 #### what is forecasting<a id='whatIsForecasting'></a>
 
-Forecasting leverages `statistical`, `machine learning`, and `deep learning` techniques to analyze past **quantitative** data and `predict future values`. 
+Forecasting leverages `statistical`, `machine learning`, and `deep learning` techniques to analyze past **quantitative** data and `predict future values`. You may be familiar with regression; `regression` is a `famous classic forecasting model`.
 
 - Time series forecasting is ubiquitous in various domains, such as retail, finance, manufacturing, healthcare and natural sciences, with roughly detailed examples below, you may get a better picture.
 
