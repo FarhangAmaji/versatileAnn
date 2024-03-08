@@ -197,9 +197,9 @@ it can be found at `\brazingTorchFolder`.
   - This project utilizes PyTorch Lightning primarily for its `multi-gpu` and `distributed computing` capabilities, otherwise, the entire pipeline could have been built from scratch. so it can be understood brazingTorch supports this.
 
 
+
+
 ---
-
-
 
 ### models<a id='modelsCurrentlySupported'></a>
 
