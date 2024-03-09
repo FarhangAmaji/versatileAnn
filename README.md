@@ -335,6 +335,17 @@ could be found at `\models`
     - `\projectUtils\dataTypeUtils` and `projectUtils\misc.py`
 
 ---
+## run it in docker
+windows Run docker-desktop, other system skip this step.
+in project folder in cli:
+docker build -t ann .
+* windows cli:
+docker run -it --rm -v %cd%:/app ann
+
+* other systems:
+
+docker run --rm -it -v ${PWD}:/app ann
+docker run --rm -it -v $(pwd):/app ann
 
 - Definitely the **first thing to do** is to **clone** the project with `git clone https://github.com/FarhangAmaji/versatileAnn`
 
