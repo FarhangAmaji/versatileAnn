@@ -1,24 +1,28 @@
 # current
-- tomorrow:
-- change color 
-    - add points to versatilleAnn in resume
-        - 15000 lines and 300 tests
-        - lots of cool unmatched features
-    - sop
-        - from github is obvious how hard working I am
-        - being innovative is obvious from project
-        - could not publish but the big project where on contracts with other people
-        - say some of soft skills can be figured if you take a look at my projects
-- readme
-    - omid points
-    - add title to paragraphs
-    - add more `highlight`
-    - add table of content
-- move private methods to inner files
-- think about autodoc python
-    sphnix autodoc
-    pdoc3
-    reportlab
+
+- machine learning part
+    - read readme
+    - todo:
+        1.
+            - find configs for each from site
+                - think about dynamic hyperparam optimization
+                    - categories param types
+                        -
+            - what should my data be like
+                - pandas or np array(maybe NpDict) or both
+            - create tests for each datatype
+            
+            - correct parallel
+            - adapt for time series
+                - (not sure) maybe automatically create inputs for `inputsFeature_backCastId` and `outFeature_foreCastId`
+            - add `param general effectiveness experience from past`
+            - add points to search parameters
+        2. 
+            - kkk complete machine learning section features
+            - kkk revise machine learning section features
+            - kkk add machine learning to How to get started
+- readme for brazing torch
+
 2. readMe
    3. explain folders in root folder
        4. where to look at code, for dive in it more

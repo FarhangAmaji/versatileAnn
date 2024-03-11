@@ -42,13 +42,13 @@ This project has some sections and `"who this project is for"` `depends` on what
   
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
-  - **very powerful, unique features:** offers `unmatched powerful`, `unique features` compared to traditional libraries like PyTorch, PyTorch Lightning, etc
-  - **User-friendly pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
-  - **Automatic differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
+  - **Very Powerful, Unique Features:** offers `unmatched powerful`, `unique features` compared to traditional frameworks like PyTorch, PyTorch Lightning, etc.
+  - **User-friendly Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
+  - **Automatic Model Architecture differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
-  - **Pre-run tests:** Get `sanity checks` and `optimize training efficiency` automatically.
+  - **PreRunTests:** Get `sanity checks` and `optimize training efficiency` automatically.
   - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
-- for people who want to use `ready forecasting models` (whole project)
+- For people who want to use `ready forecasting models` (whole project)
   - **Code of latest `state of the art` (`cutting edge models of AI, publicly published in journals, achieving the best results`) models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
 - `sequential data (Forecasting & NLP & audio) AI researchers` (whole project)
@@ -137,7 +137,7 @@ it can be found at `\brazingTorchFolder`.
    - In `most cases` for simple architectures, you may `only` need to `define` the `forward method` and call the `fit` method, making it remarkably user-friendly.
    - For further `customization`, the `commonStep` method can be `overridden` to suit specific needs.
 
-2. **Automatic Model Differentiation and Tracking:** 
+2. **Automatic Model Architecture Differentiation and Tracking:** 
 
    - This feature `automatically` `detects` and `names` your `model architecture`, even with minor changes in lower layers.
 
@@ -170,8 +170,8 @@ it can be found at `\brazingTorchFolder`.
    1. **General regularization** (applied on all layers)
    2. **Best Model save on best `val` loss**
    3. **Learning rate warm up**
-   4. **Early stopping**
-   5. **Gradient clipping**
+   4. **Early Stopping**
+   5. **Gradient Clipping**
    6. **Automatically setting GPU devices based on machine**
 
 6. **Regularization:**
@@ -217,7 +217,7 @@ could be found at `\models`
 ### dataPrep & commonDatasets<a id='dataPrepNCommonDatasetsFeatures'></a>
 
 - **Processing Toolkit:** A collection of functions named `dataPrep` is available to help `prepare time series data` for modeling purposes. These functions are located in the `\dataPrep` directory.
-- **Processed data to benchmark:** `\commonDatasets\commonDatasetsPrep` directory contains functions that leverage the `dataPrep` functionalities. These functions provide `ready preprocessed` data of some famous time series datasets, can be `used as` data to `benchmark` the performances of yout models. Note their `dataset` and `dataloader` `objects` also exist there.
+- **Processed data to benchmark:** `\commonDatasets\commonDatasetsPrep` directory contains functions that leverage the `dataPrep` functionalities. These functions provide `ready preprocessed` data of some famous time series datasets, can be `used as` data to `benchmark` the performances of your models. Note their `dataset` and `dataloader` `objects` also exist there.
 
 #### features
 
@@ -331,25 +331,35 @@ could be found at `\models`
     - for models in `\models`
     - `\brazingTorchFolder`
     - `\commonDatasets\commonDatasetsPrep` which show how data can be processed with `dataPrep`
-    - `\dataPrep` specially  `\dataPrep\normalizers`
+    - `\dataPrep` also `\dataPrep\normalizers`
     - `\projectUtils\dataTypeUtils` and `projectUtils\misc.py`
 
 ---
-## run it in docker
-windows Run docker-desktop, other system skip this step.
-in project folder in cli:
-docker build -t ann .
-* windows cli:
-docker run -it --rm -v %cd%:/app ann
-
-* other systems:
-
-docker run --rm -it -v ${PWD}:/app ann
-docker run --rm -it -v $(pwd):/app ann
+#### setup
 
 - Definitely the **first thing to do** is to **clone** the project with `git clone https://github.com/FarhangAmaji/versatileAnn`
 
-- then install requirements with `pip install -r requirements.txt`
+- run it in docker
+
+  - windows Run docker-desktop, other system skip this step.
+    in project folder in cli:
+    docker build -t ann .
+
+  * windows cli:
+  `docker run -it --rm -v %cd%:/app ann`
+
+
+  * other systems:
+    * `docker run --rm -it -v ${PWD}:/app ann`
+      `docker run --rm -it -v $(pwd):/app ann`
+
+- if you are not using docker:
+
+  - then install requirements with `pip install -r requirements.txt`
+
+---
+
+### use cases dependent look at files
 
 in order to know to get started, you should know what do yo want to do and what uses cases of this project do you want to use?!
 
@@ -433,6 +443,12 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 
 ---
 
+readme version: 1.0.0
+
+- kkk this will updated after official launch
+
+---
+
 - note currently `\models` don't work as they re not yet changed to work with newer version of brazingTorch
 
 - examples are not workings, need to be updated
@@ -451,6 +467,8 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 
 - kkk complete machine learning section features
 
+- kkk revise machine learning section features
+
 - kkk add machine learning to How to get started
 
 - kkk add picture from predictions
@@ -458,3 +476,7 @@ Forecasting leverages `statistical`, `machine learning`, and `deep learning` tec
 - kkk add explanation to this readMe about examples
 
 - kkk fill brazingTorch repo with this readMe
+
+- kkk add it has models with exogenous variables and explainability
+
+- kkk grammar check for whole file
