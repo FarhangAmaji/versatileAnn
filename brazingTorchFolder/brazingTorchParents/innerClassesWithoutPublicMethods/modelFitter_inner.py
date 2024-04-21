@@ -34,8 +34,8 @@ class _BrazingTorch_modelFitter_inner:
         self._assertPhaseBased_logOptions(value)
         self.__logOptions = value
 
-    def _getArgsRelated_toEachMethodSeparately(self, allUserKwargs):
-        appliedKwargs = {}
+    def _getArgsRelated_toEachMethodSeparately(self, appliedKwargs):
+        appliedKwargs_byMethod = {}
         for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
                                   ['trainer', 'trainerFit', 'log']):
             # ccc1
@@ -47,33 +47,33 @@ class _BrazingTorch_modelFitter_inner:
             #  - note giveOnlyKwargsRelated_toMethod has camelCase compatibility
             #  for i.e. if the method takes `my_arg` but updater has
             #  `myArg`, includes `my_arg` as 'myArg'
-            appliedKwargs[methName] = {}
-            appliedKwargs[methName] = giveOnlyKwargsRelated_toMethod(meth, updater=allUserKwargs,
-                                                                     updatee=appliedKwargs[
+            appliedKwargs_byMethod[methName] = {}
+            appliedKwargs_byMethod[methName] = giveOnlyKwargsRelated_toMethod(meth, updater=appliedKwargs,
+                                                                     updatee=appliedKwargs_byMethod[
                                                                          methName])
-        return appliedKwargs
+        return appliedKwargs_byMethod
 
-    def _removeNotAllowedArgs(self, allUserKwargs, appliedKwargs, notAllowedArgs):
+    def _removeNotAllowedArgs(self, appliedKwargs, appliedKwargs_byMethod, notAllowedArgs):
         # addTest2
         for naa in notAllowedArgs:
-            for ak in appliedKwargs.keys():
-                for ak2 in appliedKwargs[ak].keys():
+            for ak in appliedKwargs_byMethod.keys():
+                for ak2 in appliedKwargs_byMethod[ak].keys():
                     if naa == ak2 or naa == snakeToCamel(ak2):
                         Warn.warn(f'you have include {naa} in kwargs you passed, but' + \
                                   'this is not allowed and omitted')
-                        del appliedKwargs[ak][ak2]
-                        del allUserKwargs[ak2]  # in order to give warning again in leftOvers part
+                        del appliedKwargs_byMethod[ak][ak2]
+                        del appliedKwargs[ak2]  # in order to give warning again in leftOvers part
 
-    def _warnForNotUsedArgs(self, allUserKwargs, appliedKwargs):
+    def _warnForNotUsedArgs(self, appliedKwargs, appliedKwargs_byMethod):
         # addTest2
         # warn for left over kwargs, the kwargs which user has passed but don't
         # fit in pl.Trainer, pl.Trainer.fit or pl.LightningModule.log
-        for auk in allUserKwargs:
+        for auk in appliedKwargs:
             isInVolved = False
-            for ak in appliedKwargs.keys():
+            for ak in appliedKwargs_byMethod.keys():
                 if isInVolved:
                     break
-                for ak2 in appliedKwargs[ak].keys():
+                for ak2 in appliedKwargs_byMethod[ak].keys():
                     if auk == ak2 or auk == snakeToCamel(ak2):
                         isInVolved = True
                         break
@@ -91,26 +91,34 @@ class _BrazingTorch_modelFitter_inner:
                                      f"\nthe key '{akl}' must be " + \
                                      "'train', 'val', 'test', 'predict', 'else'")
 
-    # ---- _plKwargUpdater and inners
-    def _plKwargUpdater(self, allUserKwargs, kw):
+    # ---- _getBaseFitUsedKwargs and inners
+    def _getBaseFitAppliedKwargs(self, kwargs, listOfKwargs):
+        listOfKwargs = listOfKwargs or []
+        listOfKwargs.append(kwargs)
+        appliedKwargs = {}
+        for kw in listOfKwargs:
+            self._plKwargUpdater(appliedKwargs, kw)
+        return appliedKwargs
+
+    def _plKwargUpdater(self, appliedKwargs, kw):
         # ccc1
         #  pytorch lightning for some args may get different type
         #  this methods makes sure those options are correctly applied
         #  for i.e. logger can be a Logger object or a list/
         kw_ = kw.copy()
         correctArgs = {}
-        if 'logger' in allUserKwargs and 'logger' in kw:
-            correctArgs['logger'] = self._putTogether_plLoggers(allUserKwargs['logger'],
+        if 'logger' in appliedKwargs and 'logger' in kw:
+            correctArgs['logger'] = self._putTogether_plLoggers(appliedKwargs['logger'],
                                                                 kw['logger'])
             del kw_['logger']
         # 'plugins' is also like callbacks. but I don't take care of as this option is rare
-        if 'callbacks' in allUserKwargs and 'callbacks' in kw:
-            correctArgs['callbacks'] = self._putTogether_plCallbacks(allUserKwargs['callbacks'],
+        if 'callbacks' in appliedKwargs and 'callbacks' in kw:
+            correctArgs['callbacks'] = self._putTogether_plCallbacks(appliedKwargs['callbacks'],
                                                                      kw['callbacks'])
             del kw_['callbacks']
-        allUserKwargs.update(kw_)
-        allUserKwargs.update(correctArgs)
-        return allUserKwargs
+        appliedKwargs.update(kw_)
+        appliedKwargs.update(correctArgs)
+        return appliedKwargs
 
     @argValidator
     def _putTogether_plLoggers(self,

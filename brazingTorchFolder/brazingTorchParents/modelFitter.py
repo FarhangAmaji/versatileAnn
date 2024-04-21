@@ -13,10 +13,6 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
-# kkk
-#  does pl set trainer to model after training once? if so then in continuation
-#  (for i.e. after loading model) we may not use .fit of this class
-
 class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
     def __init__(self):
         # not allowing this class to have direct instance
@@ -64,7 +60,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
 
     @argValidator
     def baseFit(self, trainDataloader: DataLoader,
-                valDataloader: Union[DataLoader, None] = None,
+                valDataloader: Optional[Union[DataLoader]] = None,
                 addDefaultLogger=True, addDefault_gradientClipping=True,
                 listOfKwargs: List[dict] = None,
                 **kwargs):
@@ -73,7 +69,9 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         # cccUsage
         #  - **kwargs or listOfKwargs are any argument related to pytorch lightning trainer, trainer.fit,
         #       and self.log
-        #  - the order in listOfKwargs is important
+        #  - the order in listOfKwargs is important:
+        #       - the later ones overwrite the earliers
+        #       - kwargs are always the last (overwrite others)
         #  - _logOptions phase based values feature:
         #           - args related to self.log may be a dict with these keys 'train', 'val', 'test',
         #                   'predict' or 'else'
@@ -81,20 +79,16 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #               'else' it's gonna know
 
         # put together all kwargs user wants to pass to trainer, trainer.fit, and self.log
-        listOfKwargs = listOfKwargs or []
-        listOfKwargs.append(kwargs)
-        allUserKwargs = {}
-        for kw in listOfKwargs:
-            self._plKwargUpdater(allUserKwargs, kw)
+        appliedKwargs = self._getBaseFitAppliedKwargs(kwargs, listOfKwargs)
 
-        # add default logger if allowed and no logger is passes
+        # add default logger if allowed and no logger is passed
         # because by default we are logging some metrics
-        if addDefaultLogger and 'logger' not in allUserKwargs:
-            allUserKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
+        if addDefaultLogger and 'logger' not in appliedKwargs:
+            appliedKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
             # bugPotn1
             #  shouldn't this default logger have architectureName
 
-        appliedKwargs = self._getArgsRelated_toEachMethodSeparately(allUserKwargs)
+        appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
 
         notAllowedArgs = ['self', 'overfit_batches', 'name', 'value']
         # ccc1
@@ -102,29 +96,29 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #       _logLosses in _BrazingTorch_loss module sets them itself
         #  - overfit_batches is not compatible with this project
         #       for more info take look at 'ccc1' at runOverfitBatches
-        self._removeNotAllowedArgs(allUserKwargs, appliedKwargs, notAllowedArgs)
+        self._removeNotAllowedArgs(appliedKwargs, appliedKwargs_byMethod, notAllowedArgs)
 
-        self._warnForNotUsedArgs(allUserKwargs, appliedKwargs)
+        self._warnForNotUsedArgs(appliedKwargs, appliedKwargs_byMethod)
 
         # add gradient clipping by default
         if not self.noAdditionalOptions and addDefault_gradientClipping \
-                and 'gradient_clip_val' not in appliedKwargs['trainer']:
-            appliedKwargs['trainer']['gradient_clip_val'] = 0.1
+                and 'gradient_clip_val' not in appliedKwargs_byMethod['trainer']:
+            appliedKwargs_byMethod['trainer']['gradient_clip_val'] = 0.1
             Warn.info('gradient_clip_val is not provided to fit;' + \
                       ' so by default it is set to default "0.1"' + \
                       '\nto cancel it, you may either pass noAdditionalOptions=True to model or ' + \
                       'pass addDefault_gradientClipping=False to fit method.' + \
                       '\nor set another value to "gradient_clip_val" in kwargs passed to fit method.')
 
-        trainer = pl.Trainer(**appliedKwargs['trainer'])
+        trainer = pl.Trainer(**appliedKwargs_byMethod['trainer'])
 
-        self._logOptions = appliedKwargs['log']
+        self._logOptions = appliedKwargs_byMethod['log']
 
-        if 'train_dataloaders' in appliedKwargs['trainerFit']:
-            del appliedKwargs['trainerFit']['train_dataloaders']
-        if 'val_dataloaders' in appliedKwargs['trainerFit']:
-            del appliedKwargs['trainerFit']['val_dataloaders']
-        trainer.fit(self, trainDataloader, valDataloader, **appliedKwargs['trainerFit'])
+        if 'train_dataloaders' in appliedKwargs_byMethod['trainerFit']:
+            del appliedKwargs_byMethod['trainerFit']['train_dataloaders']
+        if 'val_dataloaders' in appliedKwargs_byMethod['trainerFit']:
+            del appliedKwargs_byMethod['trainerFit']['val_dataloaders']
+        trainer.fit(self, trainDataloader, valDataloader, **appliedKwargs_byMethod['trainerFit'])
 
         self._logOptions = {}
         return trainer
