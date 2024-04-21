@@ -34,6 +34,7 @@ class _BrazingTorch_modelFitter_inner:
         self._assertPhaseBased_logOptions(value)
         self.__logOptions = value
 
+    # ---- other baseFit methods
     def _getArgsRelated_toEachMethodSeparately(self, appliedKwargs):
         appliedKwargs_byMethod = {}
         for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
@@ -54,7 +55,7 @@ class _BrazingTorch_modelFitter_inner:
         return appliedKwargs_byMethod
 
     def _removeNotAllowedArgs(self, appliedKwargs, appliedKwargs_byMethod, notAllowedArgs):
-        # addTest2
+        # addTest3
         for naa in notAllowedArgs:
             for ak in appliedKwargs_byMethod.keys():
                 for ak2 in appliedKwargs_byMethod[ak].keys():
@@ -65,7 +66,7 @@ class _BrazingTorch_modelFitter_inner:
                         del appliedKwargs[ak2]  # in order to give warning again in leftOvers part
 
     def _warnForNotUsedArgs(self, appliedKwargs, appliedKwargs_byMethod):
-        # addTest2
+        # addTest3
         # warn for left over kwargs, the kwargs which user has passed but don't
         # fit in pl.Trainer, pl.Trainer.fit or pl.LightningModule.log
         for auk in appliedKwargs:
@@ -88,7 +89,7 @@ class _BrazingTorch_modelFitter_inner:
             if isinstance(aklV, dict):
                 if akl not in ['train', 'val', 'test', 'predict', 'else']:
                     raise ValueError("it seems you are trying to use phaseBased logOptions" + \
-                                     f"\nthe key '{akl}' must be " + \
+                                     f"\nthe key '{akl}' must be one of " + \
                                      "'train', 'val', 'test', 'predict', 'else'")
 
     # ---- _getBaseFitUsedKwargs and inners
@@ -101,10 +102,10 @@ class _BrazingTorch_modelFitter_inner:
         return appliedKwargs
 
     def _plKwargUpdater(self, appliedKwargs, kw):
-        # ccc1
+        # ccc2
         #  pytorch lightning for some args may get different type
-        #  this methods makes sure those options are correctly applied
-        #  for i.e. logger can be a Logger object or a list/
+        #  this methods makes sure those options are correctly applied (put together)
+        #  for i.e. logger can be a Logger object or a list of Logger objects
         kw_ = kw.copy()
         correctArgs = {}
         if 'logger' in appliedKwargs and 'logger' in kw:
@@ -126,10 +127,14 @@ class _BrazingTorch_modelFitter_inner:
                                var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
             -> Union[Logger, List[Logger], None, bool]:
         # addTest2
-        # ccc1
+        # ccc2
         #  - each pytorch lightning arg may get a Logger object or a list of Logger
         #       objects or None Or bool
-        #  - note have higher importance in setting Logger, Iterable[Logger] than None or bool
+        #  - note Logger and Iterable[Logger] have higher importance in setting than None or
+        #       bool (would replace them)
+        #  - also if the one side is Iterable[Logger] so the other one is either appended or
+        #       extended to the one with Iterable[Logger]
+        #  - also note var1 is the earlier one and var2 is the later
 
         # Check if either var1 or var2 is None or bool
         if var1 is None:
@@ -180,9 +185,10 @@ class _BrazingTorch_modelFitter_inner:
                                  var1: Optional[Union[List[Callback], Callback]],
                                  var2: Optional[Union[List[Callback], Callback]]) \
             -> Union[Callback, List[Callback], None]:
-        # ccc1
+        # ccc3
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
         #  - note have higher importance in setting Callback, Iterable[Callback] than None
+        # addTest2
 
         # Check if either var1 or var2 is None
         if var1 is None:
@@ -216,7 +222,7 @@ class _BrazingTorch_modelFitter_inner:
         #  this is similar to _determineShouldRun_preRunTests
         # addTest1
 
-        # ccc1(same as _determineShouldRun_preRunTests)
+        # ccc3(same as _determineShouldRun_preRunTests)
         #  there was a idea about ""architectureName should be figured out in postInit"" but it may
         #  cause problems with loggerPath in preRunTests and .fit method
 

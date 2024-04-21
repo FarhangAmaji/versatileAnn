@@ -72,11 +72,11 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #  - the order in listOfKwargs is important:
         #       - the later ones overwrite the earliers
         #       - kwargs are always the last (overwrite others)
-        #  - _logOptions phase based values feature:
-        #           - args related to self.log may be a dict with these keys 'train', 'val', 'test',
+        #  - kwargs related to logging may be specified with phase:
+        #       - args related to self.log may be a dict with these keys 'train', 'val', 'test',
         #                   'predict' or 'else'
-        #           - this way u can specify what phase use what values and if not specified with
-        #               'else' it's gonna know
+        #       - this way u can specify what exact phase use what values and what values the rest
+        #               of phases (not specified ones) 'else' use
 
         # put together all kwargs user wants to pass to trainer, trainer.fit, and self.log
         appliedKwargs = self._getBaseFitAppliedKwargs(kwargs, listOfKwargs)
@@ -91,13 +91,17 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
 
         notAllowedArgs = ['self', 'overfit_batches', 'name', 'value']
-        # ccc1
+        # ccc3
         #  - 'name','value' can be used in logging and are not allowed as the
         #       _logLosses in _BrazingTorch_loss module sets them itself
         #  - overfit_batches is not compatible with this project
         #       for more info take look at 'ccc1' at runOverfitBatches
         self._removeNotAllowedArgs(appliedKwargs, appliedKwargs_byMethod, notAllowedArgs)
 
+        # ccc3
+        #  note there might be some args passed by user (in listOfKwargs or kwargs) but the
+        #  appliedKwargs_byMethod only keeps the kwargs related to the pytorch lightning trainer,
+        #  trainer.fit, and self.log; therefore to prevent mistakes we warn the user
         self._warnForNotUsedArgs(appliedKwargs, appliedKwargs_byMethod)
 
         # add gradient clipping by default
@@ -114,6 +118,9 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
 
         self._logOptions = appliedKwargs_byMethod['log']
 
+        # ccc3
+        #  the user may have passed the train_dataloaders and val_dataloaders kwargs which are not
+        #  going to be applied and those arguments should be passed to this method directly
         if 'train_dataloaders' in appliedKwargs_byMethod['trainerFit']:
             del appliedKwargs_byMethod['trainerFit']['train_dataloaders']
         if 'val_dataloaders' in appliedKwargs_byMethod['trainerFit']:
