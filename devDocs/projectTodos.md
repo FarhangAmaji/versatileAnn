@@ -1,26 +1,4 @@
 # current
-
-- machine learning part
-    - read readme
-    - todo:
-        1.
-            - find configs for each from site
-                - think about dynamic hyperparam optimization
-                    - categories param types
-                        -
-            - what should my data be like
-                - pandas or np array(maybe NpDict) or both
-            - create tests for each datatype
-            
-            - correct parallel
-            - adapt for time series
-                - (not sure) maybe automatically create inputs for `inputsFeature_backCastId` and `outFeature_foreCastId`
-            - add `param general effectiveness experience from past`
-            - add points to search parameters
-        2. 
-            - kkk complete machine learning section features
-            - kkk revise machine learning section features
-            - kkk add machine learning to How to get started
 - readme for brazing torch
 
 2. readMe

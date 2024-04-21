@@ -115,7 +115,7 @@
 
 - ---
 
-  `feat` 1~4 : new feature is added
+- `feat` 1~4 : new feature is added
 
 - `improve` 1~4 : existing feature is improved
 

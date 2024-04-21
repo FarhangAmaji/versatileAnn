@@ -285,6 +285,24 @@ could be found at `\models`
 
 **versatileAnn** aims to provide an `easy-to-use` tool for testing `various machine learning models` with different `hyperparameters`.
 
+this section aims for `forecasting` machine learning application
+
+- features:
+
+  - comprehensive gird search on machine learning classic models.
+
+  - apply `cross fold validation` 
+
+  - calculate both 'train' and 'test' scores for multiple metrics separately(most packages don't provide such)
+
+  - parallelized for faster computations
+
+  - memory efficient but can be improved a bit
+
+- additional infos:
+  - this section is adapted from https://github.com/FarhangAmaji/binary-classification-Telco-Churn
+  - 
+
 ---
 
 # Important Message
