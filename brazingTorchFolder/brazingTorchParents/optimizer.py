@@ -60,10 +60,10 @@ class _BrazingTorch_optimizer:
         # ccc1
         #  this part is designed in order to be able to resetOptimizer but the args passed when
         #  setting it
-        # cccWhy
+        # ccc4
         #  minor: value which is a torch.optim.Optimizer is not subscriptable so we do vars(value)
         optimizerInitArgs_names = list(vars(value)['param_groups'][0].keys())
-        # cccWhy
+        # ccc3
         #  params are dynamic and must not be saved
         if 'params' in optimizerInitArgs_names:
             optimizerInitArgs_names.remove('params')

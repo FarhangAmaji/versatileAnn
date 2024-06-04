@@ -10,11 +10,11 @@ from projectUtils.misc import getProjectDirectory
 from tests.baseTest import BaseTestClass
 from tests.utils import simulateInput
 
-
-# kkk
-#  note saved files(DetermineFitRunStateTests_mockSavedModels) path is
-#  different when this file is run by runAllTests.py and when it's run
-#  from this file itself
+# ccc1
+#  note there are some saved files essential for this test(DetermineFitRunStateTests_mockSavedModels)
+#  python import path is different when this file is run by runAllTests.py and when it's run
+#  from this file itself; so assertEqual_pathCompatibile func tries to make the tests pass for both
+#  cases but still some tests do pass when run directly from this file
 class NNDummy1(BrazingTorch):
     def __init__(self, **kwargs):
         # this just in order to see does it run of not so 1 neuron is enough
@@ -75,6 +75,20 @@ class DetermineFitRunStateTests(FitTests):
     #  note test func which have _matchedSeedDict have seed=71 as there is a model saved with
     #  this seed
 
+    def assertEqual_pathCompatibile(self, loggerPath, path2):
+        pathArgs = path2.split(os.sep)
+        if 'tests' in pathArgs:
+            if loggerPath != path2:
+                testsIndex = pathArgs.index('tests')
+                pathArgsWithBrazingTorchTestsFolder = list(pathArgs[:])
+                pathArgsWithBrazingTorchTestsFolder.insert(testsIndex + 1, 'brazingTorchTests')
+                if ':' in pathArgsWithBrazingTorchTestsFolder[0] and not '\\' in \
+                                                                         pathArgsWithBrazingTorchTestsFolder[0]:
+                    pathArgsWithBrazingTorchTestsFolder[0] += '\\'
+                self.assertEqual(loggerPath, os.path.join(*pathArgsWithBrazingTorchTestsFolder))
+        else:
+            self.assertEqual(loggerPath, os.path.join(*pathArgs))
+
     def test_resume_seedSensitive_matchedSeedDict(self):
         self.setup(seed=71)
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
@@ -89,7 +103,7 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
 
     def test_noResume_seedSensitive_matchedSeedDict_dontReplace(self):
         self.setup(seed=71)
@@ -106,7 +120,7 @@ class DetermineFitRunStateTests(FitTests):
                 seed=self.seed, resume=False, seedSensitive=True)
 
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed71)
 
     def test_noResume_seedSensitive_noMatchedSeedDict(self):
         # note this one also exactly lands in the condition which
@@ -115,7 +129,7 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
 
     def test_resume_noSeedSensitive_matchedSeedDict(self):
         self.setup(seed=71)
@@ -154,14 +168,14 @@ class DetermineFitRunStateTests(FitTests):
                 seed=self.seed, resume=False, seedSensitive=False)
 
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed71)
 
     def test_noResume_noSeedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=False)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
 
     def test_modelWithSameName_anotherArchitecture(self):
         model = NNDummy2(modelName='DetermineFitRunStateTests_mockSavedModels',
@@ -179,9 +193,10 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = model._determineFitRunState(
             seed=71)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual(loggerPath,
-                         os.path.join(getProjectDirectory(), 'tests',
-                                      'NNDummy1', 'arch1', 'mainRun_seed71'))
+
+        self.assertEqual_pathCompatibile(loggerPath, os.path.join(getProjectDirectory(), 'tests',
+                                                                  'NNDummy1', 'arch1',
+                                                                  'mainRun_seed71'))
         self.assertEqual(architectureName, 'arch1')
 
 
