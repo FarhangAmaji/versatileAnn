@@ -41,10 +41,9 @@ def typeHintChecker_AListOfSomeType(func):
         allArgs.update(kwargs)
         return allArgs
 
-    def doItemsOfListObeyHinting(argVal, innerListTypes):
-        uniqueTypes = set(type(arg) for arg in argVal)
-        for ut in uniqueTypes:
-            if not any([issubclass(ut, ilt) for ilt in innerListTypes]):
+    def doItemsOfListObeyHinting(argVals, innerListTypes):
+        for arg in argVals:
+            if not any([issubclass(type(arg), ilt) for ilt in innerListTypes]):
                 return False
         return True
 
