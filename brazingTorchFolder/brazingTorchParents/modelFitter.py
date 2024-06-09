@@ -37,7 +37,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         # cccUsage
         #  - **kwargs are any argument related to pytorch lightning trainer, trainer.fit,
         #       and self.log
-        #  - note there are many args related to preRunTests; you may also run preRunTests separately
+        #  - note there are many args related to preRunTests; you may want to run preRunTests separately
 
         # ccc1
         #  note this method in some cases is loading another instance and runs on that
@@ -71,21 +71,21 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #       and self.log
         #  - the order in listOfKwargs is important:
         #       - the later ones overwrite the earliers
-        #       - kwargs are always the last (overwrite others)
-        #  - kwargs related to logging may be specified with phase:
+        #       - kwargs are always the last (may overwrite others)
+        #  - logging kwargs: kwargs related to logging may be specified with phase:
         #       - args related to self.log may be a dict with these keys 'train', 'val', 'test',
         #                   'predict' or 'else'
         #       - this way u can specify what exact phase use what values and what values the rest
         #               of phases (not specified ones) 'else' use
 
         # put together all kwargs user wants to pass to trainer, trainer.fit, and self.log
-        appliedKwargs = self._getBaseFitAppliedKwargs(kwargs, listOfKwargs)
+        appliedKwargs = self._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
 
         # add default logger if allowed and no logger is passed
         # because by default we are logging some metrics
         if addDefaultLogger and 'logger' not in appliedKwargs:
             appliedKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
-            # bugPotn1
+            # bugPotn2
             #  shouldn't this default logger have architectureName
 
         appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)

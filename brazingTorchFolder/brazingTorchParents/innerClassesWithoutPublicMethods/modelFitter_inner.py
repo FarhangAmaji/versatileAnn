@@ -92,8 +92,8 @@ class _BrazingTorch_modelFitter_inner:
                                      f"\nthe key '{akl}' must be one of " + \
                                      "'train', 'val', 'test', 'predict', 'else'")
 
-    # ---- _getBaseFitUsedKwargs and inners
-    def _getBaseFitAppliedKwargs(self, kwargs, listOfKwargs):
+    # ---- _getBaseFit_appliedKwargs and inners
+    def _getBaseFit_appliedKwargs(self, kwargs, listOfKwargs):
         listOfKwargs = listOfKwargs or []
         listOfKwargs.append(kwargs)
         appliedKwargs = {}
