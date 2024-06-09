@@ -13,7 +13,7 @@ from projectUtils.dataTypeUtils.str import snakeToCamel, camelToSnake
 from projectUtils.dataTypeUtils.tensor import equalTensors, getDefaultTorchDevice_name
 from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
     getClassObjectFromFile
-from projectUtils.typeCheck import typeHintChecker_AListOfSomeType
+from projectUtils.typeCheck import typeHintChecker_AListOfSomeType, argValidator
 
 
 class DotDictTests(BaseTestClass):
@@ -157,6 +157,7 @@ class NpDictTests(BaseTestClass):
 
 
 class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
+
     @typeHintChecker_AListOfSomeType
     def funcWithHints(self, a1: List[str], a2: List[int], a3: List[Tuple],
                       a4, a5: str, a6: Tuple, a7,
@@ -175,12 +176,16 @@ class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
 
     def testIncorrectA10Type(self):
         with self.assertRaises(TypeError):
-            self.funcWithHints(['a', 'b'], [1, '2', 3], [(1, 2), (3, 4)], 42, 'hello', (5, 6), 123,
-                               [3, 4], ['fd', 4], ['funcWithHints', 41, (3)], 11, [3, 's'])
+            self.funcWithHints(['a', 'b'], [1, 2, 3], [(1, 2), (3, 4)], 42, 'hello', (5, 6), 123,
+                               [3, 4], ['fd', 4], ['funcWithHints', 41, (3,)], 11, [3, 's'])
+
+    def testA10HintIs_ListWithUnion_butAllItemsAreOneType(self):
+        self.funcWithHints(['a', 'b'], [1, 2, 3], [(1, 2), (3, 4)], 42, 'hello', (5, 6), 123,
+                           [3, 4], ['fd', 4], ['funcWithHints', '41'], 11, [3, 's'])
 
 
 class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfSomeType_Test):
-    @typeHintChecker_AListOfSomeType
+    @argValidator
     def funcWithHints(self, a1: List[str], a2: List[int], a3: List[Tuple], a4, a5: str, a6: Tuple,
                       a7, a8: List[int], a9: List[Union[str, int]], a10: List[Union[str, int]],
                       a11: int, a12: list):
