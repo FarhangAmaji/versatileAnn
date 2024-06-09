@@ -11,14 +11,20 @@ def isHintTypeOfAListOfSomeType(typ):
     #  detects these patterns: `typing.List[str]`, `typing.List[int]`,
     #  `typing.List[Union[str,tuple]]` or even `typing.List[customType]`
     if isinstance(typ, typing._GenericAlias) and typ.__origin__ is list:
-        inner_type = typ.__args__[0]
-        if hasattr(inner_type, '__origin__') and inner_type.__origin__ is typing.Union:
-            return True, inner_type.__args__
-        return True, [inner_type]
+        innerType = typ.__args__[0]
+        if hasattr(innerType, '__origin__') and innerType.__origin__ is typing.Union:
+            # checks compatible for List[Union[str, int]] like
+            return True, innerType.__args__
+        return True, [innerType]
     return False, []
 
 
 def typeHintChecker_AListOfSomeType(func):
+    """
+    a decorator which raises error when the hint is List[someType] and the argument passed for
+    that argument doesn't follow the hinting
+    """
+
     def wrapper(*args, **kwargs):
         allArgs = getAllArgs(args, kwargs)
         hints = get_type_hints(func)
@@ -26,7 +32,7 @@ def typeHintChecker_AListOfSomeType(func):
             hintType = hints.get(argName, '')
             isListOfSomeType, innerListTypes = isHintTypeOfAListOfSomeType(hintType)
             if isListOfSomeType and not doItemsOfListObeyHinting(argVal, innerListTypes):
-                raise TypeError(f"values passed for {argName} don't obey {hintType}")
+                raise TypeError(f"values passed for '{argName}' don't obey {hintType}")
 
     def getAllArgs(args, kwargs):
         allFuncParams = list(func.__code__.co_varnames)
@@ -39,6 +45,8 @@ def typeHintChecker_AListOfSomeType(func):
         for i, ap in enumerate(argParams):
             allArgs[ap] = args[i]
         allArgs.update(kwargs)
+        if len(allFuncParams) != len(allArgs):
+            raise InternalLogicError
         return allArgs
 
     def doItemsOfListObeyHinting(argVals, innerListTypes):
@@ -52,6 +60,6 @@ def typeHintChecker_AListOfSomeType(func):
 
 def argValidator(func):
     # 1st decorator to raise error
-    typeHintChecker_AListOfSomeType(func)
+    func = typeHintChecker_AListOfSomeType(func)
     # 2nd decorator to raise error
     return validate_arguments(config={'arbitrary_types_allowed': True})(func)
