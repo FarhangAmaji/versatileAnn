@@ -1,6 +1,8 @@
 import os
 import unittest
+from unittest.mock import Mock
 
+from pytorch_lightning.loggers import Logger
 from torch import nn
 
 from brazingTorchFolder.brazingTorch import BrazingTorch
@@ -10,11 +12,14 @@ from projectUtils.misc import getProjectDirectory
 from tests.baseTest import BaseTestClass
 from tests.utils import simulateInput
 
+
 # ccc1
 #  note there are some saved files essential for this test(DetermineFitRunStateTests_mockSavedModels)
 #  python import path is different when this file is run by runAllTests.py and when it's run
 #  from this file itself; so assertEqual_pathCompatibile func tries to make the tests pass for both
 #  cases but still some tests do pass when run directly from this file
+
+# ---- dummy classes to be used in tests
 class NNDummy1(BrazingTorch):
     def __init__(self, **kwargs):
         # this just in order to see does it run of not so 1 neuron is enough
@@ -32,7 +37,8 @@ class NNDummy2(NNDummy1):
         self.l3 = nn.Linear(5, 1)
 
 
-class FitTests(BaseTestClass):
+# ---- actual tests
+class FitTestsSetup(BaseTestClass):
     def setup(self, seed):
         self.seed = seed
 
@@ -52,6 +58,92 @@ class FitTests(BaseTestClass):
         self.model = NNDummy1(modelName='DetermineFitRunStateTests_mockSavedModels',
                               testPrints=True, seed=self.seed,
                               lossFuncs=[nn.MSELoss(), nn.L1Loss()])
+
+
+class BaseFitTests(FitTestsSetup):
+    def test_basicCombination(self):
+        self.setup(seed=71)
+        kwargs = {'a': 1, 'b': 2}
+        listOfKwargs = [{'c': 3}, {'d': 4}]
+        result = self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
+        expected = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        self.assertEqual(result, expected)
+
+    def test_emptyInput(self):
+        self.setup(seed=71)
+        kwargs = {}
+        listOfKwargs = []
+        result = self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
+        expected = {}
+        self.assertEqual(result, expected)
+
+
+class BaseFit_putTogetherPlLoggersTests(FitTestsSetup):
+    def test_bothNone(self):
+        self.setup(seed=71)
+        result = self.model._putTogether_plLoggers(None, None)
+        self.assertIsNone(result)
+
+    def test_firstNone(self):
+        self.setup(seed=71)
+        logger2 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(None, logger2)
+        self.assertEqual(result, logger2)
+
+    def test_secondNone(self):
+        self.setup(seed=71)
+        logger1 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(logger1, None)
+        self.assertEqual(result, logger1)
+
+    def test_bothBool(self):
+        self.setup(seed=71)
+        result = self.model._putTogether_plLoggers(True, False)
+        self.assertFalse(result)
+
+    def test_firstBool(self):
+        self.setup(seed=71)
+        logger2 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(True, logger2)
+        self.assertEqual(result, logger2)
+
+    def test_secondBool(self):
+        self.setup(seed=71)
+        logger1 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(logger1, True)
+        self.assertEqual(result, logger1)
+
+    def test_bothSingleLogger(self):
+        self.setup(seed=71)
+        logger1 = Mock(spec=Logger)
+        logger2 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(logger1, logger2)
+        self.assertEqual(result, [logger1, logger2])
+
+    def test_firstListLogger(self):
+        self.setup(seed=71)
+        logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
+        logger2 = Mock(spec=Logger)
+        result = self.model._putTogether_plLoggers(logger1, logger2)
+        self.assertEqual(result, logger1 + [logger2])
+
+    def test_secondListLogger(self):
+        self.setup(seed=71)
+        logger1 = Mock(spec=Logger)
+        logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
+        result = self.model._putTogether_plLoggers(logger1, logger2)
+        self.assertEqual(result, [logger1] + logger2)
+
+    def test_bothListLogger(self):
+        self.setup(seed=71)
+        logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
+        logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
+        result = self.model._putTogether_plLoggers(logger1, logger2)
+        self.assertEqual(result, logger1 + logger2)
+
+
+class FitTests(FitTestsSetup):
+    pass
 
     # def testFit(self):  # kkk do it later
     #     # ccc it's just to see does it run or not
@@ -83,7 +175,8 @@ class DetermineFitRunStateTests(FitTests):
                 pathArgsWithBrazingTorchTestsFolder = list(pathArgs[:])
                 pathArgsWithBrazingTorchTestsFolder.insert(testsIndex + 1, 'brazingTorchTests')
                 if ':' in pathArgsWithBrazingTorchTestsFolder[0] and not '\\' in \
-                                                                         pathArgsWithBrazingTorchTestsFolder[0]:
+                                                                         pathArgsWithBrazingTorchTestsFolder[
+                                                                             0]:
                     pathArgsWithBrazingTorchTestsFolder[0] += '\\'
                 self.assertEqual(loggerPath, os.path.join(*pathArgsWithBrazingTorchTestsFolder))
         else:

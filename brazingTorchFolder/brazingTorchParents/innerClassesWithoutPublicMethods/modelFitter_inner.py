@@ -1,6 +1,6 @@
 import os
 from typing import Iterable
-from typing import List, Union, Optional
+from typing import List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
@@ -49,9 +49,11 @@ class _BrazingTorch_modelFitter_inner:
             #  for i.e. if the method takes `my_arg` but updater has
             #  `myArg`, includes `my_arg` as 'myArg'
             appliedKwargs_byMethod[methName] = {}
-            appliedKwargs_byMethod[methName] = giveOnlyKwargsRelated_toMethod(meth, updater=appliedKwargs,
-                                                                     updatee=appliedKwargs_byMethod[
-                                                                         methName])
+            appliedKwargs_byMethod[methName] = giveOnlyKwargsRelated_toMethod(meth,
+                                                                              updater=appliedKwargs,
+                                                                              updatee=
+                                                                              appliedKwargs_byMethod[
+                                                                                  methName])
         return appliedKwargs_byMethod
 
     def _removeNotAllowedArgs(self, appliedKwargs, appliedKwargs_byMethod, notAllowedArgs):
@@ -123,8 +125,8 @@ class _BrazingTorch_modelFitter_inner:
 
     @argValidator
     def _putTogether_plLoggers(self,
-                               var1: Optional[Union[Logger, Iterable[Logger], bool]],
-                               var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
+                               var1: Union[Logger, Iterable[Logger], bool],
+                               var2: Union[Logger, Iterable[Logger], bool]) \
             -> Union[Logger, List[Logger], None, bool]:
         # addTest2
         # ccc2
@@ -182,8 +184,8 @@ class _BrazingTorch_modelFitter_inner:
 
     @argValidator
     def _putTogether_plCallbacks(self,
-                                 var1: Optional[Union[List[Callback], Callback]],
-                                 var2: Optional[Union[List[Callback], Callback]]) \
+                                 var1: Union[List[Callback], Callback],
+                                 var2: Union[List[Callback], Callback]) \
             -> Union[Callback, List[Callback], None]:
         # ccc3
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
