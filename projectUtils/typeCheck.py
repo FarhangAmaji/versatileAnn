@@ -63,10 +63,6 @@ def typeHintChecker_AListOfSomeType(func):
                 if argsIndex < len(args):
                     allArgs[paramName] = args[argsIndex]
                     argsIndex += 1
-        #         elif paramName in kwargs:
-        #             allArgs[paramName] = kwargs[paramName]
-        #
-        # allArgs.update(kwargs)
         return allArgs, starArgVar
 
     def doItemsOfListObeyHinting(argVals, innerListTypes):
