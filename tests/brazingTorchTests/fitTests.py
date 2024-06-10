@@ -2,6 +2,7 @@ import os
 import unittest
 from unittest.mock import Mock
 
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.loggers import Logger
 from torch import nn
 
@@ -140,6 +141,60 @@ class BaseFit_putTogetherPlLoggersTests(FitTestsSetup):
         logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
         result = self.model._putTogether_plLoggers(logger1, logger2)
         self.assertEqual(result, logger1 + logger2)
+
+
+class BaseFit_putTogetherPlCallbacksTests(FitTestsSetup):
+    def test_bothNone(self):
+        self.setup(seed=71)
+        result = self.model._putTogether_plCallbacks(None, None)
+        self.assertIsNone(result)
+
+    def test_firstNone(self):
+        self.setup(seed=71)
+        callback2 = Mock(spec=Callback)
+        result = self.model._putTogether_plCallbacks(None, callback2)
+        self.assertEqual(result, callback2)
+
+    def test_secondNone(self):
+        self.setup(seed=71)
+        callback1 = Mock(spec=Callback)
+        result = self.model._putTogether_plCallbacks(callback1, None)
+        self.assertEqual(result, callback1)
+
+    def test_bothSingleCallback(self):
+        self.setup(seed=71)
+        callback1 = Mock(spec=Callback)
+        callback2 = Mock(spec=Callback)
+        result = self.model._putTogether_plCallbacks(callback1, callback2)
+        self.assertEqual(result, [callback1, callback2])
+
+    def test_firstListCallback(self):
+        self.setup(seed=71)
+        callback1 = [Mock(spec=Callback), Mock(spec=Callback)]
+        callback2 = Mock(spec=Callback)
+        result = self.model._putTogether_plCallbacks(callback1, callback2)
+        self.assertEqual(result, callback1 + [callback2])
+
+    def test_secondListCallback(self):
+        self.setup(seed=71)
+        callback1 = Mock(spec=Callback)
+        callback2 = [Mock(spec=Callback), Mock(spec=Callback)]
+        result = self.model._putTogether_plCallbacks(callback1, callback2)
+        self.assertEqual(result, [callback1] + callback2)
+
+    def test_bothListCallback(self):
+        self.setup(seed=71)
+        callback1 = [Mock(spec=Callback), Mock(spec=Callback)]
+        callback2 = [Mock(spec=Callback), Mock(spec=Callback)]
+        result = self.model._putTogether_plCallbacks(callback1, callback2)
+        self.assertEqual(result, callback1 + callback2)
+
+    def test_bothListCallbacks(self):
+        self.setup(seed=71)
+        callback1 = [Mock(spec=Callback), Mock(spec=Callback)]
+        callback2 = [Mock(spec=Callback), Mock(spec=Callback)]
+        result = self.model._putTogether_plCallbacks(callback1, callback2)
+        self.assertEqual(result, callback1 + callback2)
 
 
 class FitTests(FitTestsSetup):

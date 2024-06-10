@@ -5,7 +5,6 @@ from typing import List, Union
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.loggers import Logger
-from pytorch_lightning.loggers import Logger
 
 from projectUtils.dataTypeUtils.dict import giveOnlyKwargsRelated_toMethod
 from projectUtils.dataTypeUtils.str import snakeToCamel
