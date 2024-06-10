@@ -12,6 +12,8 @@ def getArgsOfClasses(classesDict, originalKwargs=None):
 
     allArgs = {}
     for pc, pcObj in classesDict.items():
+        if not hasattr(pcObj, '__init__'):
+            continue
         for arg in getMethodArgs(pcObj.__init__):
             if arg not in allArgs:
                 allArgs[arg] = {}
