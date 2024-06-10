@@ -7,13 +7,14 @@ import pandas as pd
 import torch
 
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
-from tests.baseTest import BaseTestClass
 from projectUtils.dataTypeUtils.dotDict_npDict import DotDict, NpDict
 from projectUtils.dataTypeUtils.str import snakeToCamel, camelToSnake
 from projectUtils.dataTypeUtils.tensor import equalTensors, getDefaultTorchDevice_name
+from projectUtils.initParentClasses import exclude_selfNArgsNKwargs_fromAllArgs
 from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
     getClassObjectFromFile
 from projectUtils.typeCheck import typeHintChecker_AListOfSomeType, argValidator
+from tests.baseTest import BaseTestClass
 
 
 class DotDictTests(BaseTestClass):
@@ -167,7 +168,7 @@ class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
 
     def testCorrectInput(self):
         self.funcWithHints(['a', 'b'], [1, 2, 3], [(1, 2), (3, 4)], 42, 'hello', (5, 6), 'other',
-                           [3, 4], ['fd', 4], ['funcWithHints', 41], [3, 's'], a11=11)
+                           [3, 4], ['fd', 4], ['funcWithHints', 41], 11, [3, 's'])
 
     def testIncorrectA2Type(self):
         with self.assertRaises(TypeError):
@@ -183,6 +184,10 @@ class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
         self.funcWithHints(['a', 'b'], [1, 2, 3], [(1, 2), (3, 4)], 42, 'hello', (5, 6), 123,
                            [3, 4], ['fd', 4], ['funcWithHints', '41'], 11, [3, 's'])
 
+    def test_singleDictArg(self):
+        res = exclude_selfNArgsNKwargs_fromAllArgs({'a': 3, 'b': 4})
+        self.assertEqual(res, {'a': 3, 'b': 4})
+
 
 class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfSomeType_Test):
     @argValidator
@@ -190,6 +195,31 @@ class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfS
                       a7, a8: List[int], a9: List[Union[str, int]], a10: List[Union[str, int]],
                       a11: int, a12: list):
         pass
+
+    @argValidator
+    def funcWithHints2_withDefaultVals(self, a1: List[str], a2: List[int] = [4, 3]):
+        return [a1, a2]
+
+    def test_defaultVal(self):
+        self.assertEqual([['1', '2'], [4, 3]], self.funcWithHints2_withDefaultVals(['1', '2']))
+
+    @argValidator
+    def funcWithHints3_withArgs(self, a1: List[str], *a2):
+        return [a1, *a2]
+
+    def test_Args(self):
+        self.funcWithHints3_withArgs(['a'], 3, 'f')
+
+    @argValidator
+    def funcWithHints4_withArgsWithHint(self, a1: List[str], *a2: int):
+        return [a1, *a2]
+
+    def test_ArgsWithHint(self):
+        self.funcWithHints4_withArgsWithHint(['a'], 3, 4)
+
+    def test_ArgsWithHintError(self):
+        with self.assertRaises(TypeError):
+            self.funcWithHints4_withArgsWithHint(['a'], 3, 'f')
 
 
 class equalTensorsTests(BaseTestClass):
