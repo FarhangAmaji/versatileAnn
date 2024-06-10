@@ -1,9 +1,8 @@
+import inspect
 import typing
 from typing import get_type_hints
 
 from pydantic import validate_arguments
-
-from projectUtils.customErrors import InternalLogicError
 
 
 def isHintTypeOfAListOfSomeType(typ):
@@ -26,7 +25,9 @@ def typeHintChecker_AListOfSomeType(func):
     """
 
     def wrapper(*args, **kwargs):
-        allArgs = getAllArgs(args, kwargs)
+        args_ = args[:]
+        kwargs_ = kwargs.copy()
+        allArgs, starArgVar = getAllArgs(args_, kwargs_)
         hints = get_type_hints(func)
         for argName, argVal in allArgs.items():
             hintType = hints.get(argName, '')
@@ -34,20 +35,34 @@ def typeHintChecker_AListOfSomeType(func):
             if isListOfSomeType and not doItemsOfListObeyHinting(argVal, innerListTypes):
                 raise TypeError(f"values passed for '{argName}' don't obey {hintType}")
 
-    def getAllArgs(args, kwargs):
-        allFuncParams = list(func.__code__.co_varnames)
-        argParams = allFuncParams[:]
-        for k in kwargs:
-            argParams.remove(k)
-        if len(argParams) != len(args):
-            raise InternalLogicError
-        allArgs = {}
-        for i, ap in enumerate(argParams):
-            allArgs[ap] = args[i]
+        if starArgVar:
+            positionalArgs = {k: v for k, v in allArgs.items() if k != starArgVar}
+            starArg = allArgs[starArgVar]
+            return func(*positionalArgs.values(), *starArg, **kwargs)
         allArgs.update(kwargs)
-        if len(allFuncParams) != len(allArgs):
-            raise InternalLogicError
-        return allArgs
+        return func(**allArgs)
+
+    def getAllArgs(args, kwargs):
+        sig = inspect.signature(func)
+        params = sig.parameters
+        allArgs = {}
+        argsIndex = 0
+        starArgVar = None
+
+        for paramName, param in params.items():
+            if param.kind == param.VAR_POSITIONAL:
+                allArgs[paramName] = args[argsIndex:]
+                starArgVar = paramName
+                break
+            elif param.kind in {param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY}:
+                if argsIndex < len(args):
+                    allArgs[paramName] = args[argsIndex]
+                    argsIndex += 1
+        #         elif paramName in kwargs:
+        #             allArgs[paramName] = kwargs[paramName]
+        #
+        # allArgs.update(kwargs)
+        return allArgs, starArgVar
 
     def doItemsOfListObeyHinting(argVals, innerListTypes):
         for arg in argVals:
