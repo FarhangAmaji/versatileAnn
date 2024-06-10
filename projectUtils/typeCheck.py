@@ -31,6 +31,11 @@ def typeHintChecker_AListOfSomeType(func):
         hints = get_type_hints(func)
         for argName, argVal in allArgs.items():
             hintType = hints.get(argName, '')
+            if argName == starArgVar:
+                if hintType:
+                    if not doItemsOfListObeyHinting(allArgs[starArgVar], [hints.get(starArgVar, '')]):
+                        raise TypeError(f"values passed for *'{argName}' don't obey {hintType}")
+
             isListOfSomeType, innerListTypes = isHintTypeOfAListOfSomeType(hintType)
             if isListOfSomeType and not doItemsOfListObeyHinting(argVal, innerListTypes):
                 raise TypeError(f"values passed for '{argName}' don't obey {hintType}")
