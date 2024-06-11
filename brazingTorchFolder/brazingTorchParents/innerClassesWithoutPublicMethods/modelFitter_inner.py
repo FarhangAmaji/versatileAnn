@@ -1,6 +1,5 @@
 import os
-from typing import Iterable
-from typing import List, Union
+from typing import Iterable, Optional, List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
@@ -124,8 +123,8 @@ class _BrazingTorch_modelFitter_inner:
 
     @argValidator
     def _putTogether_plLoggers(self,
-                               var1: Union[Logger, Iterable[Logger], bool],
-                               var2: Union[Logger, Iterable[Logger], bool]) \
+                               var1: Optional[Union[Logger, Iterable[Logger], bool]],
+                               var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
             -> Union[Logger, List[Logger], None, bool]:
         # addTest2
         # ccc2
@@ -137,6 +136,11 @@ class _BrazingTorch_modelFitter_inner:
         #       extended to the one with Iterable[Logger]
         #  - also note var1 is the earlier one and var2 is the later
 
+        # convert list_iterator back to list; note the hints make the list convert to list_iterator
+        if isinstance(var1, type(iter([]))):
+            var1 = list(var1)
+        if isinstance(var2, type(iter([]))):
+            var2 = list(var2)
         # Check if either var1 or var2 is None or bool
         if var1 is None:
             return var2
@@ -183,14 +187,18 @@ class _BrazingTorch_modelFitter_inner:
 
     @argValidator
     def _putTogether_plCallbacks(self,
-                                 var1: Union[List[Callback], Callback],
-                                 var2: Union[List[Callback], Callback]) \
+                                 var1: Optional[Union[List[Callback], Callback]],
+                                 var2: Optional[Union[List[Callback], Callback]]) \
             -> Union[Callback, List[Callback], None]:
         # ccc3
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
         #  - note have higher importance in setting Callback, Iterable[Callback] than None
         # addTest2
-
+        # convert list_iterator back to list; note the hints make the list convert to list_iterator
+        if isinstance(var1, type(iter([]))):
+            var1 = list(var1)
+        if isinstance(var2, type(iter([]))):
+            var2 = list(var2)
         # Check if either var1 or var2 is None
         if var1 is None:
             return var2
