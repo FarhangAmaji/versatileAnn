@@ -26,7 +26,6 @@ def typeHintChecker_AListOfSomeType(func):
 
     def wrapper(*args, **kwargs):
         args_ = args[:]
-        kwargs_ = kwargs.copy()
         allArgs, starArgVar = getAllArgs(args_)  # starArgVar is *args variable
         hints = get_type_hints(func)
         for argName, argVal in allArgs.items():

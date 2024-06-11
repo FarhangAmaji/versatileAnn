@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pydantic
 import torch
 
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
@@ -157,7 +158,7 @@ class NpDictTests(BaseTestClass):
             self.npDict['new_column'] = [7, 8, 9]  # __setitem__ is disabled
 
 
-class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
+class TypeHintChecker_AListOfSomeType_Test(BaseTestClass):
 
     @typeHintChecker_AListOfSomeType
     def funcWithHints(self, a1: List[str], a2: List[int], a3: List[Tuple],
@@ -189,7 +190,7 @@ class typeHintChecker_AListOfSomeType_Test(BaseTestClass):
         self.assertEqual(res, {'a': 3, 'b': 4})
 
 
-class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfSomeType_Test):
+class TypeHintChecker_AListOfSomeType_argValidator_Test(TypeHintChecker_AListOfSomeType_Test):
     @argValidator
     def funcWithHints(self, a1: List[str], a2: List[int], a3: List[Tuple], a4, a5: str, a6: Tuple,
                       a7, a8: List[int], a9: List[Union[str, int]], a10: List[Union[str, int]],
@@ -220,6 +221,46 @@ class typeHintChecker_AListOfSomeType_argValidator_Test(typeHintChecker_AListOfS
     def test_ArgsWithHintError(self):
         with self.assertRaises(TypeError):
             self.funcWithHints4_withArgsWithHint(['a'], 3, 'f')
+
+
+class ArgValidatorTest(BaseTestClass):
+    @argValidator
+    def oneType(self, a1: pd.DataFrame):
+        pass
+
+    def testOneType(self):
+        self.oneType(pd.DataFrame({'a': [1], 'b': [2]}))
+
+    def testOneTypeError(self):
+        with self.assertRaises(pydantic.error_wrappers.ValidationError):
+            self.oneType([1, 2])
+
+    @argValidator
+    def pandasUnion(self, a1: Union[pd.DataFrame, pd.Series]):
+        pass
+
+    def testUnion(self):
+        self.pandasUnion(pd.DataFrame({'a': [1], 'b': [2]}))
+
+    def testUnionError(self):
+        with self.assertRaises(pydantic.error_wrappers.ValidationError):
+            self.pandasUnion([1, 2])
+
+    @argValidator
+    def oneTypeInt(self, a1: int):
+        pass
+
+    def testOneTypeInt(self):
+        self.oneTypeInt(3)
+
+    def testOneTypeInt_notGivingError_whenPassingIntergableString(self):
+        # ccc1
+        #  note this doesn't give error with pydantic
+        self.oneTypeInt('3')
+
+    def testOneTypeIntError(self):
+        with self.assertRaises(pydantic.error_wrappers.ValidationError):
+            self.oneTypeInt('s')
 
 
 class equalTensorsTests(BaseTestClass):
