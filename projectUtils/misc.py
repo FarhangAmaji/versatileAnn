@@ -1,6 +1,7 @@
 import ast
 import inspect
 import os
+import sys
 import types
 
 import numpy as np
@@ -43,26 +44,31 @@ def isCustomFunction(func):
 
 
 # ---- methods and funcs: detect funcs, instance methods or static methods
+def isStaticmethod_withClass(classObj, methodName):
+    return isinstance(inspect.getattr_static(classObj, methodName), staticmethod)
 
-def isStaticmethod(method):
+
+def isStaticmethod_onlyByStringDefinition(method):
     if not isinstance(method, types.FunctionType):
         return False
 
     return inspect.getsource(method).strip().startswith('@staticmethod')
 
 
+def isStaticmethod(method):
+    if isStaticmethod_onlyByStringDefinition(
+            method):  # check being static method with it's string definition
+        staticmethod_actualClass = getStaticmethod_actualClass(method)  # gets class object
+        return isStaticmethod_withClass(staticmethod_actualClass, method.__name__)
+    return False
+
+
 def getStaticmethod_actualClass(method):
-    '''
-    it's not possible to get actual class of a static method don't have
-    access to its instance or class.
-    this 'globals().get(className)' doesn't work always, ofc it may work
-    sometimes if the className is in globals
-    '''
-    if not isStaticmethod(method):
-        return ''
-    qualname = method.__qualname__
-    className = qualname.split('.')[0]
-    actualClass = globals().get(className)
+    if not isStaticmethod_onlyByStringDefinition(method):
+        return None
+    className = method.__qualname__.split('.')[0]
+    moduleName = method.__module__
+    actualClass = getattr(sys.modules[moduleName], className)
     return actualClass
 
 
@@ -80,6 +86,7 @@ def isClassMethod(method):
 
 
 def isFunctionOrMethod(obj):
+    # addTest1
     if isStaticmethod(obj):
         return True, "Static Method"
     elif isinstance(obj, types.FunctionType):
