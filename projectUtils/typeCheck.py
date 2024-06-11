@@ -27,11 +27,11 @@ def typeHintChecker_AListOfSomeType(func):
     def wrapper(*args, **kwargs):
         args_ = args[:]
         kwargs_ = kwargs.copy()
-        allArgs, starArgVar = getAllArgs(args_)
+        allArgs, starArgVar = getAllArgs(args_)  # starArgVar is *args variable
         hints = get_type_hints(func)
         for argName, argVal in allArgs.items():
             hintType = hints.get(argName, '')
-            if argName == starArgVar:
+            if argName == starArgVar:  # to check *args hints
                 if hintType:
                     if not doItemsOfListObeyHinting(allArgs[starArgVar],
                                                     [hints.get(starArgVar, '')]):
@@ -41,12 +41,7 @@ def typeHintChecker_AListOfSomeType(func):
             if isListOfSomeType and not doItemsOfListObeyHinting(argVal, innerListTypes):
                 raise TypeError(f"values passed for '{argName}' don't obey {hintType}")
 
-        if starArgVar:
-            positionalArgs = {k: v for k, v in allArgs.items() if k != starArgVar}
-            starArg = allArgs[starArgVar]
-            return func(*positionalArgs.values(), *starArg, **kwargs)
-        allArgs.update(kwargs)
-        return func(**allArgs)
+        return func(*args, **kwargs)
 
     def getAllArgs(args):
         sig = inspect.signature(func)
