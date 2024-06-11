@@ -27,13 +27,14 @@ def typeHintChecker_AListOfSomeType(func):
     def wrapper(*args, **kwargs):
         args_ = args[:]
         kwargs_ = kwargs.copy()
-        allArgs, starArgVar = getAllArgs(args_, kwargs_)
+        allArgs, starArgVar = getAllArgs(args_)
         hints = get_type_hints(func)
         for argName, argVal in allArgs.items():
             hintType = hints.get(argName, '')
             if argName == starArgVar:
                 if hintType:
-                    if not doItemsOfListObeyHinting(allArgs[starArgVar], [hints.get(starArgVar, '')]):
+                    if not doItemsOfListObeyHinting(allArgs[starArgVar],
+                                                    [hints.get(starArgVar, '')]):
                         raise TypeError(f"values passed for *'{argName}' don't obey {hintType}")
 
             isListOfSomeType, innerListTypes = isHintTypeOfAListOfSomeType(hintType)
@@ -47,7 +48,7 @@ def typeHintChecker_AListOfSomeType(func):
         allArgs.update(kwargs)
         return func(**allArgs)
 
-    def getAllArgs(args, kwargs):
+    def getAllArgs(args):
         sig = inspect.signature(func)
         params = sig.parameters
         allArgs = {}
@@ -75,7 +76,7 @@ def typeHintChecker_AListOfSomeType(func):
 
 
 def argValidator(func):
-    # 1st decorator to raise error
-    func = typeHintChecker_AListOfSomeType(func)
-    # 2nd decorator to raise error
-    return validate_arguments(config={'arbitrary_types_allowed': True})(func)
+    # Apply Pydantic validation first
+    func = validate_arguments(config={'arbitrary_types_allowed': True})(func)
+    # Then apply the custom type hint checker
+    return typeHintChecker_AListOfSomeType(func)
