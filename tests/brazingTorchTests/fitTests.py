@@ -14,7 +14,6 @@ from tests.baseTest import BaseTestClass
 from tests.utils import simulateInput
 
 
-
 # ---- dummy classes to be used in tests
 class NNDummy1(BrazingTorch):
     def __init__(self, **kwargs):
@@ -249,8 +248,9 @@ class DetermineFitRunStateTests(FitTests):
             seed=self.seed, resume=True, seedSensitive=True)
         self.assertEqual(fitRunState, 'resume')
         self.assertFalse(isModelChanged)
-        self.assertEqual(checkpointPath,
-                         os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
+        self.assertEqual_pathCompatibile(checkpointPath,
+                                         os.path.join(self.expectedLoggerPathSeed71,
+                                                      'BrazingTorch.ckpt'))
 
     def test_resume_seedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
@@ -291,9 +291,10 @@ class DetermineFitRunStateTests(FitTests):
             seed=self.seed, resume=True, seedSensitive=False)
         self.assertEqual(fitRunState, "resume")
         self.assertFalse(isModelChanged)
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
-        self.assertEqual(checkpointPath,
-                         os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed71)
+        self.assertEqual_pathCompatibile(checkpointPath,
+                                         os.path.join(self.expectedLoggerPathSeed71,
+                                                      'BrazingTorch.ckpt'))
 
     def test_resume_noSeedSensitive_noMatchedSeedDict(self):
         self.setup(seed=81)
@@ -301,11 +302,12 @@ class DetermineFitRunStateTests(FitTests):
             seed=self.seed, resume=True, seedSensitive=False)
         self.assertEqual(fitRunState, "resume")
         self.assertTrue(isModelChanged)
-        self.assertEqual(loggerPath, self.expectedLoggerPathSeed71)
+        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed71)
         # note it's not 81 and it's 71 as the model has been changed
 
-        self.assertEqual(checkpointPath,
-                         os.path.join(self.expectedLoggerPathSeed71, 'BrazingTorch.ckpt'))
+        self.assertEqual_pathCompatibile(checkpointPath,
+                                         os.path.join(self.expectedLoggerPathSeed71,
+                                                      'BrazingTorch.ckpt'))
 
     def test_noResume_noSeedSensitive_matchedSeedDict_dontReplace(self):
         self.setup(seed=71)
