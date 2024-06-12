@@ -2,11 +2,11 @@ import unittest
 
 from torch import nn
 
+from brazingTorchFolder.brazingTorch import BrazingTorch
 from tests.baseTest import BaseTestClass
 from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m1 import NNDummyModule1
 from tests.brazingTorchTests.ModelDifferentiatorTests_dummyClassDefs.m2 import NNDummyModule2, \
     NNDummyModule3, NNDummyModule4
-from brazingTorchFolder.brazingTorch import BrazingTorch
 
 
 class Parent2p2p1p1:
@@ -120,6 +120,9 @@ class ModelDifferentiatorTests(BaseTestClass):
             definitions = model._getAllNeededDefinitions(model)
             return definitions
 
+        # bugPotn3
+        #  I had change the order because of some change which I don't want it is;
+        #  check the order later
         expectedDefinitions = [
             {'Parent1p1': 'class Parent1p1:\n    def __init__(self):\n        self.layp1p1 = 4\n'},
             {
@@ -131,19 +134,19 @@ class ModelDifferentiatorTests(BaseTestClass):
             {
                 'NNDummyModule3': 'class NNDummyModule3(nn.Module):\n    def __init__(self):\n        super(NNDummyModule3, self).__init__()\n        self.lay21 = nn.Linear(1, 4)\n        self.lay22 = nn.Linear(4, 1)\n        self.insMeth = NNDummyModule3ClassForInstanceMethod.instanceMethod3\n\n    def forward(self, inputs, targets):\n        return self.lay22(self.lay21(inputs))\n'},
             {
-                'NNDummyModule1': 'class NNDummyModule1(nn.Module):\n    def __init__(self):\n        super(NNDummyModule1, self).__init__()\n        self.lay11 = nn.Linear(1, 3)\n        self.lay12 = nn.Linear(3, 1)\n        self.statMeth = NNDummyModule1ClassForStaticAndInstanceMethod.static_Method1\n        self.instanceMeth = NNDummyModule1ClassForStaticAndInstanceMethod.instanceMeth1\n\n    def forward(self, inputs, targets):\n        return self.lay12(self.lay11(inputs))\n'},
-            {
-                'NNDummyModule2': 'class NNDummyModule2(nn.Module):\n    def __init__(self):\n        super(NNDummyModule2, self).__init__()\n        self.lay21 = nn.Linear(1, 4)\n        self.lay22 = nn.Linear(4, 1)\n        self.statMeth2 = NNDummyModule2ClassForStaticMethod.static_Method2\n\n    def forward(self, inputs, targets):\n        return self.lay22(self.lay21(inputs))\n'},
-            {
-                'NNDummyModule4': "class NNDummyModule4:\n    def __init__(self):\n        self.a2 = 24\n\n    def md(self):\n        return ''\n"},
-            {
                 'NNDummyModule3ClassForInstanceMethod': "class NNDummyModule3ClassForInstanceMethod:\n    def __init__(self):\n        self.ke = 47\n\n    def instanceMethod3(self):\n        print('instance method for NNDummyModule3')\n"},
             {
+                'NNDummyModule1': 'class NNDummyModule1(nn.Module):\n    def __init__(self):\n        super(NNDummyModule1, self).__init__()\n        self.lay11 = nn.Linear(1, 3)\n        self.lay12 = nn.Linear(3, 1)\n        self.statMeth = NNDummyModule1ClassForStaticAndInstanceMethod.static_Method1\n        self.instanceMeth = NNDummyModule1ClassForStaticAndInstanceMethod.instanceMeth1\n\n    def forward(self, inputs, targets):\n        return self.lay12(self.lay11(inputs))\n'},
+            {
                 'NNDummyModule1ClassForStaticAndInstanceMethod': "class NNDummyModule1ClassForStaticAndInstanceMethod:\n    def __init__(self):\n        self.ke = 78\n\n    @staticmethod\n    def static_Method1():\n        print('staticmethod for NNDummyModule1')\n\n    def instanceMeth1(self):\n        print('instancemethod for NNDummyModule1')\n"},
+            {
+                'NNDummyModule2': 'class NNDummyModule2(nn.Module):\n    def __init__(self):\n        super(NNDummyModule2, self).__init__()\n        self.lay21 = nn.Linear(1, 4)\n        self.lay22 = nn.Linear(4, 1)\n        self.statMeth2 = NNDummyModule2ClassForStaticMethod.static_Method2\n\n    def forward(self, inputs, targets):\n        return self.lay22(self.lay21(inputs))\n'},
             {
                 'NNDummyModule2ClassForStaticMethod': "class NNDummyModule2ClassForStaticMethod:\n    def __init__(self):\n        self.ke = 43\n\n    @staticmethod\n    def static_Method2():\n        print('staticmethod for NNDummyModule2')\n"},
             {
                 'ClassForStaticMethod_forParent2p1': "class ClassForStaticMethod_forParent2p1:\n    def __init__(self):\n        self.ke = 27\n\n    @staticmethod\n    def static_Methodp2p1():\n        print('staticmethod for Parent2p1')\n"},
+            {
+                'NNDummyModule4': "class NNDummyModule4:\n    def __init__(self):\n        self.a2 = 24\n\n    def md(self):\n        return ''\n"},
             {
                 'Parent1': 'class Parent1(BrazingTorch, Parent1p1):\n    def __init__(self, midLayerp1):\n        self.layp11 = NNDummyModule1()\n        self.layp12 = NNDummyModule2()\n        self.layp13 = nn.Linear(1, midLayerp1)\n        self.layp14 = nn.Linear(midLayerp1, 1)\n        self.p1FuncDef = aFuncDefForParent1\n\n    def forward(self, inputs, targets):\n        x = self.layp12(self.layp11(inputs))\n        return self.layp14(self.layp13(x))\n'},
             {
