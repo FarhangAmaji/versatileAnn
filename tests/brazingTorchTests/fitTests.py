@@ -212,7 +212,7 @@ class DetermineFitRunStateTests(FitTests):
     #  note there are some saved files essential for this test(DetermineFitRunStateTests_mockSavedModels)
     #  python import path is different when this file is run by runAllTests.py and when it's run
     #  from this file itself; so assertEqual_pathCompatibile func tries to make the tests pass for both
-    #  cases but still some tests do pass when run directly from this file
+    #  cases
 
     expectedLoggerPathSeed71 = os.path.join(getProjectDirectory(), 'tests',
                                             'DetermineFitRunStateTests_mockSavedModels', 'arch1',
