@@ -20,6 +20,7 @@ class _BrazingTorch_modelFitter_inner:
     def __init__(self):
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelFitter_inner)
+        self.phaseBasedLoggingTypes = ['train', 'val', 'test', 'predict', 'else']
 
     @property
     def _logOptions(self):
@@ -83,7 +84,8 @@ class _BrazingTorch_modelFitter_inner:
                           "can be passed to pl.Trainer, pl.Trainer.fit or " + \
                           "pl.LightningModule.log; even their camelCase names")
 
-    def _assertPhaseBased_logOptions(self, _logOptions):
+    @argValidator
+    def _assertPhaseBased_logOptions(self, _logOptions: dict):
         # assert phaseBased _logOptions to fit in the format it should have
         for akl, aklV in _logOptions.items():
             if isinstance(aklV, dict):
@@ -109,7 +111,7 @@ class _BrazingTorch_modelFitter_inner:
         kw_ = kw.copy()
         correctArgs = {}
         if 'logger' in appliedKwargs and 'logger' in kw:
-            correctArgs['logger'] = self._putTogether_plLoggers(appliedKwargs['logger'],
+            correctArgs['logger'] = self._putTogether_plLoggers_withPhasedBasedLogging(appliedKwargs['logger'],
                                                                 kw['logger'])
             del kw_['logger']
         # 'plugins' is also like callbacks. but I don't take care of as this option is rare
@@ -122,11 +124,38 @@ class _BrazingTorch_modelFitter_inner:
         return appliedKwargs
 
     @argValidator
-    def _putTogether_plLoggers(self,
-                               var1: Optional[Union[Logger, Iterable[Logger], bool]],
-                               var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
+    def _putTogether_plLoggers_withPhasedBasedLogging(self,
+                                                      var1: Optional[Union[
+                                                          dict, Logger, Iterable[Logger], bool]],
+                                                      var2: Optional[Union[
+                                                          dict, Logger, Iterable[Logger], bool]]) \
+            -> dict:
+        # ccc1
+        #  there is a phasedBasedLogging feature which allows to send kwargs related to logging in
+        #  a dictionary consisting keys 'train', 'val', 'test', 'predict' or 'else'
+        #  this code unifies the loggers to have that format
+        result = {phase: [] for phase in self.phaseBasedLoggingTypes}
+
+        def get_phaseBasedOptions(var):
+            if isinstance(var, dict):
+                self._assertPhaseBased_logOptions(var)
+                return var
+            return {phase: [] for phase in self.phaseBasedLoggingTypes}
+
+        var1PhaseBased = get_phaseBasedOptions(var1)
+        var2PhaseBased = get_phaseBasedOptions(var2)
+
+        for phase in self.phaseBasedLoggingTypes:
+            result[phase] = self._putTogether_plLoggers_normal(var1PhaseBased[phase],
+                                                               var2PhaseBased[phase])
+
+        return result
+
+    @argValidator
+    def _putTogether_plLoggers_normal(self,
+                                      var1: Optional[Union[Logger, Iterable[Logger], bool]],
+                                      var2: Optional[Union[Logger, Iterable[Logger], bool]]) \
             -> Union[Logger, List[Logger], None, bool]:
-        # addTest2
         # ccc2
         #  - each pytorch lightning arg may get a Logger object or a list of Logger
         #       objects or None Or bool
@@ -193,7 +222,6 @@ class _BrazingTorch_modelFitter_inner:
         # ccc3
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
         #  - note have higher importance in setting Callback, Iterable[Callback] than None
-        # addTest2
         # convert list_iterator back to list; note the hints make the list convert to list_iterator
         if isinstance(var1, type(iter([]))):
             var1 = list(var1)
