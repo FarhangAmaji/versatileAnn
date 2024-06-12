@@ -86,17 +86,18 @@ def isClassMethod(method):
 
 
 def isFunctionOrMethod(obj):
-    # addTest1
+    # bugPotn1
+    #  doesn't pass test_regularFunction_insideTheLocal
     if isStaticmethod(obj):
         return True, "Static Method"
     elif isinstance(obj, types.FunctionType):
         if len(obj.__qualname__.split('.')) > 1:
             return True, "Instance Method"
         return True, "Function"
-    elif isinstance(obj, types.MethodType):
-        return True, "Instance Method"
     elif isClassMethod(obj):
         return True, "Class Method"
+    elif isinstance(obj, types.MethodType):
+        return True, "Instance Method"
     else:
         return False, "not a method or a func"
 

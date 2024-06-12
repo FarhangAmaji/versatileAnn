@@ -3,8 +3,10 @@ import unittest
 
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
-    getClassObjectFromFile
+    getClassObjectFromFile, getStaticmethod_actualClass, isFunctionOrMethod
 from tests.baseTest import BaseTestClass
+from tests.utilsTests.dummyForTest import DummyClassFor_isFunctionOrMethod, \
+    dummyRegularFunctionFor_isFunctionOrMethod
 
 
 # ----
@@ -92,6 +94,68 @@ class getClassObjectFromFileTest(BaseTestClass):
 
         self.assertEqual(classObj.__name__, MainGroupSingleColStdNormalizer.__name__)
         self.assertEqual(dir(classObj), dir(MainGroupSingleColStdNormalizer))
+
+
+# ----
+class Test_isFunctionOrMethod(unittest.TestCase):
+
+    def test_staticMethod(self):
+        result, typeName = isFunctionOrMethod(DummyClassFor_isFunctionOrMethod.staticMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Static Method")
+
+    def test_classMethod(self):
+        result, typeName = isFunctionOrMethod(DummyClassFor_isFunctionOrMethod.classMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Class Method")
+
+    def test_instanceMethod(self):
+        result, typeName = isFunctionOrMethod(DummyClassFor_isFunctionOrMethod().instanceMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Instance Method")
+
+    def test_privateMethod(self):
+        result, typeName = isFunctionOrMethod(DummyClassFor_isFunctionOrMethod()._privateMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Instance Method")
+
+    def test_magicMethod(self):
+        result, typeName = isFunctionOrMethod(
+            DummyClassFor_isFunctionOrMethod()._DummyClassFor_isFunctionOrMethod__magicMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Instance Method")
+
+    def test_regularFunction(self):
+        result, typeName = isFunctionOrMethod(dummyRegularFunctionFor_isFunctionOrMethod)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Function")
+
+    def test_regularFunction_insideTheLocal(self):
+        def regularFunction():
+            pass
+
+        result, typeName = isFunctionOrMethod(regularFunction)
+        self.assertTrue(result)
+        self.assertEqual(typeName, "Function")
+
+    def test_notFunctionOrMethod(self):
+        result, typeName = isFunctionOrMethod(123)
+        self.assertFalse(result)
+        self.assertEqual(typeName, "not a method or a func")
+
+
+class Test_getStaticmethod_actualClass(unittest.TestCase):
+
+    def test_getStaticmethod_actualClass_staticMethod(self):
+        self.assertEqual(getStaticmethod_actualClass(DummyClassFor_isFunctionOrMethod.staticMethod),
+                         DummyClassFor_isFunctionOrMethod)
+
+    def test_getStaticmethod_actualClass_classMethod(self):
+        self.assertIsNone(getStaticmethod_actualClass(DummyClassFor_isFunctionOrMethod.classMethod))
+
+    def test_getStaticmethod_actualClass_instanceMethod(self):
+        self.assertIsNone(
+            getStaticmethod_actualClass(DummyClassFor_isFunctionOrMethod().instanceMethod))
 
 
 # ---- run test
