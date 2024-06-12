@@ -18,7 +18,11 @@ def morePreciseFloat(num, precisionOrder=6):
 
 # ---- methods and funcs
 def getMethodArgs(method):
-    return list(inspect.signature(method).parameters.keys())
+    if getattr(method, '_isArgValidatorWrapped', False):
+        method_ = method._originalFunc
+    else:
+        method_ = method
+    return list(inspect.signature(method_).parameters.keys())
 
 
 def isCustomFunction(func):
