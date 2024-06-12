@@ -14,11 +14,6 @@ from tests.baseTest import BaseTestClass
 from tests.utils import simulateInput
 
 
-# ccc1
-#  note there are some saved files essential for this test(DetermineFitRunStateTests_mockSavedModels)
-#  python import path is different when this file is run by runAllTests.py and when it's run
-#  from this file itself; so assertEqual_pathCompatibile func tries to make the tests pass for both
-#  cases but still some tests do pass when run directly from this file
 
 # ---- dummy classes to be used in tests
 class NNDummy1(BrazingTorch):
@@ -56,6 +51,11 @@ class FitTestsSetup(BaseTestClass):
         #  gives 'train is empty. the trainSeqLen seems to be high'; check is it giving warn
         #  with correct reason or not
 
+        # ccc1
+        #  note with define this modelName so the models get saved in modelName path and
+        #  not 'NNDummy1'(className) which is default
+        #  note also files for DetermineFitRunStateTests are put in
+        #  getProjectDirectory(), 'tests', 'DetermineFitRunStateTests_mockSavedModels'
         self.model = NNDummy1(modelName='DetermineFitRunStateTests_mockSavedModels',
                               testPrints=True, seed=self.seed,
                               lossFuncs=[nn.MSELoss(), nn.L1Loss()])
@@ -209,6 +209,12 @@ class FitTests(FitTestsSetup):
 
 
 class DetermineFitRunStateTests(FitTests):
+    # ccc1
+    #  note there are some saved files essential for this test(DetermineFitRunStateTests_mockSavedModels)
+    #  python import path is different when this file is run by runAllTests.py and when it's run
+    #  from this file itself; so assertEqual_pathCompatibile func tries to make the tests pass for both
+    #  cases but still some tests do pass when run directly from this file
+
     expectedLoggerPathSeed71 = os.path.join(getProjectDirectory(), 'tests',
                                             'DetermineFitRunStateTests_mockSavedModels', 'arch1',
                                             'mainRun_seed71')

@@ -11,15 +11,15 @@ def getArgsOfClasses(classesDict, originalKwargs=None):
     _assertClassesDictStruct(classesDict)
 
     allArgs = {}
-    for pc, pcObj in classesDict.items():
-        if not hasattr(pcObj, '__init__'):
+    for class_, classObj in classesDict.items():
+        if not hasattr(classObj, '__init__'):
             continue
-        for arg in getMethodArgs(pcObj.__init__):
+        for arg in getMethodArgs(classObj.__init__):
             if arg not in allArgs:
                 allArgs[arg] = {}
-                allArgs[arg]['classes'] = [pc]
+                allArgs[arg]['classes'] = [class_]
             else:
-                allArgs[arg]['classes'].append(pc)
+                allArgs[arg]['classes'].append(class_)
             if originalKwargs:
                 if arg in originalKwargs:
                     allArgs[arg]['value'] = originalKwargs[arg]

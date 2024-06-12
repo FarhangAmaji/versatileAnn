@@ -85,8 +85,6 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         # because by default we are logging some metrics
         if addDefaultLogger and 'logger' not in appliedKwargs:
             appliedKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
-            # bugPotn2
-            #  shouldn't this default logger have architectureName
 
         appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
 
