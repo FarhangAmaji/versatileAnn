@@ -227,9 +227,8 @@ class _BrazingTorch_modelFitter_inner:
 
     # ----
     def _determineFitRunState(self, seed, resume=True, seedSensitive=False):
-        # goodToHave2
+        # ccc2
         #  this is similar to _determineShouldRun_preRunTests
-        # addTest1
 
         # ccc3(same as _determineShouldRun_preRunTests)
         #  there was a idea about ""architectureName should be figured out in postInit"" but it may
@@ -241,7 +240,7 @@ class _BrazingTorch_modelFitter_inner:
         architectureName = 'arch1'
         checkpointPath = ''
         runName = f'mainRun_seed{seed}'
-        isModelChanged = False
+        isModelChanged = False  # kkk the name is meaningLess
 
         dummyLogger = pl.loggers.TensorBoardLogger(self.modelName)
         loggerPath = os.path.abspath(dummyLogger.log_dir)
@@ -395,3 +394,27 @@ class _BrazingTorch_modelFitter_inner:
         answer = inputTimeout("do you want to stop the code to follow the pattern? (yes/no)",
                               timeout=30)
         return answer
+
+    def getArchitectureNameNVersion_fromLoggerPath(self, loggerPath):
+        # Split the logger path into components
+        pathParts = loggerPath.split(os.sep)
+
+        # Initialize the variables
+        architectureName = None
+        version = None
+
+        # Find the index of modelName in pathParts
+        if self.modelName in pathParts:
+            model_index = pathParts.index(self.modelName)
+
+            # Check if architectureName exists
+            if model_index + 1 < len(pathParts):
+                architectureName = pathParts[model_index + 1]
+
+            # Check if version exists
+            if model_index + 2 < len(pathParts):
+                version = pathParts[model_index + 2]
+
+        # Return the extracted details in a dictionary
+        return {'modelName': self.modelName, 'architectureName': architectureName,
+                'version': version}
