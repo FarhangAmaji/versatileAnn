@@ -3,7 +3,8 @@ import unittest
 
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
-    getClassObjectFromFile, getStaticmethod_actualClass, isFunctionOrMethod
+    getClassObjectFromFile, getStaticmethod_actualClass, isFunctionOrMethod, \
+    getActualClassFromMethod
 from tests.baseTest import BaseTestClass
 from tests.utilsTests.dummyForTest import DummyClassFor_Test_isFunctionOrMethod, \
     dummyRegularFunctionFor_isFunctionOrMethod
@@ -160,6 +161,34 @@ class Test_getStaticmethod_actualClass(BaseTestClass):
     def test_getStaticmethod_actualClass_instanceMethod(self):
         self.assertIsNone(
             getStaticmethod_actualClass(DummyClassFor_Test_isFunctionOrMethod().instanceMethod))
+
+
+class Test_getActualClassFromMethod(BaseTestClass):
+
+    def test_getActualClassFromMethod_staticMethod(self):
+        self.assertEqual(
+            getActualClassFromMethod(DummyClassFor_Test_isFunctionOrMethod.staticMethod),
+            DummyClassFor_Test_isFunctionOrMethod)
+
+    def test_getActualClassFromMethod_classMethod(self):
+        self.assertEqual(
+            getActualClassFromMethod(DummyClassFor_Test_isFunctionOrMethod.classMethod),
+            DummyClassFor_Test_isFunctionOrMethod)
+
+    def test_getActualClassFromMethod_instanceMethod(self):
+        self.assertEqual(
+            getActualClassFromMethod(DummyClassFor_Test_isFunctionOrMethod().instanceMethod),
+            DummyClassFor_Test_isFunctionOrMethod)
+
+    def test_getActualClassFromMethod_privateMethod(self):
+        self.assertEqual(
+            getActualClassFromMethod(DummyClassFor_Test_isFunctionOrMethod()._privateMethod),
+            DummyClassFor_Test_isFunctionOrMethod)
+
+    def test_getActualClassFromMethod_magicMethod(self):
+        self.assertEqual(getActualClassFromMethod(
+            DummyClassFor_Test_isFunctionOrMethod()._DummyClassFor_Test_isFunctionOrMethod__magicMethod),
+            DummyClassFor_Test_isFunctionOrMethod)
 
 
 # ---- run test

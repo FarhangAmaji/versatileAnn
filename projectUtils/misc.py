@@ -106,21 +106,6 @@ def isFunctionOrMethod(obj):
         return False, "not a method or a func"
 
 
-def _ifFunctionOrMethod_returnIsClass_AlsoActualClassOrFunc(obj):
-    funcOrNot, result = isFunctionOrMethod(obj)
-    if not funcOrNot:
-        return False, None  # first one is isClass, next one is ClassOrFunc object
-
-    if result == "Static Method":
-        return True, getStaticmethod_actualClass(obj)
-    elif result == "Function":
-        return False, obj
-    elif result == "Instance Method":
-        if hasattr(obj, '__self__'):
-            return True, obj.__self__.__class__
-        return True, obj
-
-
 # ---- classes utils
 def isCustomClass(cls_):
     # Helper function to check if a class is a custom(user defined and not python builtin or not from packages) class
