@@ -17,7 +17,9 @@
   6. [projectUtils](#projectUtils)
 - Appendix
     - [what is forecasting](#whatIsForecasting)
-![Logo](https:://github.com/FarhangAmaji/versatileAnn/blob/main/BrazingTorch.jpg)
+
+
+![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/BrazingTorch.jpg)
 ## How to read this!?!?
 
 This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
