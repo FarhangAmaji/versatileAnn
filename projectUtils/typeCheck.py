@@ -66,6 +66,8 @@ def typeHintChecker_AListOfSomeType(func):
                 return False
         return True
 
+    wrapper._originalFunc = func
+    wrapper._isArgValidatorWrapped = True
     return wrapper
 
 
