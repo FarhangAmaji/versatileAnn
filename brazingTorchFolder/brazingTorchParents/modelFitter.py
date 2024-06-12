@@ -117,8 +117,9 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         self._logOptions = appliedKwargs_byMethod['log']
 
         # ccc3
-        #  the user may have passed the train_dataloaders and val_dataloaders kwargs which are not
-        #  going to be applied and those arguments should be passed to this method directly
+        #  the user may have passed the train_dataloaders and val_dataloaders in kwargs
+        #  note they are not going to be applied and those arguments should be passed to this method
+        #  directly
         if 'train_dataloaders' in appliedKwargs_byMethod['trainerFit']:
             del appliedKwargs_byMethod['trainerFit']['train_dataloaders']
         if 'val_dataloaders' in appliedKwargs_byMethod['trainerFit']:

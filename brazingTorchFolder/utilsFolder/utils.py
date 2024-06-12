@@ -138,7 +138,7 @@ def externalFit(self, trainDataloader: DataLoader,
 
     # add default logger if allowed and no logger is passed
     # because by default we are logging some metrics
-    if addDefaultLogger and 'logger' not in kwargs:  # kkk
+    if addDefaultLogger and 'logger' not in kwargs:
         architectureNameNVersion = self.getArchitectureNameNVersion_fromLoggerPath(self, loggerPath)
         kwargs['logger'] = pl.loggers.TensorBoardLogger(architectureNameNVersion['modelName'],
                                                         name=architectureNameNVersion[
