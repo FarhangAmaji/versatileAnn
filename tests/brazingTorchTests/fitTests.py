@@ -142,6 +142,74 @@ class BaseFit_putTogetherPlLoggersTests(FitTestsSetup):
         self.assertEqual(result, logger1 + logger2)
 
 
+class BaseFit_putTogetherPlLoggersWithPhasedBasedLoggingTests(FitTestsSetup):
+    phases1 = ['train', 'predict']
+    phases2 = ['train', 'test', 'else']
+
+    def _assertEqual(self, expected, result):
+        for phase in self.model.phaseBasedLoggingTypes:
+            print(phase, result[phase], expected[phase])
+            self.assertEqual(result[phase], expected[phase])
+
+    def test_bothEmptyDict(self):
+        self.setup(seed=71)
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging({}, {})
+        expected = {phase: [] for phase in self.model.phaseBasedLoggingTypes}
+        self._assertEqual(expected, result)
+
+    def test_firstEmptyDict(self):
+        self.setup(seed=71)
+        logger2 = {phase: [Mock(spec=Logger)] for phase in self.phases1}
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging({}, logger2)
+        expected = {phase: logger2.get(phase, []) for phase in self.model.phaseBasedLoggingTypes}
+        self._assertEqual(expected, result)
+
+    def test_secondEmptyDict(self):
+        self.setup(seed=71)
+        logger1 = {phase: [Mock(spec=Logger)] for phase in self.phases2}
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, {})
+        expected = {phase: logger1.get(phase, []) for phase in self.model.phaseBasedLoggingTypes}
+        self._assertEqual(expected, result)
+
+    def test_bothListLogger(self):
+        self.setup(seed=71)
+        logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
+        logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, logger2)
+        expected = {phase: [] for phase in self.model.phaseBasedLoggingTypes}
+        expected['else'] = logger1 + logger2
+        self._assertEqual(expected, result)
+
+    def test_firstListLogger_2ndPhaseBased(self):
+        self.setup(seed=71)
+        logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
+        logger2 = {phase: [Mock(spec=Logger)] for phase in self.phases1}
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, logger2)
+        expected = {phase: [] for phase in self.model.phaseBasedLoggingTypes}
+        expected.update(logger2)
+        expected['else'] = expected['else'] + logger1
+        self._assertEqual(expected, result)
+
+    def test_secondListLogger_1stPhaseBased(self):
+        self.setup(seed=71)
+        logger1 = {phase: [Mock(spec=Logger)] for phase in self.phases2}
+        logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, logger2)
+        expected = {phase: [] for phase in self.model.phaseBasedLoggingTypes}
+        expected.update(logger1)
+        expected['else'] = expected['else'] + logger2
+        self._assertEqual(expected, result)
+
+    def test_bothPhaseBased(self):
+        self.setup(seed=71)
+        logger1 = {phase: [Mock(spec=Logger)] for phase in self.phases1}
+        logger2 = {phase: [Mock(spec=Logger)] for phase in self.phases2}
+        result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, logger2)
+        expected = {phase: logger1.get(phase, []) + logger2.get(phase, []) for phase in
+                    self.model.phaseBasedLoggingTypes}
+        self._assertEqual(expected, result)
+
+
 class BaseFit_putTogetherPlCallbacksTests(FitTestsSetup):
     def test_bothNone(self):
         self.setup(seed=71)

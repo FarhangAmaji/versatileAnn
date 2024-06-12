@@ -20,7 +20,8 @@ class _BrazingTorch_modelFitter_inner:
     def __init__(self):
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelFitter_inner)
-        self.phaseBasedLoggingTypes = ['train', 'val', 'test', 'predict', 'else']
+        # bugPotn1
+        #  defining vars here(in inner parents) are not possible?!?!
 
     @property
     def _logOptions(self):
@@ -85,9 +86,9 @@ class _BrazingTorch_modelFitter_inner:
                           "pl.LightningModule.log; even their camelCase names")
 
     @argValidator
-    def _assertPhaseBased_logOptions(self, _logOptions: dict):
+    def _assertPhaseBased_logOptions(self, logOptions: dict):
         # assert phaseBased _logOptions to fit in the format it should have
-        for akl, aklV in _logOptions.items():
+        for akl, aklV in logOptions.items():
             if isinstance(aklV, dict):
                 if akl not in ['train', 'val', 'test', 'predict', 'else']:
                     raise ValueError("it seems you are trying to use phaseBased logOptions" + \
@@ -111,8 +112,9 @@ class _BrazingTorch_modelFitter_inner:
         kw_ = kw.copy()
         correctArgs = {}
         if 'logger' in appliedKwargs and 'logger' in kw:
-            correctArgs['logger'] = self._putTogether_plLoggers_withPhasedBasedLogging(appliedKwargs['logger'],
-                                                                kw['logger'])
+            correctArgs['logger'] = self._putTogether_plLoggers_withPhasedBasedLogging(
+                appliedKwargs['logger'],
+                kw['logger'])
             del kw_['logger']
         # 'plugins' is also like callbacks. but I don't take care of as this option is rare
         if 'callbacks' in appliedKwargs and 'callbacks' in kw:
@@ -140,14 +142,16 @@ class _BrazingTorch_modelFitter_inner:
             if isinstance(var, dict):
                 self._assertPhaseBased_logOptions(var)
                 return var
-            return {phase: [] for phase in self.phaseBasedLoggingTypes}
+            res = {phase: [] for phase in self.phaseBasedLoggingTypes}
+            res['else'] = var
+            return res
 
         var1PhaseBased = get_phaseBasedOptions(var1)
         var2PhaseBased = get_phaseBasedOptions(var2)
 
         for phase in self.phaseBasedLoggingTypes:
-            result[phase] = self._putTogether_plLoggers_normal(var1PhaseBased[phase],
-                                                               var2PhaseBased[phase])
+            result[phase] = self._putTogether_plLoggers_normal(var1PhaseBased.get(phase, []),
+                                                               var2PhaseBased.get(phase, []))
 
         return result
 
