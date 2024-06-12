@@ -63,13 +63,17 @@ def isStaticmethod(method):
     return False
 
 
-def getStaticmethod_actualClass(method):
-    if not isStaticmethod_onlyByStringDefinition(method):
-        return None
+def getActualClassFromMethod(method):
     className = method.__qualname__.split('.')[0]
     moduleName = method.__module__
     actualClass = getattr(sys.modules[moduleName], className)
     return actualClass
+
+
+def getStaticmethod_actualClass(method):
+    if not isStaticmethod_onlyByStringDefinition(method):
+        return None
+    return getActualClassFromMethod(method)
 
 
 def isClassMethod(method):

@@ -11,7 +11,7 @@ class NNDummyFor_findClassDefinition_inADirectoryTest:
 
 
 # ----
-class DummyClassFor_isFunctionOrMethod:
+class DummyClassFor_Test_isFunctionOrMethod:
     @staticmethod
     def staticMethod():
         pass
