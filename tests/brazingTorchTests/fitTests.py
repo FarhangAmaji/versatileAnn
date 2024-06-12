@@ -82,64 +82,64 @@ class BaseFitTests(FitTestsSetup):
 class BaseFit_putTogetherPlLoggersTests(FitTestsSetup):
     def test_bothNone(self):
         self.setup(seed=71)
-        result = self.model._putTogether_plLoggers(None, None)
+        result = self.model._putTogether_plLoggers_normal(None, None)
         self.assertIsNone(result)
 
     def test_firstNone(self):
         self.setup(seed=71)
         logger2 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(None, logger2)
+        result = self.model._putTogether_plLoggers_normal(None, logger2)
         self.assertEqual(result, logger2)
 
     def test_secondNone(self):
         self.setup(seed=71)
         logger1 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(logger1, None)
+        result = self.model._putTogether_plLoggers_normal(logger1, None)
         self.assertEqual(result, logger1)
 
     def test_bothBool(self):
         self.setup(seed=71)
-        result = self.model._putTogether_plLoggers(True, False)
+        result = self.model._putTogether_plLoggers_normal(True, False)
         self.assertFalse(result)
 
     def test_firstBool(self):
         self.setup(seed=71)
         logger2 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(True, logger2)
+        result = self.model._putTogether_plLoggers_normal(True, logger2)
         self.assertEqual(result, logger2)
 
     def test_secondBool(self):
         self.setup(seed=71)
         logger1 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(logger1, True)
+        result = self.model._putTogether_plLoggers_normal(logger1, True)
         self.assertEqual(result, logger1)
 
     def test_bothSingleLogger(self):
         self.setup(seed=71)
         logger1 = Mock(spec=Logger)
         logger2 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(logger1, logger2)
+        result = self.model._putTogether_plLoggers_normal(logger1, logger2)
         self.assertEqual(result, [logger1, logger2])
 
     def test_firstListLogger(self):
         self.setup(seed=71)
         logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
         logger2 = Mock(spec=Logger)
-        result = self.model._putTogether_plLoggers(logger1, logger2)
+        result = self.model._putTogether_plLoggers_normal(logger1, logger2)
         self.assertEqual(result, logger1 + [logger2])
 
     def test_secondListLogger(self):
         self.setup(seed=71)
         logger1 = Mock(spec=Logger)
         logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
-        result = self.model._putTogether_plLoggers(logger1, logger2)
+        result = self.model._putTogether_plLoggers_normal(logger1, logger2)
         self.assertEqual(result, [logger1] + logger2)
 
     def test_bothListLogger(self):
         self.setup(seed=71)
         logger1 = [Mock(spec=Logger), Mock(spec=Logger)]
         logger2 = [Mock(spec=Logger), Mock(spec=Logger)]
-        result = self.model._putTogether_plLoggers(logger1, logger2)
+        result = self.model._putTogether_plLoggers_normal(logger1, logger2)
         self.assertEqual(result, logger1 + logger2)
 
 
