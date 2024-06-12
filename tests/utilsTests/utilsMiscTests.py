@@ -4,7 +4,7 @@ import unittest
 from dataPrep.normalizers.mainGroupNormalizers import MainGroupSingleColStdNormalizer
 from projectUtils.misc import getProjectDirectory, findClassDefinition_inADirectory, \
     getClassObjectFromFile, getStaticmethod_actualClass, isFunctionOrMethod, \
-    getActualClassFromMethod
+    getActualClassFromMethod, giveOnlyKwargsRelated_toMethod
 from tests.baseTest import BaseTestClass
 from tests.utilsTests.dummyForTest import DummyClassFor_Test_isFunctionOrMethod, \
     dummyRegularFunctionFor_isFunctionOrMethod
@@ -98,6 +98,57 @@ class getClassObjectFromFileTest(BaseTestClass):
 
 
 # ----
+class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
+
+    def test_basic(self):
+        # Test case where method takes simple kwargs
+        def method(arg1, arg2, arg3):
+            pass
+
+        updater = {'arg1': 'value1', 'arg2': 'value2', 'arg4': 'value4'}
+        result = giveOnlyKwargsRelated_toMethod(method, updater)
+
+        self.assertEqual(result, {'arg1': 'value1', 'arg2': 'value2'})
+
+    def test_snakeCaseCompatibility(self):
+        # Test case where method takes kwargs with snake_case and updater has camelCase
+        def method(my_arg, yourArg):
+            return {'my_arg': my_arg, 'yourArg': yourArg}
+
+        updater = {'myArg': 'value1', 'yourArg': 'value2'}
+        result = giveOnlyKwargsRelated_toMethod(method, updater)
+
+        self.assertEqual(result, {'my_arg': 'value1', 'yourArg': 'value2'})
+
+    def test_delAfter(self):
+        # Test case where delAfter=True deletes keys from updater after updating updatee
+        def method(arg1, arg2):
+            pass
+
+        updater = {'arg1': 'value1', 'arg2': 'value2'}
+        result = giveOnlyKwargsRelated_toMethod(method, updater, delAfter=True)
+
+        self.assertEqual(result, {'arg1': 'value1', 'arg2': 'value2'})
+        self.assertEqual(updater, {})  # updater should be empty after deletion
+
+    def test_invalidMethod(self):
+        # Test case where an invalid method (non-callable) is passed
+        updater = {'arg1': 'value1'}
+        with self.assertRaises(ValueError):
+            giveOnlyKwargsRelated_toMethod('invalid_method', updater)
+
+    def test_emptyUpdatee(self):
+        # Test case where updatee is initially empty
+        def method(arg1):
+            return {'arg1': arg1}
+
+        updater = {'arg1': 'value1'}
+        result = giveOnlyKwargsRelated_toMethod(method, updater, updatee={})
+
+        self.assertEqual(result, {'arg1': 'value1'})
+
+
+# ----
 class Test_isFunctionOrMethod(BaseTestClass):
 
     def test_staticMethod(self):
@@ -134,6 +185,8 @@ class Test_isFunctionOrMethod(BaseTestClass):
         self.assertEqual(typeName, "Function")
 
     def test_regularFunction_insideTheLocal(self):
+        # ccc1
+        #  right now this is supposed to have error until the isFunctionOrMethod is fixed
         def regularFunction():
             pass
 

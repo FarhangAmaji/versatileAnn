@@ -1,31 +1,4 @@
-from projectUtils.dataTypeUtils.str import snakeToCamel
-from projectUtils.misc import getMethodArgs
 from projectUtils.typeCheck import argValidator
-
-
-@argValidator
-def giveOnlyKwargsRelated_toMethod(method, updater: dict,
-                                   updatee: dict = None, delAfter=False):
-    # ccc1
-    #  finds keys in updater that can be passed to method as they are in the args that method takes
-    #  updatee is the result which can have some keys from before
-    #  - also takes for camelCase adaptibility for i.e. if the method takes `my_arg`
-    #       but updater has `myArg`, includes `my_arg` as 'myArg'
-    if not callable(method):
-        raise ValueError(f'method should be a method or a function.')
-
-    updatee = updatee or {}
-    methodArgs = {key: key for key in getMethodArgs(method)}
-    for key in methodArgs:
-        if key in updater:
-            updatee.update({key: updater[key]})
-            if delAfter:
-                del updater[key]
-        elif snakeToCamel(key) in updater:
-            updatee.update({key: updater[snakeToCamel(key)]})
-            if delAfter:
-                del updater[snakeToCamel(key)]
-    return updatee
 
 
 def isNestedDict(dict_):
