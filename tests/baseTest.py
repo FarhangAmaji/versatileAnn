@@ -10,7 +10,11 @@ from projectUtils.misc import varPasser
 
 # ----
 class BaseTestClass(unittest.TestCase):
-    def assertPrint(self, innerFunc, expectedPrint, **kwargsOfTestFunc):
+    def assertPrint(self, innerFunc, expectedPrint, returnPrinted=False, **kwargsOfTestFunc):
+        # bugPotn2
+        #  sometimes when the tests are run from the file it gives `'_io.TextIOWrapper' object
+        #  has no attribute 'getvalue'` and with several tries I yet have not solved it
+        #  or gives `Process finished with exit code -1073741819 (0xC0000005) `
         capturedOutput = io.StringIO()
 
         # Redirect stdout to the StringIO object
@@ -27,10 +31,12 @@ class BaseTestClass(unittest.TestCase):
             # Assert that the expected print was printed
             self.assertIn(expectedPrint, printed)
         except Exception as e:
-            pass
+            print(f"Unexpected error in assertPrint: {e}")
         finally:
             # Restore the original stdout even if an exception occurs
             sys.stdout = sys.__stdout__
+        if returnPrinted:
+            return result, printed
         return result
 
     def equalDfs(self, df1, df2,
