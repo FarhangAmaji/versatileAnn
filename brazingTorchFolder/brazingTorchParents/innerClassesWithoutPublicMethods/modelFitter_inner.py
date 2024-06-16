@@ -37,23 +37,46 @@ class _BrazingTorch_modelFitter_inner:
     # ---- other baseFit methods
     def _getArgsRelated_toEachMethodSeparately(self, appliedKwargs):
         appliedKwargs_byMethod = {}
-        for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
-                                  ['trainer', 'trainerFit', 'log']):
-            # ccc1
-            #  - note I have checked these 3 methods and they don't have args with mutual names
-            #           except pl.Trainer and pl.LightningModule.log which take 'logger' arg
-            #           which is ok, even though logger in self.log is just a bool or None but in
-            #           pl.Trainer is a Logger object or a list of Logger objects or bool or None
-            #  to be mutual
-            #  - note giveOnlyKwargsRelated_toMethod has camelCase compatibility
-            #  for i.e. if the method takes `my_arg` but updater has
-            #  `myArg`, includes `my_arg` as 'myArg'
-            appliedKwargs_byMethod[methName] = {}
-            appliedKwargs_byMethod[methName] = giveOnlyKwargsRelated_toMethod(meth,
-                                                                              updater=appliedKwargs,
-                                                                              updatee=
-                                                                              appliedKwargs_byMethod[
-                                                                                  methName])
+        keysNotRelated = []
+
+        if self._doesDictFollow_byMethod(appliedKwargs):
+            for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
+                                      self._methodsFitCanHandle_names):
+                # so here the dict seems to have method format.
+                # but we check to give errors
+                if methName not in appliedKwargs:
+                    # should work with half filled method type
+                    # (for i.e. missing trainerFit)
+                    continue
+                _, keysNotRelated_ = giveOnlyKwargsRelated_toMethod(meth,
+                                                                    updater=appliedKwargs[methName])
+                if keysNotRelated_:
+                    raise ValueError('apparently you have sent your kwargs in `{"trainer":{...}' +
+                                     ',"trainerFit":{...},"log":{...}}` format;' +
+                                     f"{keysNotRelated_} are not related to {methName}")
+                appliedKwargs_byMethod = appliedKwargs.copy()
+        else:
+            for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
+                                      self._methodsFitCanHandle_names):
+                # bugPotn1
+                #  here if the 'logger' exist in appliedKwargs must go in 'trainer' as
+                #  the logger for 'log' can only be passed with method format
+                #  this has not been implemented yet
+                # ccc1
+                #  - note I have checked these 3 methods and they don't have args with mutual names
+                #           except pl.Trainer and pl.LightningModule.log which take 'logger' arg
+                #           which is ok, even though logger in self.log is just a bool or None but in
+                #           pl.Trainer is a Logger object or a list of Logger objects or bool or None
+                #  to be mutual
+                #  - note giveOnlyKwargsRelated_toMethod has camelCase compatibility
+                #  for i.e. if the method takes `my_arg` but updater has
+                #  `myArg`, includes `my_arg` as 'myArg'
+                appliedKwargs_byMethod[methName] = {}
+                appliedKwargs_byMethod[methName], keysNotRelated_ = giveOnlyKwargsRelated_toMethod(
+                    meth, updater=appliedKwargs, updatee=appliedKwargs_byMethod[methName])
+                keysNotRelated.extend(keysNotRelated_)
+
+        self._warnNotUsedKwargs_baseFit(appliedKwargs_byMethod, keysNotRelated)
         return appliedKwargs_byMethod
 
     def _removeNotAllowedArgs(self, appliedKwargs, appliedKwargs_byMethod, notAllowedArgs):
@@ -258,6 +281,9 @@ class _BrazingTorch_modelFitter_inner:
         return result
 
     # ----
+    # ---- check to have byMethod format
+    def _doesDictFollow_byMethod(self, dict_: dict):
+        return all(method in self._methodsFitCanHandle_names for method in dict_.keys())
     def _determineFitRunState(self, seed, resume=True, seedSensitive=False):
         # ccc2
         #  this is similar to _determineShouldRun_preRunTests
