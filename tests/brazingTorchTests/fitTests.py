@@ -80,13 +80,23 @@ class FitTestsSetup(BaseTestClass):
                               lossFuncs=[nn.MSELoss(), nn.L1Loss()])
 
 
-class BaseFitTests(FitTestsSetup):
+class BaseFit_getBaseFit_appliedKwargsTests(FitTestsSetup):
     def test_basicCombination(self):
         self.setup(seed=71)
         kwargs = {'a': 1, 'b': 2}
         listOfKwargs = [{'c': 3}, {'d': 4}]
-        result = self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
-        expected = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+
+        def innerFunc(kwargs, listOfKwargs):
+            return self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
+
+        expectedPrint = """you have included "c" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "d" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "a" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "b" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+"""
+        result, printed = self.assertPrint(innerFunc, expectedPrint, returnPrinted=True,
+                                           **{'kwargs': kwargs, 'listOfKwargs': listOfKwargs})
+        expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
         self.assertEqual(result, expected)
 
     def test_emptyInput(self):
@@ -96,6 +106,14 @@ class BaseFitTests(FitTestsSetup):
         result = self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
         expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
         self.assertEqual(result, expected)
+
+    def test_outputsBoolsCorrectly(self):
+        self.setup(seed=71)
+        kwargsApplied = {'max_epochs': 3, 'enable_checkpointing': False, }
+        res = self.model._getBaseFit_appliedKwargs(kwargsApplied, [])
+        expectedRes = {'trainer': {'enable_checkpointing': False, 'max_epochs': 3},
+                       'trainerFit': {}, 'log': {}}
+        self.assertEqual(res, expectedRes)
 
 
 class BaseFit_plKwargUpdaterTests(FitTestsSetup):
@@ -154,7 +172,7 @@ class BaseFit_plKwargUpdaterTests(FitTestsSetup):
 
         expected = {'trainer': {
             'logger': appliedKwargs['trainer']['logger'] + [kwarg['trainer']['logger']]},
-                    'trainerFit': {}, 'log': {}}
+            'trainerFit': {}, 'log': {}}
 
         result = self.model._plKwargUpdater(appliedKwargs, kwarg)
         self.assertEqual(result, expected)
@@ -233,6 +251,8 @@ class BaseFit_plKwargUpdaterTests(FitTestsSetup):
 
 
 class BaseFit_getArgsRelated_toEachMethodSeparately_Tests(FitTestsSetup):
+    # addTest1
+    #  camel and snake keys test; also check for _warnNotUsedKwargs_baseFit
     def test_followsByMethodFormat_allMethodsInvolved_valid(self):
         # Test follows format with valid arguments for all methods
         self.setup(seed=71)
