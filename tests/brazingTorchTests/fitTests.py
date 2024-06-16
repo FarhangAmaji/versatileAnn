@@ -298,14 +298,16 @@ class BaseFit_putTogetherPlLoggersWithPhasedBasedLoggingTests(FitTestsSetup):
         self.setup(seed=71)
         logger2 = {phase: [Mock(spec=Logger)] for phase in self.phases1}
         result = self.model._putTogether_plLoggers_withPhasedBasedLogging({}, logger2)
-        expected = {phase: logger2.get(phase, []) for phase in self.model._phaseBasedLoggingTypes}
+        expected = {phase: logger2.get(phase, []) for phase in
+                    self.model._phaseBasedLoggingTypes}
         self._assertEqual(expected, result)
 
     def test_secondEmptyDict(self):
         self.setup(seed=71)
         logger1 = {phase: [Mock(spec=Logger)] for phase in self.phases2}
         result = self.model._putTogether_plLoggers_withPhasedBasedLogging(logger1, {})
-        expected = {phase: logger1.get(phase, []) for phase in self.model._phaseBasedLoggingTypes}
+        expected = {phase: logger1.get(phase, []) for phase in
+                    self.model._phaseBasedLoggingTypes}
         self._assertEqual(expected, result)
 
     def test_bothListLogger(self):
@@ -420,10 +422,12 @@ class DetermineFitRunStateTests(FitTests):
     #  cases
 
     expectedLoggerPathSeed71 = os.path.join(getProjectDirectory(), 'tests',
-                                            'DetermineFitRunStateTests_mockSavedModels', 'arch1',
+                                            'DetermineFitRunStateTests_mockSavedModels',
+                                            'arch1',
                                             'mainRun_seed71')
     expectedLoggerPathSeed81 = os.path.join(getProjectDirectory(), 'tests',
-                                            'DetermineFitRunStateTests_mockSavedModels', 'arch1',
+                                            'DetermineFitRunStateTests_mockSavedModels',
+                                            'arch1',
                                             'mainRun_seed81')
 
     # mustHave1
@@ -438,12 +442,14 @@ class DetermineFitRunStateTests(FitTests):
             if loggerPath != path2:
                 testsIndex = pathArgs.index('tests')
                 pathArgsWithBrazingTorchTestsFolder = list(pathArgs[:])
-                pathArgsWithBrazingTorchTestsFolder.insert(testsIndex + 1, 'brazingTorchTests')
+                pathArgsWithBrazingTorchTestsFolder.insert(testsIndex + 1,
+                                                           'brazingTorchTests')
                 if ':' in pathArgsWithBrazingTorchTestsFolder[0] and not '\\' in \
                                                                          pathArgsWithBrazingTorchTestsFolder[
                                                                              0]:
                     pathArgsWithBrazingTorchTestsFolder[0] += '\\'
-                self.assertEqual(loggerPath, os.path.join(*pathArgsWithBrazingTorchTestsFolder))
+                self.assertEqual(loggerPath,
+                                 os.path.join(*pathArgsWithBrazingTorchTestsFolder))
         else:
             self.assertEqual(loggerPath, os.path.join(*pathArgs))
 
@@ -462,7 +468,8 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=True, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath,
+                                         self.expectedLoggerPathSeed81)  # note its 81
 
     def test_noResume_seedSensitive_matchedSeedDict_dontReplace(self):
         self.setup(seed=71)
@@ -488,7 +495,8 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=True)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath,
+                                         self.expectedLoggerPathSeed81)  # note its 81
 
     def test_resume_noSeedSensitive_matchedSeedDict(self):
         self.setup(seed=71)
@@ -536,7 +544,8 @@ class DetermineFitRunStateTests(FitTests):
         architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self.model._determineFitRunState(
             seed=self.seed, resume=False, seedSensitive=False)
         self.assertEqual(fitRunState, "beginning")
-        self.assertEqual_pathCompatibile(loggerPath, self.expectedLoggerPathSeed81)  # note its 81
+        self.assertEqual_pathCompatibile(loggerPath,
+                                         self.expectedLoggerPathSeed81)  # note its 81
 
     def test_modelWithSameName_anotherArchitecture(self):
         model = NNDummy2(modelName='DetermineFitRunStateTests_mockSavedModels',
@@ -555,9 +564,10 @@ class DetermineFitRunStateTests(FitTests):
             seed=71)
         self.assertEqual(fitRunState, "beginning")
 
-        self.assertEqual_pathCompatibile(loggerPath, os.path.join(getProjectDirectory(), 'tests',
-                                                                  'NNDummy1', 'arch1',
-                                                                  'mainRun_seed71'))
+        self.assertEqual_pathCompatibile(loggerPath,
+                                         os.path.join(getProjectDirectory(), 'tests',
+                                                      'NNDummy1', 'arch1',
+                                                      'mainRun_seed71'))
         self.assertEqual(architectureName, 'arch1')
 
 
