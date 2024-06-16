@@ -35,6 +35,69 @@ class _BrazingTorch_modelFitter_inner:
         self.__logOptions = value
 
     # ---- other baseFit methods
+
+    def _plKwargUpdater(self, appliedKwargs, kwarg):
+        # ccc4
+        #  - note _plKwargUpdater has been used in _getBaseFit_appliedKwargs
+        #  also _mergeKwargsWith_runKwargs and preRunTests
+        kwarg_ = kwarg.copy()
+        appliedKwargs_ = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        kwarg_ = self._getArgsRelated_toEachMethodSeparately(kwarg_)
+
+        def nonListableKwargs_AddFunc(first, second):
+            if isinstance(second, list) and len(second) == 0:  # if 2nd one is []
+                return first
+            return second
+
+        for method in self._methodsFitCanHandle_names:
+            appliedKwargs_[method] = appliedKwargs_.get(method, {})
+            kwarg_[method] = kwarg_.get(method, {})
+
+            for kw in set(list(appliedKwargs_[method].keys()) +
+                          list(kwarg_[method].keys())):
+
+                if kw not in appliedKwargs_[method]:
+                    appliedKwargs_[method][kw] = []
+                kwarg_kwValue = kwarg_[method].get(kw, [])
+
+                # ccc2
+                #  PyTorch Lightning for some args may get different types, and this
+                #  part ensures those options are correctly applied (put together).
+                #  note informally those kwargs are called listable.
+                #  For example, a logger can be a Logger object or a list of Logger objects. See
+                #  _putTogether_plLoggers_normal and _putTogether_plCallbacks.
+                #  Note: only the kwargs 'logger', 'callbacks', 'plugins', and 'devices' can
+                #  have lists and get their own combinator,
+                #  while for other kwargs the second one replaces the earlier one.
+                if method == 'log':
+                    appliedKwargs_[method][kw] = \
+                        self._putTogether_items_inPhasedBasedLoggingFormat(
+                            appliedKwargs_[method][kw], kwarg_kwValue, nonListableKwargs_AddFunc)
+                    # remove keys which have empty lists([])
+                    appliedKwargs_[method][kw] = {k: v for k, v in
+                                                  appliedKwargs_[method][kw].items() if
+                                                  not (isinstance(v, list) and len(v) == 0)}
+                elif method == 'trainer':
+                    if kw == 'logger':
+                        appliedKwargs_[method][kw] = self._putTogether_plLoggers_normal(
+                            appliedKwargs_[method][kw], kwarg_kwValue)
+                    elif kw == 'callbacks':
+                        appliedKwargs_[method][kw] = self._putTogether_plCallbacks(
+                            appliedKwargs_['trainer']['callbacks'], kwarg_kwValue)
+                        # bugPotn3
+                        #  'plugins' and 'devices' are also like 'logger' and 'callbacks' can also
+                        #  take list alongside other types. but I don't take care of them, as these
+                        #  options are rare
+                    else:
+                        appliedKwargs_[method][kw] = nonListableKwargs_AddFunc(
+                            appliedKwargs_[method][kw], kwarg_kwValue)
+
+                elif method == 'trainerFit':
+                    appliedKwargs_[method][kw] = nonListableKwargs_AddFunc(
+                        appliedKwargs_[method][kw], kwarg_kwValue)
+
+        return appliedKwargs_
+
     def _getArgsRelated_toEachMethodSeparately(self, appliedKwargs):
         appliedKwargs_byMethod = {}
         keysNotRelated = []
