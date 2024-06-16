@@ -14,8 +14,8 @@ from projectUtils.warnings import Warn
 
 
 class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
+    _phaseBasedLoggingTypes = ['train', 'val', 'test', 'predict', 'else']
     def __init__(self):
-        self.phaseBasedLoggingTypes = ['train', 'val', 'test', 'predict', 'else']
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_modelFitter)
 
