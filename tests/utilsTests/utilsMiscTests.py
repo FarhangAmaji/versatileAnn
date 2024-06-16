@@ -98,7 +98,7 @@ class getClassObjectFromFileTest(BaseTestClass):
 
 
 # ----
-class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
+class TestGiveOnlyKwargsRelatedToMethod(BaseTestClass):
 
     def test_basic(self):
         # Test case where method takes simple kwargs
@@ -106,9 +106,10 @@ class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
             pass
 
         updater = {'arg1': 'value1', 'arg2': 'value2', 'arg4': 'value4'}
-        result = giveOnlyKwargsRelated_toMethod(method, updater)
+        result, notRelatedKeys = giveOnlyKwargsRelated_toMethod(method, updater)
 
         self.assertEqual(result, {'arg1': 'value1', 'arg2': 'value2'})
+        self.assertEqual(notRelatedKeys, ['arg4'])
 
     def test_snakeCaseCompatibility(self):
         # Test case where method takes kwargs with snake_case and updater has camelCase
@@ -116,9 +117,10 @@ class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
             return {'my_arg': my_arg, 'yourArg': yourArg}
 
         updater = {'myArg': 'value1', 'yourArg': 'value2'}
-        result = giveOnlyKwargsRelated_toMethod(method, updater)
+        result, notRelatedKeys = giveOnlyKwargsRelated_toMethod(method, updater)
 
         self.assertEqual(result, {'my_arg': 'value1', 'yourArg': 'value2'})
+        self.assertEqual(notRelatedKeys, [])
 
     def test_delAfter(self):
         # Test case where delAfter=True deletes keys from updater after updating updatee
@@ -126,10 +128,11 @@ class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
             pass
 
         updater = {'arg1': 'value1', 'arg2': 'value2'}
-        result = giveOnlyKwargsRelated_toMethod(method, updater, delAfter=True)
+        result, notRelatedKeys = giveOnlyKwargsRelated_toMethod(method, updater, delAfter=True)
 
         self.assertEqual(result, {'arg1': 'value1', 'arg2': 'value2'})
         self.assertEqual(updater, {})  # updater should be empty after deletion
+        self.assertEqual(notRelatedKeys, [])
 
     def test_invalidMethod(self):
         # Test case where an invalid method (non-callable) is passed
@@ -143,9 +146,10 @@ class TestGiveOnlyKwargsRelatedToMethod(unittest.TestCase):
             return {'arg1': arg1}
 
         updater = {'arg1': 'value1'}
-        result = giveOnlyKwargsRelated_toMethod(method, updater, updatee={})
+        result, notRelatedKeys = giveOnlyKwargsRelated_toMethod(method, updater, updatee={})
 
         self.assertEqual(result, {'arg1': 'value1'})
+        self.assertEqual(notRelatedKeys, [])
 
 
 # ----

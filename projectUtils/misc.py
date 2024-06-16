@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 import types
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -50,8 +51,12 @@ def isCustomFunction(func):
 
 
 @argValidator
-def giveOnlyKwargsRelated_toMethod(method, updater: dict,
-                                   updatee: dict = None, delAfter=False):
+def giveOnlyKwargsRelated_toMethod(method, updater: dict, updatee: Optional[dict] = None,
+                                   delAfter=False,
+                                   giveNotRelatedKeys=True):
+    # bugPotn2
+    #  note argValidator has been applied;the updatee also works with
+    #  `updatee: dict=None` I guess argValidator has a problem which it doesn't give error
     # ccc1
     #  finds keys in updater that can be passed to method as they are in the args that method takes
     #  updatee is the result which can have some keys from before
@@ -71,6 +76,10 @@ def giveOnlyKwargsRelated_toMethod(method, updater: dict,
             updatee.update({key: updater[snakeToCamel(key)]})
             if delAfter:
                 del updater[snakeToCamel(key)]
+    if giveNotRelatedKeys:
+        keysNotInMethod = list(set(updater.keys()) - set(methodArgs.keys()) - \
+                               set(map(lambda x: snakeToCamel(x), list(methodArgs.keys()))))
+        return updatee, keysNotInMethod
     return updatee
 
 
