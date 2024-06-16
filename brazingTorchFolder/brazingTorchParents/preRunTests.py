@@ -139,11 +139,13 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
         #  ensures whole pipeline is working correctly by running couple of epochs on a batch
         self._printTestPrints('running fastDevRun')
 
-        kwargsApplied = {'logger': False, }
-        self._plKwargUpdater(kwargsApplied, kwargs)
+        kwargsApplied = {'log': {'logger': False, }, 'trainer': {'logger': False, },
+                         'trainerFit': {}}
+        kwargsApplied = self._plKwargUpdater(kwargsApplied, kwargs)
+        # bugPotn2 to have logger equal to false
 
         # force setting 'fast_dev_run' True
-        kwargsApplied['fast_dev_run'] = True
+        kwargsApplied['trainer']['fast_dev_run'] = True
 
         self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
@@ -174,13 +176,14 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
 
         callbacks_ = [StoreEpochData()]
 
-        kwargsApplied = {'limit_train_batches': 1, 'max_epochs': 100,
-                         'enable_checkpointing': False, 'logger': False,
-                         'callbacks': callbacks_, }
-        self._plKwargUpdater(kwargsApplied, kwargs)
+        kwargsApplied = {
+            'trainer': {'limit_train_batches': 1, 'max_epochs': 100, 'enable_checkpointing': False,
+                        'callbacks': callbacks_, 'logger': False}, 'log': {'logger': False, },
+            'trainerFit': {}}
+        kwargsApplied = self._plKwargUpdater(kwargsApplied, kwargs)
 
-        if 'max_epochs' in kwargsApplied and kwargsApplied['max_epochs'] < 50:
-            kwargsApplied['max_epochs'] = 50
+        if 'max_epochs' in kwargsApplied['trainer'] and kwargsApplied['trainer']['max_epochs'] < 50:
+            kwargsApplied['trainer']['max_epochs'] = 50
 
         self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False, **kwargsApplied)
 
@@ -193,13 +196,13 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
                     valDataloader: Union[DataLoader, None] = None,
                     **kwargs):
         self._printTestPrints('running profiler')
-
-        kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False,
-                         'profiler': PyTorchProfiler(),
-                         'logger': pl.loggers.TensorBoardLogger(self.modelName,
-                                                                name=architectureName,
-                                                                version='preRunTests'), }
-        self._plKwargUpdater(kwargsApplied, kwargs)
+        kwargsApplied = {'trainer': {'max_epochs': 4, 'enable_checkpointing': False,
+                                     'profiler': PyTorchProfiler(),
+                                     'logger': pl.loggers.TensorBoardLogger(self.modelName,
+                                                                            name=architectureName,
+                                                                            version='preRunTests')},
+                         'log': {}, 'trainerFit': {}}
+        kwargsApplied = self._plKwargUpdater(kwargsApplied, kwargs)
 
         trainer = self.baseFit(trainDataloader, valDataloader, **kwargsApplied)
 
@@ -210,7 +213,7 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
                              **kwargs):
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        self._plKwargUpdater(kwargsApplied, kwargs)
+        kwargsApplied = self._plKwargUpdater(kwargsApplied, kwargs)
 
         pastLr = self.lr
         lossRatioDecrease = {}
@@ -235,7 +238,7 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
             callbacks_ = [StoreEpochData()]
             # its wrong to 'kwargsApplied['callbacks'] = callbacks_'
             callbacks_Kwargs = {'callbacks': callbacks_}
-            self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
+            kwargsAppliedCopy = self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
             self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False,
                          **kwargsAppliedCopy)
@@ -268,7 +271,7 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
         batchSizesToFindBest = batchSizesToFindBest or [8, 16, 32, 64, 128]
 
         kwargsApplied = {'max_epochs': 4, 'enable_checkpointing': False, 'logger': False}
-        self._plKwargUpdater(kwargsApplied, kwargs)
+        kwargsApplied = self._plKwargUpdater(kwargsApplied, kwargs)
 
         pastBatchSize = trainDataloader.batch_size
         lossRatioDecrease = {}
@@ -282,7 +285,7 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
             kwargsAppliedCopy = kwargsApplied.copy()
             callbacks_ = [StoreEpochData()]
             callbacks_Kwargs = {'callbacks': callbacks_}
-            self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
+            kwargsAppliedCopy = self._plKwargUpdater(kwargsAppliedCopy, callbacks_Kwargs)
 
             self.baseFit(trainDataloader, valDataloader, addDefaultLogger=False,
                          **kwargsAppliedCopy)
