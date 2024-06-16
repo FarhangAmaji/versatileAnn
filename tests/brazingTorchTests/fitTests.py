@@ -98,6 +98,140 @@ class BaseFitTests(FitTestsSetup):
         self.assertEqual(result, expected)
 
 
+class BaseFit_plKwargUpdaterTests(FitTestsSetup):
+
+    def test_emptyKwargs(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {}
+        kwarg = {}
+
+        expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_noOverlapInKwargs(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10}}
+        kwarg = {'log': {'on_step': {'else': True}, 'prog_bar': True}}
+
+        expected = {'trainer': {'max_epochs': 10}, 'trainerFit': {},
+                    'log': {'on_step': {'else': True}, 'prog_bar': {'else': True}}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_inputsUntouched(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10}}
+        kwarg = {'log': {'on_step': {'else': True}, 'prog_bar': True}}
+        appliedKwargsCopy = appliedKwargs.copy()
+        kwargCopy = kwarg.copy()
+
+        self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(appliedKwargs, appliedKwargsCopy)
+        self.assertEqual(kwarg, kwargCopy)
+
+    def test_conflictingKwargs_nonListable(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10}, 'trainerFit': {'ckpt_path': 'path1'}}
+        kwarg = {'trainer': {'max_epochs': 20}, 'trainerFit': {'ckpt_path': 'path2'}}
+
+        expected = {'trainer': {'max_epochs': 20}, 'trainerFit': {'ckpt_path': 'path2'}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_conflictingListable_bothHaveLoggers(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'logger': [Mock(spec=Logger)]}}
+        kwarg = {'trainer': {'logger': Mock(spec=Logger)}}
+
+        expected = {'trainer': {
+            'logger': appliedKwargs['trainer']['logger'] + [kwarg['trainer']['logger']]},
+                    'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_conflictingListable_bothHaveCallbacks(self):
+        self.setup(seed=71)
+
+        callback1 = Mock(spec=Callback)
+        callback2 = Mock(spec=Callback)
+
+        appliedKwargs = {'trainer': {'callbacks': [callback1]}}
+        kwarg = {'trainer': {'callbacks': callback2}}
+
+        expected = {'trainer': {'callbacks': [callback1, callback2]}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_logMethod_nonLogger(self):
+        self.setup(seed=71)
+
+        appliedKwargs = {
+            'log': {'on_step': {'train': False, 'val': True, 'predict': [], 'else': True},
+                    'prog_bar': True}}
+        kwarg = {'log': {'on_step': {'train': True, 'else': False}, 'prog_bar': False}}
+
+        expected = {'trainer': {}, 'trainerFit': {},
+                    'log': {'on_step': {'train': True, 'val': True, 'else': False},
+                            'prog_bar': {'else': False}}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_trainerNTrainerFit_combined(self):
+        self.setup(seed=71)
+
+        logger1 = Mock(spec=Logger)
+        logger2 = Mock(spec=Logger)
+        callback1 = Mock(spec=Callback)
+        callback2 = Mock(spec=Callback)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10, 'logger': logger1, 'callbacks': [callback1]}}
+        kwarg = {'trainer': {'logger': logger2, 'callbacks': callback2}}
+
+        expected = {'trainer': {'max_epochs': 10, 'logger': [logger1, logger2],
+                                'callbacks': [callback1, callback2]}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_trainerCallbacks_emptyInApplied(self):
+        self.setup(seed=71)
+
+        callback2 = Mock(spec=Callback)
+
+        appliedKwargs = {'trainer': {'callbacks': []}}
+        kwarg = {'trainer': {'callbacks': callback2}}
+
+        expected = {'trainer': {'callbacks': [callback2]}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+    def test_trainerCallbacks_emptyInKwarg(self):
+        self.setup(seed=71)
+
+        callback1 = Mock(spec=Callback)
+
+        appliedKwargs = {'trainer': {'callbacks': [callback1]}}
+        kwarg = {'trainer': {'callbacks': []}}
+
+        expected = {'trainer': {'callbacks': [callback1]}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._plKwargUpdater(appliedKwargs, kwarg)
+        self.assertEqual(result, expected)
+
+
 class BaseFit_getArgsRelated_toEachMethodSeparately_Tests(FitTestsSetup):
     def test_followsByMethodFormat_allMethodsInvolved_valid(self):
         # Test follows format with valid arguments for all methods
@@ -196,7 +330,7 @@ you have included "extra" but it doesn't match with args can be passed to pl.Tra
         self.assertEqual(result, expectedRes)
 
     def test_inputsUntouced(self):
-        # this should be doesNotFollowByMethodFormat
+        # for this test; doesNotFollowByMethodFormat should be tested
         self.setup(seed=71)
 
         appliedKwargs = {'max_epochs': 25, 'invalid_arg': 999,
@@ -206,10 +340,10 @@ you have included "extra" but it doesn't match with args can be passed to pl.Tra
         self.assertEqual(appliedKwargs, appliedKwargsCopy)
 
     def test_emptyAppliedKwargs(self):
-        self.setup(seed=77)
+        self.setup(seed=71)
 
         appliedKwargs = {}
-        expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
+        expected = {}
 
         result = self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
         self.assertEqual(result, expected)
