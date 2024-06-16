@@ -94,7 +94,124 @@ class BaseFitTests(FitTestsSetup):
         kwargs = {}
         listOfKwargs = []
         result = self.model._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
-        expected = {}
+        expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
+        self.assertEqual(result, expected)
+
+
+class BaseFit_getArgsRelated_toEachMethodSeparately_Tests(FitTestsSetup):
+    def test_followsByMethodFormat_allMethodsInvolved_valid(self):
+        # Test follows format with valid arguments for all methods
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10, 'log_every_n_steps': 50},
+                         'trainerFit': {'ckpt_path': 'path/to/checkpoint'},
+                         'log': {'on_step': {'else': True}, 'prog_bar': True}}
+
+        expected = {'trainer': {'max_epochs': 10, 'log_every_n_steps': 50},
+                    'trainerFit': {'ckpt_path': 'path/to/checkpoint'},
+                    'log': {'on_step': {'else': True}, 'prog_bar': True}}
+
+        result = self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        self.assertEqual(result, expected)
+
+    def test_followsByMethodFormat_someMethodsInvolved_valid(self):
+        # Test follows format with valid arguments for some methods
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 15},
+                         'log': {'name': 'test_metric', 'value': 0.7}}
+
+        expected = {'trainer': {'max_epochs': 15},
+                    'log': {'name': 'test_metric', 'value': 0.7}, }
+
+        result = self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        self.assertEqual(result, expected)
+
+    def test_followsByMethodFormat_invalid(self):
+        # Test follows format with invalid arguments
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10}, 'trainerFit': {'train_dataloaders': None},
+                         'log': {'invalid_arg': 123}}
+
+        with self.assertRaises(ValueError) as context:
+            self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        expectedErrorText = 'apparently you have sent your kwargs in `{"trainer":{...},"trainerFit":{...},"log":{...}}` format;[\'invalid_arg\'] are not related to log'
+        self.assertIn(expectedErrorText, str(context.exception))
+
+    def test_followsByMethodFormat_butHasAdditionalKeys(self):
+        # Test follows format with additional unrelated keys
+        self.setup(seed=71)
+
+        appliedKwargs = {'trainer': {'max_epochs': 10},
+                         'trainerFit': {'ckpt_path': 'path/to/checkpoint'},
+                         'log': {'name': 'test_metric', 'value': 0.5},
+                         'extra': {'some_extra_key': 'extra_value'}}
+
+        expected = {'log': {}, 'trainer': {}, 'trainerFit': {}}
+        expectedPrint = """you have included "trainerFit" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "trainer" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "log" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+you have included "extra" but it doesn't match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names
+"""
+
+        def innerFunc(appliedKwargs):
+            return self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+
+        result = self.assertPrint(innerFunc, expectedPrint=expectedPrint,
+                                  appliedKwargs=appliedKwargs)
+        self.assertEqual(result, expected)
+
+    def test_doesNotFollowByMethodFormat_valid(self):
+        # Test does not follow format with valid arguments
+        self.setup(seed=71)
+
+        appliedKwargs = {'max_epochs': 20, 'ckpt_path': 'path/to/checkpoint',
+                         'name': 'test_metric', 'value': 0.8}
+
+        expected = {'trainer': {'max_epochs': 20},
+                    'trainerFit': {'ckpt_path': 'path/to/checkpoint'},
+                    'log': {'name': 'test_metric', 'value': 0.8}}
+
+        result = self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        self.assertEqual(result, expected)
+
+    def test_doesNotFollowByMethodFormat_invalid(self):
+        # Test does not follow format with invalid arguments and catch it with self.assertPrint
+        self.setup(seed=71)
+
+        appliedKwargs = {'max_epochs': 25, 'invalid_arg': 999,
+                         'name': 'test_metric', 'value': 0.9}
+
+        expectedPrint = 'you have included "invalid_arg" but it doesn' + "'t match with args can be passed to pl.Trainer, pl.Trainer.fit or pl.LightningModule.log; even their camelCase names"
+
+        def innerFunc(appliedKwargs):
+            return self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+
+        result = self.assertPrint(innerFunc, expectedPrint=expectedPrint,
+                                  appliedKwargs=appliedKwargs)
+
+        expectedRes = {'trainer': {'max_epochs': 25}, 'trainerFit': {},
+                       'log': {'name': 'test_metric', 'value': 0.9}}
+        self.assertEqual(result, expectedRes)
+
+    def test_inputsUntouced(self):
+        # this should be doesNotFollowByMethodFormat
+        self.setup(seed=71)
+
+        appliedKwargs = {'max_epochs': 25, 'invalid_arg': 999,
+                         'name': 'test_metric', 'value': 0.9}
+        appliedKwargsCopy = appliedKwargs.copy()
+        self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
+        self.assertEqual(appliedKwargs, appliedKwargsCopy)
+
+    def test_emptyAppliedKwargs(self):
+        self.setup(seed=77)
+
+        appliedKwargs = {}
+        expected = {'trainer': {}, 'trainerFit': {}, 'log': {}}
+
+        result = self.model._getArgsRelated_toEachMethodSeparately(appliedKwargs)
         self.assertEqual(result, expected)
 
 
