@@ -28,9 +28,14 @@ class _BrazingTorch_preRunTests_inner:
                                                   'score': lastEpochLoss / firstEpochLoss * lastEpochLoss}})
 
     def _mergeKwargsWith_runKwargs(self, mainKwargsOfPreRunTests, runKwargs):
-        result = mainKwargsOfPreRunTests.copy()
-        self._plKwargUpdater(result, runKwargs)
-        return result
+        mainKwargsOfPreRunTests_ = mainKwargsOfPreRunTests.copy()
+        appliedKwargs = {method: {} for method in self._methodsFitCanHandle_names}
+        appliedKwargs = self._plKwargUpdater(appliedKwargs,
+                                             self._getArgsRelated_toEachMethodSeparately(
+                                                 mainKwargsOfPreRunTests_))
+        appliedKwargs = self._plKwargUpdater(appliedKwargs,
+                                             self._getArgsRelated_toEachMethodSeparately(runKwargs))
+        return appliedKwargs
 
     # ---- _determineShouldRun_preRunTests
     def _determineShouldRun_preRunTests(self, force, seedSensitive):
