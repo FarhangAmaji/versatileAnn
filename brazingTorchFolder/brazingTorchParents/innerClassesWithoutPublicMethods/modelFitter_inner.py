@@ -12,6 +12,9 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
+# goodToHave1
+#  the phasedBasedFormat and appliedKwargs_byMethod should have classes
+#  and not a format of dictionary
 # kkk
 #  does pl set trainer to model after training once? if so then in continuation
 #  (for i.e. after loading model) we may not use .fit of this class
@@ -31,10 +34,20 @@ class _BrazingTorch_modelFitter_inner:
     @_logOptions.setter
     @argValidator
     def _logOptions(self, value: dict):
-        self._assertPhaseBased_logOptions(value)
+        for key, val in value.items():
+            self._assertPhaseBased_logOptions(val)
         self.__logOptions = value
 
-    # ---- other baseFit methods
+    # ---- _getBaseFit_appliedKwargs and inners
+    def _getBaseFit_appliedKwargs(self, kwargs, listOfKwargs):
+        listOfKwargs_ = listOfKwargs or []
+        listOfKwargs_ = listOfKwargs_[:]
+        listOfKwargs_.append(kwargs)
+
+        appliedKwargs = {method: {} for method in self._methodsFitCanHandle_names}
+        for kw in listOfKwargs_:
+            appliedKwargs = self._plKwargUpdater(appliedKwargs, kw)
+        return appliedKwargs
 
     def _plKwargUpdater(self, appliedKwargs, kwarg):
         # ccc4
@@ -121,16 +134,7 @@ class _BrazingTorch_modelFitter_inner:
         else:
             for meth, methName in zip([pl.Trainer, pl.Trainer.fit, pl.LightningModule.log],
                                       self._methodsFitCanHandle_names):
-                # bugPotn1
-                #  here if the 'logger' exist in appliedKwargs must go in 'trainer' as
-                #  the logger for 'log' can only be passed with method format
-                #  this has not been implemented yet
-                # ccc1
-                #  - note I have checked these 3 methods and they don't have args with mutual names
-                #           except pl.Trainer and pl.LightningModule.log which take 'logger' arg
-                #           which is ok, even though logger in self.log is just a bool or None but in
-                #           pl.Trainer is a Logger object or a list of Logger objects or bool or None
-                #  to be mutual
+                # ccc3
                 #  - note giveOnlyKwargsRelated_toMethod has camelCase compatibility
                 #  for i.e. if the method takes `my_arg` but updater has
                 #  `myArg`, includes `my_arg` as 'myArg'
@@ -142,105 +146,32 @@ class _BrazingTorch_modelFitter_inner:
         self._warnNotUsedKwargs_baseFit(appliedKwargs_byMethod, keysNotRelated)
         return appliedKwargs_byMethod
 
-    def _removeNotAllowedArgs(self, appliedKwargs, appliedKwargs_byMethod, notAllowedArgs):
-        # addTest3
-        for naa in notAllowedArgs:
-            for ak in appliedKwargs_byMethod.keys():
-                for ak2 in appliedKwargs_byMethod[ak].keys():
-                    if naa == ak2 or naa == snakeToCamel(ak2):
-                        Warn.warn(f'you have include {naa} in kwargs you passed, but' + \
-                                  'this is not allowed and omitted')
-                        del appliedKwargs_byMethod[ak][ak2]
-                        del appliedKwargs[ak2]  # in order to give warning again in leftOvers part
+    def _warnNotUsedKwargs_baseFit(self, appliedKwargs_byMethod, keysNotRelated):
+        # get keysRelatedToMethods
+        keysRelatedToMethods = []
+        for methName in self._methodsFitCanHandle_names:
+            if methName not in appliedKwargs_byMethod:
+                # should work with half filled method type
+                # (for i.e. missing trainerFit)
+                continue
+            for key in appliedKwargs_byMethod[methName].keys():
+                keysRelatedToMethods.append(key)
 
-    def _warnForNotUsedArgs(self, appliedKwargs, appliedKwargs_byMethod):
-        # addTest3
-        # warn for left over kwargs, the kwargs which user has passed but don't
-        # fit in pl.Trainer, pl.Trainer.fit or pl.LightningModule.log
-        for auk in appliedKwargs:
-            isInVolved = False
-            for ak in appliedKwargs_byMethod.keys():
-                if isInVolved:
-                    break
-                for ak2 in appliedKwargs_byMethod[ak].keys():
-                    if auk == ak2 or auk == snakeToCamel(ak2):
-                        isInVolved = True
-                        break
-            if not isInVolved:
-                Warn.warn(f"you have included {auk} but it doesn't match with args " + \
-                          "can be passed to pl.Trainer, pl.Trainer.fit or " + \
-                          "pl.LightningModule.log; even their camelCase names")
+        # bugPotn3
+        #  now we take the _byMethod format dict; so there is a possibility of the
+        #  real snakeCase of pytorchlightning is not got corrected and it's been missed
+        #  to get corrected somewhere
 
-    @argValidator
-    def _assertPhaseBased_logOptions(self, logOptions: dict):
-        # assert phaseBased _logOptions to fit in the format it should have
-        for akl, aklV in logOptions.items():
-            if isinstance(aklV, dict):
-                if akl not in ['train', 'val', 'test', 'predict', 'else']:
-                    raise ValueError("it seems you are trying to use phaseBased logOptions" + \
-                                     f"\nthe key '{akl}' must be one of " + \
-                                     "'train', 'val', 'test', 'predict', 'else'")
+        # warning part
+        keysNotRelated = list(set(keysNotRelated) - set(keysRelatedToMethods))
+        for key in keysNotRelated:
+            warnMsg = f'you have included "{key}" but it ' + "doesn't match with args " + \
+                      "can be passed to pl.Trainer, pl.Trainer.fit or " + \
+                      "pl.LightningModule.log; even their camelCase names"
+            Warn.warn(warnMsg)
+            self._printTestPrints(warnMsg)
 
-    # ---- _getBaseFit_appliedKwargs and inners
-    def _getBaseFit_appliedKwargs(self, kwargs, listOfKwargs):
-        listOfKwargs = listOfKwargs or []
-        listOfKwargs.append(kwargs)
-        appliedKwargs = {}
-        for kw in listOfKwargs:
-            self._plKwargUpdater(appliedKwargs, kw)
-        return appliedKwargs
-
-    def _plKwargUpdater(self, appliedKwargs, kw):
-        # ccc2
-        #  pytorch lightning for some args may get different type
-        #  this methods makes sure those options are correctly applied (put together)
-        #  for i.e. logger can be a Logger object or a list of Logger objects
-        kw_ = kw.copy()
-        correctArgs = {}
-        if 'logger' in appliedKwargs and 'logger' in kw:
-            correctArgs['logger'] = self._putTogether_plLoggers_withPhasedBasedLogging(
-                appliedKwargs['logger'],
-                kw['logger'])
-            del kw_['logger']
-        # 'plugins' is also like callbacks. but I don't take care of as this option is rare
-        if 'callbacks' in appliedKwargs and 'callbacks' in kw:
-            correctArgs['callbacks'] = self._putTogether_plCallbacks(appliedKwargs['callbacks'],
-                                                                     kw['callbacks'])
-            del kw_['callbacks']
-        appliedKwargs.update(kw_)
-        appliedKwargs.update(correctArgs)
-        return appliedKwargs
-
-    @argValidator
-    def _putTogether_plLoggers_withPhasedBasedLogging(self,
-                                                      var1: Optional[Union[
-                                                          dict, Logger, Iterable[Logger], bool]],
-                                                      var2: Optional[Union[
-                                                          dict, Logger, Iterable[Logger], bool]]) \
-            -> dict:
-        # ccc1
-        #  there is a phasedBasedLogging feature which allows to send kwargs related to logging in
-        #  a dictionary consisting keys 'train', 'val', 'test', 'predict' or 'else'
-        #  this code unifies the loggers to have that format
-        result = {phase: [] for phase in self.phaseBasedLoggingTypes}
-
-        def get_phaseBasedOptions(var):
-            if isinstance(var, dict):
-                self._assertPhaseBased_logOptions(var)
-                return var
-            res = {phase: [] for phase in self.phaseBasedLoggingTypes}
-            res['else'] = var
-            return res
-
-        var1PhaseBased = get_phaseBasedOptions(var1)
-        var2PhaseBased = get_phaseBasedOptions(var2)
-
-        for phase in self.phaseBasedLoggingTypes:
-            result[phase] = self._putTogether_plLoggers_normal(var1PhaseBased.get(phase, []),
-                                                               var2PhaseBased.get(phase, []))
-
-        return result
-
+    # ---- methods for putting together listable Pytorch Lightning kwargs
     @argValidator
     def _putTogether_plLoggers_normal(self,
                                       var1: Optional[Union[Logger, Iterable[Logger], bool]],
@@ -304,6 +235,7 @@ class _BrazingTorch_modelFitter_inner:
         # ccc3
         #  - each pytorch lightning arg may get a Callback object or a list of Callback or None
         #  - note have higher importance in setting Callback, Iterable[Callback] than None
+
         # convert list_iterator back to list; note the hints make the list convert to list_iterator
         if isinstance(var1, type(iter([]))):
             var1 = list(var1)
@@ -336,6 +268,25 @@ class _BrazingTorch_modelFitter_inner:
         return result
 
     # ---- methods for phaseBased
+    @argValidator
+    def _keysDontFollow_phaseBasedFormat(self, dict_: dict):
+        # ccc3
+        #  having keysDontFollow empty mean it does follow phaseBasedFormat
+        keysDontFollow = []
+        for key, value in dict_.items():
+            if isinstance(value, dict):
+                if key not in ['train', 'val', 'test', 'predict', 'else']:
+                    keysDontFollow.append(key)
+        return keysDontFollow
+
+    @argValidator
+    def _assertPhaseBased_logOptions(self, logOptions: dict):
+        # assert phaseBased _logOptions to fit in the format it should have
+        keysDontFollow = self._keysDontFollow_phaseBasedFormat(logOptions)
+        if keysDontFollow:
+            raise ValueError("it seems you are trying to use phaseBased logOptions" + \
+                             f"\nthe key '{keysDontFollow[0]}' must be one of " + \
+                             "'train', 'val', 'test', 'predict', 'else'")
 
     def _get_phaseBasedFormat(self, var):
         if isinstance(var, dict) and not self._keysDontFollow_phaseBasedFormat(var):
@@ -364,6 +315,21 @@ class _BrazingTorch_modelFitter_inner:
     # ---- check to have byMethod format
     def _doesDictFollow_byMethod(self, dict_: dict):
         return all(method in self._methodsFitCanHandle_names for method in dict_.keys())
+
+    # ---- other baseFit methods
+    def _removeNotAllowedArgs(self, appliedKwargs_byMethod, notAllowedArgs):
+        # addTest3
+        for naa in notAllowedArgs:
+            for method in self._methodsFitCanHandle_names:
+                for key in appliedKwargs_byMethod[method].keys():
+                    if naa == key or naa == snakeToCamel(key):
+                        warnMsg = f'you have include {naa} in kwargs you passed, but' + \
+                                  'this is not allowed and omitted'
+                        Warn.warn(warnMsg)
+                        self._printTestPrints(warnMsg)
+                        del appliedKwargs_byMethod[method][key]
+
+    # ---- determineFitRunState
     def _determineFitRunState(self, seed, resume=True, seedSensitive=False):
         # ccc2
         #  this is similar to _determineShouldRun_preRunTests
@@ -556,3 +522,30 @@ class _BrazingTorch_modelFitter_inner:
         # Return the extracted details in a dictionary
         return {'modelName': self.modelName, 'architectureName': architectureName,
                 'version': version}
+
+    # ---- not used: obsolete; delete later
+    @argValidator
+    def _putTogether_plLoggers_withPhasedBasedLogging(self,
+                                                      var1: Optional[Union[
+                                                          dict, Logger, Iterable[Logger], bool]],
+                                                      var2: Optional[Union[
+                                                          dict, Logger, Iterable[Logger], bool]]) \
+            -> dict:
+        # goodToHave3
+        #  this is not used; remove this later
+        # ccc3
+        #  this is not used in the code directly anymore and not it's applied in _plKwargUpdater but
+        #  because there are some tests for it and the logic in _plKwargUpdater is exactly the same
+        #  so we keep it
+        return self._putTogether_items_inPhasedBasedLoggingFormat(var1, var2,
+                                                                  self._putTogether_plLoggers_normal)
+
+    def _flatten_byMethodDict(self, dict_: dict):
+        # goodToHave3
+        #  this is not used; remove this later
+        flatDict = {}
+        if self._doesDictFollow_byMethod(dict_):
+            for method in self._methodsFitCanHandle_names:
+                flatDict.update(dict_[method])
+            return flatDict
+        return dict_

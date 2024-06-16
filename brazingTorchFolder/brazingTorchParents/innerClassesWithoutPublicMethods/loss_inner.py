@@ -12,6 +12,9 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
+# bugPotn1 do logOptions here follow the phasedBased format;logOptions  is a dict which it's inner values should have phaseBased format
+# bugPotn1 note may the key exist but they are empty so it should be checked
+
 class _BrazingTorch_loss_inner:
     def __init__(self):
 
