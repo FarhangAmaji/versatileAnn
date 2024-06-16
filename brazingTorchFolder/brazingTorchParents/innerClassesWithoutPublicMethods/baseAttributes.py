@@ -50,7 +50,9 @@ class _BrazingTorch_baseAttributes:
             self.modelName = modelName
 
     def _printTestPrints(self, *args):
-        # only prints for test purposes
+        # ccc2
+        #  only prints for test purposes
+        #  specially as the Warn doesn't get catched by BaseTestClass.assertPrint
         if self.testPrints:
             for arg in args:
                 print(arg)
