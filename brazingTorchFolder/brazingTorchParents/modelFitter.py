@@ -84,8 +84,9 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
 
         # add default logger if allowed and no logger is passed
         # because by default we are logging some metrics
-        if addDefaultLogger and 'logger' not in appliedKwargs:
-            appliedKwargs['logger'] = pl.loggers.TensorBoardLogger(self.modelName)
+        if addDefaultLogger and 'logger' not in appliedKwargs_byMethod['trainer']:
+            appliedKwargs_byMethod['trainer']['logger'] = {
+                pl.loggers.TensorBoardLogger(self.modelName)}
 
         appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
 

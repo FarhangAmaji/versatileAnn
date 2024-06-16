@@ -138,12 +138,20 @@ def externalFit(self, trainDataloader: DataLoader,
 
     # add default logger if allowed and no logger is passed
     # because by default we are logging some metrics
-    if addDefaultLogger and 'logger' not in kwargs:
+    if addDefaultLogger and 'logger' not in kwargs['trainer']:
         architectureNameNVersion = self.getArchitectureNameNVersion_fromLoggerPath(self, loggerPath)
-        kwargs['logger'] = pl.loggers.TensorBoardLogger(architectureNameNVersion['modelName'],
-                                                        name=architectureNameNVersion[
-                                                            'architectureName'],
-                                                        version=architectureNameNVersion['version'])
+        kwargs['trainer']['logger'] = {
+            pl.loggers.TensorBoardLogger(architectureNameNVersion['modelName'],
+                                         name=architectureNameNVersion['architectureName'],
+                                         version=architectureNameNVersion['version'])}
+        # ccc2
+        #  - note the addDefaultLogger is added here also in baseFit
+        #  note in the baseFit we don't have access to the architectureName and
+        #  the version but here we have
+        #  - also note obviously we don't expect addDefaultLogger in baseFit replace
+        #  this one as now the logger is filled and addDefaultLogger only adds
+        #  when the logger is empty
+        #  - addDefaultLogger adds logger to kwargs['trainer'] and not kwargs or kwargs['log']
 
     # run preRunTests which provide useful sanity checks like fastDevRun, overfitBatches
     # also details like profiler to see bottlenecks of the model, bestLearningRate(sets it by
