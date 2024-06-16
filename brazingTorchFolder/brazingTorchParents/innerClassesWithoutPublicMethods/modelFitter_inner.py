@@ -283,11 +283,6 @@ class _BrazingTorch_modelFitter_inner:
 
         result = []
         if isinstance(var1, Iterable):
-            # goodToHave3
-            #  check does argValidator check for Iterable[Logger] or not
-            # Check if all elements of var1 are Logger
-            if not all(isinstance(logger, Logger) for logger in var1):
-                raise ValueError('var1 has some elements which are not Logger objects')
             # bugPotn1
             #  I checked and found that list(here result) can extend tuples and sets as well
             #  but I don't know what happens for other iterables
@@ -296,9 +291,6 @@ class _BrazingTorch_modelFitter_inner:
             result.append(var1)
 
         if isinstance(var2, Iterable):
-            # Check if all elements of var2 are Logger
-            if not all(isinstance(logger, Logger) for logger in var2):
-                raise ValueError('var2 has some elements which are not Logger objects')
             result.extend(var2)
         else:
             result.append(var2)
@@ -343,7 +335,32 @@ class _BrazingTorch_modelFitter_inner:
             result.append(var2)
         return result
 
-    # ----
+    # ---- methods for phaseBased
+
+    def _get_phaseBasedFormat(self, var):
+        if isinstance(var, dict) and not self._keysDontFollow_phaseBasedFormat(var):
+            return var
+        res = {phase: [] for phase in self._phaseBasedLoggingTypes}
+        res['else'] = var
+        return res
+
+    @argValidator
+    def _putTogether_items_inPhasedBasedLoggingFormat(self, var1, var2, addFunc=None):
+        # ccc1
+        #  there is a phasedBasedLogging feature which allows to send kwargs related to logging in
+        #  a dictionary consisting keys 'train', 'val', 'test', 'predict' or 'else'
+        #  this code unifies the loggers to have that format
+        result = {phase: [] for phase in self._phaseBasedLoggingTypes}
+
+        var1PhaseBased = self._get_phaseBasedFormat(var1)
+        var2PhaseBased = self._get_phaseBasedFormat(var2)
+
+        for phase in self._phaseBasedLoggingTypes:
+            result[phase] = addFunc(var1PhaseBased.get(phase, []),
+                                    var2PhaseBased.get(phase, []))
+
+        return result
+
     # ---- check to have byMethod format
     def _doesDictFollow_byMethod(self, dict_: dict):
         return all(method in self._methodsFitCanHandle_names for method in dict_.keys())
