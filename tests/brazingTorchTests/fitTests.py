@@ -34,8 +34,28 @@ class NNDummy2(NNDummy1):
 
 # ---- actual tests
 class FitTestsSetup(BaseTestClass):
+    readySetupsBySeed = {}
+
+    def readySetupsChecker(self, seed):
+        if seed in self.readySetupsBySeed:
+            self._readySetupAssign(seed)
+            return True
+        return False
+
+    def readySetupsAssigner(self, seed):
+        if seed not in self.readySetupsBySeed:
+            self._readySetupAssign(seed)
+
+    def _readySetupAssign(self, seed):
+        attributes = ['trainDataloader', 'valDataloader', 'testDataloader', 'normalizer',
+                      'model']
+        for attribute in attributes:
+            setattr(self, attribute, self.readySetupsBySeed[seed][attribute])
+
     def setup(self, seed):
         self.seed = seed
+        if self.readySetupsChecker(seed):
+            return
 
         backcastLen = 7
         forecastLen = 4
