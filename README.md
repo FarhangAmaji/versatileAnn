@@ -44,7 +44,7 @@ This project has some sections and `"who this project is for"` `depends` on what
   
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
-  - __Very Powerful, Unique Features:__ offers `unmatched powerful`, `unique features` compared to traditional frameworks like PyTorch, PyTorch Lightning, etc.
+  - **Very Powerful, Unique Features:** offers `unmatched powerful`, `unique features` compared to traditional frameworks like PyTorch, PyTorch Lightning, etc.
   - **User-friendly Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic Model Architecture differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
@@ -122,8 +122,6 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
-
-![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/BrazingTorch.jpg)
 
 brazingTorch is a `high level wrapper` around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
 
