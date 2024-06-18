@@ -34,7 +34,7 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, but `Forecasting` and `NLP` (natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
 
-- [in the case you don't know what forecasting is, click here](#whatIsForecasting)
+- [in the case you don't know what **forecasting** is, click here](#whatIsForecasting)
 
 
 
@@ -45,7 +45,7 @@ This project has some sections and `"who this project is for"` `depends` on what
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
   - **Very Powerful, Unique Features:** offers `unmatched powerful`, `unique features` compared to traditional frameworks like PyTorch, PyTorch Lightning, etc.
-  - **User-friendly Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
+  - **User-friendly Customizable Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic Model Architecture differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
   - **PreRunTests:** Get `sanity checks` and `optimize training efficiency` automatically.
@@ -67,19 +67,15 @@ This project has some sections and `"who this project is for"` `depends` on what
 
 # What versatileAnn is<a id='whatVersatileAnnIs'></a>
 
-This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making it well-suited for AI development compared to other similar packages.
+This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making `prototyping models faster`, designed to `save` you significant amount of `development time`. making it well-suited for AI development compared to other similar packages.
 
-This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique functionalities and options` available.
+This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique novel functionalities and options` available.
 
-These features are not only `well-tested`, with more than 300 unit tests, but also designed to `save` you significant amount of `development time`. 
+These features are not only `well-tested`, with more than 400 unit tests, also with `smart errors` `preventing possible semantic mistakes`, making your `development reliable`.
 
-Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
+Beside has latest the `state of the art models` in the `field of forecasting`, and also `already prepared datasets` so you can test and `benchmark` models you are developing. Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
 
 # **Project Features**<a id='projectFeatures'></a>
-
-- **Enhances Code Reliability:** 
-
-  In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
 
 - **Simplifies Complex Processes:**
 
@@ -89,13 +85,17 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
   `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & Using Experiences`.
 
-- **Elevates Code Quality:**
-
-  The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
-
 - **Error Detection and Prevention:**
 
   It also `raises errors` and `warnings` to `prevent many potential errors`; this is especially `very needed` when `working` with `Python` and Python packages.
+
+- **Enhances Code Reliability:** 
+
+  In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
+
+- **Elevates Code Quality:**
+
+  The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
 
 - **Enhances Future Development:**
 
@@ -123,7 +123,7 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
-brazingTorch is a `high level wrapper` around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
+brazingTorch is a **high level wrapper** around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
 
 `brazingTorch` was developed here in this project(versatileAnn), but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
@@ -229,7 +229,7 @@ could be found at `\models`
 
 - **Time Series Splitting:**
 
-  - Offers functions to split time series data into training, validation, and testing sets, even shuffled.
+  - Offers functions to split time series data into training, validation, and testing sets, `even shuffled`.
     - Can `split into three sets` (train, validation, and test) instead of the usual two, making the splitting much easier. Note the most important thing here is that it `considers the sequential nature of time series data`, crucial for accurate preparation.
     - Includes a dedicated function for splitting `"NSeries"` timeseries data, where `multiple time series` reside `within a single dataframe` along each other in different rows.
     - This is an `unmatched unique feature`.
