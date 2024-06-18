@@ -1,4 +1,5 @@
 ## Table of Contents
+- [**quickSummary**](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md)
 - [**Who this project is for**](#whoThisProjectIsFor)
 - [**What versatileAnn is**](#whatVersatileAnnIs)
 - [**Project Features**](#projectFeatures)
