@@ -18,8 +18,12 @@
 - Appendix
     - [what is forecasting](#whatIsForecasting)
 
-
 ![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/BrazingTorch.jpg)
+
+## quickSummary
+
+This readme is quite detailed, so it's better to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md).
+
 ## How to read this!?!?
 
 This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
@@ -34,18 +38,18 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, but `Forecasting` and `NLP` (natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
 
-- [in the case you don't know what forecasting is, click here](#whatIsForecasting)
+- [in the case you don't know what **forecasting** is, click here](#whatIsForecasting)
 
 
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 
-- `anyone who uses Pytorch (AI deep learning library)` or `any other deep learning framework` ([`brazingTorch` section](#brazingTorch)):
+- `anyone who uses Pytorch (AI deep learning library)` or `similar`(any other deep learning framework) ([brazingTorch section](#brazingTorch)):
   
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
   - **Very Powerful, Unique Features:** offers `unmatched powerful`, `unique features` compared to traditional frameworks like PyTorch, PyTorch Lightning, etc.
-  - **User-friendly Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
+  - **User-friendly Customizable Pipeline:** Pre-built pipeline `saves` you `significant development time` by `minimizing coding`, letting you focus on your model, and is also `customizable` with ease.
   - **Automatic Model Architecture differentiation and tracking:** `No need to worry` about naming or `losing promising models`.
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
   - **PreRunTests:** Get `sanity checks` and `optimize training efficiency` automatically.
@@ -67,19 +71,15 @@ This project has some sections and `"who this project is for"` `depends` on what
 
 # What versatileAnn is<a id='whatVersatileAnnIs'></a>
 
-This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making it well-suited for AI development compared to other similar packages.
+This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making `prototyping models faster`, designed to `save` you significant amount of `development time`. making it well-suited for AI development compared to other similar packages.
 
-This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique functionalities and options` available.
+This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique novel functionalities and options` available.
 
-These features are not only `well-tested`, with more than 300 unit tests, but also designed to `save` you significant amount of `development time`. 
+These features are not only `well-tested`, with more than 400 unit tests, also with `smart errors` `preventing possible semantic mistakes`, making your `development reliable`.
 
-Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
+Beside has latest the `state of the art models` in the `field of forecasting`, and also `already prepared datasets` so you can test and `benchmark` models you are developing. Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
 
 # **Project Features**<a id='projectFeatures'></a>
-
-- **Enhances Code Reliability:** 
-
-  In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
 
 - **Simplifies Complex Processes:**
 
@@ -87,15 +87,19 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 - **Reduces Development Time:** 
 
-  `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & Using Experiences`.
-
-- **Elevates Code Quality:**
-
-  The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
+  `useful ready functionalities` significantly `impact` development `timelines`. Therefore improves `Development & User Experiences`. Enabling development with `less boilerplate code`.
 
 - **Error Detection and Prevention:**
 
   It also `raises errors` and `warnings` to `prevent many potential errors`; this is especially `very needed` when `working` with `Python` and Python packages.
+
+- **Enhances Code Reliability:** 
+
+  In programming `even minor typos` can `waste months of hard work`. `Well-tested tools` help `minimize errors` and `ensure reliability` of code.
+
+- **Elevates Code Quality:**
+
+  The essence and attention to detail ingrained in this project `guide` your development towards `cleanliness`, meticulously addressing even minor details to `prevent errors` and enhance code robustness.
 
 - **Enhances Future Development:**
 
@@ -123,7 +127,7 @@ Not only can it be `useful for` people to `simply try out some models`, but it's
 
 ### brazingTorch<a id='brazingTorchFeatures'></a>
 
-brazingTorch is a `high level wrapper` around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
+brazingTorch is a **high level wrapper** around `pytorch lightning`, which itself is a wrapper around `pytorch`. therefore, you can seamlessly `integrate` BrazingTorch with other `PyTorch`, `PyTorch Lightning`, and even TensorBoard features for a `tailored` deep learning experience.
 
 `brazingTorch` was developed here in this project(versatileAnn), but as it offers valuable functionalities for the `broader deep learning community`, so it was moved to its own github repo: https://github.com/FarhangAmaji/brazingTorch
 
@@ -156,7 +160,7 @@ it can be found at `\brazingTorchFolder`.
    - these is `unique` unmatched feature compared to traditional libraries like PyTorch, PyTorch Lightning, etc
    - Allows you to easily modify the **batch size** of data loaders, a functionality not available with PyTorch dataloader.
 
-4. **preRunTests**
+4. **Automatic preRunTests**:
 
    - preRunTests is a  default `set of` models runs, to provide useful `sanity checks` and `optimizations` and `details providing runs`. If preRunTests hasen't been executed already, is going to be executed automatically before the `.fit` method.
    - 1. **FastDevRun:** This runs the entire pipeline, `checking` for any `errors` that might cause the `whole process` to fail. This `allows` you to start the training, `walk away`, and come back later `without worrying` about unexpected failures.
@@ -227,9 +231,27 @@ could be found at `\models`
 
   - There are lots of useful functions in `\dataPrep\preprocessing.py` which help to `transform` `raw data` and `do data preparation operations`.
 
+- **`VAnnTsDataset` specialized time series dataset:**
+
+  - Utilizes `parallel` capabilities of pytorch dataset
+
+  - **Efficient `sequence generation` with `getBackForeCastData`:**
+
+    The `getBackForeCastData` function offers a convenient way to generate different types of sequences from `pandas DataFrames`:
+
+    - **Cast modes:** The function supports various modes for generating sequences, including `backcast`, `forecast`, `fullcast`, and `singlePoint`.
+    - **Faster than pandas:** Compared to using pandas DataFrames directly, `getBackForeCastData` is specifically designed to utilize a `wrapper around pandas dataframe` but making it `faster` to fetch data.
+    - **Mitigates Errors:**  So many errors that can occur during the sequence generation process but it helps mitigate those errors, resulting to save time and effort.
+
+  - **Efficient Data Handling with nested dictionaries:**
+
+    - **Allows Easy Data Structuring with Nested dictionaries:** While `using dictionaries` is an intuitive way to `structure` your `data`, especially `nested dictionaries`(**dictionaries within dictionaries**) `for more complex data`. but `nesting` dictionaries make it `harder` `to do operations`, therefore helps with doing operation on nested dictionaries.
+    - **Automatic Handling of Nested Dictionaries:** Forget manual manipulation! This dataset `automatically detects` whether your data is in dictionaries or nested dictionaries. It handles these structures for `loss calculations` and even `converts them to tensors` for your model.
+    - **GPU Memory Efficient Tensor Conversion:** This dataset `prioritizes memory efficiency`. It only converts your data to tensors at the `final step`, right before feeding it to the model. This `avoids unnecessary GPU memory usage` and optimizes allocation.
+
 - **Time Series Splitting:**
 
-  - Offers functions to split time series data into training, validation, and testing sets, even shuffled.
+  - Offers functions to split time series data into training, validation, and testing sets, `even shuffled`.
     - Can `split into three sets` (train, validation, and test) instead of the usual two, making the splitting much easier. Note the most important thing here is that it `considers the sequential nature of time series data`, crucial for accurate preparation.
     - Includes a dedicated function for splitting `"NSeries"` timeseries data, where `multiple time series` reside `within a single dataframe` along each other in different rows.
     - This is an `unmatched unique feature`.
@@ -253,24 +275,6 @@ could be found at `\models`
        - This specialized normalizer is designed for `"NSeries"` data.
        - NSeries refers to data containing multiple distinct time series within a single column.
        - The normalizer `assigns` and manages a separate `SingleColNormalizer` for `each unique group` within the NSeries data. This ensures proper normalization for each individual time series.
-
-- **`VAnnTsDataset` specialized time series dataset:**
-
-  - Utilizes `parallel` capabilities of pytorch dataset
-
-  - **Efficient `sequence generation` with `getBackForeCastData`:**
-
-    The `getBackForeCastData` function offers a convenient way to generate different types of sequences from `pandas DataFrames`:
-
-    - **Cast modes:** The function supports various modes for generating sequences, including `backcast`, `forecast`, `fullcast`, and `singlePoint`.
-    - **Faster than pandas:** Compared to using pandas DataFrames directly, `getBackForeCastData` is specifically designed to utilize a `wrapper around pandas dataframe` but making it `faster` to fetch data.
-    - **Mitigates Errors:**  So many errors that can occur during the sequence generation process but it helps mitigate those errors, resulting to save time and effort.
-
-  - **Efficient Data Handling with nested dictionaries:**
-
-    - **Allows Easy Data Structuring with Nested dictionaries:** While `using dictionaries` is an intuitive way to `structure` your `data`, especially `nested dictionaries`(**dictionaries within dictionaries**) `for more complex data`. but `nesting` dictionaries make it `harder` `to do operations`, therefore helps with doing operation on nested dictionaries.
-    - **Automatic Handling of Nested Dictionaries:** Forget manual manipulation! This dataset `automatically detects` whether your data is in dictionaries or nested dictionaries. It handles these structures for `loss calculations` and even `converts them to tensors` for your model.
-    - **GPU Memory Efficient Tensor Conversion:** This dataset `prioritizes memory efficiency`. It only converts your data to tensors at the `final step`, right before feeding it to the model. This `avoids unnecessary GPU memory usage` and optimizes allocation.
 
 - **Supports Diverse Exogenous Variables:** 
 
