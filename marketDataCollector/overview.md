@@ -39,6 +39,5 @@
               - why? (to showcase?!!? I guess that's not a good showcase)
               - do enable us later customize some parts easier
                   - so what options they don't provide
-            1.1. why we want to make from scratch
 # questions
 # possible bugs
