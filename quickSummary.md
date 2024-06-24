@@ -41,4 +41,4 @@ This project aims to provide **utility tools** that **facilitate** the **develop
 
 
 
-This project is extensive, with over 15,000 lines of code and rigorously tested with over 400 tests. It offers a wealth of **unique and innovative functionalities and options**, detailed in the main README.md — [**worth exploring further**](https://github.com/FarhangAmaji/versatileAnn).
+This project is extensive, with over 15,000 lines of code and rigorously tested with over 400 tests. It offers a wealth of **unique and innovative functionalities and options**, detailed in the main README.md — [**worth exploring further (project itself)**](https://github.com/FarhangAmaji/versatileAnn).
