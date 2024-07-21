@@ -228,3 +228,11 @@ class _BrazingTorch_loss_inner:
         if not self.lossFuncs:
             raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
                              'preRunTests or pass them to it')
+
+    def _lossFuncsNotPassedHere_errorOrUseModels(self, lossFuncs):
+        if not lossFuncs:
+            if not self.lossFuncs:
+                raise ValueError(
+                    'You should either pass lossFuncs as an argument here or to the model')
+            lossFuncs = self.lossFuncs
+        return lossFuncs

@@ -24,7 +24,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
     @argValidator
     def fit(self, trainDataloader: DataLoader,
             valDataloader: Optional[DataLoader] = None,
-            *, lossFuncs: List[nn.modules.loss._Loss],
+            *, lossFuncs: Optional[List[nn.modules.loss._Loss]] = None,
             seed=None, resume=True, seedSensitive=False,
             addDefaultLogger=True, addDefault_gradientClipping=True,
             warmUp_epochNum=5, addDefault_reduceLROnPlateau=True,
@@ -41,6 +41,9 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #  - **kwargs are any argument related to pytorch lightning trainer, trainer.fit,
         #       and self.log
         #  - note there are many args related to preRunTests; you may want to run preRunTests separately
+
+        # case the lossFuncs is not passed here
+        lossFuncs = self._lossFuncsNotPassedHere_errorOrUseModels(lossFuncs)
 
         # ccc1
         #  note this method in some cases is loading another instance and runs on that

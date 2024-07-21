@@ -94,7 +94,7 @@ def isPytorchLightningScheduler(obj):
 @argValidator
 def externalFit(self, trainDataloader: DataLoader,
                 valDataloader: Optional[DataLoader] = None,
-                *, lossFuncs: List[nn.modules.loss._Loss],
+                *, lossFuncs: Optional[List[nn.modules.loss._Loss]] = None,
                 seed=None, resume=True, seedSensitive=False,
                 addDefaultLogger=True, addDefault_gradientClipping=True,
                 warmUp_epochNum=5, addDefault_reduceLROnPlateau=True,
@@ -113,6 +113,7 @@ def externalFit(self, trainDataloader: DataLoader,
     if not seed:
         seed = self.seed
 
+    lossFuncs = self._lossFuncsNotPassedHere_errorOrUseModels(lossFuncs)
     self._setLossFuncs_ifNot(lossFuncs)
 
     architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self._determineFitRunState(

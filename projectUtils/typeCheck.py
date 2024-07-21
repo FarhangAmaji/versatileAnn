@@ -72,6 +72,9 @@ def typeHintChecker_AListOfSomeType(func):
 
 
 def argValidator(func):
+    # mustHave1
+    #  the warnings for missing arguments are not clear
+
     # Apply Pydantic validation first
     func = validate_arguments(config={'arbitrary_types_allowed': True})(func)
     # Then apply the custom type hint checker
