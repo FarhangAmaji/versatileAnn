@@ -10,6 +10,9 @@ from projectUtils.typeCheck import argValidator
 
 class _BrazingTorch_loss(_BrazingTorch_loss_inner):
     def __init__(self, lossFuncs: Optional[List[nn.modules.loss._Loss]] = None, **kwargs):
+        # ccc2
+        #  note lossFuncs for runs (fit or baseFit) can't be empty but here in model definition,
+        #  it can be
         self.lossFuncs = lossFuncs or []
         # not allowing this class to have direct instance
         _allowOnlyCreationOf_ChildrenInstances(self, _BrazingTorch_loss)

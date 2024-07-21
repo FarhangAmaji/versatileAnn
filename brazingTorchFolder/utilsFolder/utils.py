@@ -112,8 +112,7 @@ def externalFit(self, trainDataloader: DataLoader,
     if not seed:
         seed = self.seed
 
-    lossFuncs = self._lossFuncsNotPassedHere_errorOrUseModels(lossFuncs)
-    self._setLossFuncs_ifNot(lossFuncs)
+    lossFuncs = self._setLossFuncs_ifNot(lossFuncs)
 
     architectureName, loggerPath, fitRunState, checkpointPath, isModelChanged = self._determineFitRunState(
         seed=seed,

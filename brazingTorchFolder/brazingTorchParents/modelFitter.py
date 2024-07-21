@@ -43,7 +43,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #  - note there are many args related to preRunTests; you may want to run preRunTests separately
 
         # case the lossFuncs is not passed here
-        lossFuncs = self._lossFuncsNotPassedHere_errorOrUseModels(lossFuncs)
+        lossFuncs = self._setLossFuncs_ifNot(lossFuncs)
 
         # ccc1
         #  note this method in some cases is loading another instance and runs on that

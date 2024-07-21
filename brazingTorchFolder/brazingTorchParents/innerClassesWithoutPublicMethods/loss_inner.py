@@ -1,7 +1,8 @@
 import copy
-from typing import Union
+from typing import Union, List, Optional
 
 import torch
+import torch.nn as nn
 
 from dataPrep.dataloader import _NestedDictStruct
 from projectUtils.dataTypeUtils.dict import isNestedDict
@@ -39,8 +40,6 @@ class _BrazingTorch_loss_inner:
         #  gives error without setting lossFuncs;
         #  should think is having lossFuncs is a must or I can make it optional
         calculatedLosses = []
-        if not self.lossFuncs:  # guard clause #kkk this is related to allowing self.lossFuncs to be empty
-            return None, calculatedLosses
 
         if not hasattr(self, '_outputsStruct') or not self._outputsStruct:
             self._outputsStruct = _NestedDictStruct(forwardOutputs)
@@ -212,13 +211,26 @@ class _BrazingTorch_loss_inner:
             for metric in metrics])
         Warn.info(infoMsg)
 
-    def _getLossName(self, phase, loss_):
+    @staticmethod
+    def _getLossName(phase, loss_):
         return snakeToCamel(phase + type(loss_).__name__)
 
     # ----
+    @staticmethod
+    def _combineLossLists(lossFuncs1: Optional[List[nn.modules.loss._Loss]] = None,
+                          lossFuncs2: Optional[List[nn.modules.loss._Loss]] = None):
+        lossFuncs1 = lossFuncs1 or []
+        lossFuncs2 = lossFuncs2 or []
+        combinedList = lossFuncs1[:]
+        combinedList_types = [type(loss) for loss in combinedList]
+        for loss in lossFuncs2:
+            if type(loss) not in combinedList_types:
+                combinedList.append(loss)
+        return combinedList
+
     def _setLossFuncs_ifNot(self, lossFuncs):
         if lossFuncs:
-            self.lossFuncs = lossFuncs
+            self.lossFuncs = self._combineLossLists(self.lossFuncs, lossFuncs)
             # cccUsage
             #  only first loss is used for backpropagation and others are just for logging
             # ccc1
@@ -226,13 +238,5 @@ class _BrazingTorch_loss_inner:
             # anyway self.lossFuncs must be set
 
         if not self.lossFuncs:
-            raise ValueError('lossFuncs must have set self.lossFuncs before running ' + \
-                             'preRunTests or pass them to it')
-
-    def _lossFuncsNotPassedHere_errorOrUseModels(self, lossFuncs):
-        if not lossFuncs:
-            if not self.lossFuncs:
-                raise ValueError(
-                    'You should either pass lossFuncs as an argument here or to the model')
-            lossFuncs = self.lossFuncs
-        return lossFuncs
+            raise ValueError('You must set lossFuncs')
+        return self.lossFuncs
