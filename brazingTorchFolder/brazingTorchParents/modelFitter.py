@@ -71,7 +71,6 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
                 listOfKwargs: List[dict] = None,
                 **kwargs):
 
-        # addTest1
         # cccUsage
         #  - **kwargs or listOfKwargs are any argument related to pytorch lightning trainer, trainer.fit,
         #       and self.log

@@ -20,7 +20,7 @@ from projectUtils.typeCheck import argValidator
 from projectUtils.warnings import Warn
 
 
-def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
+def loadFromCheckpointPath(checkpointPath, modelClassOrInstance):
     # bugPotn1
     #  note a normal checkpoint dictionary has these keys ['epoch', 'global_step',
     #  'pytorch-lightning_version', 'state_dict', 'loops', 'callbacks',
@@ -35,12 +35,11 @@ def loadFromCheckpointPath(checkpointPath, ModelClassOrInstance):
     checkpoint = torch.load(checkpointPath)
 
     # Load state_dict into model
-    if isclass(ModelClassOrInstance):
-        model = ModelClassOrInstance.load_from_checkpoint(
-            checkpoint_path=checkpointPath)
+    if isclass(modelClassOrInstance):
+        modelClass = modelClassOrInstance
     else:
-        model = type(ModelClassOrInstance).load_from_checkpoint(
-            checkpoint_path=checkpointPath)
+        modelClass = type(modelClassOrInstance)
+    model = modelClass.load_from_checkpoint(checkpoint_path=checkpointPath)
 
     # Load optimizer and schedulers states
     if 'optimizer_states' in checkpoint:
@@ -139,12 +138,12 @@ def externalFit(self, trainDataloader: DataLoader,
 
     # add default logger if allowed and no logger is passed
     # because by default we are logging some metrics
-    if addDefaultLogger and 'logger' not in kwargs['trainer']:
-        architectureNameNVersion = self.getArchitectureNameNVersion_fromLoggerPath(self, loggerPath)
-        kwargs['trainer']['logger'] = {
-            pl.loggers.TensorBoardLogger(architectureNameNVersion['modelName'],
-                                         name=architectureNameNVersion['architectureName'],
-                                         version=architectureNameNVersion['version'])}
+    if addDefaultLogger and 'logger' not in kwargs:
+        architectureNameNVersion = self.getArchitectureNameNVersion_fromLoggerPath(loggerPath)
+        kwargs['logger'] = pl.loggers.TensorBoardLogger(architectureNameNVersion['modelName'],
+                                                        name=architectureNameNVersion[
+                                                            'architectureName'],
+                                                        version=architectureNameNVersion['version'])
         # ccc2
         #  - note the addDefaultLogger is added here also in baseFit
         #  note in the baseFit we don't have access to the architectureName and

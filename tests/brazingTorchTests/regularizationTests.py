@@ -42,7 +42,7 @@ class RegularizationTests(BaseTestClass):
         kwargsApplied = {'max_epochs': 3, 'enable_checkpointing': False, }
 
         # checks that model runs also
-        trainer = model.fit(self.dataloader, None, **kwargsApplied)
+        model, trainer = model.fit(self.dataloader, None, **kwargsApplied)
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
@@ -68,7 +68,7 @@ class RegularizationTests(BaseTestClass):
         kwargsApplied = {'max_epochs': 3, 'enable_checkpointing': False, }
 
         # checks that model runs also
-        trainer = model.fit(self.dataloader, None, **kwargsApplied)
+        model, trainer = model.fit(self.dataloader, None, **kwargsApplied)
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
@@ -94,7 +94,7 @@ class RegularizationTests(BaseTestClass):
         kwargsApplied = {'max_epochs': 3, 'enable_checkpointing': False, }
 
         # checks that model runs also
-        trainer = model.fit(self.dataloader, None, **kwargsApplied)
+        model, trainer = model.fit(self.dataloader, None, **kwargsApplied)
 
         model._setOperationalRegularizations()
         self.assertEqual(str(model._operationalRegularizations['lay1']),
