@@ -147,6 +147,11 @@ class _BrazingTorch_modelFitter_inner:
         return appliedKwargs_byMethod
 
     def _warnNotUsedKwargs_baseFit(self, appliedKwargs_byMethod, keysNotRelated):
+        # ccc3
+        #  note there might be some args passed by user (in listOfKwargs or kwargs) but the
+        #  appliedKwargs_byMethod only keeps the kwargs related to the pytorch lightning trainer,
+        #  trainer.fit, and self.log; therefore to prevent mistakes we warn the user
+
         # get keysRelatedToMethods
         keysRelatedToMethods = []
         for methName in self._methodsFitCanHandle_names:

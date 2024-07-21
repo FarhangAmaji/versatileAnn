@@ -82,7 +82,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
         #               of phases (not specified ones) 'else' use
 
         # put together all kwargs user wants to pass to trainer, trainer.fit, and self.log
-        appliedKwargs = self._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
+        appliedKwargs_byMethod = self._getBaseFit_appliedKwargs(kwargs, listOfKwargs)
 
         # add default logger if allowed and no logger is passed
         # because by default we are logging some metrics
@@ -90,21 +90,13 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
             appliedKwargs_byMethod['trainer']['logger'] = {
                 pl.loggers.TensorBoardLogger(self.modelName)}
 
-        appliedKwargs_byMethod = self._getArgsRelated_toEachMethodSeparately(appliedKwargs)
-
         notAllowedArgs = ['self', 'overfit_batches', 'name', 'value']
         # ccc3
         #  - 'name','value' can be used in logging and are not allowed as the
         #       _logLosses in _BrazingTorch_loss module sets them itself
         #  - overfit_batches is not compatible with this project
         #       for more info take look at 'ccc1' at runOverfitBatches
-        self._removeNotAllowedArgs(appliedKwargs, appliedKwargs_byMethod, notAllowedArgs)
-
-        # ccc3
-        #  note there might be some args passed by user (in listOfKwargs or kwargs) but the
-        #  appliedKwargs_byMethod only keeps the kwargs related to the pytorch lightning trainer,
-        #  trainer.fit, and self.log; therefore to prevent mistakes we warn the user
-        self._warnForNotUsedArgs(appliedKwargs, appliedKwargs_byMethod)
+        self._removeNotAllowedArgs(appliedKwargs_byMethod, notAllowedArgs)
 
         # add gradient clipping by default
         if not self.noAdditionalOptions and addDefault_gradientClipping \

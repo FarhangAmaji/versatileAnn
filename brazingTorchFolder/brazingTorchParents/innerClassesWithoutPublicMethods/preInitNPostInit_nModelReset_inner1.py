@@ -25,7 +25,7 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner1(
         # ccc1
         #  - __new__ acts as `preInit` step, also enables to have `postInit`.
         #    this is for a more clean setup. so users don't need to init parent classes themselves.
-        #    even adviced to not do so. and user can just define their model related things
+        #    even advised to not do so. and user can just define their model related things
         #    in __init__ and forward
         #  - this method initiates the object. also calls __init__ of parent classes
         #    with their related keyword args(kwargs) automatically.
@@ -36,7 +36,8 @@ class _BrazingTorch_preInitNPostInit_nModelReset_inner1(
         #         2. parent classes of  `BrazingTorch` class
 
         # goodToHave1
-        #  detect if the super() is called or not in children; also maybe the __init__s of parent classes are directly callled
+        #  detect if the super() is called or not in children; also maybe the __init__s of parent
+        #  classes are directly callled
         # mustHave1 make initArgs
         print(f'BrazingTorch __new__ method initiated for "{cls.__name__}" class')
 
