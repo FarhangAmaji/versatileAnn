@@ -62,7 +62,7 @@ class _BrazingTorch_modelFitter(_BrazingTorch_modelFitter_inner):
                            'preRunTests_profilerKwargs', 'preRunTests_findBestLearningRateKwargs',
                            'preRunTests_findBestBatchSizesKwargs'])
 
-        return externalFit(**kwargs_, **kwargs)
+        return externalFit(self, **kwargs_, **kwargs)
 
     @argValidator
     def baseFit(self, trainDataloader: DataLoader,
