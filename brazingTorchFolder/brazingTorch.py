@@ -112,10 +112,6 @@ class BrazingTorch(pl.LightningModule,
         #  - may add targets if its is model arguments
         forwardOutputs = self.forward(inputs, targets)
 
-        # calculate loss
-        # bugPotn1
-        #  if the loss is not returned from _calculatedLosses because of
-        #  not having self.lossFuncs would it make error
         loss, calculatedLosses = self._calculateLosses(forwardOutputs, targets)
 
         # Log losses

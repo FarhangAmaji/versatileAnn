@@ -47,7 +47,7 @@ class _BrazingTorch_preRunTests(_BrazingTorch_preRunTests_inner):
     @argValidator
     def preRunTests(self, trainDataloader,
                     valDataloader: Optional[DataLoader] = None,
-                    *, lossFuncs: List[nn.modules.loss._Loss],
+                    *, lossFuncs: Optional[List[nn.modules.loss._Loss]] = None,
                     force=False, seedSensitive=False,
                     lrFinderRange=(1e-6, 5), lrFinderNumSteps=20, lrsToFindBest=None,
                     batchSizesToFindBest=None,
