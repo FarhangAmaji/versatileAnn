@@ -23,7 +23,7 @@
 
 ## quickSummary
 
-This readme is quite detailed, so it's better to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md).
+This readme is quite detailed, so it's better first to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md).
 
 ![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummaryImage.png)
 ## How to read this!?!?
