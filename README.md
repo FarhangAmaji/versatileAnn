@@ -25,6 +25,7 @@
 
 This readme is quite detailed, so it's better to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md).
 
+![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummaryImage.png)
 ## How to read this!?!?
 
 This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
@@ -45,7 +46,7 @@ This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, b
 
 This project has some sections and `"who this project is for"` `depends` on what `section` you may use.
 
-- `anyone who uses Pytorch (AI deep learning library)` or `similar`(any other deep learning framework) ([brazingTorch section](#brazingTorch)):
+- `General AI users`: anyone who uses `Pytorch` (AI deep learning library) or `similar` (any other deep learning framework) ([brazingTorch section](#brazingTorch)):
   
   if you are using pytorch, or any other deep learning framework like `tensorflow`, `keras`, `caffe`, etc, it worths to `try` **"brazingTorch"** at `least once`.
   
@@ -55,10 +56,10 @@ This project has some sections and `"who this project is for"` `depends` on what
   - **Resettable Components:** Unique resettable `dataloaders`, `optimizers`, and even can reset `models`.
   - **PreRunTests:** Get `sanity checks` and `optimize training efficiency` automatically.
   - **Smart defaults with reminder warnings:** `Simplify your workflow` and customize as needed.
-- For people who want to use `ready forecasting models` (whole project)
+- `Practitioners` and `enthusiasts` who want to `experiment` with or implement ready-made state-of-the-art forecasting models for their use cases
   - **Code of latest `state of the art` (`cutting edge models of AI, publicly published in journals, achieving the best results`) models in `forecasting`**
   - **ready processed datasets:** ready processed data for some famous timeseries datasets.
-- `sequential data (Forecasting & NLP & audio) AI researchers` (whole project)
+- `AI researchers` especially who work with sequential data (Forecasting & NLP & audio) models
   
   - **Rich and Versatile Data Processing and Analysis Library**
   - `Not Reinventing the Wheel`, helps to `avoid` to develop from `scratch`.
