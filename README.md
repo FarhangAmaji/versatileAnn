@@ -1,5 +1,5 @@
 ## Table of Contents
-- [**quickSummary**](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md)
+- [**quickSummary**](https://github.com/FarhangAmaji/versatileAnn/blob/master/devDocs/readMes/quickSummary.md)
 - [**Who this project is for**](#whoThisProjectIsFor)
 - [**What versatileAnn is**](#whatVersatileAnnIs)
 - [**Project Features**](#projectFeatures)
@@ -23,9 +23,8 @@
 
 ## quickSummary
 
-This readme is quite detailed, so it's better first to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummary.md).
+This readme is quite detailed, so it's better first to take look at [quickSummary](https://github.com/FarhangAmaji/versatileAnn/blob/master/devDocs/readMes/quickSummary.md).
 
-![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/quickSummaryImage.png)
 ## How to read this!?!?
 
 This is a `quite big project`, and this readMe is `a bit long`, so `recommended` for the `first time` :
@@ -38,7 +37,7 @@ This is a `quite big project`, and this readMe is `a bit long`, so `recommended`
 
 # Who this project is for?!<a id='whoThisProjectIsFor'></a>
 
-This project firstly is for `AI enthusiasts`, if you are `interested` in `AI`, but `Forecasting` and `NLP` (natural language processing) are `not` in your fields of `interests` in AI, then you may go straight to https://github.com/FarhangAmaji/brazingTorch
+The project includes a `core framework` that supports `any PyTorch model`, alongside `specialized modules for forecasting` tasks. If you're interested in AI but your focus doesn’t include Forecasting or NLP (Natural Language Processing), you may want to explore it directly at https://github.com/FarhangAmaji/brazingTorch
 
 - [in the case you don't know what **forecasting** is, click here](#whatIsForecasting)
 
@@ -73,13 +72,23 @@ This project has some sections and `"who this project is for"` `depends` on what
 
 # What versatileAnn is<a id='whatVersatileAnnIs'></a>
 
-This project aims to provide `utility tools` that `facilitate` the `development of models`, `particularly` those in the realm of `deep learning`, making `prototyping models faster`, designed to `save` you significant amount of `development time`. making it well-suited for AI development compared to other similar packages.
+In the fields of AI like `NLP` and `computer vision`, `foundational models` have become `dominant`, streamlining the development process due to the `intrinsic characteristics of data` in these areas, making it ideal for foundational models. However, in more `general AI tasks` like `time series forecasting` where data types are more varied and complex, `suitable foundational` models either `don’t exist` or can’t be effectively applied. This creates a need for flexible tools that support `model development from scratch`, particularly for navigating the `vast possibilities of architectures and hyperparameters`. This project is designed to meet this need, providing a `robust set of utility tools` for `hyper-model search` that `acceler	ate the prototyping` process and `save valuable development time`, while ensuring that the search for optimal models is `reliable` and `adaptable` across tasks.
 
-This project is `quite extensive`, with over 15,000 lines of code. While `this readMe` highlights some `key features`, there are many `more unique novel functionalities and options` available.
+The project is extensive, with over 18,000 lines of code that go beyond what is outlined in the README, encompassing a `range of unique, novel functionalities` and options. At its core, the `framework supports any PyTorch model`, with `specialized modules` for `forecasting tasks`, making it highly adaptable to a wide variety of AI applications. Additionally, it includes specialized forecasting libraries packed with essential tools for `pre-processing` and `post-processing time-series data`, making it particularly valuable for researchers and practitioners in forecasting.
 
-These features are not only `well-tested`, with more than 400 unit tests, also with `smart errors` `preventing possible semantic mistakes`, making your `development reliable`.
+To enhance reliability, the framework incorporates `smart defaults`, intelligent `warnings`, and automated `checks` to `prevent common semantic mistakes` that can `derail` projects late in development. By addressing `potential errors early`, the system `reduces` the `risk of failure` and ensures a smoother, more assured development process. It also features over 400 unit tests, underscoring a commitment to high testing standards and reliability.
 
-Beside has latest the `state of the art models` in the `field of forecasting`, and also `already prepared datasets` so you can test and `benchmark` models you are developing. Not only can it be `useful for` people to `simply try out some models`, but it's `designed` to be `especially handy` for `AI researchers` who require a robust and efficient development environment.
+Beyond reliability, the project provides access to `state-of-the-art forecasting models` and `already prepared datasets` for testing and `benchmarking`. This allows users to `validate` and compare model `performance easily`, making it `ideal` for both `AI researchers` requiring a robust and efficient environment, and `those simply looking to experiment` with `cutting-edge forecasting techniques` or try out models quickly.
+
+Whether you’re developing a model from scratch or experimenting with existing advanced techniques, this project offers a comprehensive, ready-to-use environment that facilitates advanced AI research and development, designed to save time, minimize risk, and accelerate innovation across AI applications.
+
+# Important Message
+
+**The project has not officially been launched:** The project you currently have access to is not finished, but it effectively demonstrates its main features, code quality, and implementation style. This version showcases the fundamental functionalities, structure, and design principles, offering insight into the project's capabilities and attention to detail.
+
+The first phase of this project (all features mentioned in this README) has been completed; for access to the full project, please feel free to reach out via email at popamaji@gmail.com
+
+- note the past code exist but not guaranteed to work perfectly.
 
 # **Project Features**<a id='projectFeatures'></a>
 
@@ -312,12 +321,6 @@ this section aims for `forecasting` machine learning application
   - 
 
 ---
-
-# Important Message
-
-**The project has not officially been launched:** Many sections of the project have been completed, but not all sections, especially the `\examples` and `\models` sections, need to be updated with the latest reconstruction of `brazingTorch`.
-
-- note the past code exist but not guaranteed to work perfectly.
 
 ### Project additional infos<a id='additionalInfos'></a>
 
