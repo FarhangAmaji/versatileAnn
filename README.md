@@ -19,7 +19,7 @@
 - Appendix
     - [what is forecasting](#whatIsForecasting)
 
-![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/BrazingTorch.jpg)
+![Logo](https://github.com/FarhangAmaji/versatileAnn/blob/master/devDocs/readMes/BrazingTorch.jpg)
 
 ## quickSummary
 
